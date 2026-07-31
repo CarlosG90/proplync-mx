@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>InmoContent OS · Riviera Maya</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#06232a;
+    --ink-2:#0b333b;
+    --sea:#0c7c77;
+    --sea-deep:#0a5d59;
+    --aqua:#34d6c4;
+    --aqua-soft:#8fe8dd;
+    --sand:#f3ecdd;
+    --sand-2:#e8dcc4;
+    --gold:#e7a43b;
+    --gold-deep:#c78420;
+    --paper:#fbf7ee;
+    --on-ink:#eaf6f3;
+    --on-ink-dim:#a9ccc7;
+    --on-sand:#13323a;
+    --on-sand-dim:#4c6a6f;
+    --line:#d8cbb0;
+    --radius:18px;
+    --maxw:1180px;
+    --display:"Fraunces",Georgia,serif;
+    --body:"Hanken Grotesk",system-ui,sans-serif;
+    --mono:"Space Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;font-family:var(--body);background:var(--paper);color:var(--on-sand);
+    line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.05;margin:0;letter-spacing:-.01em}
+  p{margin:0}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase}
+  .mono{font-family:var(--mono)}
+
+  /* ---------- NAV ---------- */
+  header{position:sticky;top:0;z-index:50;background:rgba(6,35,42,.86);backdrop-filter:blur(12px);border-bottom:1px solid rgba(143,232,221,.14)}
+  nav{display:flex;align-items:center;gap:28px;height:66px}
+  .brand{display:flex;align-items:center;gap:11px;color:var(--on-ink);font-family:var(--display);font-size:1.12rem;font-weight:500;letter-spacing:-.01em}
+  .brand .mark{width:26px;height:26px;flex:none}
+  .navlinks{display:flex;gap:26px;margin-left:auto}
+  .navlinks a{color:var(--on-ink-dim);font-size:.9rem;font-weight:500;transition:color .2s}
+  .navlinks a:hover{color:var(--aqua)}
+  .navtools{display:flex;align-items:center;gap:14px}
+  .lang{display:inline-flex;border:1px solid rgba(143,232,221,.3);border-radius:999px;overflow:hidden;font-family:var(--mono);font-size:.72rem}
+  .lang button{background:transparent;color:var(--on-ink-dim);border:0;padding:6px 11px;cursor:pointer;letter-spacing:.05em}
+  .lang button.on{background:var(--aqua);color:var(--ink);font-weight:700}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--body);font-weight:600;font-size:.92rem;padding:11px 20px;border-radius:999px;cursor:pointer;border:0;transition:transform .15s ease,box-shadow .2s,background .2s;white-space:nowrap}
+  .btn-gold{background:var(--gold);color:#231600;box-shadow:0 8px 22px -10px rgba(231,164,59,.8)}
+  .btn-gold:hover{transform:translateY(-2px);box-shadow:0 14px 30px -12px rgba(231,164,59,.9)}
+  .btn-ghost{background:transparent;color:var(--on-ink);border:1px solid rgba(143,232,221,.35)}
+  .btn-ghost:hover{border-color:var(--aqua);color:var(--aqua)}
+  .btn-dark{background:var(--ink);color:var(--on-ink)}
+  .btn-dark:hover{transform:translateY(-2px);background:var(--ink-2)}
+  .navtoggle{display:none;background:none;border:0;cursor:pointer;flex-direction:column;gap:5px;padding:6px}
+  .navtoggle span{width:24px;height:2px;background:var(--on-ink);border-radius:2px}
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative;background:
+      radial-gradient(120% 90% at 82% 8%, rgba(52,214,196,.20), transparent 55%),
+      radial-gradient(90% 70% at 0% 100%, rgba(12,124,119,.5), transparent 60%),
+      linear-gradient(165deg,#06232a 0%,#0a4a48 60%,#0c6360 100%);
+    color:var(--on-ink);overflow:hidden}
+  .hero .wrap{position:relative;z-index:2;display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center;padding-top:64px;padding-bottom:96px}
+  .hero-eyebrow{color:var(--aqua);display:flex;align-items:center;gap:10px;margin-bottom:22px}
+  .hero-eyebrow::before{content:"";width:26px;height:1px;background:var(--aqua)}
+  .hero h1{font-size:clamp(2.5rem,5.4vw,4.35rem);letter-spacing:-.025em}
+  .hero h1 em{font-style:italic;color:var(--aqua)}
+  .hero-sub{margin-top:24px;font-size:1.12rem;color:var(--on-ink-dim);max-width:30em}
+  .hero-cta{margin-top:34px;display:flex;gap:14px;flex-wrap:wrap}
+  .hero-meta{margin-top:36px;display:flex;gap:26px;flex-wrap:wrap;font-family:var(--mono);font-size:.74rem;color:var(--on-ink-dim);letter-spacing:.03em}
+  .hero-meta b{color:var(--on-ink);font-weight:700}
+  .wave{position:absolute;left:0;right:0;bottom:-1px;z-index:1;line-height:0}
+  .wave svg{width:100%;height:70px;display:block}
+
+  /* ---------- DEMO CARD (signature) ---------- */
+  .demo{position:relative}
+  .demo-card{background:rgba(251,247,238,.06);border:1px solid rgba(143,232,221,.22);border-radius:24px;padding:16px;backdrop-filter:blur(6px);box-shadow:0 40px 80px -40px rgba(0,0,0,.7)}
+  .listing{display:flex;gap:14px;align-items:center;padding:12px;border-radius:15px;background:rgba(6,35,42,.5);border:1px solid rgba(143,232,221,.14)}
+  .listing-photo{width:88px;height:72px;border-radius:11px;flex:none;background:
+      linear-gradient(150deg,#12908a,#0a5d59 55%,#083f3d),
+      radial-gradient(circle at 70% 25%,rgba(231,164,59,.5),transparent 40%);
+    position:relative;overflow:hidden}
+  .listing-photo::after{content:"";position:absolute;inset:0;background:
+     linear-gradient(transparent 55%,rgba(52,214,196,.25) 56%,transparent 58%),
+     linear-gradient(transparent 72%,rgba(255,255,255,.14) 73%,transparent 75%)}
+  .listing-info{flex:1;min-width:0}
+  .listing-info .t{font-family:var(--display);font-size:1.02rem;color:var(--on-ink);font-weight:500}
+  .listing-info .loc{font-family:var(--mono);font-size:.68rem;color:var(--aqua);letter-spacing:.05em;margin-top:3px}
+  .listing-specs{display:flex;gap:12px;margin-top:9px;font-family:var(--mono);font-size:.66rem;color:var(--on-ink-dim)}
+  .listing-price{font-family:var(--mono);font-weight:700;color:var(--gold);font-size:1rem;text-align:right;white-space:nowrap}
+  .demo-arrow{text-align:center;font-family:var(--mono);font-size:.66rem;color:var(--on-ink-dim);letter-spacing:.18em;text-transform:uppercase;margin:13px 0 11px}
+  .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .chip{font-family:var(--body);font-weight:600;font-size:.78rem;color:var(--on-ink-dim);background:rgba(6,35,42,.45);border:1px solid rgba(143,232,221,.16);border-radius:11px;padding:10px 6px;cursor:pointer;text-align:center;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:5px}
+  .chip svg{width:19px;height:19px;stroke:var(--aqua-soft);opacity:.85}
+  .chip:hover{border-color:var(--aqua);color:var(--on-ink)}
+  .chip.on{background:var(--aqua);border-color:var(--aqua);color:var(--ink)}
+  .chip.on svg{stroke:var(--ink);opacity:1}
+  .preview{margin-top:12px;background:var(--paper);border-radius:15px;padding:16px;min-height:132px;color:var(--on-sand);position:relative;overflow:hidden}
+  .pv-tag{position:absolute;top:11px;right:13px;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--sea);background:rgba(12,124,119,.1);padding:3px 8px;border-radius:6px}
+  .pv-title{font-family:var(--display);font-size:1.02rem;color:var(--ink);max-width:80%}
+  .pv-body{font-size:.82rem;color:var(--on-sand-dim);margin-top:7px;max-width:92%}
+  .pv-row{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+  .pv-pill{font-family:var(--mono);font-size:.62rem;background:var(--sand-2);color:var(--sea-deep);padding:4px 8px;border-radius:6px}
+  .pv-dots{display:flex;gap:6px;margin-top:12px}
+  .pv-dots i{width:24px;height:5px;border-radius:3px;background:var(--sand-2)}
+  .pv-dots i.a{background:var(--sea)}
+  .pv-visual{position:absolute;right:-8px;bottom:-8px;width:96px;height:96px;border-radius:14px;background:linear-gradient(150deg,#12908a,#0a5d59);opacity:.14}
+  .pv-play{width:38px;height:38px;border-radius:50%;background:var(--sea);display:flex;align-items:center;justify-content:center;margin-top:12px}
+  .pv-play svg{width:15px;height:15px;fill:#fff}
+
+  /* ---------- SECTIONS ---------- */
+  section{padding:96px 0}
+  .sec-head{max-width:44rem;margin-bottom:52px}
+  .sec-head .eyebrow{color:var(--sea);margin-bottom:16px;display:block}
+  .sec-head h2{font-size:clamp(2rem,3.8vw,3rem);color:var(--ink)}
+  .sec-head p{margin-top:18px;font-size:1.08rem;color:var(--on-sand-dim)}
+
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  /* problem band */
+  .band{background:var(--ink);color:var(--on-ink)}
+  .band h2{color:var(--on-ink)}
+  .band .sec-head .eyebrow{color:var(--aqua)}
+  .band p{color:var(--on-ink-dim)}
+  .prob-quote{font-family:var(--display);font-size:clamp(1.5rem,3.2vw,2.3rem);line-height:1.25;color:var(--on-ink);max-width:22em}
+  .prob-quote em{color:var(--aqua);font-style:italic}
+
+  /* process */
+  .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;counter-reset:s}
+  .step{padding:26px 20px;border-top:2px solid var(--line);position:relative}
+  .step::before{counter-increment:s;content:"0" counter(s);font-family:var(--mono);font-size:.8rem;color:var(--gold-deep);font-weight:700}
+  .step h3{font-size:1.18rem;color:var(--ink);margin-top:14px}
+  .step p{font-size:.9rem;color:var(--on-sand-dim);margin-top:9px}
+
+  /* pieces grid */
+  .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .piece{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px;transition:transform .2s,box-shadow .2s}
+  .piece:hover{transform:translateY(-4px);box-shadow:0 22px 44px -28px rgba(10,74,72,.6)}
+  .piece .ic{width:44px;height:44px;border-radius:12px;background:linear-gradient(150deg,var(--sea),var(--sea-deep));display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+  .piece .ic svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.7}
+  .piece h3{font-size:1.22rem;color:var(--ink)}
+  .piece p{font-size:.92rem;color:var(--on-sand-dim);margin-top:8px}
+  .piece .fmt{font-family:var(--mono);font-size:.64rem;color:var(--sea);letter-spacing:.08em;margin-top:14px;text-transform:uppercase}
+
+  .guard{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:34px}
+  .guard div{padding:20px;border-left:2px solid var(--gold);background:var(--sand)}
+  .guard h4{font-family:var(--body);font-weight:700;font-size:.96rem;color:var(--ink);margin:0}
+  .guard p{font-size:.86rem;color:var(--on-sand-dim);margin-top:6px}
+
+  /* properties */
+  .pfilter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:30px}
+  .pfilter button{font-family:var(--mono);font-size:.74rem;letter-spacing:.05em;background:#fff;color:var(--on-sand-dim);border:1px solid var(--line);border-radius:999px;padding:9px 18px;cursor:pointer;transition:all .18s}
+  .pfilter button:hover{border-color:var(--sea);color:var(--sea)}
+  .pfilter button.on{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+  .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .pcard{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+  .pcard:hover{transform:translateY(-4px);box-shadow:0 24px 48px -30px rgba(10,74,72,.55)}
+  .pcard-photo{aspect-ratio:4/3;background-size:cover;background-position:center;position:relative}
+  .pcard-badge{position:absolute;top:12px;left:12px;font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:5px 10px;border-radius:6px;color:#fff;backdrop-filter:blur(4px)}
+  .badge-sale{background:rgba(12,124,119,.9)}
+  .badge-rental{background:rgba(231,164,59,.92);color:#231600}
+  .pcard-id{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:.58rem;color:#fff;background:rgba(6,35,42,.5);padding:4px 8px;border-radius:6px;letter-spacing:.05em}
+  .pcard-body{padding:20px;display:flex;flex-direction:column;flex:1}
+  .pcard-loc{font-family:var(--mono);font-size:.64rem;color:var(--sea);letter-spacing:.1em;text-transform:uppercase}
+  .pcard-title{font-family:var(--display);font-size:1.18rem;color:var(--ink);margin-top:7px;line-height:1.2}
+  .pcard-specs{display:flex;gap:14px;margin-top:12px;font-family:var(--mono);font-size:.68rem;color:var(--on-sand-dim);flex-wrap:wrap}
+  .pcard-foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:16px}
+  .pcard-price{font-family:var(--mono);font-weight:700;color:var(--gold-deep);font-size:1.05rem}
+  .pcard-price small{color:var(--on-sand-dim);font-weight:400;font-size:.7rem}
+  .pcard-gen{width:100%;margin-top:14px;justify-content:center;font-family:var(--body);font-weight:600;font-size:.82rem;padding:10px;border-radius:11px;background:var(--sand);color:var(--sea-deep);border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .18s}
+  .pcard-gen:hover{background:var(--sea);color:#fff;border-color:var(--sea)}
+  .props-note{margin-top:30px;font-size:.86rem;color:var(--on-sand-dim);display:flex;align-items:flex-start;gap:10px;max-width:52em}
+  .props-note .eb{font-family:var(--mono);font-size:.62rem;background:var(--ink);color:var(--aqua);padding:4px 9px;border-radius:6px;letter-spacing:.06em;white-space:nowrap;margin-top:2px}
+  @media (max-width:900px){.pgrid{grid-template-columns:1fr 1fr}}
+  @media (max-width:560px){.pgrid{grid-template-columns:1fr}}
+
+  /* ROI */
+  .roi{background:linear-gradient(160deg,#0a4a48,#06232a);color:var(--on-ink)}
+  .roi h2{color:var(--on-ink)}
+  .roi .sec-head .eyebrow{color:var(--aqua)}
+  .roi p{color:var(--on-ink-dim)}
+  .roi-grid{display:grid;grid-template-columns:1fr 1fr;gap:38px;align-items:start}
+  .roi-form{background:rgba(251,247,238,.05);border:1px solid rgba(143,232,221,.2);border-radius:20px;padding:30px}
+  .field{margin-bottom:20px}
+  .field label{display:flex;justify-content:space-between;font-size:.88rem;color:var(--on-ink);font-weight:600;margin-bottom:9px}
+  .field .val{font-family:var(--mono);color:var(--aqua)}
+  input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:5px;background:rgba(143,232,221,.25);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 0 4px rgba(231,164,59,.25)}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border:0;border-radius:50%;background:var(--gold);cursor:pointer}
+  .curr{display:inline-flex;border:1px solid rgba(143,232,221,.3);border-radius:999px;overflow:hidden;font-family:var(--mono);font-size:.72rem}
+  .curr button{background:transparent;color:var(--on-ink-dim);border:0;padding:6px 13px;cursor:pointer}
+  .curr button.on{background:var(--aqua);color:var(--ink);font-weight:700}
+  .roi-out{padding:6px 0}
+  .roi-big{font-family:var(--display);font-size:clamp(2.6rem,6vw,4rem);color:var(--aqua);line-height:1}
+  .roi-big small{font-family:var(--mono);font-size:.9rem;color:var(--on-ink-dim);display:block;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+  .roi-second{display:flex;gap:30px;margin-top:26px;flex-wrap:wrap}
+  .roi-second div .n{font-family:var(--mono);font-size:1.5rem;color:var(--on-ink);font-weight:700}
+  .roi-second div .l{font-size:.8rem;color:var(--on-ink-dim);margin-top:2px}
+  .roi-note{font-size:.8rem;color:var(--on-ink-dim);margin-top:26px;font-style:italic;max-width:34em}
+
+  /* pricing */
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+  .tier{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:30px;display:flex;flex-direction:column}
+  .tier.feat{background:var(--ink);color:var(--on-ink);border-color:var(--ink);position:relative;transform:translateY(-8px)}
+  .tier.feat .tier-name,.tier.feat .tier-price{color:var(--on-ink)}
+  .tier.feat li{color:var(--on-ink-dim)}
+  .tier-flag{position:absolute;top:-11px;left:30px;background:var(--gold);color:#231600;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:4px 11px;border-radius:6px;font-weight:700}
+  .tier-name{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--sea);font-weight:700}
+  .tier-price{font-family:var(--display);font-size:2.2rem;color:var(--ink);margin:12px 0 4px}
+  .tier-price span{font-family:var(--mono);font-size:.8rem;color:var(--on-sand-dim)}
+  .tier ul{list-style:none;padding:0;margin:20px 0 26px;flex:1}
+  .tier li{font-size:.9rem;color:var(--on-sand-dim);padding:8px 0 8px 24px;position:relative;border-top:1px solid rgba(0,0,0,.06)}
+  .tier.feat li{border-top-color:rgba(143,232,221,.12)}
+  .tier li::before{content:"";position:absolute;left:0;top:14px;width:12px;height:7px;border-left:2px solid var(--gold);border-bottom:2px solid var(--gold);transform:rotate(-45deg)}
+  .tier .btn{width:100%;justify-content:center}
+  .price-foot{text-align:center;font-size:.9rem;color:var(--on-sand-dim);margin-top:26px}
+
+  /* privacy / localization */
+  .priv{display:grid;grid-template-columns:1.1fr .9fr;gap:44px;align-items:center}
+  .priv-card{background:var(--sand);border:1px solid var(--line);border-radius:var(--radius);padding:30px}
+  .priv-card .eyebrow{color:var(--sea);display:block;margin-bottom:14px}
+  .priv-card h3{font-size:1.5rem;color:var(--ink)}
+  .priv-list{margin-top:18px;display:flex;flex-direction:column;gap:12px}
+  .priv-list div{display:flex;gap:12px;font-size:.92rem;color:var(--on-sand-dim)}
+  .priv-list b{color:var(--ink);font-weight:600}
+  .priv-list .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex:none;margin-top:7px}
+  .limits h3{font-size:1.4rem;color:var(--ink);margin-bottom:18px}
+  .limits li{list-style:none;font-size:.92rem;color:var(--on-sand-dim);padding:11px 0;border-bottom:1px dashed var(--line)}
+  .limits ul{padding:0;margin:0}
+  .limits li b{color:var(--ink);font-weight:600}
+
+  /* CTA */
+  .cta{background:
+     radial-gradient(80% 120% at 90% 10%,rgba(231,164,59,.25),transparent 55%),
+     linear-gradient(150deg,#0c7c77,#06232a);color:var(--on-ink);text-align:center}
+  .cta h2{font-size:clamp(2.1rem,4.5vw,3.4rem);color:#fff;max-width:16em;margin:0 auto}
+  .cta p{color:var(--on-ink-dim);margin:20px auto 0;max-width:34em;font-size:1.08rem}
+  .cta .btn{margin-top:32px}
+
+  footer{background:var(--ink);color:var(--on-ink-dim);padding:44px 0}
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;font-size:.85rem}
+  .foot .brand{color:var(--on-ink)}
+  .foot a:hover{color:var(--aqua)}
+
+  @media (max-width:900px){
+    .hero .wrap{grid-template-columns:1fr;gap:40px;padding-bottom:72px}
+    .demo{max-width:440px}
+    .navlinks{display:none}
+    .navtoggle{display:flex}
+    .navlinks.open{display:flex;position:absolute;top:66px;left:0;right:0;flex-direction:column;background:var(--ink);padding:20px 28px;gap:18px;border-bottom:1px solid rgba(143,232,221,.14);margin:0}
+    .steps{grid-template-columns:1fr 1fr}
+    .grid6{grid-template-columns:1fr 1fr}
+    .guard,.roi-grid,.priv,.tiers{grid-template-columns:1fr}
+    .tier.feat{transform:none}
+    section{padding:72px 0}
+  }
+  @media (max-width:560px){
+    .chips{grid-template-columns:1fr 1fr}
+    .grid6,.steps{grid-template-columns:1fr}
+    .hero-meta{gap:18px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .reveal{transition:none;opacity:1;transform:none}
+    *{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="#top">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="#34d6c4" opacity=".18"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#34d6c4" stroke-width="1.8" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#e7a43b" stroke-width="1.8" stroke-linecap="round"/></svg>
+      InmoContent<span style="color:#34d6c4">OS</span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="#como" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a>
+      <a href="#piezas" data-es="Qué generas" data-en="What you get">Qué generas</a>
+      <a href="#propiedades" data-es="Propiedades" data-en="Properties">Propiedades</a>
+      <a href="#roi" data-es="Calculadora" data-en="ROI">Calculadora</a>
+      <a href="#precios" data-es="Precios" data-en="Pricing">Precios</a>
+      <a href="#contacto" data-es="Contacto" data-en="Contact">Contacto</a>
+    </div>
+    <div class="navtools">
+      <div class="lang" role="group" aria-label="Language">
+        <button id="es" class="on" onclick="setLang('es')">ES</button>
+        <button id="en" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="#contacto" class="btn btn-gold" data-es="Reservar llamada" data-en="Book a call">Reservar llamada</a>
+      <button class="navtoggle" aria-label="Menu" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero" id="top" style="padding:0">
+  <div class="wrap">
+    <div>
+      <div class="hero-eyebrow eyebrow" data-es="Contenido inmobiliario · Riviera Maya" data-en="Real estate content · Riviera Maya">Contenido inmobiliario · Riviera Maya</div>
+      <h1 data-es="Captura una propiedad una vez. <em>Publica en seis formatos.</em>" data-en="Capture a property once. <em>Publish in six formats.</em>">Captura una propiedad una vez. <em>Publica en seis formatos.</em></h1>
+      <p class="hero-sub" data-es="Un sistema interno que convierte los datos de un inmueble en ficha PDF, post, carrusel, story, email y video — listos para revisar antes de publicar. Hecho para agencias de Tulum, Playa del Carmen y Cancún." data-en="An internal system that turns a listing's data into a PDF fact sheet, post, carousel, story, email, and video — ready to review before you publish. Built for agencies in Tulum, Playa del Carmen, and Cancún.">Un sistema interno que convierte los datos de un inmueble en ficha PDF, post, carrusel, story, email y video — listos para revisar antes de publicar. Hecho para agencias de Tulum, Playa del Carmen y Cancún.</p>
+      <div class="hero-cta">
+        <a href="#contacto" class="btn btn-gold" data-es="Reservar diagnóstico de 15 min" data-en="Book a 15-min diagnosis">Reservar diagnóstico de 15 min</a>
+        <a href="#como" class="btn btn-ghost" data-es="Ver cómo funciona" data-en="See how it works">Ver cómo funciona</a>
+      </div>
+      <div class="hero-meta">
+        <span data-es="<b>1</b> ficha → <b>6</b> piezas" data-en="<b>1</b> listing → <b>6</b> pieces"><b>1</b> ficha → <b>6</b> piezas</span>
+        <span data-es="<b>ES + EN</b> bilingüe" data-en="<b>ES + EN</b> bilingual"><b>ES + EN</b> bilingüe</span>
+        <span data-es="<b>Revisión</b> antes de publicar" data-en="<b>Review</b> before publishing"><b>Revisión</b> antes de publicar</span>
+      </div>
+    </div>
+
+    <!-- signature interactive demo -->
+    <div class="demo">
+      <div class="demo-card reveal">
+        <div class="listing">
+          <div class="listing-photo" id="d-photo"></div>
+          <div class="listing-info">
+            <div class="t" id="d-title">Depa en preventa</div>
+            <div class="loc" id="d-loc">TULUM · ALDEA ZAMÁ</div>
+            <div class="listing-specs" id="d-specs"></div>
+          </div>
+          <div class="listing-price" id="d-price">USD<br>$245,000</div>
+        </div>
+        <div class="demo-arrow" data-es="↓ genera automáticamente ↓" data-en="↓ generates automatically ↓">↓ genera automáticamente ↓</div>
+        <div class="chips" id="chips">
+          <button class="chip on" data-fmt="pdf" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg><span data-es="Ficha PDF" data-en="PDF sheet">Ficha PDF</span></button>
+          <button class="chip" data-fmt="post" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.4"/></svg><span>Post</span></button>
+          <button class="chip" data-fmt="carousel" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><rect x="7" y="6" width="10" height="12" rx="2"/><path d="M4 9v6M20 9v6"/></svg><span data-es="Carrusel" data-en="Carousel">Carrusel</span></button>
+          <button class="chip" data-fmt="story" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><rect x="7" y="3" width="10" height="18" rx="3"/></svg><span>Story</span></button>
+          <button class="chip" data-fmt="email" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 8l9 6 9-6"/></svg><span>Email</span></button>
+          <button class="chip" data-fmt="video" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg><span>Video</span></button>
+        </div>
+        <div class="preview" id="preview"></div>
+      </div>
+    </div>
+  </div>
+  <div class="wave"><svg viewBox="0 0 1200 70" preserveAspectRatio="none"><path d="M0 40 C 200 10 400 70 600 40 C 800 10 1000 70 1200 40 L1200 70 L0 70 Z" fill="#fbf7ee"/></svg></div>
+</section>
+
+<!-- PROBLEM -->
+<section class="band" id="problema">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="El cuello de botella" data-en="The bottleneck">El cuello de botella</span>
+    </div>
+    <p class="prob-quote reveal" data-es="Tu equipo copia el mismo precio, los mismos m² y la misma descripción de Canva al CRM, al email y a Instagram. <em>Cada propiedad, otra vez.</em>" data-en="Your team copies the same price, the same m², the same description from Canva to the CRM, to email, to Instagram. <em>Every property, all over again.</em>">Tu equipo copia el mismo precio, los mismos m² y la misma descripción de Canva al CRM, al email y a Instagram. <em>Cada propiedad, otra vez.</em></p>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="como">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="El sistema" data-en="The system">El sistema</span>
+      <h2 data-es="Introduce los datos una vez. El sistema hace el resto." data-en="Enter the data once. The system does the rest.">Introduce los datos una vez. El sistema hace el resto.</h2>
+      <p data-es="No es pedirle seis textos a una IA. Es un flujo que valida la información, mantiene tu marca y te obliga a revisar antes de publicar." data-en="It isn't asking an AI for six texts. It's a flow that validates the information, keeps your brand consistent, and makes you review before publishing.">No es pedirle seis textos a una IA. Es un flujo que valida la información, mantiene tu marca y te obliga a revisar antes de publicar.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal"><h3 data-es="Rellena la ficha" data-en="Fill the form">Rellena la ficha</h3><p data-es="Tipo, precio, ubicación, m², recámaras, baños, características y fotos." data-en="Type, price, location, m², bedrooms, bathrooms, features, and photos.">Tipo, precio, ubicación, m², recámaras, baños, características y fotos.</p></div>
+      <div class="step reveal"><h3 data-es="Valida y organiza" data-en="Validate & organize">Valida y organiza</h3><p data-es="Comprueba los datos, optimiza las imágenes y crea una ficha estructurada." data-en="Checks the data, optimizes images, and builds a structured record.">Comprueba los datos, optimiza las imágenes y crea una ficha estructurada.</p></div>
+      <div class="step reveal"><h3 data-es="Genera 6 piezas" data-en="Generate 6 pieces">Genera 6 piezas</h3><p data-es="PDF, post, carrusel, story, email y video — desde una sola ficha." data-en="PDF, post, carousel, story, email, and video — from one record.">PDF, post, carrusel, story, email y video — desde una sola ficha.</p></div>
+      <div class="step reveal"><h3 data-es="Revisa y edita" data-en="Review & edit">Revisa y edita</h3><p data-es="Vista previa editable. La automatización reduce trabajo, no la revisión." data-en="Editable preview. Automation cuts work, not the review.">Vista previa editable. La automatización reduce trabajo, no la revisión.</p></div>
+      <div class="step reveal"><h3 data-es="Descarga en ZIP" data-en="Download as ZIP">Descarga en ZIP</h3><p data-es="Cada pieza por separado o todo el paquete listo para publicar." data-en="Each piece separately or the whole package, ready to publish.">Cada pieza por separado o todo el paquete listo para publicar.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PIECES -->
+<section id="piezas" style="background:linear-gradient(180deg,#fbf7ee,#f3ecdd)">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Qué generas" data-en="What you get">Qué generas</span>
+      <h2 data-es="Seis piezas desde una sola ficha" data-en="Six pieces from a single record">Seis piezas desde una sola ficha</h2>
+      <p data-es="Mismos colores, tipografías, tono y llamadas a la acción en cada propiedad. Marca coherente, sin rehacer el diseño cada vez." data-en="Same colors, fonts, tone, and calls to action on every property. Consistent brand, without redesigning each time.">Mismos colores, tipografías, tono y llamadas a la acción en cada propiedad. Marca coherente, sin rehacer el diseño cada vez.</p>
+    </div>
+    <div class="grid6">
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg></div><h3 data-es="Ficha técnica" data-en="Fact sheet">Ficha técnica</h3><p data-es="Documento con todos los datos del inmueble, maquetado con tu marca." data-en="A document with all the listing data, laid out with your brand.">Documento con todos los datos del inmueble, maquetado con tu marca.</p><div class="fmt">PDF · A4</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.4"/></svg></div><h3 data-es="Post de Instagram" data-en="Instagram post">Post de Instagram</h3><p data-es="Imagen principal, copy comercial y CTA listos para publicar." data-en="Main image, sales copy, and CTA ready to publish.">Imagen principal, copy comercial y CTA listos para publicar.</p><div class="fmt">1080 × 1080</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24"><rect x="7" y="6" width="10" height="12" rx="2"/><path d="M4 9v6M20 9v6"/></svg></div><h3 data-es="Carrusel de 5" data-en="5-slide carousel">Carrusel de 5</h3><p data-es="Portada, ubicación, interior, características y contacto — una idea por slide." data-en="Cover, location, interior, features, and contact — one idea per slide.">Portada, ubicación, interior, características y contacto — una idea por slide.</p><div class="fmt">5 × 1080</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="3"/></svg></div><h3 data-es="Story vertical" data-en="Vertical story">Story vertical</h3><p data-es="Formato 9:16 para stories de Instagram y Facebook." data-en="9:16 format for Instagram and Facebook stories.">Formato 9:16 para stories de Instagram y Facebook.</p><div class="fmt">1080 × 1920</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 8l9 6 9-6"/></svg></div><h3 data-es="Email comercial" data-en="Sales email">Email comercial</h3><p data-es="Correo en HTML para enviar la propiedad a tu base de datos del CRM." data-en="HTML email to send the listing to your CRM database.">Correo en HTML para enviar la propiedad a tu base de datos del CRM.</p><div class="fmt">HTML</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg></div><h3 data-es="Video vertical" data-en="Vertical video">Video vertical</h3><p data-es="Fotos, texto, música y locución compuestos en un reel 9:16." data-en="Photos, text, music, and voiceover composed into a 9:16 reel.">Fotos, texto, música y locución compuestos en un reel 9:16.</p><div class="fmt">MP4 · 9:16</div></div>
+    </div>
+    <div class="guard">
+      <div class="reveal"><h4 data-es="La IA no inventa" data-en="The AI never invents">La IA no inventa</h4><p data-es="Si un dato no está en la ficha, no aparece en la pieza. Nada de m² o rentabilidades inventadas." data-en="If a value isn't in the form, it doesn't appear in the piece. No made-up m² or yields.">Si un dato no está en la ficha, no aparece en la pieza. Nada de m² o rentabilidades inventadas.</p></div>
+      <div class="reveal"><h4 data-es="Revisión humana obligatoria" data-en="Human review, always">Revisión humana obligatoria</h4><p data-es="Todo pasa por una vista previa editable antes de descargar y publicar." data-en="Everything passes through an editable preview before download and publishing.">Todo pasa por una vista previa editable antes de descargar y publicar.</p></div>
+      <div class="reveal"><h4 data-es="Marca coherente" data-en="Consistent brand">Marca coherente</h4><p data-es="Tus colores, tipografías y CTAs aplicados igual en las seis piezas." data-en="Your colors, fonts, and CTAs applied the same way across all six pieces.">Tus colores, tipografías y CTAs aplicados igual en las seis piezas.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROPERTIES -->
+<section id="propiedades">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Inventario conectado" data-en="Connected inventory">Inventario conectado</span>
+      <h2 data-es="Tus propiedades, listas para generar contenido" data-en="Your properties, ready to generate content">Tus propiedades, listas para generar contenido</h2>
+      <p data-es="Estas fichas se sincronizan desde tu cuenta de EasyBroker (MLS de México). Elige una propiedad y conviértela en las seis piezas." data-en="These listings sync from your EasyBroker account (Mexico's MLS). Pick a property and turn it into the six pieces.">Estas fichas se sincronizan desde tu cuenta de EasyBroker (MLS de México). Elige una propiedad y conviértela en las seis piezas.</p>
+    </div>
+    <div class="pfilter" id="pfilter">
+      <button class="on" data-op="all" onclick="filterProps(this)" data-es="Todas" data-en="All">Todas</button>
+      <button data-op="sale" onclick="filterProps(this)" data-es="Venta" data-en="For sale">Venta</button>
+      <button data-op="rental" onclick="filterProps(this)" data-es="Renta" data-en="For rent">Renta</button>
+    </div>
+    <div class="pgrid" id="pgrid"></div>
+    <div class="props-note reveal">
+      <span class="eb">EasyBroker API</span>
+      <p data-es="Datos y fotos de muestra con la estructura real de la API de EasyBroker (las imágenes son ilustraciones). En producción, un proxy en el servidor entrega tu inventario y tus fotografías reales sin exponer tu API Key." data-en="Sample data and illustrated photos using EasyBroker's real API schema. In production, a server-side proxy serves your real inventory and photos without exposing your API Key.">Datos y fotos de muestra con la estructura real de la API de EasyBroker (las imágenes son ilustraciones). En producción, un proxy en el servidor entrega tu inventario y tus fotografías reales sin exponer tu API Key.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ROI -->
+<section class="roi" id="roi">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Calculadora de retorno" data-en="ROI calculator">Calculadora de retorno</span>
+      <h2 data-es="Cuánto tiempo recuperas al mes" data-en="How much time you get back each month">Cuánto tiempo recuperas al mes</h2>
+      <p data-es="Ajusta los valores a tu operación. Es una estimación prudente para empezar la conversación, no una promesa." data-en="Adjust the values to your operation. It's a conservative estimate to start the conversation, not a promise.">Ajusta los valores a tu operación. Es una estimación prudente para empezar la conversación, no una promesa.</p>
+    </div>
+    <div class="roi-grid">
+      <div class="roi-form reveal">
+        <div class="field">
+          <label><span data-es="Propiedades al mes" data-en="Properties per month">Propiedades al mes</span><span class="val" id="v-props">15</span></label>
+          <input type="range" id="props" min="1" max="80" value="15" oninput="calc()">
+        </div>
+        <div class="field">
+          <label><span data-es="Horas por propiedad" data-en="Hours per property">Horas por propiedad</span><span class="val" id="v-hours">3.0</span></label>
+          <input type="range" id="hours" min="0.5" max="8" step="0.5" value="3" oninput="calc()">
+        </div>
+        <div class="field">
+          <label><span data-es="Costo por hora" data-en="Cost per hour">Costo por hora</span><span class="val" id="v-rate">$25</span></label>
+          <input type="range" id="rate" min="5" max="120" value="25" oninput="calc()">
+        </div>
+        <div class="field" style="margin-bottom:0;display:flex;justify-content:space-between;align-items:center">
+          <label style="margin:0"><span data-es="Moneda" data-en="Currency">Moneda</span></label>
+          <div class="curr">
+            <button id="usd" class="on" onclick="setCurr('USD')">USD</button>
+            <button id="mxn" onclick="setCurr('MXN')">MXN</button>
+          </div>
+        </div>
+      </div>
+      <div class="roi-out reveal">
+        <div class="roi-big"><small data-es="Ahorro mensual estimado" data-en="Estimated monthly saving">Ahorro mensual estimado</small><span id="out-month">$1,125</span></div>
+        <div class="roi-second">
+          <div><div class="n" id="out-year">$13,500</div><div class="l" data-es="al año" data-en="per year">al año</div></div>
+          <div><div class="n" id="out-hrs">45 h</div><div class="l" data-es="horas recuperadas / mes" data-en="hours recovered / month">horas recuperadas / mes</div></div>
+        </div>
+        <p class="roi-note" data-es="Fórmula: propiedades × horas × costo por hora. Ajústalo a tus datos reales antes de tomar decisiones." data-en="Formula: properties × hours × cost per hour. Adjust it to your real numbers before making decisions.">Fórmula: propiedades × horas × costo por hora. Ajústalo a tus datos reales antes de tomar decisiones.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="precios">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Inversión" data-en="Investment">Inversión</span>
+      <h2 data-es="No vendes seis archivos. Vendes un sistema." data-en="You aren't buying six files. You're buying a system.">No vendes seis archivos. Vendes un sistema.</h2>
+      <p data-es="Un sistema personalizado que reutilizas con decenas o cientos de propiedades. El precio depende del alcance real." data-en="A customized system you reuse across dozens or hundreds of properties. The price depends on the real scope.">Un sistema personalizado que reutilizas con decenas o cientos de propiedades. El precio depende del alcance real.</p>
+    </div>
+    <div class="tiers">
+      <div class="tier reveal">
+        <div class="tier-name" data-es="Inicial" data-en="Starter">Inicial</div>
+        <div class="tier-price" data-es="desde $1,500 <span>USD</span>" data-en="from $1,500 <span>USD</span>">desde $1,500 <span>USD</span></div>
+        <ul>
+          <li data-es="Formulario personalizado" data-en="Custom form">Formulario personalizado</li>
+          <li data-es="Ficha PDF, post, carrusel y story" data-en="PDF sheet, post, carousel & story">Ficha PDF, post, carrusel y story</li>
+          <li data-es="Instalación local" data-en="Local install">Instalación local</li>
+        </ul>
+        <a href="#contacto" class="btn btn-dark" data-es="Empezar aquí" data-en="Start here">Empezar aquí</a>
+      </div>
+      <div class="tier feat reveal">
+        <div class="tier-flag" data-es="Más elegido" data-en="Most chosen">Más elegido</div>
+        <div class="tier-name" data-es="Completo" data-en="Full">Completo</div>
+        <div class="tier-price" data-es="desde $3,000 <span>USD</span>" data-en="from $3,000 <span>USD</span>">desde $3,000 <span>USD</span></div>
+        <ul>
+          <li data-es="Todo lo de Inicial" data-en="Everything in Starter">Todo lo de Inicial</li>
+          <li data-es="Email HTML y video vertical" data-en="HTML email & vertical video">Email HTML y video vertical</li>
+          <li data-es="Personalización de marca" data-en="Brand customization">Personalización de marca</li>
+          <li data-es="Formación y soporte inicial" data-en="Training & initial support">Formación y soporte inicial</li>
+        </ul>
+        <a href="#contacto" class="btn btn-gold" data-es="Reservar diagnóstico" data-en="Book a diagnosis">Reservar diagnóstico</a>
+      </div>
+      <div class="tier reveal">
+        <div class="tier-name" data-es="Conectado" data-en="Connected">Conectado</div>
+        <div class="tier-price" data-es="desde $5,000 <span>USD</span>" data-en="from $5,000 <span>USD</span>">desde $5,000 <span>USD</span></div>
+        <ul>
+          <li data-es="Multiusuario y base de datos en la nube" data-en="Multi-user & cloud database">Multiusuario y base de datos en la nube</li>
+          <li data-es="Integración con CRM y portal" data-en="CRM & portal integration">Integración con CRM y portal</li>
+          <li data-es="Automatizaciones y despliegue" data-en="Automations & deployment">Automatizaciones y despliegue</li>
+          <li data-es="Soporte continuo" data-en="Ongoing support">Soporte continuo</li>
+        </ul>
+        <a href="#contacto" class="btn btn-dark" data-es="Hablar del alcance" data-en="Discuss the scope">Hablar del alcance</a>
+      </div>
+    </div>
+    <p class="price-foot" data-es="El precio final depende del alcance real, no de una cifra arbitraria. Publicar directo en Instagram o portales requiere APIs, permisos y cuentas configuradas — es una fase aparte." data-en="The final price depends on the real scope, not an arbitrary number. Publishing directly to Instagram or portals requires APIs, permissions, and configured accounts — that's a separate phase.">El precio final depende del alcance real, no de una cifra arbitraria. Publicar directo en Instagram o portales requiere APIs, permisos y cuentas configuradas — es una fase aparte.</p>
+  </div>
+</section>
+
+<!-- PRIVACY + LIMITS -->
+<section style="background:linear-gradient(180deg,#f3ecdd,#fbf7ee)">
+  <div class="wrap priv">
+    <div class="priv-card reveal">
+      <span class="eyebrow" data-es="Privacidad desde el diseño" data-en="Privacy by design">Privacidad desde el diseño</span>
+      <h3 data-es="Cumple con la LFPDPPP desde el primer día" data-en="LFPDPPP-ready from day one">Cumple con la LFPDPPP desde el primer día</h3>
+      <div class="priv-list">
+        <div><span class="dot"></span><p data-es="<b>Dirección exacta solo interna.</b> Las piezas públicas muestran zona o colonia, no la ubicación precisa." data-en="<b>Exact address stays internal.</b> Public pieces show the zone or neighborhood, not the precise location."><b>Dirección exacta solo interna.</b> Las piezas públicas muestran zona o colonia, no la ubicación precisa.</p></div>
+        <div><span class="dot"></span><p data-es="<b>Datos personales con finalidad.</b> Nada de datos personales en registros o servicios externos sin un propósito definido." data-en="<b>Personal data with a purpose.</b> No personal data in logs or external services without a defined purpose."><b>Datos personales con finalidad.</b> Nada de datos personales en registros o servicios externos sin un propósito definido.</p></div>
+        <div><span class="dot"></span><p data-es="<b>Fotos con derechos.</b> Solo imágenes propias o autorizadas por la agencia." data-en="<b>Licensed photos.</b> Only the agency's own or authorized images."><b>Fotos con derechos.</b> Solo imágenes propias o autorizadas por la agencia.</p></div>
+      </div>
+    </div>
+    <div class="limits reveal">
+      <h3 data-es="Lo que te explicamos con honestidad" data-en="What we tell you honestly">Lo que te explicamos con honestidad</h3>
+      <ul>
+        <li data-es="<b>Publicación automática:</b> generar y publicar son procesos distintos; publicar necesita integraciones." data-en="<b>Auto-publishing:</b> generating and publishing are different; publishing needs integrations."><b>Publicación automática:</b> generar y publicar son procesos distintos; publicar necesita integraciones.</li>
+        <li data-es="<b>La locución puede tener costo:</b> una voz local es gratuita; una voz profesional por API se paga por uso." data-en="<b>Voiceover may cost money:</b> a local voice is free; a professional API voice is paid per use."><b>La locución puede tener costo:</b> una voz local es gratuita; una voz profesional por API se paga por uso.</li>
+        <li data-es="<b>La información se verifica:</b> el sistema no inventa características, superficies ni ubicaciones." data-en="<b>Information is verified:</b> the system doesn't invent features, areas, or locations."><b>La información se verifica:</b> el sistema no inventa características, superficies ni ubicaciones.</li>
+        <li data-es="<b>El sistema necesita mantenimiento:</b> dependencias, APIs y plataformas cambian con el tiempo." data-en="<b>The system needs maintenance:</b> dependencies, APIs, and platforms change over time."><b>El sistema necesita mantenimiento:</b> dependencias, APIs y plataformas cambian con el tiempo.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="contacto">
+  <div class="wrap">
+    <h2 data-es="Convierte cada propiedad en seis piezas listas para publicar" data-en="Turn every property into six publish-ready pieces">Convierte cada propiedad en seis piezas listas para publicar</h2>
+    <p data-es="En una llamada de 15 minutos revisamos tu proceso actual, qué piezas te consumen más tiempo y qué automatizar primero." data-en="In a 15-minute call we review your current process, which pieces eat the most time, and what to automate first.">En una llamada de 15 minutos revisamos tu proceso actual, qué piezas te consumen más tiempo y qué automatizar primero.</p>
+    <a href="mailto:hola@inmocontent.mx?subject=Diagn%C3%B3stico%20InmoContent%20OS" class="btn btn-gold" data-es="Reservar diagnóstico gratuito" data-en="Book a free diagnosis">Reservar diagnóstico gratuito</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <span class="brand" style="font-family:var(--display);font-size:1.05rem">InmoContent<span style="color:#34d6c4">OS</span> · Riviera Maya</span>
+    <span data-es="Hecho con Claude Code · Tulum · Playa del Carmen · Cancún" data-en="Built with Claude Code · Tulum · Playa del Carmen · Cancún">Hecho con Claude Code · Tulum · Playa del Carmen · Cancún</span>
+    <span class="mono" style="font-size:.72rem;opacity:.7">© 2026</span>
+  </div>
+</footer>
+
+<script>
+  /* ---------- i18n ---------- */
+  let lang='es';
+  function setLang(l){
+    lang=l;
+    document.documentElement.lang=l;
+    document.getElementById('es').classList.toggle('on',l==='es');
+    document.getElementById('en').classList.toggle('on',l==='en');
+    document.querySelectorAll('[data-es]').forEach(function(el){
+      el.innerHTML = el.getAttribute('data-'+l);
+    });
+    renderProperties();
+    updateHeroListing();
+    renderPreview();
+    calc();
+  }
+
+  /* ---------- properties (EasyBroker API schema) ----------
+     Sample data shaped like EasyBroker's /v1/properties response.
+     On load the page tries LISTINGS_ENDPOINT (your deployed proxy) and, if it
+     answers, replaces this sample array with your real inventory. If the proxy
+     isn't reachable (e.g. this static preview), the samples below stay. */
+  const LISTINGS_ENDPOINT = '/api/listings';   // set to '' to stay in demo mode
+  let properties = [
+    {public_id:'EB-T2451', title_es:'Departamento en preventa', title_en:'Pre-sale apartment', town:'Tulum', neighborhood:'Aldea Zamá', bedrooms:2, bathrooms:2, parking:1, size:78, operation:'sale', currency:'USD', amount:245000, formatted:'245,000', image:'', scene:'condo'},
+    {public_id:'EB-P8830', title_es:'Casa con alberca en Playacar', title_en:'House with pool in Playacar', town:'Playa del Carmen', neighborhood:'Playacar Fase II', bedrooms:3, bathrooms:4, parking:2, size:240, operation:'sale', currency:'USD', amount:685000, formatted:'685,000', image:'', scene:'pool'},
+    {public_id:'EB-M1207', title_es:'Studio frente al mar', title_en:'Beachfront studio', town:'Puerto Morelos', neighborhood:'Zona Hotelera', bedrooms:1, bathrooms:1, parking:1, size:45, operation:'sale', currency:'USD', amount:189000, formatted:'189,000', image:'', scene:'studio'},
+    {public_id:'EB-C4062', title_es:'Penthouse vista al Caribe', title_en:'Penthouse with Caribbean view', town:'Cancún', neighborhood:'Puerto Cancún', bedrooms:3, bathrooms:3, parking:2, size:180, operation:'sale', currency:'USD', amount:1150000, formatted:'1,150,000', image:'', scene:'penthouse'},
+    {public_id:'EB-P5519', title_es:'Departamento amueblado', title_en:'Furnished apartment', town:'Playa del Carmen', neighborhood:'Centro', bedrooms:2, bathrooms:2, parking:1, size:90, operation:'rental', currency:'USD', amount:2200, formatted:'2,200', image:'', scene:'apartment'},
+    {public_id:'EB-T3388', title_es:'Villa en la selva', title_en:'Villa in the jungle', town:'Tulum', neighborhood:'Región 15', bedrooms:4, bathrooms:4, parking:3, size:320, operation:'sale', currency:'USD', amount:890000, formatted:'890,000', image:'', scene:'villa'}
+  ];
+  let activeProp = properties[0];
+  let opFilter = 'all';
+
+  /* Built-in illustrated property photos (encoded SVG) so sample cards always
+     show an image with no external requests. Real EasyBroker photos (p.image)
+     override these automatically in production. */
+  function sceneSVG(type){
+    const C={sea:'#17b0a8',seaD:'#0c7c77',sand:'#f4ecda',gold:'#e7a43b',ink:'#06232a',jungle:'#1f7a4d',jgl2:'#2e9d63',jgl3:'#15633c',teal:'#0a5d59',aqua:'#34d6c4',wall:'#fbf5e8',wall2:'#e8dcc4'};
+    let skyA='#bfeee6', skyB='#eaf7f2';
+    if(type==='penthouse'){skyA='#0a5d59'; skyB='#f2b45f';}
+    if(type==='villa'){skyA='#cdeee0'; skyB='#eaf7ef';}
+    const palm=(x,y,s)=>`<g transform='translate(${x},${y}) scale(${s})'><path d='M0 0C-3-30-2-55 2-80' stroke='#7a5230' stroke-width='5' fill='none' stroke-linecap='round'/><g fill='${C.jgl2}'><path d='M2-80C-20-95-40-92-52-80C-30-84-12-80 2-70Z'/><path d='M2-80C24-95 44-92 56-80C34-84 14-80 2-70Z'/><path d='M2-80C-14-104-10-120 4-128C2-110 4-92 4-78Z'/><path d='M2-80C18-104 14-120 0-128C2-110 0-92 0-78Z'/><path d='M2-80C-30-86-46-70-50-56C-34-70-14-76 2-74Z'/><path d='M2-80C34-86 50-70 54-56C38-70 18-76 2-74Z'/></g></g>`;
+    const win=(x,y,c,cols,rows,gx,gy,w,h)=>{let r='';for(let i=0;i<cols;i++)for(let j=0;j<rows;j++)r+=`<rect x='${x+i*gx}' y='${y+j*gy}' width='${w}' height='${h}' rx='1' fill='${c}'/>`;return r;};
+    const sun=(x,y,r)=>`<circle cx='${x}' cy='${y}' r='${r+8}' fill='${C.gold}' opacity='.18'/><circle cx='${x}' cy='${y}' r='${r}' fill='${C.gold}'/>`;
+    const blob=b=>`<circle cx='${b[0]}' cy='${b[1]}' r='${b[2]}' fill='${b[3]}'/>`;
+    let inner='';
+    switch(type){
+      case 'studio':
+        inner = sun(322,72,26)
+          + `<rect x='0' y='150' width='400' height='60' fill='${C.seaD}'/>`
+          + `<rect x='0' y='150' width='400' height='12' fill='${C.aqua}' opacity='.55'/>`
+          + `<path d='M0 205 Q200 190 400 205 L400 300 L0 300 Z' fill='${C.sand}'/>`
+          + `<path d='M0 208 Q200 194 400 208' stroke='#fff' stroke-width='3' fill='none' opacity='.6'/>`
+          + `<g><rect x='243' y='196' width='4' height='20' fill='#7a5230'/><rect x='285' y='196' width='4' height='20' fill='#7a5230'/><path d='M232 198 L300 198 L280 176 L252 176 Z' fill='#b9863f'/><path d='M232 198 L300 198 L266 186 Z' fill='#a9752f'/></g>`
+          + palm(78,232,1.15);
+        break;
+      case 'penthouse':
+        inner = sun(300,150,30)
+          + `<rect x='0' y='176' width='400' height='124' fill='${C.seaD}'/>`
+          + `<rect x='150' y='176' width='70' height='124' fill='${C.gold}' opacity='.3'/>`
+          + `<g fill='${C.teal}'><rect x='40' y='96' width='46' height='104'/><rect x='96' y='60' width='40' height='140'/><rect x='150' y='110' width='34' height='90'/><rect x='250' y='80' width='44' height='120'/><rect x='300' y='120' width='36' height='80'/></g>`
+          + win(48,104,C.gold,3,6,14,15,6,8) + win(104,70,C.gold,2,8,16,15,7,8) + win(256,90,C.gold,3,7,13,15,6,8);
+        break;
+      case 'pool':
+        inner = sun(70,66,24)
+          + `<rect x='0' y='210' width='400' height='90' fill='${C.sand}'/>`
+          + palm(40,214,1) + palm(360,210,1.05)
+          + `<rect x='150' y='120' width='150' height='95' fill='${C.wall}'/>`
+          + `<rect x='150' y='120' width='150' height='16' fill='${C.teal}'/>`
+          + `<rect x='214' y='170' width='24' height='45' fill='${C.teal}'/>`
+          + win(166,150,C.aqua,1,1,0,0,26,20) + win(258,150,C.aqua,1,1,0,0,26,20)
+          + `<rect x='96' y='240' width='210' height='44' rx='10' fill='${C.aqua}'/>`
+          + `<rect x='96' y='240' width='210' height='14' rx='7' fill='#bdeee6' opacity='.6'/>`;
+        break;
+      case 'condo':
+        inner = sun(330,64,22)
+          + `<rect x='0' y='236' width='400' height='64' fill='${C.jgl3}'/>`
+          + `<rect x='150' y='70' width='120' height='170' fill='${C.wall}'/>`
+          + `<rect x='150' y='70' width='120' height='170' fill='none' stroke='${C.teal}' stroke-width='3'/>`
+          + `<g stroke='${C.teal}' stroke-width='3'>`+[100,130,160,190,220].map(y=>`<line x1='150' y1='${y}' x2='270' y2='${y}'/>`).join('')+`</g>`
+          + `<rect x='150' y='70' width='30' height='170' fill='${C.aqua}' opacity='.25'/>`
+          + palm(78,246,1.1) + palm(330,244,1.05);
+        break;
+      case 'apartment':
+        inner = `<rect x='0' y='250' width='400' height='50' fill='${C.wall2}'/>`
+          + `<rect x='30' y='150' width='80' height='104' fill='#dfeae6'/>`
+          + `<rect x='118' y='110' width='90' height='144' fill='#eef3ef'/>`
+          + `<rect x='216' y='140' width='70' height='114' fill='#d9e3df'/>`
+          + `<rect x='294' y='96' width='84' height='158' fill='#e7efe9'/>`
+          + win(40,162,C.teal,3,4,24,22,12,12) + win(128,122,C.teal,3,6,26,22,12,12)
+          + win(226,152,C.teal,2,4,26,22,12,12) + win(306,110,C.teal,3,6,24,22,12,12)
+          + `<rect x='0' y='276' width='400' height='6' fill='${C.ink}' opacity='.25'/>` + palm(372,278,.75);
+        break;
+      case 'villa':
+      default:
+        inner = [[40,150,60,C.jgl2],[110,130,70,C.jungle],[190,150,64,C.jgl2],[260,128,72,C.jungle],[330,150,62,C.jgl2]].map(blob).join('')
+          + `<rect x='168' y='150' width='90' height='70' fill='${C.wall}'/><path d='M160 152 L266 152 L213 120 Z' fill='#b9863f'/>`
+          + win(182,168,C.teal,2,1,44,0,22,26)
+          + [[10,210,60,C.jungle],[80,205,70,C.jgl3],[220,210,74,C.jgl3],[330,205,66,C.jgl3]].map(blob).join('')
+          + `<rect x='0' y='252' width='400' height='48' fill='${C.jgl3}'/>`;
+        break;
+    }
+    const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><defs><linearGradient id='sk' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${skyA}'/><stop offset='1' stop-color='${skyB}'/></linearGradient></defs><rect width='400' height='300' fill='url(#sk)'/>${inner}</svg>`;
+    return "data:image/svg+xml,"+encodeURIComponent(svg);
+  }
+  const photoFor = p => p.image || sceneSVG(p.scene||'villa');
+
+  const bd = p => p.bedrooms+' '+(lang==='es'?'rec':'bd');
+  const ba = p => p.bathrooms+' '+(lang==='es'?'baños':'bath');
+  const per = p => p.operation==='rental' ? (lang==='es'?'/mes':'/mo') : '';
+  const priceStr = p => p.currency+' $'+p.formatted+(per(p)?' '+per(p):'');
+  const opLabel = p => p.operation==='sale' ? (lang==='es'?'Venta':'For sale') : (lang==='es'?'Renta':'For rent');
+
+  function cardHTML(p){
+    return '<article class="pcard">'+
+      '<div class="pcard-photo" style="background-color:#0a5d59;background-image:linear-gradient(180deg,rgba(6,35,42,.32),rgba(6,35,42,0) 42%,rgba(6,35,42,0) 72%,rgba(6,35,42,.14)),url(\''+photoFor(p)+'\')">'+
+        '<span class="pcard-badge '+(p.operation==='sale'?'badge-sale':'badge-rental')+'">'+opLabel(p)+'</span>'+
+        '<span class="pcard-id">'+p.public_id+'</span>'+
+      '</div>'+
+      '<div class="pcard-body">'+
+        '<div class="pcard-loc">'+p.neighborhood+' · '+p.town+'</div>'+
+        '<div class="pcard-title">'+(lang==='es'?p.title_es:p.title_en)+'</div>'+
+        '<div class="pcard-specs"><span>'+bd(p)+'</span><span>'+ba(p)+'</span><span>'+p.size+' m²</span></div>'+
+        '<div class="pcard-foot"><span class="pcard-price">'+p.currency+' $'+p.formatted+(per(p)?' <small>'+per(p)+'</small>':'')+'</span></div>'+
+        '<button class="pcard-gen" onclick="loadProperty(\''+p.public_id+'\')">'+(lang==='es'?'Generar 6 piezas':'Generate 6 pieces')+' →</button>'+
+      '</div></article>';
+  }
+  function renderProperties(){
+    const list = properties.filter(p=>opFilter==='all'||p.operation===opFilter);
+    document.getElementById('pgrid').innerHTML = list.map(cardHTML).join('');
+  }
+  async function loadListings(){
+    if(!LISTINGS_ENDPOINT) return;               // demo mode: keep sample data
+    try{
+      const r = await fetch(LISTINGS_ENDPOINT, {headers:{'accept':'application/json'}});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const data = await r.json();
+      const live = data.listings || data;        // accept {listings:[...]} or a bare array
+      if(Array.isArray(live) && live.length){
+        properties = live;
+        activeProp = properties[0];
+        renderProperties();
+        updateHeroListing();
+        renderPreview();
+      }
+    }catch(e){
+      console.warn('[InmoContent] Live listings unavailable, using sample data:', e.message);
+    }
+  }
+  function filterProps(el){
+    opFilter = el.getAttribute('data-op');
+    document.querySelectorAll('#pfilter button').forEach(b=>b.classList.remove('on'));
+    el.classList.add('on');
+    renderProperties();
+  }
+  function loadProperty(id){
+    activeProp = properties.find(p=>p.public_id===id) || activeProp;
+    currentFmt = 'pdf';
+    document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c.getAttribute('data-fmt')==='pdf'));
+    updateHeroListing();
+    renderPreview();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  function updateHeroListing(){
+    const p=activeProp;
+    document.getElementById('d-title').textContent = lang==='es'?p.title_es:p.title_en;
+    document.getElementById('d-loc').textContent = (p.town+' · '+p.neighborhood).toUpperCase();
+    document.getElementById('d-specs').innerHTML = '<span>'+bd(p)+'</span><span>'+ba(p)+'</span><span>'+p.size+' m²</span>';
+    document.getElementById('d-price').innerHTML = p.currency+'<br>$'+p.formatted+(per(p)?'<br><small style="font-size:.58rem;opacity:.8">'+per(p)+'</small>':'');
+    document.getElementById('d-photo').style.cssText += ';background-image:linear-gradient(150deg,rgba(6,35,42,.12),rgba(6,35,42,.22)),url(\''+photoFor(p)+'\');background-size:cover;background-position:center';
+  }
+
+  /* ---------- signature demo previews (property-aware) ---------- */
+  const previews = {
+    es:{
+      pdf:{tag:'PDF', title:'{T}', body:'Ficha técnica con precio, superficie, recámaras, amenidades y contacto en {L} — maquetada con tu marca.'},
+      post:{tag:'Instagram', title:'{T} 🌴', body:'Publicación con foto principal, copy comercial y CTA. Ubicación: {L}. Escríbenos por DM.'},
+      carousel:{tag:'Carrusel · 5', title:'Cinco slides, una historia', body:'Portada → ubicación → interior → amenidades → contacto. {L}, una idea por diapositiva.', dots:true},
+      story:{tag:'Story · 9:16', title:'Story vertical lista', body:'Pantalla completa con precio, sticker de {L} y CTA para agendar visita.', pills:['9:16','Swipe up']},
+      email:{tag:'Email · HTML', title:'Nueva propiedad para tu base', body:'Correo listo para el CRM con la ficha de {T} y botón "Agendar visita".', pills:['CRM','HTML']},
+      video:{tag:'Video · 9:16', title:'Reel con fotos, texto y locución', body:'Recorrido vertical de {T} compuesto con FFmpeg — música y voz opcional.', play:true}
+    },
+    en:{
+      pdf:{tag:'PDF', title:'{T}', body:'Fact sheet with price, area, bedrooms, amenities, and contact in {L} — laid out with your brand.'},
+      post:{tag:'Instagram', title:'{T} 🌴', body:'Post with main image, sales copy, and CTA. Location: {L}. DM us.'},
+      carousel:{tag:'Carousel · 5', title:'Five slides, one story', body:'Cover → location → interior → amenities → contact. {L}, one idea per slide.', dots:true},
+      story:{tag:'Story · 9:16', title:'Vertical story, ready', body:'Full-screen with price, a {L} location sticker, and a CTA to book a viewing.', pills:['9:16','Swipe up']},
+      email:{tag:'Email · HTML', title:'New listing for your database', body:'CRM-ready email with the {T} fact sheet and a "Book a viewing" button.', pills:['CRM','HTML']},
+      video:{tag:'Video · 9:16', title:'Reel with photos, text & voiceover', body:'Vertical walkthrough of {T} composed with FFmpeg — optional music and voice.', play:true}
+    }
+  };
+  let currentFmt='pdf';
+  function pick(el){
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+    el.classList.add('on');
+    currentFmt=el.getAttribute('data-fmt');
+    renderPreview();
+  }
+  function renderPreview(){
+    const p=activeProp;
+    const L=p.neighborhood+', '+p.town;
+    const T=(lang==='es'?p.title_es:p.title_en)+' · '+p.neighborhood;
+    const d=previews[lang][currentFmt];
+    const title=d.title.replace('{T}',T).replace('{L}',L);
+    const body=d.body.replace('{T}',T).replace('{L}',L);
+    let pills=d.pills;
+    if(currentFmt==='pdf'){pills=[bd(p),ba(p),p.size+' m²',priceStr(p)];}
+    if(currentFmt==='post'){pills=['#'+p.town.replace(/\s+/g,''),'#RivieraMaya',p.operation==='sale'?(lang==='es'?'#Venta':'#ForSale'):(lang==='es'?'#Renta':'#ForRent')];}
+    let html='<span class="pv-tag">'+d.tag+'</span><div class="pv-title">'+title+'</div><div class="pv-body">'+body+'</div>';
+    if(pills){html+='<div class="pv-row">'+pills.map(x=>'<span class="pv-pill">'+x+'</span>').join('')+'</div>';}
+    if(d.dots){html+='<div class="pv-dots"><i class="a"></i><i></i><i></i><i></i><i></i></div>';}
+    if(d.play){html+='<div class="pv-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>';}
+    html+='<div class="pv-visual"></div>';
+    document.getElementById('preview').innerHTML=html;
+  }
+
+  /* ---------- ROI ---------- */
+  let curr='USD';
+  const rates={USD:{sym:'$',def:25,max:120,step:1,loc:'en-US'},MXN:{sym:'$',def:350,max:1500,step:10,loc:'es-MX'}};
+  function setCurr(c){
+    curr=c;
+    document.getElementById('usd').classList.toggle('on',c==='USD');
+    document.getElementById('mxn').classList.toggle('on',c==='MXN');
+    const r=document.getElementById('rate');
+    r.max=rates[c].max; r.step=rates[c].step; r.value=rates[c].def;
+    calc();
+  }
+  function fmtMoney(n){
+    return rates[curr].sym+Math.round(n).toLocaleString(rates[curr].loc)+' '+curr;
+  }
+  function calc(){
+    const props=+document.getElementById('props').value;
+    const hours=+document.getElementById('hours').value;
+    const rate=+document.getElementById('rate').value;
+    document.getElementById('v-props').textContent=props;
+    document.getElementById('v-hours').textContent=hours.toFixed(1);
+    document.getElementById('v-rate').textContent=rates[curr].sym+rate.toLocaleString(rates[curr].loc);
+    const monthHrs=props*hours;
+    const month=monthHrs*rate;
+    document.getElementById('out-month').textContent=fmtMoney(month);
+    document.getElementById('out-year').textContent=fmtMoney(month*12);
+    document.getElementById('out-hrs').textContent=monthHrs.toLocaleString(rates[curr].loc)+' h';
+  }
+
+  /* ---------- scroll reveal ---------- */
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  /* close mobile nav on link click */
+  document.querySelectorAll('#navlinks a').forEach(a=>a.addEventListener('click',()=>document.getElementById('navlinks').classList.remove('open')));
+
+  /* init */
+  renderProperties();
+  updateHeroListing();
+  renderPreview();
+  calc();
+  loadListings();   // try live EasyBroker data; silently keeps samples if offline
+</script>
+</body>
+</html>

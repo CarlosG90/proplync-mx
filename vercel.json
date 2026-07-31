@@ -1,0 +1,4 @@
+{
+  "cleanUrls": true,
+  "functions": { "api/listings.js": { "maxDuration": 30 } }
+}
