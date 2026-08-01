@@ -2,16 +2,15 @@
 
 Bilingual (ES/EN) landing site for a real-estate content-automation system aimed at
 the Riviera Maya market, with real property photos and an optional serverless proxy
-that can feed live listings from **MercadoLibre** (Mexico's largest marketplace, with
-a real "Inmuebles" category) without exposing your app credentials.
+that can feed live listings from **EasyBroker** (Mexico's MLS) without exposing your
+API key.
 
 ## What's here
 
 ```
 proplync-mx/
 ├── index.html          # the site (open directly in a browser to preview)
-├── api/listings.js     # MercadoLibre proxy (Vercel path: /api/listings) — optional, free app credentials
-├── api/ml-callback.js   # one-time OAuth handoff for the MercadoLibre proxy above
+├── api/listings.js     # EasyBroker proxy (Vercel path: /api/listings) — optional, needs a paid EasyBroker account
 ├── api/photos.js        # Pexels proxy (Vercel path: /api/photos) — free real photos for the sample listings
 ├── .env.example         # copy to .env.local and add your key(s)
 ├── vercel.json           # minimal Vercel config
@@ -35,29 +34,15 @@ matching each query and swaps it in for the illustrated placeholder.
 3. Deploy (see below). If `/api/photos` isn't reachable, the illustrated samples stay —
    nothing breaks.
 
-## Go live with real inventory (optional, free)
+## Go live with real inventory (optional)
 
-MercadoLibre's real-estate search is free, but its search endpoint requires an OAuth
-token — anonymous requests 403. Access tokens expire every 6 hours and the
-refresh_token that renews them is single-use (a new one is issued on every refresh),
-so it lives in Upstash Redis (Vercel Marketplace, free tier) rather than a plain env
-var. One-time setup:
+EasyBroker has **no free or sandbox tier** — you need a real, paid broker account to get
+an API key at all, even for test/fictional data. If you have one:
 
-1. **Add Upstash Redis to the project** (auto-provisions the env vars below):
-   `vercel integration add upstash/upstash-kv`
-2. **Register a free app** at developers.mercadolibre.com.mx (any MercadoLibre account
-   works). Set its redirect URI to `https://<your-domain>/api/ml-callback` exactly.
-   Save the Client ID and Client Secret.
-3. Add them as env vars: `vercel env add ML_CLIENT_ID`, `vercel env add ML_CLIENT_SECRET`.
-4. Deploy, then visit this URL once in a browser (with your real client_id and domain),
-   log in, and authorize:
-   `https://auth.mercadolibre.com.mx/authorization?response_type=code&client_id=<ID>&redirect_uri=https://<your-domain>/api/ml-callback`
-5. MercadoLibre redirects to `/api/ml-callback`, which exchanges the code for tokens
-   and stores them in Redis. You're done — `/api/listings` refreshes itself from here.
-   Re-run step 4 only if the refresh_token expires from 6 months of disuse.
-
-If `/api/listings` isn't reachable or not yet authorized, the samples (with Pexels
-photos) stay — nothing breaks.
+1. Get your key at app.easybroker.com → Settings → API.
+2. Add `EASYBROKER_API_KEY` to `.env.local` (or your Vercel project's env vars).
+3. The site fetches `/api/listings` on load. If the proxy answers, real inventory
+   replaces the samples automatically; if not, the samples (with Pexels photos) stay.
 
 ## Deploy (Vercel)
 
@@ -65,8 +50,7 @@ photos) stay — nothing breaks.
 npm i -g vercel
 vercel                              # follow prompts
 vercel env add PEXELS_API_KEY       # paste your key
-vercel env add ML_CLIENT_ID         # optional, MercadoLibre live listings
-vercel env add ML_CLIENT_SECRET     # optional, MercadoLibre live listings
+vercel env add EASYBROKER_API_KEY   # optional, only if you have a paid account
 vercel --prod
 ```
 
@@ -75,8 +59,8 @@ near the top of the `<script>` in `index.html` to the full URL.
 
 ## Notes
 
-- The listings proxy queries MercadoLibre per town (Tulum, Playa del Carmen, Puerto
-  Morelos, Cancún) and caches results 5 minutes at the edge.
+- The listings proxy paginates EasyBroker (50/page, up to `MAX_PAGES`) and caches results
+  5 minutes at the edge, staying under EasyBroker's 20 req/s limit.
 - The photos proxy caches results 1 day at the edge.
 - Only publish content from listings you own or are authorized to use.
 - Photos from Pexels are free to use; crediting the photographer (returned in the API

@@ -2,7 +2,6 @@
   "cleanUrls": true,
   "functions": {
     "api/listings.js": { "maxDuration": 30 },
-    "api/photos.js": { "maxDuration": 10 },
-    "api/ml-callback.js": { "maxDuration": 10 }
+    "api/photos.js": { "maxDuration": 10 }
   }
 }
