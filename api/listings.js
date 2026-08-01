@@ -1,146 +1,121 @@
 /**
- * EasyBroker → Proplync.mx  ·  listings proxy
+ * MercadoLibre → Proplync.mx  ·  listings proxy
  * -----------------------------------------------------------------------------
  * WHY THIS EXISTS
- * EasyBroker's API is back-end only and needs a SECRET key. You must never put
- * that key in front-end code (anyone could read it). This tiny proxy holds the
- * key on the server, fetches your listings, reshapes them to the exact format
- * the website expects, and returns clean JSON the page can fetch().
+ * MercadoLibre's real-estate search (site MLM, category "Inmuebles") is free
+ * but requires an OAuth access_token — anonymous requests to
+ * /sites/MLM/search now get a 403. Access tokens expire every 6 hours and the
+ * refresh_token that renews them is single-use (MercadoLibre issues a new one
+ * on every refresh), so it can't live in a plain env var. This proxy keeps the
+ * current access_token and refresh_token in Upstash Redis (see api/ml-callback.js
+ * for the one-time setup that seeds the first pair) and refreshes them itself
+ * whenever the cached access_token has expired.
  *
- * DEPLOY (pick one — the handler works on all three):
- *   • Vercel   → save as /api/listings.js
- *   • Netlify  → save as /netlify/functions/listings.js
- *   • Node/Express → see the express snippet at the bottom
- *
- * SET ONE ENV VAR:
- *   EASYBROKER_API_KEY = your key
- *   EasyBroker has no free or sandbox tier — you need a real, paid broker
- *   account to get a key at all. Get yours at app.easybroker.com → Settings
- *   → API. If this var is unset, the page falls back to its sample listings
- *   (see api/photos.js for how those get real, free photos via Pexels).
+ * SET THESE ENV VARS:
+ *   ML_CLIENT_ID, ML_CLIENT_SECRET   — from developers.mercadolibre.com.mx
+ *   KV_REST_API_URL, KV_REST_API_TOKEN — from the Upstash Marketplace integration
+ * Then do the one-time browser authorization described in api/ml-callback.js
+ * before this endpoint has anything to refresh.
  * -----------------------------------------------------------------------------
  */
 
-const EB_BASE = 'https://api.easybroker.com/v1';
+const ML_SITE = 'MLM';                 // Mexico
+const CATEGORY = 'MLM1459';             // Inmuebles (real estate)
+const TOWNS = ['Tulum', 'Playa del Carmen', 'Puerto Morelos', 'Cancún'];
+const PER_TOWN = 8;
 
-// Map one EasyBroker property to the shape the site's cards use.
-function mapProperty(p) {
-  const op = (p.operations && p.operations[0]) || {};
-  // EasyBroker "location" is a single string, e.g. "Aldea Zamá, Tulum, Q. Roo".
-  const parts = (p.location || '').split(',').map(s => s.trim());
+async function kvGet(key) {
+  const r = await fetch(`${process.env.KV_REST_API_URL}/get/${encodeURIComponent(key)}`, {
+    headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` }
+  });
+  if (!r.ok) throw new Error(`KV get failed for ${key}: HTTP ${r.status}`);
+  const { result } = await r.json();
+  return result;
+}
+
+async function kvSet(key, value) {
+  const url = `${process.env.KV_REST_API_URL}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}`;
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` } });
+  if (!r.ok) throw new Error(`KV set failed for ${key}: HTTP ${r.status}`);
+}
+
+async function refreshAccessToken() {
+  const refreshToken = await kvGet('ml:refresh_token');
+  if (!refreshToken) throw new Error('No refresh_token in Redis — complete the one-time setup in api/ml-callback.js first');
+
+  const r = await fetch('https://api.mercadolibre.com/oauth/token', {
+    method: 'POST',
+    headers: { 'accept': 'application/json', 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      client_id: process.env.ML_CLIENT_ID,
+      client_secret: process.env.ML_CLIENT_SECRET,
+      refresh_token: refreshToken
+    })
+  });
+  const data = await r.json();
+  if (!r.ok || !data.access_token) throw new Error(`MercadoLibre token refresh failed: ${JSON.stringify(data)}`);
+
+  await kvSet('ml:access_token', data.access_token);
+  await kvSet('ml:access_token_expires_at', String(Date.now() + (data.expires_in - 300) * 1000));
+  if (data.refresh_token) await kvSet('ml:refresh_token', data.refresh_token); // single-use, always rotates
+
+  return data.access_token;
+}
+
+async function getAccessToken() {
+  const [token, expiresAt] = await Promise.all([kvGet('ml:access_token'), kvGet('ml:access_token_expires_at')]);
+  if (token && expiresAt && Date.now() < Number(expiresAt)) return token;
+  return refreshAccessToken();
+}
+
+// Pull the attribute value_name for a given attribute id, if MercadoLibre included it in search results.
+function attr(item, id) {
+  const found = (item.attributes || []).find(a => a.id === id);
+  return found ? found.value_name : null;
+}
+
+function mapItem(item, town) {
+  const bedrooms = Number(attr(item, 'BEDROOMS')) || 0;
+  const bathrooms = Number(attr(item, 'FULL_BATHROOMS') || attr(item, 'BATHROOMS')) || 0;
+  const size = Number(attr(item, 'COVERED_AREA') || attr(item, 'TOTAL_AREA')) || 0;
+  const opRaw = (attr(item, 'OPERATION') || '').toLowerCase();
+  const operation = opRaw.includes('renta') || opRaw.includes('arriendo') || opRaw.includes('alquiler') ? 'rental' : 'sale';
+
   return {
-    public_id: p.public_id,
-    title_es: p.title || 'Propiedad',
-    title_en: p.title || 'Property',           // EB stores one title; translate later if needed
-    neighborhood: parts[0] || '',
-    town: parts[1] || parts[0] || '',
-    bedrooms: p.bedrooms || 0,
-    bathrooms: p.bathrooms || 0,
-    parking: p.parking_spaces || 0,
-    size: p.construction_size || p.lot_size || 0,
-    operation: op.type === 'rental' ? 'rental' : 'sale',
-    currency: op.currency || 'USD',
-    amount: op.amount || 0,
-    formatted: op.formatted_amount || (op.amount ? op.amount.toLocaleString('en-US') : ''),
-    image: p.title_image_full || p.title_image_thumb || ''
+    public_id: item.id,
+    title_es: item.title,
+    title_en: item.title,
+    neighborhood: (item.address && item.address.city_name) || '',
+    town,
+    bedrooms,
+    bathrooms,
+    parking: Number(attr(item, 'PARKING_LOTS')) || 0,
+    size,
+    operation,
+    currency: item.currency_id || 'MXN',
+    amount: item.price || 0,
+    formatted: item.price ? item.price.toLocaleString('en-US') : '',
+    image: item.thumbnail ? item.thumbnail.replace(/^http:/, 'https:') : ''
   };
 }
 
-// Pagination settings. EasyBroker caps `limit` at 50 per page, so to pull more
-// we walk the pages. Caps below stop a runaway loop and keep us under EB's
-// 20 requests/second limit.
-const PAGE_LIMIT   = 50;    // max EasyBroker allows per page
-const MAX_PAGES    = 40;    // safety cap → up to 2,000 listings
-const PAGE_DELAY_MS = 120;  // pause between page requests (well under 20 req/s)
-// Note: serverless functions have execution limits (Vercel/Netlify ~10s by default).
-// A large crawl can exceed that — the Cache-Control header below means the full
-// walk only runs once per cache window, not on every visitor. If you have many
-// hundreds of listings, lower MAX_PAGES, raise your function timeout, or cache
-// results in a KV/database instead of crawling on-request.
-
-const sleep = ms => new Promise(res => setTimeout(res, ms));
-
-async function fetchPage(key, page) {
-  const url = `${EB_BASE}/properties?page=${page}&limit=${PAGE_LIMIT}&search[statuses][]=published`;
-  const r = await fetch(url, {
-    headers: {
-      'accept': 'application/json',
-      'Country-Code': 'MX',
-      'X-Authorization': key
-    }
-  });
-  if (!r.ok) throw new Error(`EasyBroker responded ${r.status} on page ${page}`);
-  return r.json(); // { content: [...], pagination: { limit, page, total, next_page, previous_page } }
+async function fetchTown(token, town) {
+  const url = `https://api.mercadolibre.com/sites/${ML_SITE}/search?category=${CATEGORY}&q=${encodeURIComponent(town)}&limit=${PER_TOWN}`;
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${token}`, accept: 'application/json' } });
+  if (!r.ok) throw new Error(`MercadoLibre search responded ${r.status} for "${town}"`);
+  const data = await r.json();
+  return (data.results || []).map(item => mapItem(item, town));
 }
 
-async function fetchListings() {
-  const key = process.env.EASYBROKER_API_KEY;
-  if (!key) throw new Error('Missing EASYBROKER_API_KEY');
-
-  const all = [];
-  let page = 1;
-
-  while (page <= MAX_PAGES) {
-    const data = await fetchPage(key, page);
-    const batch = data.content || [];
-    all.push(...batch);
-
-    // Decide whether another page exists. EasyBroker returns pagination.next_page
-    // (a page number or null); we also stop if the batch came back short or empty.
-    const pg = data.pagination || {};
-    const hasNext = pg.next_page != null && batch.length === PAGE_LIMIT;
-    if (!hasNext) break;
-
-    page += 1;
-    await sleep(PAGE_DELAY_MS); // be polite to the rate limit
-  }
-
-  return all.map(mapProperty);
-}
-
-// --- Vercel / Netlify style handler ------------------------------------------
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');      // tighten to your domain in prod
-  res.setHeader('Cache-Control', 's-maxage=300');          // cache 5 min; respects EB's 20 req/s limit
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 's-maxage=300');
   try {
-    const listings = await fetchListings();
-    res.status(200).json({ listings });
+    const token = await getAccessToken();
+    const perTown = await Promise.all(TOWNS.map(town => fetchTown(token, town)));
+    res.status(200).json({ listings: perTown.flat() });
   } catch (err) {
     res.status(502).json({ error: 'listings_unavailable', detail: String(err.message) });
   }
 }
-
-/* -----------------------------------------------------------------------------
- * FRONT-END: swap the hard-coded sample array for a live fetch.
- * In the site's <script>, replace `const properties = [ ...sample... ]` with:
- *
- *     let properties = [];
- *     async function loadListings(){
- *       try{
- *         const r = await fetch('/api/listings');
- *         const { listings } = await r.json();
- *         if (listings && listings.length){
- *           properties = listings;
- *           activeProp = properties[0];
- *           renderProperties();
- *           updateHeroListing();
- *           renderPreview();
- *         }
- *       }catch(e){ console.warn('Falling back to sample listings', e); }
- *     }
- *     loadListings();   // call once on load
- *
- * Keep a small sample array as a fallback so the page still looks complete if
- * the proxy is unreachable.
- * -----------------------------------------------------------------------------
- *
- * EXPRESS variant:
- *
- *     const express = require('express');
- *     const app = express();
- *     app.get('/api/listings', async (req, res) => {
- *       try { res.json({ listings: await fetchListings() }); }
- *       catch (e) { res.status(502).json({ error: String(e.message) }); }
- *     });
- *     app.listen(3000);
- */
