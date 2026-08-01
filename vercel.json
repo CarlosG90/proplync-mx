@@ -1,4 +1,7 @@
 {
   "cleanUrls": true,
-  "functions": { "api/listings.js": { "maxDuration": 30 } }
+  "functions": {
+    "api/listings.js": { "maxDuration": 30 },
+    "api/photos.js": { "maxDuration": 10 }
+  }
 }

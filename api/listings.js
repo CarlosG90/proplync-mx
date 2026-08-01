@@ -1,5 +1,5 @@
 /**
- * EasyBroker → InmoContent OS  ·  listings proxy
+ * EasyBroker → Proplync.mx  ·  listings proxy
  * -----------------------------------------------------------------------------
  * WHY THIS EXISTS
  * EasyBroker's API is back-end only and needs a SECRET key. You must never put
@@ -14,10 +14,10 @@
  *
  * SET ONE ENV VAR:
  *   EASYBROKER_API_KEY = your key
- *   - Real data:  get your key at app.easybroker.com → Settings → API
- *   - Testing:    EasyBroker publishes a sandbox key (fictional data) in their
- *                 docs playground at dev.easybroker.com — use it to try this out
- *                 with no account.
+ *   EasyBroker has no free or sandbox tier — you need a real, paid broker
+ *   account to get a key at all. Get yours at app.easybroker.com → Settings
+ *   → API. If this var is unset, the page falls back to its sample listings
+ *   (see api/photos.js for how those get real, free photos via Pexels).
  * -----------------------------------------------------------------------------
  */
 
