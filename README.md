@@ -25,14 +25,17 @@ ES⇄EN toggle, ROI calculator, and "1 listing → 6 formats" demo.
 
 ## Real photos, no MLS account needed
 
-The six sample listings ship with a `photoQuery` (e.g. "jungle villa mexico exterior").
-On load, the page calls `/api/photos`, which searches **Pexels** for a free, real photo
-matching each query and swaps it in for the illustrated placeholder.
+Each sample listing ships with a real, free-to-use Pexels photo hardcoded into its
+`image` field — no API key needed to see real pictures. `/api/photos` (with a
+`photoQuery` per listing, e.g. "jungle villa mexico exterior") is there if you add
+more sample listings and want fresh photos searched automatically instead of picking
+URLs by hand:
 
 1. **Get a free Pexels API key** — instant, no approval wait: https://www.pexels.com/api/
 2. Copy `.env.example` to `.env.local` and fill in `PEXELS_API_KEY`.
-3. Deploy (see below). If `/api/photos` isn't reachable, the illustrated samples stay —
-   nothing breaks.
+3. Deploy (see below). If `/api/photos` isn't reachable, each listing's hardcoded
+   photo (or the illustrated placeholder, for listings with neither) stays — nothing
+   breaks.
 
 ## Go live with real inventory (optional)
 
