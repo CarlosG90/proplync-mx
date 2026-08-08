@@ -2,6 +2,16 @@
   "cleanUrls": true,
   "functions": {
     "api/listings.js": { "maxDuration": 30 },
-    "api/photos.js": { "maxDuration": 10 }
-  }
+    "api/photos.js": { "maxDuration": 10 },
+    "api/geocode.js": { "maxDuration": 10 },
+    "api/amenities.js": { "maxDuration": 15 },
+    "api/describe.js": { "maxDuration": 15 },
+    "api/search.js": { "maxDuration": 30 },
+    "api/property.js": { "maxDuration": 15 }
+  },
+  "rewrites": [
+    { "source": "/propiedad/:id", "destination": "/property.html?id=:id" },
+    { "source": "/property/:id", "destination": "/property.html?id=:id" },
+    { "source": "/favoritos", "destination": "/favorites.html" }
+  ]
 }

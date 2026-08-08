@@ -1,0 +1,58 @@
+/* Proplync.mx · Design Tokens & Reset
+   ──────────────────────────────────── */
+:root{
+  --ink:#06232a;
+  --ink-2:#0b333b;
+  --sea:#0c7c77;
+  --sea-deep:#0a5d59;
+  --aqua:#34d6c4;
+  --aqua-soft:#8fe8dd;
+  --sand:#f3ecdd;
+  --sand-2:#e8dcc4;
+  --gold:#e7a43b;
+  --gold-deep:#c78420;
+  --paper:#fbf7ee;
+  --on-ink:#eaf6f3;
+  --on-ink-dim:#a9ccc7;
+  --on-sand:#13323a;
+  --on-sand-dim:#4c6a6f;
+  --line:#d8cbb0;
+  --radius:18px;
+  --maxw:1180px;
+  --display:"Fraunces",Georgia,serif;
+  --body:"Hanken Grotesk",system-ui,sans-serif;
+  --mono:"Space Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;font-family:var(--body);background:var(--paper);color:var(--on-sand);
+  line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.05;margin:0;letter-spacing:-.01em}
+p{margin:0}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase}
+.mono{font-family:var(--mono)}
+
+/* sections & reveal */
+section{padding:96px 0}
+.sec-head{max-width:44rem;margin-bottom:52px}
+.sec-head .eyebrow{color:var(--sea);margin-bottom:16px;display:block}
+.sec-head h2{font-size:clamp(2rem,3.8vw,3rem);color:var(--ink)}
+.sec-head p{margin-top:18px;font-size:1.08rem;color:var(--on-sand-dim)}
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* footer */
+footer{background:var(--ink);color:var(--on-ink-dim);padding:44px 0}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;font-size:.85rem}
+.foot .brand{color:var(--on-ink)}
+.foot a:hover{color:var(--aqua)}
+
+/* accessibility */
+@media (prefers-reduced-motion:reduce){
+  .reveal{transition:none;opacity:1;transform:none}
+  *{scroll-behavior:auto}
+}

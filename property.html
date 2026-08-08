@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="Propiedad · Proplync.mx" data-en="Property · Proplync.mx">Propiedad · Proplync.mx</title>
+<meta name="description" content="Detalle de propiedad en la Riviera Maya.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  .prop-hero{position:relative;height:420px;background:var(--ink);overflow:hidden}
+  .prop-hero-img{width:100%;height:100%;object-fit:cover;display:block;opacity:.85}
+  .prop-hero-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,35,42,.7) 0%,rgba(6,35,42,.1) 50%,rgba(6,35,42,.25) 100%)}
+  .prop-hero-nav{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:3}
+  .prop-hero-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);border:0;cursor:pointer;transition:all .2s}
+  .prop-hero-dot.active{background:#fff;transform:scale(1.2)}
+  .prop-hero-arrows{position:absolute;top:50%;left:0;right:0;display:flex;justify-content:space-between;padding:0 16px;transform:translateY(-50%);z-index:3;pointer-events:none}
+  .prop-hero-arrow{width:42px;height:42px;border-radius:50%;background:rgba(6,35,42,.55);backdrop-filter:blur(4px);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;transition:background .2s;pointer-events:all}
+  .prop-hero-arrow:hover{background:rgba(6,35,42,.8)}
+  .prop-hero-badge{position:absolute;top:86px;left:28px;z-index:3}
+  .prop-hero-fav{position:absolute;top:86px;right:28px;z-index:3;width:42px;height:42px;border-radius:50%;background:rgba(6,35,42,.55);backdrop-filter:blur(4px);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .prop-hero-fav:hover{background:rgba(6,35,42,.8);transform:scale(1.1)}
+  .prop-hero-fav svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2}
+  .prop-hero-fav.saved svg{fill:var(--gold);stroke:var(--gold)}
+
+  .prop-content{padding:40px 0 80px}
+  .prop-layout{display:grid;grid-template-columns:1fr 380px;gap:40px;align-items:start}
+
+  .prop-header{margin-bottom:32px}
+  .prop-loc{font-family:var(--mono);font-size:.72rem;color:var(--sea);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+  .prop-title{font-family:var(--display);font-size:clamp(1.6rem,3.2vw,2.4rem);color:var(--ink);line-height:1.15}
+  .prop-price{font-family:var(--mono);font-weight:700;color:var(--gold-deep);font-size:1.4rem;margin-top:12px}
+  .prop-price small{font-weight:400;color:var(--on-sand-dim);font-size:.78rem}
+
+  .prop-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:36px;padding:24px;background:#fff;border:1px solid var(--line);border-radius:var(--radius)}
+  .prop-fact{text-align:center}
+  .prop-fact-val{font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--ink)}
+  .prop-fact-label{font-family:var(--mono);font-size:.62rem;color:var(--on-sand-dim);letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+
+  .prop-section{margin-bottom:36px}
+  .prop-section h2{font-family:var(--display);font-size:1.3rem;color:var(--ink);margin-bottom:16px}
+  .prop-desc{font-size:.94rem;color:var(--on-sand-dim);line-height:1.7}
+
+  .prop-features{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .prop-feature{display:flex;align-items:center;gap:8px;font-size:.86rem;color:var(--on-sand);padding:8px 12px;background:var(--sand);border-radius:8px}
+  .prop-feature::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--aqua);flex:none}
+
+  /* sidebar */
+  .prop-sidebar{position:sticky;top:86px;display:flex;flex-direction:column;gap:20px}
+  .prop-sidebar-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:14px}
+  .prop-sidebar-card h3{font-size:1rem;color:var(--ink)}
+
+  .prop-map{border-radius:12px;overflow:hidden;border:1px solid var(--line);height:240px;background:var(--sand)}
+
+  .prop-amenities{display:flex;flex-direction:column;gap:7px}
+
+  .prop-ai-block{border-top:1px dashed var(--line);padding-top:16px;display:flex;flex-direction:column;gap:10px}
+  .prop-ai-text{font-size:.86rem;color:var(--on-sand-dim);line-height:1.5;margin:0}
+
+  .prop-cta{padding:24px;background:var(--ink);border-radius:var(--radius);text-align:center}
+  .prop-cta h3{color:var(--on-ink);font-size:1.1rem;margin-bottom:12px}
+  .prop-cta p{color:var(--on-ink-dim);font-size:.84rem;margin-bottom:16px}
+
+  .prop-back{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.74rem;color:var(--sea);margin-bottom:20px;letter-spacing:.03em}
+  .prop-back:hover{color:var(--aqua)}
+
+  /* gallery thumbnails */
+  .prop-gallery{display:flex;gap:8px;overflow-x:auto;padding:4px 0;margin-bottom:32px;-webkit-overflow-scrolling:touch}
+  .prop-gallery::-webkit-scrollbar{height:4px}
+  .prop-gallery::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
+  .prop-thumb{width:80px;height:60px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid transparent;flex:none;transition:border-color .2s,opacity .2s;opacity:.65}
+  .prop-thumb:hover,.prop-thumb.active{opacity:1;border-color:var(--aqua)}
+
+  /* loading / error */
+  .prop-loading{text-align:center;padding:120px 20px}
+  .prop-loading h2{color:var(--ink);font-size:1.4rem}
+  .prop-loading p{color:var(--on-sand-dim);margin-top:8px}
+
+  /* leaflet popup */
+  .leaflet-popup-content-wrapper{border-radius:12px;font-family:var(--body)}
+  .leaflet-popup-content{margin:10px 14px;font-size:.84rem}
+
+  @media (max-width:900px){
+    .prop-hero{height:300px}
+    .prop-layout{grid-template-columns:1fr}
+    .prop-sidebar{position:static}
+    .prop-facts{grid-template-columns:repeat(2,1fr)}
+    .prop-features{grid-template-columns:1fr}
+  }
+  @media (max-width:560px){
+    .prop-hero{height:240px}
+    .prop-facts{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="#34d6c4" opacity=".18"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#34d6c4" stroke-width="1.8" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#e7a43b" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Proplync<span style="color:#34d6c4">.mx</span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/#como" data-es="Como funciona" data-en="How it works">Como funciona</a>
+      <a href="/#precios" data-es="Precios" data-en="Pricing">Precios</a>
+      <a href="/favoritos" data-es="Favoritos" data-en="Favorites">Favoritos <span id="fav-badge" style="display:none;background:var(--gold);color:#231600;font-family:var(--mono);font-size:.58rem;font-weight:700;padding:2px 6px;border-radius:999px;margin-left:4px">0</span></a>
+    </div>
+    <div class="navtools">
+      <div class="lang"><button id="es" class="on" onclick="setLang('es')">ES</button><button id="en" onclick="setLang('en')">EN</button></div>
+    </div>
+    <button class="navtoggle" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<!-- Hero / Gallery -->
+<div class="prop-hero" id="prop-hero">
+  <img class="prop-hero-img" id="hero-img" src="" alt="">
+  <div class="prop-hero-overlay"></div>
+  <div class="prop-hero-badge">
+    <span class="pcard-badge badge-sale" id="hero-badge"></span>
+  </div>
+  <button class="prop-hero-fav" id="hero-fav" onclick="toggleHeroFav()">
+    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+  </button>
+  <div class="prop-hero-arrows" id="hero-arrows" style="display:none">
+    <button class="prop-hero-arrow" onclick="galleryPrev()">&#8249;</button>
+    <button class="prop-hero-arrow" onclick="galleryNext()">&#8250;</button>
+  </div>
+  <div class="prop-hero-nav" id="hero-dots"></div>
+</div>
+
+<!-- Thumbnails -->
+<div class="wrap">
+  <div class="prop-gallery" id="prop-gallery"></div>
+</div>
+
+<!-- Main content -->
+<div class="prop-content">
+  <div class="wrap">
+    <a href="/search" class="prop-back" data-es="&larr; Volver a busqueda" data-en="&larr; Back to search">&larr; Volver a busqueda</a>
+
+    <div class="prop-layout">
+      <!-- Left column -->
+      <div>
+        <div class="prop-header">
+          <div class="prop-loc" id="prop-loc"></div>
+          <h1 class="prop-title" id="prop-title"></h1>
+          <div class="prop-price" id="prop-price"></div>
+        </div>
+
+        <div class="prop-facts" id="prop-facts">
+          <div class="prop-fact"><div class="prop-fact-val" id="f-beds">—</div><div class="prop-fact-label" data-es="Recamaras" data-en="Bedrooms">Recamaras</div></div>
+          <div class="prop-fact"><div class="prop-fact-val" id="f-baths">—</div><div class="prop-fact-label" data-es="Banos" data-en="Bathrooms">Banos</div></div>
+          <div class="prop-fact"><div class="prop-fact-val" id="f-size">—</div><div class="prop-fact-label">m²</div></div>
+          <div class="prop-fact"><div class="prop-fact-val" id="f-parking">—</div><div class="prop-fact-label" data-es="Estacionamiento" data-en="Parking">Estacionamiento</div></div>
+        </div>
+
+        <div class="prop-section" id="desc-section">
+          <h2 data-es="Descripcion" data-en="Description">Descripcion</h2>
+          <div class="prop-desc" id="prop-desc"></div>
+        </div>
+
+        <div class="prop-section" id="features-section" style="display:none">
+          <h2 data-es="Caracteristicas" data-en="Features">Caracteristicas</h2>
+          <div class="prop-features" id="prop-features"></div>
+        </div>
+      </div>
+
+      <!-- Right sidebar -->
+      <div class="prop-sidebar">
+        <!-- Map -->
+        <div class="prop-sidebar-card">
+          <h3 data-es="Ubicacion" data-en="Location">Ubicacion</h3>
+          <div class="prop-map" id="prop-map"></div>
+        </div>
+
+        <!-- Amenities -->
+        <div class="prop-sidebar-card" id="amenities-card">
+          <h3 data-es="Cerca de aqui" data-en="Nearby">Cerca de aqui</h3>
+          <div class="prop-amenities" id="prop-amenities">
+            <p class="ps-loading" data-es="Buscando lugares cercanos..." data-en="Finding nearby places...">Buscando lugares cercanos...</p>
+          </div>
+        </div>
+
+        <!-- AI Description -->
+        <div class="prop-sidebar-card">
+          <h3 data-es="Descripcion con IA" data-en="AI Description">Descripcion con IA</h3>
+          <div class="prop-ai-block" id="ai-block">
+            <button class="btn btn-dark ps-btn" id="ai-btn" onclick="generateAI()">
+              <span data-es="Generar con IA" data-en="Generate with AI">Generar con IA</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+            </button>
+            <div class="prop-ai-text" id="ai-text" style="display:none"></div>
+            <span class="ps-ai-credit" id="ai-credit" style="display:none">Powered by Groq · Llama 3.3</span>
+          </div>
+        </div>
+
+        <!-- Contact CTA -->
+        <div class="prop-cta">
+          <h3 data-es="Te interesa esta propiedad?" data-en="Interested in this property?">Te interesa esta propiedad?</h3>
+          <p data-es="Contactanos para mas informacion o agendar una visita." data-en="Contact us for more information or to schedule a visit.">Contactanos para mas informacion o agendar una visita.</p>
+          <a href="mailto:info@proplync.mx" class="btn btn-gold" data-es="Contactar agente" data-en="Contact agent">Contactar agente</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="#34d6c4" opacity=".18"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#34d6c4" stroke-width="1.8" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#e7a43b" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Proplync<span style="color:#34d6c4">.mx</span>
+    </a>
+    <span data-es="Riviera Maya · Tulum · Playa del Carmen · Cancun" data-en="Riviera Maya · Tulum · Playa del Carmen · Cancun">Riviera Maya · Tulum · Playa del Carmen · Cancun</span>
+    <span class="mono" style="font-size:.72rem;opacity:.7">&copy; 2026</span>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/favorites.js"></script>
+<script>
+  /* ---------- state ---------- */
+  let property = null;
+  let galleryImages = [];
+  let galleryIndex = 0;
+  let map = null;
+
+  /* ---------- get property ID from URL ---------- */
+  function getPropertyId() {
+    // try query param first (?id=...)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('id')) return params.get('id');
+    // try path: /propiedad/EB-xxxx or /property/EB-xxxx
+    const parts = window.location.pathname.split('/');
+    return parts[parts.length - 1] || null;
+  }
+
+  /* ---------- gallery ---------- */
+  function setGalleryImage(idx) {
+    if (!galleryImages.length) return;
+    galleryIndex = idx;
+    const img = document.getElementById('hero-img');
+    img.src = galleryImages[idx];
+    img.alt = property ? (lang === 'es' ? property.title_es : property.title_en) : '';
+    // update dots
+    document.querySelectorAll('.prop-hero-dot').forEach(function(d, i) {
+      d.classList.toggle('active', i === idx);
+    });
+    // update thumbs
+    document.querySelectorAll('.prop-thumb').forEach(function(t, i) {
+      t.classList.toggle('active', i === idx);
+    });
+  }
+
+  function galleryNext() {
+    if (!galleryImages.length) return;
+    setGalleryImage((galleryIndex + 1) % galleryImages.length);
+  }
+
+  function galleryPrev() {
+    if (!galleryImages.length) return;
+    setGalleryImage((galleryIndex - 1 + galleryImages.length) % galleryImages.length);
+  }
+
+  function buildGallery(images) {
+    galleryImages = images;
+    if (images.length <= 1) return;
+
+    // show arrows
+    document.getElementById('hero-arrows').style.display = '';
+
+    // dots
+    var dotsHtml = '';
+    for (var i = 0; i < images.length; i++) {
+      dotsHtml += '<button class="prop-hero-dot' + (i === 0 ? ' active' : '') + '" onclick="setGalleryImage(' + i + ')"></button>';
+    }
+    document.getElementById('hero-dots').innerHTML = dotsHtml;
+
+    // thumbnails
+    var thumbsHtml = '';
+    for (var j = 0; j < images.length; j++) {
+      thumbsHtml += '<img class="prop-thumb' + (j === 0 ? ' active' : '') + '" src="' + images[j] + '" alt="" onclick="setGalleryImage(' + j + ')">';
+    }
+    document.getElementById('prop-gallery').innerHTML = thumbsHtml;
+  }
+
+  /* ---------- hero favorite ---------- */
+  function toggleHeroFav() {
+    if (!property) return;
+    var added = toggleFavorite(property.public_id);
+    document.getElementById('hero-fav').classList.toggle('saved', added);
+  }
+
+  /* ---------- render property ---------- */
+  function renderProperty(p) {
+    property = p;
+    var title = lang === 'es' ? p.title_es : p.title_en;
+    var desc = lang === 'es' ? (p.description_es || p.description_en || '') : (p.description_en || p.description_es || '');
+
+    // page title
+    document.title = title + ' · Proplync.mx';
+
+    // hero image
+    var allImages = [];
+    if (p.image) allImages.push(p.image);
+    if (p.images && p.images.length) {
+      p.images.forEach(function(img) {
+        if (img && allImages.indexOf(img) < 0) allImages.push(img);
+      });
+    }
+    if (allImages.length) {
+      document.getElementById('hero-img').src = allImages[0];
+      document.getElementById('hero-img').alt = title;
+      buildGallery(allImages);
+    }
+
+    // badge
+    var badge = document.getElementById('hero-badge');
+    badge.textContent = opLabel(p);
+    badge.className = 'pcard-badge ' + (p.operation === 'sale' ? 'badge-sale' : 'badge-rental');
+
+    // fav state
+    document.getElementById('hero-fav').classList.toggle('saved', isFavorite(p.public_id));
+
+    // header
+    document.getElementById('prop-loc').textContent = p.neighborhood + ' · ' + p.town;
+    document.getElementById('prop-title').textContent = title;
+    var perLbl = p.operation === 'rental' ? (lang === 'es' ? '/mes' : '/mo') : '';
+    document.getElementById('prop-price').innerHTML = p.currency + ' $' + p.formatted + (perLbl ? ' <small>' + perLbl + '</small>' : '');
+
+    // facts
+    document.getElementById('f-beds').textContent = p.bedrooms;
+    document.getElementById('f-baths').textContent = p.bathrooms;
+    document.getElementById('f-size').textContent = p.size;
+    document.getElementById('f-parking').textContent = p.parking;
+
+    // description
+    if (desc) {
+      document.getElementById('prop-desc').textContent = desc;
+      document.getElementById('desc-section').style.display = '';
+    } else {
+      document.getElementById('desc-section').style.display = 'none';
+    }
+
+    // features
+    if (p.features && p.features.length) {
+      document.getElementById('features-section').style.display = '';
+      document.getElementById('prop-features').innerHTML = p.features.map(function(f) {
+        return '<div class="prop-feature">' + f + '</div>';
+      }).join('');
+    }
+
+    // map
+    if (p.lat && p.lng) {
+      initMap(p.lat, p.lng, title);
+      loadAmenities(p.lat, p.lng);
+    } else {
+      document.getElementById('prop-map').innerHTML = '<p style="padding:20px;text-align:center;color:var(--on-sand-dim);font-size:.84rem" data-es="Ubicacion no disponible" data-en="Location not available">Ubicacion no disponible</p>';
+      document.getElementById('prop-amenities').innerHTML = '<p class="ps-loading" data-es="Sin coordenadas disponibles" data-en="No coordinates available">Sin coordenadas disponibles</p>';
+    }
+  }
+
+  /* ---------- map ---------- */
+  function initMap(lat, lng, title) {
+    map = L.map('prop-map', { scrollWheelZoom: false, zoomControl: true }).setView([lat, lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://openstreetmap.org">OSM</a>',
+      maxZoom: 18
+    }).addTo(map);
+    L.marker([lat, lng]).addTo(map).bindPopup('<b>' + title + '</b>').openPopup();
+  }
+
+  /* ---------- amenities ---------- */
+  async function loadAmenities(lat, lng) {
+    var container = document.getElementById('prop-amenities');
+    try {
+      var places = await fetchAmenities(lat, lng);
+      if (!places.length) {
+        container.innerHTML = '<p class="ps-loading" data-es="No se encontraron lugares cercanos" data-en="No nearby places found">' + (lang === 'es' ? 'No se encontraron lugares cercanos' : 'No nearby places found') + '</p>';
+        return;
+      }
+      var html = '';
+      places.slice(0, 12).forEach(function(p) {
+        var dist = p.dist < 1000 ? Math.round(p.dist) + ' m' : (p.dist / 1000).toFixed(1) + ' km';
+        html += '<div class="ps-poi">' +
+          '<span class="ps-poi-cat">' + p.cat + '</span>' +
+          '<span class="ps-poi-name">' + p.name + '</span>' +
+          '<span class="ps-poi-dist">' + dist + '</span>' +
+          '</div>';
+      });
+      container.innerHTML = html;
+    } catch (e) {
+      container.innerHTML = '<p class="ps-error">' + e.message + '</p>';
+    }
+  }
+
+  /* ---------- AI description ---------- */
+  async function generateAI() {
+    if (!property) return;
+    var btn = document.getElementById('ai-btn');
+    var text = document.getElementById('ai-text');
+    var credit = document.getElementById('ai-credit');
+    btn.disabled = true;
+    btn.innerHTML = '<span>' + (lang === 'es' ? 'Generando...' : 'Generating...') + '</span>';
+
+    try {
+      var desc = await fetchDescription({
+        title: lang === 'es' ? property.title_es : property.title_en,
+        location: property.neighborhood + ', ' + property.town,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        size: property.size,
+        price: property.currency + ' $' + property.formatted,
+        operation: property.operation,
+        lang: lang
+      });
+      text.textContent = desc;
+      text.style.display = '';
+      credit.style.display = '';
+      btn.style.display = 'none';
+    } catch (e) {
+      text.textContent = lang === 'es' ? 'Error al generar descripcion. Intenta de nuevo.' : 'Error generating description. Try again.';
+      text.style.display = '';
+      btn.disabled = false;
+      btn.innerHTML = '<span>' + (lang === 'es' ? 'Reintentar' : 'Retry') + '</span>';
+    }
+  }
+
+  /* ---------- load property ---------- */
+  async function loadProperty() {
+    var id = getPropertyId();
+    if (!id) {
+      showError(lang === 'es' ? 'ID de propiedad no proporcionado' : 'Property ID not provided');
+      return;
+    }
+
+    try {
+      var data = await fetchProperty(id);
+      if (data.property) {
+        renderProperty(data.property);
+      } else {
+        showError(lang === 'es' ? 'Propiedad no encontrada' : 'Property not found');
+      }
+    } catch (e) {
+      showError(e.message);
+    }
+  }
+
+  function showError(msg) {
+    document.querySelector('.prop-content .wrap').innerHTML =
+      '<div class="prop-loading">' +
+      '<h2>' + (lang === 'es' ? 'Propiedad no encontrada' : 'Property not found') + '</h2>' +
+      '<p>' + msg + '</p>' +
+      '<a href="/search" class="btn btn-dark" style="margin-top:20px" data-es="Volver a buscar" data-en="Back to search">' + (lang === 'es' ? 'Volver a buscar' : 'Back to search') + '</a>' +
+      '</div>';
+  }
+
+  /* ---------- lang change ---------- */
+  document.addEventListener('langchange', function() {
+    if (property) renderProperty(property);
+  });
+
+  /* ---------- keyboard nav for gallery ---------- */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight') galleryNext();
+    if (e.key === 'ArrowLeft') galleryPrev();
+  });
+
+  /* ---------- mobile nav ---------- */
+  document.querySelectorAll('#navlinks a').forEach(function(a) {
+    a.addEventListener('click', function() {
+      document.getElementById('navlinks').classList.remove('open');
+    });
+  });
+
+  /* ---------- init ---------- */
+  loadProperty();
+  updateFavBadge();
+</script>
+</body>
+</html>

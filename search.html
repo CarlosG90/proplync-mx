@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="Buscar propiedades · Proplync.mx" data-en="Search properties · Proplync.mx">Buscar propiedades · Proplync.mx</title>
+<meta name="description" content="Encuentra propiedades en venta y renta en la Riviera Maya. Tulum, Playa del Carmen, Cancún, Puerto Morelos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  .search-layout{display:grid;grid-template-columns:1fr 380px;gap:0;min-height:calc(100vh - 66px)}
+  .search-main{padding:28px;overflow-y:auto}
+  .search-map{position:sticky;top:66px;height:calc(100vh - 66px);border-left:1px solid var(--line)}
+
+  .search-head{margin-bottom:24px}
+  .search-head h1{font-size:clamp(1.6rem,3vw,2.2rem);color:var(--ink)}
+  .search-head p{font-size:.92rem;color:var(--on-sand-dim);margin-top:6px}
+  .search-count{font-family:var(--mono);font-size:.72rem;color:var(--sea);margin-top:8px}
+
+  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;align-items:center}
+  .filter-select{font-family:var(--mono);font-size:.74rem;letter-spacing:.03em;background:#fff;color:var(--on-sand);border:1px solid var(--line);border-radius:999px;padding:9px 14px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234c6a6f' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+  .filter-select:focus{outline:2px solid var(--aqua);outline-offset:1px}
+  .filter-input{font-family:var(--mono);font-size:.74rem;background:#fff;color:var(--on-sand);border:1px solid var(--line);border-radius:999px;padding:9px 14px;width:110px}
+  .filter-input:focus{outline:2px solid var(--aqua);outline-offset:1px}
+  .filter-input::placeholder{color:var(--on-sand-dim)}
+  .filter-clear{font-family:var(--mono);font-size:.68rem;color:var(--sea);background:none;border:0;cursor:pointer;text-decoration:underline;padding:6px}
+
+  .search-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .search-grid .pcard-gen{display:none}
+
+  .search-empty{text-align:center;padding:60px 20px}
+  .search-empty h3{color:var(--ink);font-size:1.3rem}
+  .search-empty p{color:var(--on-sand-dim);margin-top:8px}
+
+  /* leaflet overrides */
+  .leaflet-popup-content-wrapper{border-radius:12px;font-family:var(--body)}
+  .leaflet-popup-content{margin:10px 14px;font-size:.84rem;line-height:1.4}
+  .leaflet-popup-content b{color:var(--ink);font-family:var(--display);font-weight:500}
+  .leaflet-popup-content .pop-price{font-family:var(--mono);color:var(--gold-deep);font-weight:700;font-size:.82rem;display:block;margin-top:4px}
+  .leaflet-popup-content .pop-link{font-family:var(--mono);font-size:.68rem;color:var(--sea);display:block;margin-top:6px}
+
+  @media (max-width:900px){
+    .search-layout{grid-template-columns:1fr}
+    .search-map{position:relative;top:0;height:300px;border-left:0;border-bottom:1px solid var(--line);order:-1}
+    .search-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="#34d6c4" opacity=".18"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#34d6c4" stroke-width="1.8" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#e7a43b" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Proplync<span style="color:#34d6c4">.mx</span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/search" style="color:var(--aqua)" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/#como" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a>
+      <a href="/#precios" data-es="Precios" data-en="Pricing">Precios</a>
+      <a href="/favoritos" data-es="Favoritos" data-en="Favorites">Favoritos <span id="fav-badge" style="display:none;background:var(--gold);color:#231600;font-family:var(--mono);font-size:.58rem;font-weight:700;padding:2px 6px;border-radius:999px;margin-left:4px">0</span></a>
+    </div>
+    <div class="navtools">
+      <div class="lang"><button id="es" class="on" onclick="setLang('es')">ES</button><button id="en" onclick="setLang('en')">EN</button></div>
+    </div>
+    <button class="navtoggle" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<div class="search-layout">
+  <div class="search-main">
+    <div class="search-head">
+      <h1 data-es="Propiedades en la Riviera Maya" data-en="Properties in the Riviera Maya">Propiedades en la Riviera Maya</h1>
+      <p data-es="Inventario real de EasyBroker. Datos verificados, sin información inventada." data-en="Real EasyBroker inventory. Verified data, no made-up information.">Inventario real de EasyBroker. Datos verificados, sin información inventada.</p>
+      <div class="search-count" id="search-count"></div>
+    </div>
+
+    <div class="filters" id="filters">
+      <select class="filter-select" id="f-op" onchange="applyFilters()">
+        <option value="all" data-es="Todas" data-en="All">Todas</option>
+        <option value="sale" data-es="Venta" data-en="For sale">Venta</option>
+        <option value="rental" data-es="Renta" data-en="For rent">Renta</option>
+      </select>
+      <select class="filter-select" id="f-town" onchange="applyFilters()">
+        <option value="" data-es="Todas las zonas" data-en="All zones">Todas las zonas</option>
+      </select>
+      <select class="filter-select" id="f-beds" onchange="applyFilters()">
+        <option value="" data-es="Recámaras" data-en="Bedrooms">Recámaras</option>
+        <option value="1">1+</option>
+        <option value="2">2+</option>
+        <option value="3">3+</option>
+        <option value="4">4+</option>
+      </select>
+      <input class="filter-input" id="f-minprice" type="number" placeholder="Min $" onchange="applyFilters()">
+      <input class="filter-input" id="f-maxprice" type="number" placeholder="Max $" onchange="applyFilters()">
+      <button class="filter-clear" onclick="clearFilters()" data-es="Limpiar" data-en="Clear">Limpiar</button>
+    </div>
+
+    <div class="search-grid" id="search-grid"></div>
+  </div>
+
+  <div class="search-map" id="search-map"></div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="#34d6c4" opacity=".18"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#34d6c4" stroke-width="1.8" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#e7a43b" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Proplync<span style="color:#34d6c4">.mx</span>
+    </a>
+    <span data-es="Riviera Maya · Tulum · Playa del Carmen · Cancún" data-en="Riviera Maya · Tulum · Playa del Carmen · Cancún">Riviera Maya · Tulum · Playa del Carmen · Cancún</span>
+    <span class="mono" style="font-size:.72rem;opacity:.7">© 2026</span>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/favorites.js"></script>
+<script>
+  /* ---------- state ---------- */
+  let listings = [];
+  let map, markers = [];
+
+  /* ---------- map init ---------- */
+  function initMap() {
+    map = L.map('search-map', { scrollWheelZoom: true }).setView([20.5, -87.2], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>',
+      maxZoom: 18
+    }).addTo(map);
+  }
+
+  function updateMarkers(props) {
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+    const bounds = [];
+    props.forEach(p => {
+      if (p.lat == null || p.lng == null) return;
+      const title = lang === 'es' ? p.title_es : p.title_en;
+      const marker = L.marker([p.lat, p.lng])
+        .bindPopup(
+          '<b>' + title + '</b>' +
+          '<span class="pop-price">' + p.currency + ' $' + p.formatted + '</span>' +
+          '<a class="pop-link" href="/propiedad/' + p.public_id + '">' + (lang === 'es' ? 'Ver detalle →' : 'View details →') + '</a>'
+        )
+        .addTo(map);
+      markers.push(marker);
+      bounds.push([p.lat, p.lng]);
+    });
+    if (bounds.length > 1) {
+      map.fitBounds(bounds, { padding: [30, 30] });
+    } else if (bounds.length === 1) {
+      map.setView(bounds[0], 13);
+    }
+  }
+
+  /* ---------- card rendering ---------- */
+  function cardHTML(p) {
+    const title = lang === 'es' ? p.title_es : p.title_en;
+    const opLbl = p.operation === 'sale' ? (lang === 'es' ? 'Venta' : 'For sale') : (lang === 'es' ? 'Renta' : 'For rent');
+    const perLbl = p.operation === 'rental' ? (lang === 'es' ? '/mes' : '/mo') : '';
+    const favClass = isFavorite(p.public_id) ? ' saved' : '';
+    return '<article class="pcard" data-id="' + p.public_id + '" onclick="window.location.href=\'/propiedad/' + p.public_id + '\'">' +
+      '<div class="pcard-photo" style="background-color:#0a5d59;background-image:linear-gradient(180deg,rgba(6,35,42,.32),rgba(6,35,42,0) 42%,rgba(6,35,42,0) 72%,rgba(6,35,42,.14)),url(\'' + (p.image || '') + '\')">' +
+        '<span class="pcard-badge ' + (p.operation === 'sale' ? 'badge-sale' : 'badge-rental') + '">' + opLbl + '</span>' +
+      '</div>' +
+      '<div class="pcard-body">' +
+        '<div class="pcard-loc">' + p.neighborhood + ' · ' + p.town + '</div>' +
+        '<div class="pcard-title">' + title + '</div>' +
+        '<div class="pcard-specs"><span>' + p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') + '</span><span>' + p.bathrooms + ' ' + (lang === 'es' ? 'baños' : 'bath') + '</span><span>' + p.size + ' m²</span></div>' +
+        '<div class="pcard-foot"><span class="pcard-price">' + p.currency + ' $' + p.formatted + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
+      '</div></article>';
+  }
+
+  function renderGrid(props) {
+    const grid = document.getElementById('search-grid');
+    if (!props.length) {
+      grid.innerHTML = '<div class="search-empty"><h3>' + (lang === 'es' ? 'No se encontraron propiedades' : 'No properties found') + '</h3><p>' + (lang === 'es' ? 'Intenta con otros filtros.' : 'Try different filters.') + '</p></div>';
+      return;
+    }
+    grid.innerHTML = props.map(cardHTML).join('');
+    injectFavButtons();
+  }
+
+  /* ---------- filters ---------- */
+  function getFilterParams() {
+    const params = {};
+    const op = document.getElementById('f-op').value;
+    const town = document.getElementById('f-town').value;
+    const beds = document.getElementById('f-beds').value;
+    const minP = document.getElementById('f-minprice').value;
+    const maxP = document.getElementById('f-maxprice').value;
+    if (op && op !== 'all') params.op = op;
+    if (town) params.town = town;
+    if (beds) params.beds = beds;
+    if (minP) params.minPrice = minP;
+    if (maxP) params.maxPrice = maxP;
+    return params;
+  }
+
+  async function applyFilters() {
+    const params = getFilterParams();
+    // update URL without reload
+    const qs = new URLSearchParams(params).toString();
+    history.replaceState(null, '', qs ? '/search?' + qs : '/search');
+    await loadSearch(params);
+  }
+
+  function clearFilters() {
+    document.getElementById('f-op').value = 'all';
+    document.getElementById('f-town').value = '';
+    document.getElementById('f-beds').value = '';
+    document.getElementById('f-minprice').value = '';
+    document.getElementById('f-maxprice').value = '';
+    applyFilters();
+  }
+
+  /* ---------- load data ---------- */
+  async function loadSearch(params) {
+    try {
+      const data = await fetchSearch(params || {});
+      listings = data.listings || [];
+
+      // update count
+      const countEl = document.getElementById('search-count');
+      countEl.textContent = listings.length + (lang === 'es' ? ' propiedades encontradas' : ' properties found');
+
+      // populate town dropdown (only on first load)
+      if (data.towns && data.towns.length) {
+        const sel = document.getElementById('f-town');
+        const current = sel.value;
+        const opts = sel.querySelectorAll('option:not(:first-child)');
+        if (!opts.length) {
+          data.towns.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            sel.appendChild(opt);
+          });
+        }
+        if (current) sel.value = current;
+      }
+
+      renderGrid(listings);
+      updateMarkers(listings);
+    } catch (e) {
+      console.warn('[Proplync] search error:', e.message);
+      document.getElementById('search-grid').innerHTML = '<div class="search-empty"><h3>Error</h3><p>' + e.message + '</p></div>';
+    }
+  }
+
+  /* ---------- restore filters from URL ---------- */
+  function restoreFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('op')) document.getElementById('f-op').value = params.get('op');
+    if (params.get('town')) document.getElementById('f-town').value = params.get('town');
+    if (params.get('beds')) document.getElementById('f-beds').value = params.get('beds');
+    if (params.get('minPrice')) document.getElementById('f-minprice').value = params.get('minPrice');
+    if (params.get('maxPrice')) document.getElementById('f-maxprice').value = params.get('maxPrice');
+    return Object.fromEntries(params);
+  }
+
+  /* ---------- lang change ---------- */
+  document.addEventListener('langchange', function () {
+    renderGrid(listings);
+    updateMarkers(listings);
+    const countEl = document.getElementById('search-count');
+    countEl.textContent = listings.length + (lang === 'es' ? ' propiedades encontradas' : ' properties found');
+  });
+
+  /* ---------- mobile nav ---------- */
+  document.querySelectorAll('#navlinks a').forEach(a => a.addEventListener('click', () => document.getElementById('navlinks').classList.remove('open')));
+
+  /* ---------- scroll reveal ---------- */
+  const io = new IntersectionObserver(es => {
+    es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: .12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  /* ---------- init ---------- */
+  initMap();
+  const initialParams = restoreFromURL();
+  loadSearch(initialParams);
+  updateFavBadge();
+</script>
+</body>
+</html>

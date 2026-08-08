@@ -7,65 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
 <style>
-  :root{
-    --ink:#06232a;
-    --ink-2:#0b333b;
-    --sea:#0c7c77;
-    --sea-deep:#0a5d59;
-    --aqua:#34d6c4;
-    --aqua-soft:#8fe8dd;
-    --sand:#f3ecdd;
-    --sand-2:#e8dcc4;
-    --gold:#e7a43b;
-    --gold-deep:#c78420;
-    --paper:#fbf7ee;
-    --on-ink:#eaf6f3;
-    --on-ink-dim:#a9ccc7;
-    --on-sand:#13323a;
-    --on-sand-dim:#4c6a6f;
-    --line:#d8cbb0;
-    --radius:18px;
-    --maxw:1180px;
-    --display:"Fraunces",Georgia,serif;
-    --body:"Hanken Grotesk",system-ui,sans-serif;
-    --mono:"Space Mono",ui-monospace,monospace;
-  }
-  *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{
-    margin:0;font-family:var(--body);background:var(--paper);color:var(--on-sand);
-    line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;
-  }
-  h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.05;margin:0;letter-spacing:-.01em}
-  p{margin:0}
-  a{color:inherit;text-decoration:none}
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
-  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase}
-  .mono{font-family:var(--mono)}
-
-  /* ---------- NAV ---------- */
-  header{position:sticky;top:0;z-index:50;background:rgba(6,35,42,.86);backdrop-filter:blur(12px);border-bottom:1px solid rgba(143,232,221,.14)}
-  nav{display:flex;align-items:center;gap:28px;height:66px}
-  .brand{display:flex;align-items:center;gap:11px;color:var(--on-ink);font-family:var(--display);font-size:1.12rem;font-weight:500;letter-spacing:-.01em}
-  .brand .mark{width:26px;height:26px;flex:none}
-  .navlinks{display:flex;gap:26px;margin-left:auto}
-  .navlinks a{color:var(--on-ink-dim);font-size:.9rem;font-weight:500;transition:color .2s}
-  .navlinks a:hover{color:var(--aqua)}
-  .navtools{display:flex;align-items:center;gap:14px}
-  .lang{display:inline-flex;border:1px solid rgba(143,232,221,.3);border-radius:999px;overflow:hidden;font-family:var(--mono);font-size:.72rem}
-  .lang button{background:transparent;color:var(--on-ink-dim);border:0;padding:6px 11px;cursor:pointer;letter-spacing:.05em}
-  .lang button.on{background:var(--aqua);color:var(--ink);font-weight:700}
-  .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--body);font-weight:600;font-size:.92rem;padding:11px 20px;border-radius:999px;cursor:pointer;border:0;transition:transform .15s ease,box-shadow .2s,background .2s;white-space:nowrap}
-  .btn-gold{background:var(--gold);color:#231600;box-shadow:0 8px 22px -10px rgba(231,164,59,.8)}
-  .btn-gold:hover{transform:translateY(-2px);box-shadow:0 14px 30px -12px rgba(231,164,59,.9)}
-  .btn-ghost{background:transparent;color:var(--on-ink);border:1px solid rgba(143,232,221,.35)}
-  .btn-ghost:hover{border-color:var(--aqua);color:var(--aqua)}
-  .btn-dark{background:var(--ink);color:var(--on-ink)}
-  .btn-dark:hover{transform:translateY(-2px);background:var(--ink-2)}
-  .navtoggle{display:none;background:none;border:0;cursor:pointer;flex-direction:column;gap:5px;padding:6px}
-  .navtoggle span{width:24px;height:2px;background:var(--on-ink);border-radius:2px}
-
   /* ---------- HERO ---------- */
   .hero{position:relative;background:
       radial-gradient(120% 90% at 82% 8%, rgba(52,214,196,.20), transparent 55%),
@@ -120,16 +65,7 @@
   .pv-play{width:38px;height:38px;border-radius:50%;background:var(--sea);display:flex;align-items:center;justify-content:center;margin-top:12px}
   .pv-play svg{width:15px;height:15px;fill:#fff}
 
-  /* ---------- SECTIONS ---------- */
-  section{padding:96px 0}
-  .sec-head{max-width:44rem;margin-bottom:52px}
-  .sec-head .eyebrow{color:var(--sea);margin-bottom:16px;display:block}
-  .sec-head h2{font-size:clamp(2rem,3.8vw,3rem);color:var(--ink)}
-  .sec-head p{margin-top:18px;font-size:1.08rem;color:var(--on-sand-dim)}
-
-  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
-  .reveal.in{opacity:1;transform:none}
-
+  /* ---------- HOMEPAGE-SPECIFIC ---------- */
   /* problem band */
   .band{background:var(--ink);color:var(--on-ink)}
   .band h2{color:var(--on-ink)}
@@ -159,33 +95,6 @@
   .guard div{padding:20px;border-left:2px solid var(--gold);background:var(--sand)}
   .guard h4{font-family:var(--body);font-weight:700;font-size:.96rem;color:var(--ink);margin:0}
   .guard p{font-size:.86rem;color:var(--on-sand-dim);margin-top:6px}
-
-  /* properties */
-  .pfilter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:30px}
-  .pfilter button{font-family:var(--mono);font-size:.74rem;letter-spacing:.05em;background:#fff;color:var(--on-sand-dim);border:1px solid var(--line);border-radius:999px;padding:9px 18px;cursor:pointer;transition:all .18s}
-  .pfilter button:hover{border-color:var(--sea);color:var(--sea)}
-  .pfilter button.on{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
-  .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-  .pcard{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
-  .pcard:hover{transform:translateY(-4px);box-shadow:0 24px 48px -30px rgba(10,74,72,.55)}
-  .pcard-photo{aspect-ratio:4/3;background-size:cover;background-position:center;position:relative}
-  .pcard-badge{position:absolute;top:12px;left:12px;font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:5px 10px;border-radius:6px;color:#fff;backdrop-filter:blur(4px)}
-  .badge-sale{background:rgba(12,124,119,.9)}
-  .badge-rental{background:rgba(231,164,59,.92);color:#231600}
-  .pcard-id{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:.58rem;color:#fff;background:rgba(6,35,42,.5);padding:4px 8px;border-radius:6px;letter-spacing:.05em}
-  .pcard-body{padding:20px;display:flex;flex-direction:column;flex:1}
-  .pcard-loc{font-family:var(--mono);font-size:.64rem;color:var(--sea);letter-spacing:.1em;text-transform:uppercase}
-  .pcard-title{font-family:var(--display);font-size:1.18rem;color:var(--ink);margin-top:7px;line-height:1.2}
-  .pcard-specs{display:flex;gap:14px;margin-top:12px;font-family:var(--mono);font-size:.68rem;color:var(--on-sand-dim);flex-wrap:wrap}
-  .pcard-foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:16px}
-  .pcard-price{font-family:var(--mono);font-weight:700;color:var(--gold-deep);font-size:1.05rem}
-  .pcard-price small{color:var(--on-sand-dim);font-weight:400;font-size:.7rem}
-  .pcard-gen{width:100%;margin-top:14px;justify-content:center;font-family:var(--body);font-weight:600;font-size:.82rem;padding:10px;border-radius:11px;background:var(--sand);color:var(--sea-deep);border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .18s}
-  .pcard-gen:hover{background:var(--sea);color:#fff;border-color:var(--sea)}
-  .props-note{margin-top:30px;font-size:.86rem;color:var(--on-sand-dim);display:flex;align-items:flex-start;gap:10px;max-width:52em}
-  .props-note .eb{font-family:var(--mono);font-size:.62rem;background:var(--ink);color:var(--aqua);padding:4px 9px;border-radius:6px;letter-spacing:.06em;white-space:nowrap;margin-top:2px}
-  @media (max-width:900px){.pgrid{grid-template-columns:1fr 1fr}}
-  @media (max-width:560px){.pgrid{grid-template-columns:1fr}}
 
   /* ROI */
   .roi{background:linear-gradient(160deg,#0a4a48,#06232a);color:var(--on-ink)}
@@ -250,31 +159,18 @@
   .cta p{color:var(--on-ink-dim);margin:20px auto 0;max-width:34em;font-size:1.08rem}
   .cta .btn{margin-top:32px}
 
-  footer{background:var(--ink);color:var(--on-ink-dim);padding:44px 0}
-  .foot{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;font-size:.85rem}
-  .foot .brand{color:var(--on-ink)}
-  .foot a:hover{color:var(--aqua)}
-
   @media (max-width:900px){
     .hero .wrap{grid-template-columns:1fr;gap:40px;padding-bottom:72px}
     .demo{max-width:440px}
-    .navlinks{display:none}
-    .navtoggle{display:flex}
-    .navlinks.open{display:flex;position:absolute;top:66px;left:0;right:0;flex-direction:column;background:var(--ink);padding:20px 28px;gap:18px;border-bottom:1px solid rgba(143,232,221,.14);margin:0}
     .steps{grid-template-columns:1fr 1fr}
     .grid6{grid-template-columns:1fr 1fr}
     .guard,.roi-grid,.priv,.tiers{grid-template-columns:1fr}
     .tier.feat{transform:none}
-    section{padding:72px 0}
   }
   @media (max-width:560px){
     .chips{grid-template-columns:1fr 1fr}
     .grid6,.steps{grid-template-columns:1fr}
     .hero-meta{gap:18px}
-  }
-  @media (prefers-reduced-motion:reduce){
-    .reveal{transition:none;opacity:1;transform:none}
-    *{scroll-behavior:auto}
   }
 </style>
 </head>
@@ -287,6 +183,7 @@
       Proplync<span style="color:#34d6c4">.mx</span>
     </a>
     <div class="navlinks" id="navlinks">
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
       <a href="#como" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a>
       <a href="#piezas" data-es="Qué generas" data-en="What you get">Qué generas</a>
       <a href="#propiedades" data-es="Propiedades" data-en="Properties">Propiedades</a>
@@ -416,10 +313,24 @@
       <button data-op="sale" onclick="filterProps(this)" data-es="Venta" data-en="For sale">Venta</button>
       <button data-op="rental" onclick="filterProps(this)" data-es="Renta" data-en="For rent">Renta</button>
     </div>
-    <div class="pgrid" id="pgrid"></div>
+    <div class="props-layout">
+      <div class="pgrid" id="pgrid"></div>
+      <aside class="pside">
+        <div class="pside-inner reveal">
+          <span class="eyebrow" data-es="Propiedad seleccionada" data-en="Selected property">Propiedad seleccionada</span>
+          <h3 id="ps-title"></h3>
+          <div class="ps-map"><iframe id="ps-map-frame" title="map" loading="lazy"></iframe></div>
+          <div class="ps-amenities" id="ps-amenities"></div>
+          <div class="ps-ai-block">
+            <button class="btn btn-dark ps-btn" id="ps-ai-btn" onclick="generateDescription()" data-es="✨ Generar descripción con IA" data-en="✨ Generate AI description">✨ Generar descripción con IA</button>
+            <div id="ps-ai-out"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
     <div class="props-note reveal">
       <span class="eb">EasyBroker API</span>
-      <p data-es="Datos y fotos de muestra con la estructura real de la API de EasyBroker (las imágenes son ilustraciones). En producción, un proxy en el servidor entrega tu inventario y tus fotografías reales sin exponer tu API Key." data-en="Sample data and illustrated photos using EasyBroker's real API schema. In production, a server-side proxy serves your real inventory and photos without exposing your API Key.">Datos y fotos de muestra con la estructura real de la API de EasyBroker (las imágenes son ilustraciones). En producción, un proxy en el servidor entrega tu inventario y tus fotografías reales sin exponer tu API Key.</p>
+      <p data-es="Datos y fotos de muestra con la estructura real de la API de EasyBroker (las imágenes son ilustraciones). En producción, un proxy en el servidor entrega tu inventario y tus fotografías reales sin exponer tu API Key. El panel lateral usa OpenStreetMap (ubicación y lugares cercanos) y Groq (descripción con IA) — ambas APIs reales y gratuitas." data-en="Sample data and illustrated photos using EasyBroker's real API schema. In production, a server-side proxy serves your real inventory and photos without exposing your API Key. The side panel uses OpenStreetMap (location & nearby places) and Groq (AI description) — both real, free APIs.">Datos y fotos de muestra con la estructura real de la API de EasyBroker (las imágenes son ilustraciones). En producción, un proxy en el servidor entrega tu inventario y tus fotografías reales sin exponer tu API Key. El panel lateral usa OpenStreetMap (ubicación y lugares cercanos) y Groq (descripción con IA) — ambas APIs reales y gratuitas.</p>
     </div>
   </div>
 </section>
@@ -554,36 +465,28 @@
   </div>
 </footer>
 
+<script src="/js/i18n.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/favorites.js"></script>
 <script>
-  /* ---------- i18n ---------- */
-  let lang='es';
-  function setLang(l){
-    lang=l;
-    document.documentElement.lang=l;
-    document.getElementById('es').classList.toggle('on',l==='es');
-    document.getElementById('en').classList.toggle('on',l==='en');
-    document.querySelectorAll('[data-es]').forEach(function(el){
-      el.innerHTML = el.getAttribute('data-'+l);
-    });
+  /* ---------- homepage-specific: wire lang change to page components ---------- */
+  document.addEventListener('langchange', function(){
     renderProperties();
     updateHeroListing();
     renderPreview();
+    updateSidePanel();
     calc();
-  }
+  });
 
-  /* ---------- properties (EasyBroker API schema) ----------
-     Sample data shaped like EasyBroker's /v1/properties response.
-     On load the page tries LISTINGS_ENDPOINT (your deployed proxy) and, if it
-     answers, replaces this sample array with your real inventory. If the proxy
-     isn't reachable (e.g. this static preview), the samples below stay. */
-  const LISTINGS_ENDPOINT = '/api/listings';   // set to '' to stay in demo mode
+  /* ---------- properties (EasyBroker API schema) ---------- */
+  const LISTINGS_ENDPOINT = '/api/listings';
   let properties = [
-    {public_id:'EB-T2451', title_es:'Departamento en preventa', title_en:'Pre-sale apartment', town:'Tulum', neighborhood:'Aldea Zamá', bedrooms:2, bathrooms:2, parking:1, size:78, operation:'sale', currency:'USD', amount:245000, formatted:'245,000', image:'https://images.pexels.com/photos/35877931/pexels-photo-35877931.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'condo', photoQuery:'modern condo balcony jungle'},
-    {public_id:'EB-P8830', title_es:'Casa con alberca en Playacar', title_en:'House with pool in Playacar', town:'Playa del Carmen', neighborhood:'Playacar Fase II', bedrooms:3, bathrooms:4, parking:2, size:240, operation:'sale', currency:'USD', amount:685000, formatted:'685,000', image:'https://images.pexels.com/photos/8134849/pexels-photo-8134849.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'pool', photoQuery:'luxury house swimming pool'},
-    {public_id:'EB-M1207', title_es:'Studio frente al mar', title_en:'Beachfront studio', town:'Puerto Morelos', neighborhood:'Zona Hotelera', bedrooms:1, bathrooms:1, parking:1, size:45, operation:'sale', currency:'USD', amount:189000, formatted:'189,000', image:'https://images.pexels.com/photos/6312076/pexels-photo-6312076.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'studio', photoQuery:'beachfront studio apartment interior'},
-    {public_id:'EB-C4062', title_es:'Penthouse vista al Caribe', title_en:'Penthouse with Caribbean view', town:'Cancún', neighborhood:'Puerto Cancún', bedrooms:3, bathrooms:3, parking:2, size:180, operation:'sale', currency:'USD', amount:1150000, formatted:'1,150,000', image:'https://images.pexels.com/photos/6775268/pexels-photo-6775268.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'penthouse', photoQuery:'penthouse ocean view terrace'},
-    {public_id:'EB-P5519', title_es:'Departamento amueblado', title_en:'Furnished apartment', town:'Playa del Carmen', neighborhood:'Centro', bedrooms:2, bathrooms:2, parking:1, size:90, operation:'rental', currency:'USD', amount:2200, formatted:'2,200', image:'https://images.pexels.com/photos/6969824/pexels-photo-6969824.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'apartment', photoQuery:'furnished apartment living room modern'},
-    {public_id:'EB-T3388', title_es:'Villa en la selva', title_en:'Villa in the jungle', town:'Tulum', neighborhood:'Región 15', bedrooms:4, bathrooms:4, parking:3, size:320, operation:'sale', currency:'USD', amount:890000, formatted:'890,000', image:'https://images.pexels.com/photos/4940760/pexels-photo-4940760.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'villa', photoQuery:'jungle villa mexico exterior'}
+    {public_id:'EB-T2451', title_es:'Departamento en preventa', title_en:'Pre-sale apartment', town:'Tulum', neighborhood:'Aldea Zamá', bedrooms:2, bathrooms:2, parking:1, size:78, operation:'sale', currency:'USD', amount:245000, formatted:'245,000', image:'https://images.pexels.com/photos/35877931/pexels-photo-35877931.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'condo', photoQuery:'modern condo balcony jungle', lat:20.2114, lng:-87.4654},
+    {public_id:'EB-P8830', title_es:'Casa con alberca en Playacar', title_en:'House with pool in Playacar', town:'Playa del Carmen', neighborhood:'Playacar Fase II', bedrooms:3, bathrooms:4, parking:2, size:240, operation:'sale', currency:'USD', amount:685000, formatted:'685,000', image:'https://images.pexels.com/photos/8134849/pexels-photo-8134849.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'pool', photoQuery:'luxury house swimming pool', lat:20.6116, lng:-87.0739},
+    {public_id:'EB-M1207', title_es:'Studio frente al mar', title_en:'Beachfront studio', town:'Puerto Morelos', neighborhood:'Zona Hotelera', bedrooms:1, bathrooms:1, parking:1, size:45, operation:'sale', currency:'USD', amount:189000, formatted:'189,000', image:'https://images.pexels.com/photos/6312076/pexels-photo-6312076.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'studio', photoQuery:'beachfront studio apartment interior', lat:20.8460, lng:-86.8756},
+    {public_id:'EB-C4062', title_es:'Penthouse vista al Caribe', title_en:'Penthouse with Caribbean view', town:'Cancún', neighborhood:'Puerto Cancún', bedrooms:3, bathrooms:3, parking:2, size:180, operation:'sale', currency:'USD', amount:1150000, formatted:'1,150,000', image:'https://images.pexels.com/photos/6775268/pexels-photo-6775268.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'penthouse', photoQuery:'penthouse ocean view terrace', lat:21.1394, lng:-86.7649},
+    {public_id:'EB-P5519', title_es:'Departamento amueblado', title_en:'Furnished apartment', town:'Playa del Carmen', neighborhood:'Centro', bedrooms:2, bathrooms:2, parking:1, size:90, operation:'rental', currency:'USD', amount:2200, formatted:'2,200', image:'https://images.pexels.com/photos/6969824/pexels-photo-6969824.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'apartment', photoQuery:'furnished apartment living room modern', lat:20.6296, lng:-87.0739},
+    {public_id:'EB-T3388', title_es:'Villa en la selva', title_en:'Villa in the jungle', town:'Tulum', neighborhood:'Región 15', bedrooms:4, bathrooms:4, parking:3, size:320, operation:'sale', currency:'USD', amount:890000, formatted:'890,000', image:'https://images.pexels.com/photos/4940760/pexels-photo-4940760.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'villa', photoQuery:'jungle villa mexico exterior', lat:20.1950, lng:-87.4550}
   ];
   let activeProp = properties[0];
   let opFilter = 'all';
@@ -662,14 +565,8 @@
   }
   const photoFor = p => p.image || sceneSVG(p.scene||'villa');
 
-  const bd = p => p.bedrooms+' '+(lang==='es'?'rec':'bd');
-  const ba = p => p.bathrooms+' '+(lang==='es'?'baños':'bath');
-  const per = p => p.operation==='rental' ? (lang==='es'?'/mes':'/mo') : '';
-  const priceStr = p => p.currency+' $'+p.formatted+(per(p)?' '+per(p):'');
-  const opLabel = p => p.operation==='sale' ? (lang==='es'?'Venta':'For sale') : (lang==='es'?'Renta':'For rent');
-
   function cardHTML(p){
-    return '<article class="pcard">'+
+    return '<article class="pcard" onclick="selectProperty(\''+p.public_id+'\')">'+
       '<div class="pcard-photo" style="background-color:#0a5d59;background-image:linear-gradient(180deg,rgba(6,35,42,.32),rgba(6,35,42,0) 42%,rgba(6,35,42,0) 72%,rgba(6,35,42,.14)),url(\''+photoFor(p)+'\')">'+
         '<span class="pcard-badge '+(p.operation==='sale'?'badge-sale':'badge-rental')+'">'+opLabel(p)+'</span>'+
         '<span class="pcard-id">'+p.public_id+'</span>'+
@@ -679,12 +576,16 @@
         '<div class="pcard-title">'+(lang==='es'?p.title_es:p.title_en)+'</div>'+
         '<div class="pcard-specs"><span>'+bd(p)+'</span><span>'+ba(p)+'</span><span>'+p.size+' m²</span></div>'+
         '<div class="pcard-foot"><span class="pcard-price">'+p.currency+' $'+p.formatted+(per(p)?' <small>'+per(p)+'</small>':'')+'</span></div>'+
-        '<button class="pcard-gen" onclick="loadProperty(\''+p.public_id+'\')">'+(lang==='es'?'Generar 6 piezas':'Generate 6 pieces')+' →</button>'+
+        '<button class="pcard-gen" onclick="event.stopPropagation();loadProperty(\''+p.public_id+'\')">'+(lang==='es'?'Generar 6 piezas':'Generate 6 pieces')+' →</button>'+
       '</div></article>';
   }
   function renderProperties(){
     const list = properties.filter(p=>opFilter==='all'||p.operation===opFilter);
     document.getElementById('pgrid').innerHTML = list.map(cardHTML).join('');
+  }
+  function selectProperty(id){
+    activeProp = properties.find(p=>p.public_id===id) || activeProp;
+    updateSidePanel();
   }
   async function loadListings(){
     if(!LISTINGS_ENDPOINT) return;               // demo mode: keep sample data
@@ -699,6 +600,7 @@
         renderProperties();
         updateHeroListing();
         renderPreview();
+        updateSidePanel();
       }
     }catch(e){
       console.warn('[Proplync] Live listings unavailable, using sample data:', e.message);
@@ -737,7 +639,94 @@
     document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c.getAttribute('data-fmt')==='pdf'));
     updateHeroListing();
     renderPreview();
+    updateSidePanel();
     window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  /* ---------- side panel: location (OpenStreetMap) + AI description (Groq) ----------
+     Both are real, free, third-party APIs — proxied server-side so keys never
+     ship to the browser and Nominatim's usage policy (User-Agent, no client
+     hammering) is respected. See api/geocode.js, api/amenities.js, api/describe.js. */
+  const GEOCODE_ENDPOINT = '/api/geocode';
+  const AMENITIES_ENDPOINT = '/api/amenities';
+  const DESCRIBE_ENDPOINT = '/api/describe';
+
+  async function updateSidePanel(){
+    const p = activeProp;
+    document.getElementById('ps-title').textContent = lang==='es'?p.title_es:p.title_en;
+    document.getElementById('ps-ai-out').innerHTML = '';
+    document.getElementById('ps-ai-btn').disabled = false;
+
+    let {lat, lng} = p;
+    if(lat==null || lng==null){
+      try{
+        const q = p.neighborhood+', '+p.town+', Quintana Roo, Mexico';
+        const r = await fetch(GEOCODE_ENDPOINT+'?q='+encodeURIComponent(q));
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const d = await r.json();
+        if(d.lat!=null && d.lng!=null){ lat=d.lat; lng=d.lng; p.lat=lat; p.lng=lng; }
+      }catch(e){
+        console.warn('[Proplync] geocode unavailable:', e.message);
+      }
+    }
+
+    const mapFrame = document.getElementById('ps-map-frame');
+    const amenBox = document.getElementById('ps-amenities');
+    if(lat!=null && lng!=null){
+      const d=0.012;
+      mapFrame.src = 'https://www.openstreetmap.org/export/embed.html?bbox='+(lng-d)+'%2C'+(lat-d)+'%2C'+(lng+d)+'%2C'+(lat+d)+'&layer=mapnik&marker='+lat+'%2C'+lng;
+      mapFrame.style.display = 'block';
+      loadAmenities(lat, lng);
+    }else{
+      mapFrame.style.display = 'none';
+      amenBox.innerHTML = '';
+    }
+  }
+
+  async function loadAmenities(lat, lng){
+    const box = document.getElementById('ps-amenities');
+    box.innerHTML = '<p class="ps-loading">'+(lang==='es'?'Buscando lugares cercanos…':'Finding nearby places…')+'</p>';
+    try{
+      const r = await fetch(AMENITIES_ENDPOINT+'?lat='+lat+'&lng='+lng);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const {places} = await r.json();
+      if(!places || !places.length){ box.innerHTML=''; return; }
+      box.innerHTML = places.slice(0,6).map(pl=>
+        '<div class="ps-poi"><span class="ps-poi-cat">'+pl.category+'</span><span class="ps-poi-name">'+pl.name+'</span><span class="ps-poi-dist">'+pl.distance_m+' m</span></div>'
+      ).join('');
+    }catch(e){
+      box.innerHTML = '';
+      console.warn('[Proplync] amenities unavailable:', e.message);
+    }
+  }
+
+  async function generateDescription(){
+    const btn = document.getElementById('ps-ai-btn');
+    const out = document.getElementById('ps-ai-out');
+    btn.disabled = true;
+    out.innerHTML = '<p class="ps-loading">'+(lang==='es'?'Generando con IA…':'Generating with AI…')+'</p>';
+    try{
+      const p = activeProp;
+      const r = await fetch(DESCRIBE_ENDPOINT, {
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify({
+          title: lang==='es'?p.title_es:p.title_en,
+          town:p.town, neighborhood:p.neighborhood,
+          bedrooms:p.bedrooms, bathrooms:p.bathrooms, size:p.size,
+          operation:p.operation, currency:p.currency, amount:p.amount,
+          lang
+        })
+      });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const {description} = await r.json();
+      out.innerHTML = '<p class="ps-ai-text">'+description+'</p><span class="ps-ai-credit">Powered by Groq · Llama 3.3</span>';
+    }catch(e){
+      out.innerHTML = '<p class="ps-error">'+(lang==='es'?'No se pudo generar la descripción. Intenta de nuevo.':'Could not generate the description. Try again.')+'</p>';
+      console.warn('[Proplync] describe unavailable:', e.message);
+    }finally{
+      btn.disabled = false;
+    }
   }
   function updateHeroListing(){
     const p=activeProp;
@@ -833,6 +822,7 @@
   renderProperties();
   updateHeroListing();
   renderPreview();
+  updateSidePanel();
   calc();
   loadListings();   // try live EasyBroker data; silently keeps samples if offline
   loadPhotos();     // fill in real photos for any sample without one

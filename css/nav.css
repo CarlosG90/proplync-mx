@@ -1,0 +1,29 @@
+/* Proplync.mx · Navigation
+   ──────────────────────── */
+header{position:sticky;top:0;z-index:50;background:rgba(6,35,42,.86);backdrop-filter:blur(12px);border-bottom:1px solid rgba(143,232,221,.14)}
+nav{display:flex;align-items:center;gap:28px;height:66px}
+.brand{display:flex;align-items:center;gap:11px;color:var(--on-ink);font-family:var(--display);font-size:1.12rem;font-weight:500;letter-spacing:-.01em}
+.brand .mark{width:26px;height:26px;flex:none}
+.navlinks{display:flex;gap:26px;margin-left:auto}
+.navlinks a{color:var(--on-ink-dim);font-size:.9rem;font-weight:500;transition:color .2s}
+.navlinks a:hover{color:var(--aqua)}
+.navtools{display:flex;align-items:center;gap:14px}
+.lang{display:inline-flex;border:1px solid rgba(143,232,221,.3);border-radius:999px;overflow:hidden;font-family:var(--mono);font-size:.72rem}
+.lang button{background:transparent;color:var(--on-ink-dim);border:0;padding:6px 11px;cursor:pointer;letter-spacing:.05em}
+.lang button.on{background:var(--aqua);color:var(--ink);font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--body);font-weight:600;font-size:.92rem;padding:11px 20px;border-radius:999px;cursor:pointer;border:0;transition:transform .15s ease,box-shadow .2s,background .2s;white-space:nowrap}
+.btn-gold{background:var(--gold);color:#231600;box-shadow:0 8px 22px -10px rgba(231,164,59,.8)}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 14px 30px -12px rgba(231,164,59,.9)}
+.btn-ghost{background:transparent;color:var(--on-ink);border:1px solid rgba(143,232,221,.35)}
+.btn-ghost:hover{border-color:var(--aqua);color:var(--aqua)}
+.btn-dark{background:var(--ink);color:var(--on-ink)}
+.btn-dark:hover{transform:translateY(-2px);background:var(--ink-2)}
+.navtoggle{display:none;background:none;border:0;cursor:pointer;flex-direction:column;gap:5px;padding:6px}
+.navtoggle span{width:24px;height:2px;background:var(--on-ink);border-radius:2px}
+
+@media (max-width:900px){
+  .navlinks{display:none}
+  .navtoggle{display:flex}
+  .navlinks.open{display:flex;position:absolute;top:66px;left:0;right:0;flex-direction:column;background:var(--ink);padding:20px 28px;gap:18px;border-bottom:1px solid rgba(143,232,221,.14);margin:0}
+  section{padding:72px 0}
+}
