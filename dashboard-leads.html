@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="Leads &middot; Proplync.mx" data-en="Leads &middot; Proplync.mx">Leads &middot; Proplync.mx</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .dash-main{padding:36px 32px;max-width:1000px;margin:0 auto}
+  .dash-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:16px}
+  .dash-head h1{font-size:clamp(1.5rem,3vw,2rem);color:var(--ink);font-weight:300}
+  .dash-tabs{display:flex;gap:8px;margin-bottom:24px}
+  .dash-tabs a{
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.05em;
+    padding:9px 18px;border-radius:999px;border:1px solid var(--line);
+    color:var(--on-sand-dim);background:var(--white);
+  }
+  .dash-tabs a.on{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+
+  .lead-list{display:flex;flex-direction:column;gap:14px}
+  .lead-card{
+    padding:20px;background:var(--white);border:1px solid rgba(26,36,56,.06);border-radius:var(--radius);
+    display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  }
+  .lead-info{flex:1;min-width:220px}
+  .lead-name{font-family:var(--display);font-size:1.06rem;color:var(--ink)}
+  .lead-contact{font-family:var(--mono);font-size:.72rem;color:var(--sea);margin-top:6px}
+  .lead-listing{font-family:var(--mono);font-size:.66rem;color:var(--on-sand-dim);margin-top:6px;text-transform:uppercase;letter-spacing:.04em}
+  .lead-message{font-size:.86rem;color:var(--on-sand-dim);margin-top:10px;line-height:1.5}
+  .lead-date{font-family:var(--mono);font-size:.62rem;color:var(--on-sand-dim);margin-top:10px}
+  .lead-status-select{flex:none;align-self:flex-start}
+  .dash-empty{text-align:center;padding:60px 20px;color:var(--on-sand-dim)}
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Proplync<span class="accent">.mx</span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/dashboard" data-es="Mis propiedades" data-en="My listings">Mis propiedades</a>
+      <a href="/dashboard/leads" data-es="Leads" data-en="Leads">Leads</a>
+    </div>
+    <div class="navtools">
+      <div class="lang"><button id="es" class="on" onclick="setLang('es')">ES</button><button id="en" onclick="setLang('en')">EN</button></div>
+      <a href="#" class="btn btn-ghost" onclick="signOut();return false" data-es="Cerrar sesion" data-en="Sign out">Cerrar sesion</a>
+    </div>
+    <button class="navtoggle" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<main class="dash-main">
+  <div class="dash-head">
+    <h1 data-es="Leads" data-en="Leads">Leads</h1>
+  </div>
+
+  <div class="dash-tabs">
+    <a href="/dashboard" data-es="Propiedades" data-en="Listings">Propiedades</a>
+    <a href="/dashboard/leads" class="on" data-es="Leads" data-en="Leads">Leads</a>
+  </div>
+
+  <div class="lead-list" id="lead-list">
+    <p class="dash-empty" data-es="Cargando..." data-en="Loading...">Cargando...</p>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/supabase-client.js"></script>
+<script>
+  let myLeads = [];
+
+  const STATUS_LABELS = {
+    es: { new: 'Nuevo', contacted: 'Contactado', won: 'Ganado', lost: 'Perdido' },
+    en: { new: 'New', contacted: 'Contacted', won: 'Won', lost: 'Lost' }
+  };
+
+  function leadCardHTML(l) {
+    const d = new Date(l.created_at);
+    return '<div class="lead-card">' +
+      '<div class="lead-info">' +
+        '<div class="lead-name">' + l.name + '</div>' +
+        '<div class="lead-contact">' + l.email + (l.phone ? ' &middot; ' + l.phone : '') + '</div>' +
+        '<div class="lead-listing">' + (l.listing_public_id || '') + '</div>' +
+        (l.message ? '<div class="lead-message">' + l.message + '</div>' : '') +
+        '<div class="lead-date">' + d.toLocaleDateString(lang === 'es' ? 'es-MX' : 'en-US') + '</div>' +
+      '</div>' +
+      '<select class="form-select lead-status-select" onchange="updateLeadStatus(\'' + l.id + '\', this.value)">' +
+        Object.keys(STATUS_LABELS[lang]).map(function(s) {
+          return '<option value="' + s + '"' + (s === l.status ? ' selected' : '') + '>' + STATUS_LABELS[lang][s] + '</option>';
+        }).join('') +
+      '</select>' +
+    '</div>';
+  }
+
+  function renderLeads() {
+    const box = document.getElementById('lead-list');
+    if (!myLeads.length) {
+      box.innerHTML = '<p class="dash-empty" data-es="Aun no tienes leads. Cuando alguien contacte una de tus propiedades, aparecera aqui." data-en="No leads yet. When someone contacts one of your listings, it will appear here.">' +
+        (lang === 'es' ? 'Aun no tienes leads. Cuando alguien contacte una de tus propiedades, aparecera aqui.' : 'No leads yet. When someone contacts one of your listings, it will appear here.') + '</p>';
+      return;
+    }
+    box.innerHTML = myLeads.map(leadCardHTML).join('');
+  }
+
+  async function loadLeads() {
+    const r = await authedFetch('/api/leads');
+    if (r.status === 401) { window.location.href = '/login'; return; }
+    const data = await r.json();
+    myLeads = data.leads || [];
+    renderLeads();
+  }
+
+  async function updateLeadStatus(id, status) {
+    await authedFetch('/api/leads?id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    const lead = myLeads.find(l => l.id === id);
+    if (lead) lead.status = status;
+  }
+
+  document.addEventListener('langchange', renderLeads);
+  document.querySelectorAll('#navlinks a').forEach(a => a.addEventListener('click', () => document.getElementById('navlinks').classList.remove('open')));
+
+  (async function init() {
+    const session = await requireAuth();
+    if (!session) return;
+    await loadLeads();
+  })();
+</script>
+</body>
+</html>

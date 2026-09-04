@@ -8,7 +8,8 @@ const API = {
   amenities: '/api/amenities',
   describe: '/api/describe',
   search: '/api/search',
-  property: '/api/property'
+  property: '/api/property',
+  nlsearch: '/api/nlsearch'
 };
 
 async function fetchListings() {
@@ -61,4 +62,15 @@ async function fetchProperty(id) {
   const r = await fetch(API.property + '?id=' + encodeURIComponent(id), { headers: { accept: 'application/json' } });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.json();
+}
+
+async function fetchNLSearch(query) {
+  const r = await fetch(API.nlsearch, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ query })
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const data = await r.json();
+  return data.filters || {};
 }

@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="Mi panel &middot; Proplync.mx" data-en="My dashboard &middot; Proplync.mx">Mi panel &middot; Proplync.mx</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .dash-main{padding:36px 32px;max-width:1000px;margin:0 auto}
+  .dash-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:16px}
+  .dash-head h1{font-size:clamp(1.5rem,3vw,2rem);color:var(--ink);font-weight:300}
+  .dash-tabs{display:flex;gap:8px;margin-bottom:24px}
+  .dash-tabs a{
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.05em;
+    padding:9px 18px;border-radius:999px;border:1px solid var(--line);
+    color:var(--on-sand-dim);background:var(--white);
+  }
+  .dash-tabs a.on{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+
+  .dash-listings{display:flex;flex-direction:column;gap:14px}
+  .dash-item{
+    display:flex;gap:16px;align-items:center;padding:16px;
+    background:var(--white);border:1px solid rgba(26,36,56,.06);border-radius:var(--radius);
+  }
+  .dash-item-photo{width:90px;height:70px;border-radius:var(--radius-sm);background-size:cover;background-position:center;background-color:var(--sand);flex:none}
+  .dash-item-body{flex:1;min-width:0}
+  .dash-item-title{font-family:var(--display);font-size:1.02rem;color:var(--ink)}
+  .dash-item-meta{font-family:var(--mono);font-size:.66rem;color:var(--on-sand-dim);margin-top:4px}
+  .dash-item-status{
+    font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;
+    padding:4px 10px;border-radius:6px;font-weight:700;
+  }
+  .status-published{background:rgba(45,138,133,.12);color:var(--sea-deep)}
+  .status-draft{background:rgba(201,169,110,.15);color:var(--gold-deep)}
+  .status-archived{background:rgba(26,36,56,.08);color:var(--on-sand-dim)}
+  .dash-item-actions{display:flex;gap:8px;flex:none}
+  .dash-item-actions button{
+    font-family:var(--mono);font-size:.68rem;background:none;border:1px solid var(--line);
+    border-radius:8px;padding:8px 14px;cursor:pointer;color:var(--on-sand-dim);
+  }
+  .dash-item-actions button:hover{border-color:var(--sea);color:var(--sea)}
+  .dash-item-actions button.danger:hover{border-color:#b3452f;color:#b3452f}
+
+  .dash-empty{text-align:center;padding:60px 20px;color:var(--on-sand-dim)}
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}
+  .form-grid .field-full{grid-column:1/-1}
+  #listing-modal,#settings-modal,#share-modal{
+    display:none;position:fixed;inset:0;background:rgba(10,22,40,.5);
+    z-index:100;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;
+  }
+  #listing-modal.open,#settings-modal.open,#share-modal.open{display:flex}
+  .modal-card{
+    background:var(--white);border-radius:var(--radius-lg);padding:32px;
+    max-width:640px;width:100%;box-shadow:var(--shadow-xl);
+  }
+  .modal-card h2{font-size:1.3rem;color:var(--ink);margin-bottom:24px}
+  .modal-actions{display:flex;gap:10px;margin-top:8px;align-items:center;flex-wrap:wrap}
+  .modal-reassure{font-size:.76rem;color:var(--on-sand-dim);margin:0}
+  .photo-preview{width:100%;aspect-ratio:16/9;border-radius:var(--radius-sm);background-size:cover;background-position:center;background-color:var(--sand);margin-bottom:12px}
+
+  .ai-assist-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .btn-ai{gap:8px}
+  .btn-ai svg{width:15px;height:15px;flex:none}
+  .btn-ai:disabled{opacity:.5;cursor:default;transform:none!important}
+  #ai-assist-status{font-size:.78rem;color:var(--on-sand-dim)}
+
+  /* live mini-site preview inside the share modal — browser-chrome frame */
+  .share-card{max-width:480px}
+  .browser-frame{border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow-lg);background:var(--sand)}
+  .browser-frame-bar{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--sand-2);border-bottom:1px solid var(--line)}
+  .browser-dot{width:7px;height:7px;border-radius:50%;background:var(--sand-3);flex:none}
+  .browser-frame-url{
+    margin-left:6px;flex:1;min-width:0;font-family:var(--mono);font-size:.64rem;color:var(--on-sand-dim);
+    background:var(--white);border-radius:999px;padding:4px 12px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;
+  }
+  .browser-frame-body{width:100%;height:280px;border:0;display:block;background:var(--white)}
+  .share-url-row{display:flex;align-items:center;gap:10px;margin-top:16px}
+  .share-qr-mini{width:52px;height:52px;border-radius:8px;border:1px solid var(--line);flex:none}
+  .share-url-row .form-input{margin:0}
+
+  @media (max-width:700px){
+    .form-grid{grid-template-columns:1fr}
+    .dash-item{flex-wrap:wrap}
+    .dash-item-actions{width:100%;justify-content:flex-end}
+  }
+  @media (max-width:520px){
+    .browser-frame-body{height:220px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Proplync<span class="accent">.mx</span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/dashboard" data-es="Mis propiedades" data-en="My listings">Mis propiedades</a>
+      <a href="/dashboard/leads" data-es="Leads" data-en="Leads">Leads</a>
+    </div>
+    <div class="navtools">
+      <div class="lang"><button id="es" class="on" onclick="setLang('es')">ES</button><button id="en" onclick="setLang('en')">EN</button></div>
+      <a href="#" class="btn btn-ghost" onclick="signOut();return false" data-es="Cerrar sesion" data-en="Sign out">Cerrar sesion</a>
+    </div>
+    <button class="navtoggle" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<main class="dash-main">
+  <div class="dash-head">
+    <h1 id="agency-name-header" data-es="Mis propiedades" data-en="My listings">Mis propiedades</h1>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="openSettingsModal()" data-es="Mi agencia" data-en="My agency">Mi agencia</button>
+      <button class="btn btn-gold" onclick="openListingModal()" data-es="+ Nueva propiedad" data-en="+ New listing">+ Nueva propiedad</button>
+    </div>
+  </div>
+
+  <div class="dash-tabs">
+    <a href="/dashboard" class="on" data-es="Propiedades" data-en="Listings">Propiedades</a>
+    <a href="/dashboard/leads" data-es="Leads" data-en="Leads">Leads</a>
+  </div>
+
+  <div class="dash-listings" id="dash-listings">
+    <p class="dash-empty" data-es="Cargando..." data-en="Loading...">Cargando...</p>
+  </div>
+</main>
+
+<div id="listing-modal">
+  <div class="modal-card">
+    <h2 id="modal-title" data-es="Nueva propiedad" data-en="New listing">Nueva propiedad</h2>
+    <div id="modal-error" style="display:none" class="form-error"></div>
+    <form id="listing-form" onsubmit="handleSaveListing(event)">
+      <input type="hidden" id="l-id">
+      <div class="field field-full">
+        <label class="form-label" for="l-photo-url" data-es="Foto principal" data-en="Main photo">Foto principal</label>
+        <div class="photo-preview" id="l-photo-preview"></div>
+        <input class="form-input" id="l-photo-file" type="file" accept="image/*" onchange="handlePhotoUpload(event)">
+        <div class="form-hint" id="l-photo-status"></div>
+        <input type="hidden" id="l-image">
+      </div>
+      <div class="form-grid">
+        <div class="field"><label class="form-label" data-es="Titulo (ES)" data-en="Title (ES)">Titulo (ES)</label><input class="form-input" id="l-title-es" required></div>
+        <div class="field"><label class="form-label" data-es="Titulo (EN)" data-en="Title (EN)">Titulo (EN)</label><input class="form-input" id="l-title-en"></div>
+        <div class="field"><label class="form-label" data-es="Ciudad" data-en="Town">Ciudad</label><input class="form-input" id="l-town" required></div>
+        <div class="field"><label class="form-label" data-es="Colonia / Zona" data-en="Neighborhood">Colonia / Zona</label><input class="form-input" id="l-neighborhood"></div>
+        <div class="field"><label class="form-label" data-es="Recamaras" data-en="Bedrooms">Recamaras</label><input class="form-input" id="l-bedrooms" type="number" min="0" value="0"></div>
+        <div class="field"><label class="form-label" data-es="Banos" data-en="Bathrooms">Banos</label><input class="form-input" id="l-bathrooms" type="number" min="0" value="0"></div>
+        <div class="field"><label class="form-label" data-es="Estacionamientos" data-en="Parking">Estacionamientos</label><input class="form-input" id="l-parking" type="number" min="0" value="0"></div>
+        <div class="field"><label class="form-label" data-es="Tamano (m&sup2;)" data-en="Size (sqm)">Tamano (m&sup2;)</label><input class="form-input" id="l-size" type="number" min="0" value="0"></div>
+        <div class="field">
+          <label class="form-label" data-es="Operacion" data-en="Operation">Operacion</label>
+          <select class="form-select" id="l-operation"><option value="sale">Venta</option><option value="rental">Renta</option></select>
+        </div>
+        <div class="field">
+          <label class="form-label" data-es="Moneda" data-en="Currency">Moneda</label>
+          <select class="form-select" id="l-currency"><option value="USD">USD</option><option value="MXN">MXN</option></select>
+        </div>
+        <div class="field"><label class="form-label" data-es="Precio" data-en="Price">Precio</label><input class="form-input" id="l-amount" type="number" min="0" required></div>
+        <div class="field">
+          <label class="form-label" data-es="Estado" data-en="Status">Estado</label>
+          <select class="form-select" id="l-status"><option value="published">Publicada</option><option value="draft">Borrador</option><option value="archived">Archivada</option></select>
+        </div>
+      </div>
+      <div class="field field-full ai-assist-row">
+        <button type="button" class="btn btn-outline btn-ai" id="ai-assist-btn" onclick="handleAIAssist()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.3 2.3M15.7 15.7L18 18M18 6l-2.3 2.3M8.3 15.7L6 18"/></svg>
+          <span data-es="Generar con IA" data-en="Generate with AI">Generar con IA</span>
+        </button>
+        <span id="ai-assist-status"></span>
+      </div>
+      <div class="field field-full">
+        <label class="form-label" data-es="Descripcion (ES)" data-en="Description (ES)">Descripcion (ES)</label>
+        <textarea class="form-textarea" id="l-description-es"></textarea>
+      </div>
+      <div class="field field-full">
+        <label class="form-label" data-es="Descripcion (EN)" data-en="Description (EN)">Descripcion (EN)</label>
+        <textarea class="form-textarea" id="l-description-en"></textarea>
+      </div>
+      <div class="field field-full">
+        <label class="form-label" data-es="Caracteristicas (separadas por coma)" data-en="Features (comma-separated)">Caracteristicas (separadas por coma)</label>
+        <input class="form-input" id="l-features" placeholder="Alberca privada, Vista al mar, Cocina integral...">
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn btn-gold" id="save-listing-btn" data-es="Guardar" data-en="Save">Guardar</button>
+        <button type="button" class="btn btn-outline" onclick="closeListingModal()" data-es="Cancelar" data-en="Cancel">Cancelar</button>
+        <p class="modal-reassure" data-es="Pagina lista en menos de 2 minutos. Sin desarrollador." data-en="Page live in under 2 minutes. No developer needed.">Pagina lista en menos de 2 minutos. Sin desarrollador.</p>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="settings-modal">
+  <div class="modal-card">
+    <h2 data-es="Mi agencia" data-en="My agency">Mi agencia</h2>
+    <p class="form-hint" style="margin-bottom:16px" data-es="Esto se muestra en la mini-pagina de cada una de tus propiedades." data-en="This shows on every one of your properties' mini-sites.">Esto se muestra en la mini-pagina de cada una de tus propiedades.</p>
+    <div id="settings-error" style="display:none" class="form-error"></div>
+    <form id="settings-form" onsubmit="handleSaveSettings(event)">
+      <div class="field field-full">
+        <label class="form-label" data-es="Logo" data-en="Logo">Logo</label>
+        <div class="photo-preview" id="s-logo-preview" style="aspect-ratio:3/1;max-width:240px"></div>
+        <input class="form-input" id="s-logo-file" type="file" accept="image/*" onchange="handleLogoUpload(event)">
+        <div class="form-hint" id="s-logo-status"></div>
+        <input type="hidden" id="s-logo-url">
+      </div>
+      <div class="field field-full">
+        <label class="form-label" data-es="Nombre de la agencia" data-en="Agency name">Nombre de la agencia</label>
+        <input class="form-input" id="s-name" required>
+      </div>
+      <div class="field field-full">
+        <label class="form-label" data-es="WhatsApp (con codigo de pais, ej. +529981234567)" data-en="WhatsApp (with country code, e.g. +529981234567)">WhatsApp</label>
+        <input class="form-input" id="s-whatsapp" type="tel" placeholder="+529981234567">
+        <div class="form-hint" data-es="Los compradores podran escribirte directo por WhatsApp desde tus propiedades." data-en="Buyers will be able to message you directly on WhatsApp from your listings.">Los compradores podran escribirte directo por WhatsApp desde tus propiedades.</div>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn btn-gold" id="save-settings-btn" data-es="Guardar" data-en="Save">Guardar</button>
+        <button type="button" class="btn btn-outline" onclick="closeSettingsModal()" data-es="Cerrar" data-en="Close">Cerrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="share-modal">
+  <div class="modal-card share-card" style="text-align:center">
+    <h2 id="share-modal-title" data-es="Tu pagina esta lista" data-en="Your page is live">Tu pagina esta lista</h2>
+    <p class="form-hint" style="margin-bottom:16px" data-es="Compartela por WhatsApp, copia el enlace o descarga el QR." data-en="Share it on WhatsApp, copy the link, or download the QR.">Compartela por WhatsApp, copia el enlace o descarga el QR.</p>
+    <div class="browser-frame">
+      <div class="browser-frame-bar">
+        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+        <span class="browser-frame-url" id="share-url-pill"></span>
+      </div>
+      <iframe id="share-preview-iframe" class="browser-frame-body" title="Preview" loading="lazy"></iframe>
+    </div>
+    <div class="share-url-row">
+      <img id="share-qr" alt="QR" class="share-qr-mini">
+      <input class="form-input" id="share-url" readonly onclick="this.select()">
+    </div>
+    <div class="modal-actions" style="justify-content:center">
+      <a id="share-whatsapp" class="btn btn-gold" target="_blank" rel="noopener" data-es="WhatsApp" data-en="WhatsApp">WhatsApp</a>
+      <button type="button" class="btn btn-outline" onclick="copyShareUrl()" data-es="Copiar enlace" data-en="Copy link">Copiar enlace</button>
+      <a id="share-qr-download" class="btn btn-outline" download="qr.gif" data-es="Descargar QR" data-en="Download QR">Descargar QR</a>
+    </div>
+    <button type="button" class="btn btn-outline" style="margin-top:10px" onclick="closeShareModal()" data-es="Cerrar" data-en="Close">Cerrar</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/supabase-client.js"></script>
+<script>
+  let myListings = [];
+  let currentAgencyId = null;
+  let uploadedImageUrl = null;
+
+  function statusLabel(s) {
+    if (s === 'published') return lang === 'es' ? 'Publicada' : 'Published';
+    if (s === 'draft') return lang === 'es' ? 'Borrador' : 'Draft';
+    return lang === 'es' ? 'Archivada' : 'Archived';
+  }
+
+  function itemHTML(l) {
+    const title = lang === 'es' ? (l.title_es || l.title_en) : (l.title_en || l.title_es);
+    return '<div class="dash-item">' +
+      '<div class="dash-item-photo" style="background-image:url(\'' + (l.image || '') + '\')"></div>' +
+      '<div class="dash-item-body">' +
+        '<div class="dash-item-title">' + title + '</div>' +
+        '<div class="dash-item-meta">' + l.town + (l.neighborhood ? ' &middot; ' + l.neighborhood : '') + ' &middot; ' + l.currency + ' $' + Number(l.amount).toLocaleString() + '</div>' +
+      '</div>' +
+      '<span class="dash-item-status status-' + l.status + '">' + statusLabel(l.status) + '</span>' +
+      '<div class="dash-item-actions">' +
+        '<button onclick="openShareModal(\'' + l.public_id + '\')" data-es="Compartir" data-en="Share">' + (lang === 'es' ? 'Compartir' : 'Share') + '</button>' +
+        '<button onclick="editListing(\'' + l.id + '\')" data-es="Editar" data-en="Edit">' + (lang === 'es' ? 'Editar' : 'Edit') + '</button>' +
+        '<button class="danger" onclick="deleteListing(\'' + l.id + '\')" data-es="Eliminar" data-en="Delete">' + (lang === 'es' ? 'Eliminar' : 'Delete') + '</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  async function loadListings() {
+    const r = await authedFetch('/api/my-listings');
+    if (r.status === 401) { window.location.href = '/login'; return; }
+    const data = await r.json();
+    myListings = data.listings || [];
+    const box = document.getElementById('dash-listings');
+    if (!myListings.length) {
+      box.innerHTML = '<p class="dash-empty" data-es="Aun no tienes propiedades. Crea la primera." data-en="No listings yet. Create your first one.">' +
+        (lang === 'es' ? 'Aun no tienes propiedades. Crea la primera.' : 'No listings yet. Create your first one.') + '</p>';
+      return;
+    }
+    box.innerHTML = myListings.map(itemHTML).join('');
+  }
+
+  function openListingModal(listing) {
+    document.getElementById('modal-error').style.display = 'none';
+    document.getElementById('listing-form').reset();
+    document.getElementById('l-photo-preview').style.backgroundImage = '';
+    document.getElementById('l-photo-status').textContent = '';
+    uploadedImageUrl = null;
+
+    if (listing) {
+      document.getElementById('modal-title').textContent = lang === 'es' ? 'Editar propiedad' : 'Edit listing';
+      document.getElementById('l-id').value = listing.id;
+      document.getElementById('l-title-es').value = listing.title_es || '';
+      document.getElementById('l-title-en').value = listing.title_en || '';
+      document.getElementById('l-town').value = listing.town || '';
+      document.getElementById('l-neighborhood').value = listing.neighborhood || '';
+      document.getElementById('l-bedrooms').value = listing.bedrooms || 0;
+      document.getElementById('l-bathrooms').value = listing.bathrooms || 0;
+      document.getElementById('l-parking').value = listing.parking || 0;
+      document.getElementById('l-size').value = listing.size || 0;
+      document.getElementById('l-operation').value = listing.operation || 'sale';
+      document.getElementById('l-currency').value = listing.currency || 'USD';
+      document.getElementById('l-amount').value = listing.amount || 0;
+      document.getElementById('l-status').value = listing.status || 'published';
+      document.getElementById('l-description-es').value = listing.description_es || '';
+      document.getElementById('l-description-en').value = listing.description_en || '';
+      document.getElementById('l-features').value = (listing.features || []).join(', ');
+      document.getElementById('l-image').value = listing.image || '';
+      uploadedImageUrl = listing.image || null;
+      if (listing.image) document.getElementById('l-photo-preview').style.backgroundImage = "url('" + listing.image + "')";
+    } else {
+      document.getElementById('modal-title').textContent = lang === 'es' ? 'Nueva propiedad' : 'New listing';
+      document.getElementById('l-id').value = '';
+    }
+    document.getElementById('listing-modal').classList.add('open');
+  }
+
+  function closeListingModal() {
+    document.getElementById('listing-modal').classList.remove('open');
+  }
+
+  function editListing(id) {
+    const listing = myListings.find(l => l.id === id);
+    if (listing) openListingModal(listing);
+  }
+
+  async function deleteListing(id) {
+    const ok = confirm(lang === 'es' ? '¿Eliminar esta propiedad?' : 'Delete this listing?');
+    if (!ok) return;
+    await authedFetch('/api/my-listings?id=' + encodeURIComponent(id), { method: 'DELETE' });
+    await loadListings();
+  }
+
+  async function handlePhotoUpload(evt) {
+    const file = evt.target.files[0];
+    if (!file || !currentAgencyId) return;
+    const statusEl = document.getElementById('l-photo-status');
+    statusEl.textContent = lang === 'es' ? 'Subiendo...' : 'Uploading...';
+    try {
+      const sbClient = initSupabase();
+      const ext = file.name.split('.').pop();
+      const path = currentAgencyId + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+      const { error } = await sbClient.storage.from('listing-photos').upload(path, file);
+      if (error) throw error;
+      const { data } = sbClient.storage.from('listing-photos').getPublicUrl(path);
+      uploadedImageUrl = data.publicUrl;
+      document.getElementById('l-image').value = uploadedImageUrl;
+      document.getElementById('l-photo-preview').style.backgroundImage = "url('" + uploadedImageUrl + "')";
+      statusEl.textContent = lang === 'es' ? 'Listo' : 'Done';
+    } catch (e) {
+      statusEl.textContent = (lang === 'es' ? 'Error: ' : 'Error: ') + e.message;
+    }
+  }
+
+  async function handleSaveListing(evt) {
+    evt.preventDefault();
+    const errEl = document.getElementById('modal-error');
+    errEl.style.display = 'none';
+    const btn = document.getElementById('save-listing-btn');
+    btn.disabled = true;
+
+    const id = document.getElementById('l-id').value;
+    const payload = {
+      title_es: document.getElementById('l-title-es').value,
+      title_en: document.getElementById('l-title-en').value || document.getElementById('l-title-es').value,
+      town: document.getElementById('l-town').value,
+      neighborhood: document.getElementById('l-neighborhood').value,
+      bedrooms: parseInt(document.getElementById('l-bedrooms').value) || 0,
+      bathrooms: parseInt(document.getElementById('l-bathrooms').value) || 0,
+      parking: parseInt(document.getElementById('l-parking').value) || 0,
+      size: parseFloat(document.getElementById('l-size').value) || 0,
+      operation: document.getElementById('l-operation').value,
+      currency: document.getElementById('l-currency').value,
+      amount: parseFloat(document.getElementById('l-amount').value) || 0,
+      status: document.getElementById('l-status').value,
+      description_es: document.getElementById('l-description-es').value,
+      description_en: document.getElementById('l-description-en').value,
+      features: document.getElementById('l-features').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean),
+      image: uploadedImageUrl || undefined
+    };
+
+    // best-effort geocode from town+neighborhood, reusing the existing
+    // free OpenStreetMap proxy already built for the buyer-facing sidebar
+    try {
+      const geo = await fetchGeocode(payload.neighborhood + ', ' + payload.town + ', Quintana Roo, Mexico');
+      if (geo.lat != null && geo.lng != null) { payload.lat = geo.lat; payload.lng = geo.lng; }
+    } catch (e) { /* non-fatal, listing saves without coordinates */ }
+
+    try {
+      const url = id ? '/api/my-listings?id=' + encodeURIComponent(id) : '/api/my-listings';
+      const method = id ? 'PATCH' : 'POST';
+      const r = await authedFetch(url, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || data.error);
+      closeListingModal();
+      await loadListings();
+      if (!id && data.listing && data.listing.public_id) openShareModal(data.listing.public_id);
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ---------- AI Assist: fill description (ES/EN) + features from the form's own facts ---------- */
+  async function handleAIAssist() {
+    const btn = document.getElementById('ai-assist-btn');
+    const statusEl = document.getElementById('ai-assist-status');
+    const title = document.getElementById('l-title-es').value.trim();
+    const town = document.getElementById('l-town').value.trim();
+    if (!title || !town) {
+      statusEl.textContent = lang === 'es' ? 'Escribe titulo y ciudad primero.' : 'Fill in title and town first.';
+      return;
+    }
+    btn.disabled = true;
+    statusEl.textContent = lang === 'es' ? 'Generando...' : 'Generating...';
+    const base = {
+      title: title,
+      town: town,
+      neighborhood: document.getElementById('l-neighborhood').value,
+      bedrooms: parseInt(document.getElementById('l-bedrooms').value) || 0,
+      bathrooms: parseInt(document.getElementById('l-bathrooms').value) || 0,
+      parking: parseInt(document.getElementById('l-parking').value) || 0,
+      size: parseFloat(document.getElementById('l-size').value) || 0,
+      operation: document.getElementById('l-operation').value,
+      currency: document.getElementById('l-currency').value,
+      amount: parseFloat(document.getElementById('l-amount').value) || 0
+    };
+    try {
+      const [esRes, enRes] = await Promise.all([
+        fetch('/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ lang: 'es' }, base)) }),
+        fetch('/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ lang: 'en' }, base)) })
+      ]);
+      const esData = await esRes.json();
+      if (!esRes.ok) throw new Error(esData.detail || esData.error);
+      document.getElementById('l-description-es').value = esData.content.pdf.description;
+      document.getElementById('l-features').value = (esData.content.pdf.features_list || []).join(', ');
+      if (enRes.ok) {
+        const enData = await enRes.json();
+        document.getElementById('l-description-en').value = enData.content.pdf.description;
+      }
+      statusEl.textContent = lang === 'es' ? 'Listo. Revisa y ajusta si quieres.' : 'Done. Review and tweak if you like.';
+    } catch (e) {
+      statusEl.textContent = lang === 'es' ? 'No se pudo generar. Intenta de nuevo.' : 'Could not generate. Try again.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  document.addEventListener('langchange', function () {
+    if (myListings.length) document.getElementById('dash-listings').innerHTML = myListings.map(itemHTML).join('');
+  });
+
+  /* ---------- agency settings (branding + WhatsApp for the mini-site) ---------- */
+  async function openSettingsModal() {
+    document.getElementById('settings-error').style.display = 'none';
+    const r = await authedFetch('/api/my-listings?resource=agency');
+    if (r.ok) {
+      const data = await r.json();
+      const a = data.agency || {};
+      document.getElementById('s-name').value = a.name || '';
+      document.getElementById('s-whatsapp').value = a.whatsapp_number || '';
+      document.getElementById('s-logo-url').value = a.logo_url || '';
+      document.getElementById('s-logo-preview').style.backgroundImage = a.logo_url ? "url('" + a.logo_url + "')" : '';
+    }
+    document.getElementById('settings-modal').classList.add('open');
+  }
+
+  function closeSettingsModal() {
+    document.getElementById('settings-modal').classList.remove('open');
+  }
+
+  async function handleLogoUpload(evt) {
+    const file = evt.target.files[0];
+    if (!file || !currentAgencyId) return;
+    const statusEl = document.getElementById('s-logo-status');
+    statusEl.textContent = lang === 'es' ? 'Subiendo...' : 'Uploading...';
+    try {
+      const sbClient = initSupabase();
+      const ext = file.name.split('.').pop();
+      const path = currentAgencyId + '/logo-' + Date.now() + '.' + ext;
+      const { error } = await sbClient.storage.from('listing-photos').upload(path, file);
+      if (error) throw error;
+      const { data } = sbClient.storage.from('listing-photos').getPublicUrl(path);
+      document.getElementById('s-logo-url').value = data.publicUrl;
+      document.getElementById('s-logo-preview').style.backgroundImage = "url('" + data.publicUrl + "')";
+      statusEl.textContent = lang === 'es' ? 'Listo' : 'Done';
+    } catch (e) {
+      statusEl.textContent = (lang === 'es' ? 'Error: ' : 'Error: ') + e.message;
+    }
+  }
+
+  async function handleSaveSettings(evt) {
+    evt.preventDefault();
+    const errEl = document.getElementById('settings-error');
+    errEl.style.display = 'none';
+    const btn = document.getElementById('save-settings-btn');
+    btn.disabled = true;
+    try {
+      const payload = {
+        name: document.getElementById('s-name').value.trim(),
+        whatsapp_number: document.getElementById('s-whatsapp').value.trim(),
+        logo_url: document.getElementById('s-logo-url').value || undefined
+      };
+      const r = await authedFetch('/api/my-listings?resource=agency', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || data.error);
+      document.getElementById('agency-name-header').textContent = data.agency.name;
+      closeSettingsModal();
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ---------- share a listing's mini-site (URL + QR) ---------- */
+  let shareUrl = '';
+
+  function openShareModal(publicId) {
+    shareUrl = window.location.origin + '/property/' + publicId;
+    document.getElementById('share-url').value = shareUrl;
+    document.getElementById('share-url-pill').textContent = shareUrl.replace(/^https?:\/\//, '');
+    document.getElementById('share-preview-iframe').src = shareUrl;
+    const waMsg = lang === 'es' ? 'Mira esta propiedad: ' + shareUrl : 'Check out this listing: ' + shareUrl;
+    document.getElementById('share-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(waMsg);
+    const qr = qrcode(0, 'M');
+    qr.addData(shareUrl);
+    qr.make();
+    const dataUrl = qr.createDataURL(6, 4);
+    document.getElementById('share-qr').src = dataUrl;
+    document.getElementById('share-qr-download').href = dataUrl;
+    document.getElementById('share-modal').classList.add('open');
+  }
+
+  function closeShareModal() {
+    document.getElementById('share-modal').classList.remove('open');
+    document.getElementById('share-preview-iframe').src = 'about:blank';
+  }
+
+  function copyShareUrl() {
+    const input = document.getElementById('share-url');
+    input.select();
+    navigator.clipboard && navigator.clipboard.writeText(shareUrl).catch(function () {});
+  }
+
+  document.querySelectorAll('#navlinks a').forEach(a => a.addEventListener('click', () => document.getElementById('navlinks').classList.remove('open')));
+
+  (async function init() {
+    const session = await requireAuth();
+    if (!session) return;
+    currentAgencyId = session.user.user_metadata && session.user.user_metadata.agency_id;
+    if (session.user.user_metadata && session.user.user_metadata.agency_name) {
+      document.getElementById('agency-name-header').textContent = session.user.user_metadata.agency_name;
+    }
+    await loadListings();
+  })();
+</script>
+</body>
+</html>

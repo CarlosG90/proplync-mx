@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title data-es="Buscar propiedades · Proplync.mx" data-en="Search properties · Proplync.mx">Buscar propiedades · Proplync.mx</title>
-<meta name="description" content="Encuentra propiedades en venta y renta en la Riviera Maya. Tulum, Playa del Carmen, Cancún, Puerto Morelos.">
+<meta name="description" content="Encuentra propiedades en venta y renta en la Riviera Maya. Tulum, Playa del Carmen, Cancun, Puerto Morelos.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -13,41 +13,95 @@
 <link rel="stylesheet" href="/css/components.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-  .search-layout{display:grid;grid-template-columns:1fr 380px;gap:0;min-height:calc(100vh - 66px)}
-  .search-main{padding:28px;overflow-y:auto}
-  .search-map{position:sticky;top:66px;height:calc(100vh - 66px);border-left:1px solid var(--line)}
+  .search-layout{display:grid;grid-template-columns:1fr 400px;gap:0;min-height:calc(100vh - 72px)}
+  .search-main{padding:36px 32px;overflow-y:auto}
+  .search-map{position:sticky;top:72px;height:calc(100vh - 72px);border-left:1px solid var(--line)}
 
-  .search-head{margin-bottom:24px}
-  .search-head h1{font-size:clamp(1.6rem,3vw,2.2rem);color:var(--ink)}
-  .search-head p{font-size:.92rem;color:var(--on-sand-dim);margin-top:6px}
-  .search-count{font-family:var(--mono);font-size:.72rem;color:var(--sea);margin-top:8px}
+  .search-head{margin-bottom:28px}
+  .search-head .eyebrow{color:var(--gold);display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .search-head .eyebrow::before{content:"";width:24px;height:1px;background:var(--gold)}
+  .search-head h1{font-size:clamp(1.6rem,3vw,2.4rem);color:var(--ink);font-weight:300;letter-spacing:-.02em}
+  .search-head p{font-size:.9rem;color:var(--on-sand-dim);margin-top:8px;line-height:1.6}
+  .search-count{font-family:var(--mono);font-size:.68rem;color:var(--gold);margin-top:10px;letter-spacing:.03em}
 
-  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;align-items:center}
-  .filter-select{font-family:var(--mono);font-size:.74rem;letter-spacing:.03em;background:#fff;color:var(--on-sand);border:1px solid var(--line);border-radius:999px;padding:9px 14px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234c6a6f' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-  .filter-select:focus{outline:2px solid var(--aqua);outline-offset:1px}
-  .filter-input{font-family:var(--mono);font-size:.74rem;background:#fff;color:var(--on-sand);border:1px solid var(--line);border-radius:999px;padding:9px 14px;width:110px}
-  .filter-input:focus{outline:2px solid var(--aqua);outline-offset:1px}
-  .filter-input::placeholder{color:var(--on-sand-dim)}
-  .filter-clear{font-family:var(--mono);font-size:.68rem;color:var(--sea);background:none;border:0;cursor:pointer;text-decoration:underline;padding:6px}
+  .nlsearch{
+    display:flex;gap:10px;margin-bottom:16px;
+    padding:6px 6px 6px 20px;background:var(--ink);
+    border-radius:999px;box-shadow:var(--shadow-md);
+    align-items:center;
+  }
+  .nlsearch svg{width:16px;height:16px;flex:none;stroke:var(--gold);fill:none;stroke-width:1.8}
+  .nlsearch input{
+    flex:1;background:none;border:0;color:var(--on-ink);
+    font-family:var(--body);font-size:.92rem;padding:10px 0;
+  }
+  .nlsearch input::placeholder{color:var(--on-ink-dim)}
+  .nlsearch input:focus{outline:none}
+  .nlsearch button{
+    font-family:var(--mono);font-size:.7rem;letter-spacing:.05em;font-weight:700;
+    background:var(--gold);color:var(--ink);border:0;border-radius:999px;
+    padding:11px 20px;cursor:pointer;white-space:nowrap;
+    transition:background var(--duration) ease;
+  }
+  .nlsearch button:hover{background:var(--gold-light)}
+  .nlsearch button:disabled{opacity:.6;cursor:default}
+  .nlsearch-hint{font-family:var(--mono);font-size:.66rem;color:var(--on-sand-dim);margin-bottom:20px;letter-spacing:.02em}
 
-  .search-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .filters{
+    display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;align-items:center;
+    padding:16px 20px;background:var(--white);
+    border:1px solid rgba(26,36,56,.06);
+    border-radius:var(--radius);
+  }
+  .filter-select{
+    font-family:var(--mono);font-size:.7rem;letter-spacing:.04em;
+    background:var(--paper);color:var(--on-sand);
+    border:1px solid var(--line);border-radius:999px;
+    padding:9px 32px 9px 14px;cursor:pointer;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235c6577' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;
+    transition:border-color var(--duration) ease;
+  }
+  .filter-select:focus{outline:none;border-color:var(--sea)}
+  .filter-input{
+    font-family:var(--mono);font-size:.7rem;
+    background:var(--paper);color:var(--on-sand);
+    border:1px solid var(--line);border-radius:999px;
+    padding:9px 14px;width:110px;
+    transition:border-color var(--duration) ease;
+  }
+  .filter-input:focus{outline:none;border-color:var(--sea)}
+  .filter-input::placeholder{color:var(--on-sand-light)}
+  .filter-clear{
+    font-family:var(--mono);font-size:.66rem;color:var(--sea);
+    background:none;border:0;cursor:pointer;padding:8px;
+    letter-spacing:.04em;
+    transition:color var(--duration) ease;
+  }
+  .filter-clear:hover{color:var(--ink)}
+
+  .search-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
   .search-grid .pcard-gen{display:none}
 
-  .search-empty{text-align:center;padding:60px 20px}
-  .search-empty h3{color:var(--ink);font-size:1.3rem}
-  .search-empty p{color:var(--on-sand-dim);margin-top:8px}
+  .search-empty{text-align:center;padding:80px 20px}
+  .search-empty h3{color:var(--ink);font-size:1.3rem;font-weight:300}
+  .search-empty p{color:var(--on-sand-dim);margin-top:10px}
 
   /* leaflet overrides */
-  .leaflet-popup-content-wrapper{border-radius:12px;font-family:var(--body)}
-  .leaflet-popup-content{margin:10px 14px;font-size:.84rem;line-height:1.4}
-  .leaflet-popup-content b{color:var(--ink);font-family:var(--display);font-weight:500}
-  .leaflet-popup-content .pop-price{font-family:var(--mono);color:var(--gold-deep);font-weight:700;font-size:.82rem;display:block;margin-top:4px}
-  .leaflet-popup-content .pop-link{font-family:var(--mono);font-size:.68rem;color:var(--sea);display:block;margin-top:6px}
+  .leaflet-popup-content-wrapper{border-radius:var(--radius);font-family:var(--body);box-shadow:var(--shadow-lg)}
+  .leaflet-popup-content{margin:12px 16px;font-size:.84rem;line-height:1.5}
+  .leaflet-popup-content b{color:var(--ink);font-family:var(--display);font-weight:400}
+  .leaflet-popup-content .pop-price{font-family:var(--mono);color:var(--ink);font-weight:700;font-size:.82rem;display:block;margin-top:6px}
+  .leaflet-popup-content .pop-link{font-family:var(--mono);font-size:.66rem;color:var(--gold);display:block;margin-top:8px;letter-spacing:.03em}
+  .leaflet-popup-content .pop-link:hover{color:var(--sea)}
 
   @media (max-width:900px){
     .search-layout{grid-template-columns:1fr}
-    .search-map{position:relative;top:0;height:300px;border-left:0;border-bottom:1px solid var(--line);order:-1}
+    .search-map{position:relative;top:0;height:280px;border-left:0;border-bottom:1px solid var(--line);order:-1}
+    .search-main{padding:24px}
     .search-grid{grid-template-columns:1fr}
+    .filters{padding:12px 16px}
   }
 </style>
 </head>
@@ -56,14 +110,15 @@
 <header>
   <nav class="wrap">
     <a class="brand" href="/">
-      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="#34d6c4" opacity=".18"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#34d6c4" stroke-width="1.8" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#e7a43b" stroke-width="1.8" stroke-linecap="round"/></svg>
-      Proplync<span style="color:#34d6c4">.mx</span>
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Proplync<span class="accent">.mx</span>
     </a>
     <div class="navlinks" id="navlinks">
       <a href="/search" style="color:var(--aqua)" data-es="Buscar" data-en="Search">Buscar</a>
-      <a href="/#como" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a>
+      <a href="/#como" data-es="Como funciona" data-en="How it works">Como funciona</a>
       <a href="/#precios" data-es="Precios" data-en="Pricing">Precios</a>
-      <a href="/favoritos" data-es="Favoritos" data-en="Favorites">Favoritos <span id="fav-badge" style="display:none;background:var(--gold);color:#231600;font-family:var(--mono);font-size:.58rem;font-weight:700;padding:2px 6px;border-radius:999px;margin-left:4px">0</span></a>
+      <a href="/favoritos" data-es="Favoritos" data-en="Favorites">Favoritos <span id="fav-badge" style="display:none;background:var(--gold);color:var(--ink);font-family:var(--mono);font-size:.56rem;font-weight:700;padding:2px 6px;border-radius:999px;margin-left:4px">0</span></a>
+      <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
     </div>
     <div class="navtools">
       <div class="lang"><button id="es" class="on" onclick="setLang('es')">ES</button><button id="en" onclick="setLang('en')">EN</button></div>
@@ -75,10 +130,18 @@
 <div class="search-layout">
   <div class="search-main">
     <div class="search-head">
+      <span class="eyebrow" data-es="Inventario" data-en="Inventory">Inventario</span>
       <h1 data-es="Propiedades en la Riviera Maya" data-en="Properties in the Riviera Maya">Propiedades en la Riviera Maya</h1>
-      <p data-es="Inventario real de EasyBroker. Datos verificados, sin información inventada." data-en="Real EasyBroker inventory. Verified data, no made-up information.">Inventario real de EasyBroker. Datos verificados, sin información inventada.</p>
+      <p data-es="Inventario real de EasyBroker. Datos verificados, sin informacion inventada." data-en="Real EasyBroker inventory. Verified data, no made-up information.">Inventario real de EasyBroker. Datos verificados, sin informacion inventada.</p>
       <div class="search-count" id="search-count"></div>
     </div>
+
+    <form class="nlsearch" id="nlsearch-form" onsubmit="handleNLSearch(event)">
+      <svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+      <input type="text" id="nlsearch-input" data-es-placeholder="Ej. depa de 2 recamaras cerca de la playa bajo 400k" data-en-placeholder="E.g. 2 bedroom condo near the beach under $400k" placeholder="Ej. depa de 2 recamaras cerca de la playa bajo 400k">
+      <button type="submit" id="nlsearch-btn" data-es="Buscar con IA" data-en="Search with AI">Buscar con IA</button>
+    </form>
+    <div class="nlsearch-hint" id="nlsearch-hint" data-es="Escribe en lenguaje natural &mdash; la IA lo convierte en filtros." data-en="Type in plain language &mdash; AI turns it into filters.">Escribe en lenguaje natural &mdash; la IA lo convierte en filtros.</div>
 
     <div class="filters" id="filters">
       <select class="filter-select" id="f-op" onchange="applyFilters()">
@@ -90,7 +153,7 @@
         <option value="" data-es="Todas las zonas" data-en="All zones">Todas las zonas</option>
       </select>
       <select class="filter-select" id="f-beds" onchange="applyFilters()">
-        <option value="" data-es="Recámaras" data-en="Bedrooms">Recámaras</option>
+        <option value="" data-es="Recamaras" data-en="Bedrooms">Recamaras</option>
         <option value="1">1+</option>
         <option value="2">2+</option>
         <option value="3">3+</option>
@@ -110,11 +173,11 @@
 <footer>
   <div class="wrap foot">
     <a class="brand" href="/">
-      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="#34d6c4" opacity=".18"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#34d6c4" stroke-width="1.8" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#e7a43b" stroke-width="1.8" stroke-linecap="round"/></svg>
-      Proplync<span style="color:#34d6c4">.mx</span>
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Proplync<span class="accent">.mx</span>
     </a>
-    <span data-es="Riviera Maya · Tulum · Playa del Carmen · Cancún" data-en="Riviera Maya · Tulum · Playa del Carmen · Cancún">Riviera Maya · Tulum · Playa del Carmen · Cancún</span>
-    <span class="mono" style="font-size:.72rem;opacity:.7">© 2026</span>
+    <span data-es="Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun" data-en="Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun">Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun</span>
+    <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span>
   </div>
 </footer>
 
@@ -123,6 +186,21 @@
 <script src="/js/api.js"></script>
 <script src="/js/favorites.js"></script>
 <script>
+  /* ---------- header scroll ---------- */
+  (function(){
+    const header = document.querySelector('header');
+    let ticking = false;
+    window.addEventListener('scroll', function(){
+      if(!ticking){
+        requestAnimationFrame(function(){
+          header.classList.toggle('scrolled', window.scrollY > 40);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  })();
+
   /* ---------- state ---------- */
   let listings = [];
   let map, markers = [];
@@ -147,7 +225,7 @@
         .bindPopup(
           '<b>' + title + '</b>' +
           '<span class="pop-price">' + p.currency + ' $' + p.formatted + '</span>' +
-          '<a class="pop-link" href="/propiedad/' + p.public_id + '">' + (lang === 'es' ? 'Ver detalle →' : 'View details →') + '</a>'
+          '<a class="pop-link" href="/propiedad/' + p.public_id + '">' + (lang === 'es' ? 'Ver detalle &rarr;' : 'View details &rarr;') + '</a>'
         )
         .addTo(map);
       markers.push(marker);
@@ -167,13 +245,13 @@
     const perLbl = p.operation === 'rental' ? (lang === 'es' ? '/mes' : '/mo') : '';
     const favClass = isFavorite(p.public_id) ? ' saved' : '';
     return '<article class="pcard" data-id="' + p.public_id + '" onclick="window.location.href=\'/propiedad/' + p.public_id + '\'">' +
-      '<div class="pcard-photo" style="background-color:#0a5d59;background-image:linear-gradient(180deg,rgba(6,35,42,.32),rgba(6,35,42,0) 42%,rgba(6,35,42,0) 72%,rgba(6,35,42,.14)),url(\'' + (p.image || '') + '\')">' +
+      '<div class="pcard-photo" style="background-color:#142237;background-image:linear-gradient(180deg,rgba(10,22,40,.18),rgba(10,22,40,0) 42%,rgba(10,22,40,0) 72%,rgba(10,22,40,.12)),url(\'' + (p.image || '') + '\')">' +
         '<span class="pcard-badge ' + (p.operation === 'sale' ? 'badge-sale' : 'badge-rental') + '">' + opLbl + '</span>' +
       '</div>' +
       '<div class="pcard-body">' +
-        '<div class="pcard-loc">' + p.neighborhood + ' · ' + p.town + '</div>' +
+        '<div class="pcard-loc">' + p.neighborhood + ' &middot; ' + p.town + '</div>' +
         '<div class="pcard-title">' + title + '</div>' +
-        '<div class="pcard-specs"><span>' + p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') + '</span><span>' + p.bathrooms + ' ' + (lang === 'es' ? 'baños' : 'bath') + '</span><span>' + p.size + ' m²</span></div>' +
+        '<div class="pcard-specs"><span>' + p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') + '</span><span>' + p.bathrooms + ' ' + (lang === 'es' ? 'banos' : 'bath') + '</span><span>' + p.size + ' m&sup2;</span></div>' +
         '<div class="pcard-foot"><span class="pcard-price">' + p.currency + ' $' + p.formatted + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
       '</div></article>';
   }
@@ -206,7 +284,6 @@
 
   async function applyFilters() {
     const params = getFilterParams();
-    // update URL without reload
     const qs = new URLSearchParams(params).toString();
     history.replaceState(null, '', qs ? '/search?' + qs : '/search');
     await loadSearch(params);
@@ -227,11 +304,9 @@
       const data = await fetchSearch(params || {});
       listings = data.listings || [];
 
-      // update count
       const countEl = document.getElementById('search-count');
       countEl.textContent = listings.length + (lang === 'es' ? ' propiedades encontradas' : ' properties found');
 
-      // populate town dropdown (only on first load)
       if (data.towns && data.towns.length) {
         const sel = document.getElementById('f-town');
         const current = sel.value;
@@ -255,6 +330,42 @@
     }
   }
 
+  /* ---------- natural-language search ---------- */
+  async function handleNLSearch(evt) {
+    evt.preventDefault();
+    const input = document.getElementById('nlsearch-input');
+    const btn = document.getElementById('nlsearch-btn');
+    const query = input.value.trim();
+    if (!query) return;
+
+    btn.disabled = true;
+    btn.textContent = lang === 'es' ? 'Buscando...' : 'Searching...';
+    try {
+      const filters = await fetchNLSearch(query);
+
+      // reflect recognized fields back into the visible filter controls
+      document.getElementById('f-op').value = filters.op || 'all';
+      document.getElementById('f-town').value = filters.town || '';
+      document.getElementById('f-beds').value = filters.beds || '';
+      document.getElementById('f-minprice').value = filters.minPrice || '';
+      document.getElementById('f-maxprice').value = filters.maxPrice || '';
+
+      // run the real search with the full filter set, including fields
+      // (minSize/maxSize/q) the visible filter bar has no control for yet
+      const qs = new URLSearchParams(filters).toString();
+      history.replaceState(null, '', qs ? '/search?' + qs : '/search');
+      await loadSearch(filters);
+    } catch (e) {
+      console.warn('[Proplync] nlsearch error:', e.message);
+      document.getElementById('search-grid').innerHTML = '<div class="search-empty"><h3>' +
+        (lang === 'es' ? 'No se pudo interpretar la busqueda' : 'Could not understand the search') +
+        '</h3><p>' + (lang === 'es' ? 'Intenta describirlo de otra forma, o usa los filtros.' : 'Try rephrasing it, or use the filters below.') + '</p></div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = lang === 'es' ? 'Buscar con IA' : 'Search with AI';
+    }
+  }
+
   /* ---------- restore filters from URL ---------- */
   function restoreFromURL() {
     const params = new URLSearchParams(window.location.search);
@@ -272,6 +383,8 @@
     updateMarkers(listings);
     const countEl = document.getElementById('search-count');
     countEl.textContent = listings.length + (lang === 'es' ? ' propiedades encontradas' : ' properties found');
+    const nlInput = document.getElementById('nlsearch-input');
+    nlInput.placeholder = nlInput.getAttribute('data-' + lang + '-placeholder');
   });
 
   /* ---------- mobile nav ---------- */

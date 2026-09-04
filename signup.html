@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="Crea tu cuenta &middot; Proplync.mx" data-en="Create your account &middot; Proplync.mx">Crea tu cuenta &middot; Proplync.mx</title>
+<meta name="description" content="Publica tus propiedades, gestiona leads y haz crecer tu inmobiliaria en la Riviera Maya.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .auth-main{padding:80px 20px;min-height:calc(100vh - 200px);display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Proplync<span class="accent">.mx</span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/#como" data-es="Como funciona" data-en="How it works">Como funciona</a>
+      <a href="/login" data-es="Iniciar sesion" data-en="Log in">Iniciar sesion</a>
+    </div>
+    <div class="navtools">
+      <div class="lang"><button id="es" class="on" onclick="setLang('es')">ES</button><button id="en" onclick="setLang('en')">EN</button></div>
+    </div>
+    <button class="navtoggle" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<main class="auth-main">
+  <div class="auth-card">
+    <h1 data-es="Registra tu inmobiliaria" data-en="Register your agency">Registra tu inmobiliaria</h1>
+    <p class="sub" data-es="Publica propiedades y recibe leads en minutos." data-en="Publish properties and start receiving leads in minutes.">Publica propiedades y recibe leads en minutos.</p>
+
+    <div id="form-error" style="display:none" class="form-error"></div>
+
+    <form id="signup-form" onsubmit="handleSignup(event)">
+      <div class="field">
+        <label class="form-label" for="agency-name" data-es="Nombre de tu inmobiliaria" data-en="Agency name">Nombre de tu inmobiliaria</label>
+        <input class="form-input" id="agency-name" type="text" required>
+      </div>
+      <div class="field">
+        <label class="form-label" for="email" data-es="Correo electronico" data-en="Email">Correo electronico</label>
+        <input class="form-input" id="email" type="email" required>
+      </div>
+      <div class="field">
+        <label class="form-label" for="password" data-es="Contrasena" data-en="Password">Contrasena</label>
+        <input class="form-input" id="password" type="password" required minlength="6">
+        <div class="form-hint" data-es="Minimo 6 caracteres" data-en="Minimum 6 characters">Minimo 6 caracteres</div>
+      </div>
+      <button class="btn btn-gold btn-block" type="submit" id="signup-btn" data-es="Crear cuenta" data-en="Create account">Crear cuenta</button>
+    </form>
+
+    <div class="switch" data-es="&iquest;Ya tienes cuenta? <a href='/login'>Inicia sesion</a>" data-en="Already have an account? <a href='/login'>Log in</a>">&iquest;Ya tienes cuenta? <a href="/login">Inicia sesion</a></div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Proplync<span class="accent">.mx</span>
+    </a>
+    <span data-es="Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun" data-en="Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun">Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun</span>
+    <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/supabase-client.js"></script>
+<script>
+  async function handleSignup(evt) {
+    evt.preventDefault();
+    const errEl = document.getElementById('form-error');
+    errEl.style.display = 'none';
+    const btn = document.getElementById('signup-btn');
+    const agencyName = document.getElementById('agency-name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    btn.disabled = true;
+    btn.textContent = lang === 'es' ? 'Creando cuenta...' : 'Creating account...';
+
+    try {
+      const r = await fetch('/api/onboard', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ agencyName, email, password })
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        if (data.error === 'email_already_registered') {
+          throw new Error(lang === 'es' ? 'Ese correo ya tiene una cuenta. Intenta iniciar sesion.' : 'That email already has an account. Try logging in instead.');
+        }
+        throw new Error(data.detail || data.error || 'signup_failed');
+      }
+
+      const sbClient = initSupabase();
+      const { error: signInErr } = await sbClient.auth.signInWithPassword({ email, password });
+      if (signInErr) throw signInErr;
+
+      window.location.href = '/dashboard';
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = lang === 'es' ? 'Crear cuenta' : 'Create account';
+    }
+  }
+
+  document.querySelectorAll('#navlinks a').forEach(a => a.addEventListener('click', () => document.getElementById('navlinks').classList.remove('open')));
+</script>
+</body>
+</html>

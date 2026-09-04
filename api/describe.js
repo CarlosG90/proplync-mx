@@ -12,7 +12,7 @@
  */
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.3-70b-versatile';
+const MODEL = 'qwen/qwen3.8-27b';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -38,8 +38,8 @@ export default async function handler(req, res) {
   const isEs = lang !== 'en';
   const opWord = operation === 'rental' ? (isEs ? 'renta' : 'rent') : (isEs ? 'venta' : 'sale');
   const system = isEs
-    ? 'Eres un redactor inmobiliario en México. Escribe descripciones de venta breves, cálidas y honestas, sin inventar datos que no te dieron. Máximo 80 palabras.'
-    : "You are a real estate copywriter in Mexico. Write short, warm, honest sales descriptions, never inventing facts you weren't given. Max 80 words.";
+    ? 'Eres un redactor inmobiliario en México. Escribe descripciones de venta breves, cálidas y honestas, liderando con la característica más fuerte del inmueble. Nunca inventes ni infles datos que no te dieron, y nunca describas al comprador ideal (nada de "perfecto para..." ni lenguaje que discrimine o segregue). Evita clichés vacíos ("no te lo puedes perder"). Máximo 80 palabras.'
+    : 'You are a real estate copywriter in Mexico. Write short, warm, honest sales descriptions, leading with the property\'s strongest feature. Never invent or inflate facts you weren\'t given, and never describe the ideal buyer (no "perfect for..." or language that discriminates/steers). Avoid empty clichés ("must see"). Max 80 words.';
   const user = isEs
     ? `Propiedad: ${title}, en ${neighborhood}, ${town}. ${bedrooms} recámaras, ${bathrooms} baños, ${size} m². En ${opWord} por ${currency} $${amount}. Escribe una descripción comercial.`
     : `Property: ${title}, in ${neighborhood}, ${town}. ${bedrooms} bedrooms, ${bathrooms} bathrooms, ${size} m². For ${opWord} at ${currency} $${amount}. Write a sales description.`;

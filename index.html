@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>Proplync.mx · Riviera Maya</title>
+<meta name="description" content="Captura una propiedad una vez, publica en siete formatos. Prop-pilot, el generador de contenido con IA de Proplync, para agencias, propietarios y desarrolladoras de Tulum, Playa del Carmen y Cancun.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -11,185 +12,872 @@
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/components.css">
 <style>
-  /* ---------- HERO ---------- */
-  .hero{position:relative;background:
-      radial-gradient(120% 90% at 82% 8%, rgba(52,214,196,.20), transparent 55%),
-      radial-gradient(90% 70% at 0% 100%, rgba(12,124,119,.5), transparent 60%),
-      linear-gradient(165deg,#06232a 0%,#0a4a48 60%,#0c6360 100%);
-    color:var(--on-ink);overflow:hidden}
-  .hero .wrap{position:relative;z-index:2;display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center;padding-top:64px;padding-bottom:96px}
-  .hero-eyebrow{color:var(--aqua);display:flex;align-items:center;gap:10px;margin-bottom:22px}
-  .hero-eyebrow::before{content:"";width:26px;height:1px;background:var(--aqua)}
-  .hero h1{font-size:clamp(2.5rem,5.4vw,4.35rem);letter-spacing:-.025em}
-  .hero h1 em{font-style:italic;color:var(--aqua)}
-  .hero-sub{margin-top:24px;font-size:1.12rem;color:var(--on-ink-dim);max-width:30em}
-  .hero-cta{margin-top:34px;display:flex;gap:14px;flex-wrap:wrap}
-  .hero-meta{margin-top:36px;display:flex;gap:26px;flex-wrap:wrap;font-family:var(--mono);font-size:.74rem;color:var(--on-ink-dim);letter-spacing:.03em}
-  .hero-meta b{color:var(--on-ink);font-weight:700}
-  .wave{position:absolute;left:0;right:0;bottom:-1px;z-index:1;line-height:0}
-  .wave svg{width:100%;height:70px;display:block}
+  /* ================================================================
+     HERO — Immersive, conversion-optimized
+     ================================================================ */
+  .hero{
+    position:relative;
+    background:var(--ink);
+    color:var(--on-ink);overflow:hidden;
+    min-height:94vh;display:flex;flex-direction:column;justify-content:flex-end;
+  }
+  /* Ambient gradient orbs */
+  .hero::before{
+    content:"";position:absolute;inset:0;z-index:1;
+    background:
+      radial-gradient(ellipse 70% 55% at 72% 18%, rgba(201,169,110,.1), transparent 55%),
+      radial-gradient(ellipse 55% 75% at 8% 82%, rgba(45,138,133,.14), transparent 50%),
+      radial-gradient(ellipse 35% 45% at 50% 50%, rgba(20,34,55,.55), transparent);
+  }
+  /* Animated floating orb */
+  .hero-orb{
+    position:absolute;z-index:1;pointer-events:none;
+    border-radius:50%;filter:blur(80px);opacity:.6;
+  }
+  .hero-orb-1{
+    width:400px;height:400px;top:-10%;right:5%;
+    background:radial-gradient(circle,rgba(201,169,110,.2),transparent 70%);
+    animation:orbFloat 12s ease-in-out infinite;
+  }
+  .hero-orb-2{
+    width:300px;height:300px;bottom:10%;left:-5%;
+    background:radial-gradient(circle,rgba(45,138,133,.18),transparent 70%);
+    animation:orbFloat 15s ease-in-out infinite reverse;
+  }
+  @keyframes orbFloat{
+    0%,100%{transform:translate(0,0) scale(1)}
+    33%{transform:translate(20px,-30px) scale(1.05)}
+    66%{transform:translate(-15px,20px) scale(.95)}
+  }
+  /* Subtle grain texture */
+  .hero::after{
+    content:"";position:absolute;inset:0;z-index:1;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity:.025;pointer-events:none;mix-blend-mode:overlay;
+  }
+  .hero .wrap{
+    position:relative;z-index:2;
+    display:grid;grid-template-columns:1.15fr .85fr;gap:72px;align-items:end;
+    padding-top:140px;padding-bottom:120px;
+  }
+  .hero-content{padding-bottom:28px}
+  .hero-eyebrow{
+    color:var(--gold);display:inline-flex;align-items:center;gap:12px;margin-bottom:32px;
+  }
+  .hero-eyebrow::before{content:"";width:36px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)}
+  .hero h1{
+    font-size:var(--text-5xl);
+    letter-spacing:-.035em;font-weight:300;line-height:1.02;
+  }
+  .hero h1 em{font-style:italic;color:var(--gold);font-weight:300}
+  .hero-sub{
+    margin-top:32px;font-size:var(--text-md);color:var(--on-ink-dim);
+    max-width:32em;line-height:1.75;
+  }
+  .hero-tags{
+    margin-top:26px;font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;
+    color:var(--gold-light);line-height:1.8;max-width:34em;
+  }
+  .hero-paths{
+    margin-top:36px;display:grid;grid-template-columns:1fr 1fr;gap:14px;
+  }
+  .hero-path{
+    position:relative;display:flex;flex-direction:column;gap:6px;
+    padding:22px 24px 24px;border-radius:var(--radius-lg);
+    background:rgba(240,237,232,.04);border:1px solid rgba(240,237,232,.1);
+    text-decoration:none;transition:all var(--duration) ease;
+  }
+  .hero-path:hover{
+    background:rgba(240,237,232,.07);border-color:var(--gold-light);
+    transform:translateY(-3px);
+  }
+  .hero-path-eyebrow{
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--gold);
+  }
+  .hero-path-title{
+    font-family:var(--display);font-size:1.14rem;color:var(--on-ink);font-weight:400;
+    margin-top:6px;line-height:1.25;
+  }
+  .hero-path-sub{font-size:.8rem;color:var(--on-ink-dim);margin-top:4px}
+  .hero-path-arrow{
+    position:absolute;top:22px;right:22px;color:var(--gold);font-size:1.1rem;
+    transition:transform var(--duration) ease;
+  }
+  .hero-path:hover .hero-path-arrow{transform:translateX(4px)}
+  .hero-cta{margin-top:20px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .hero-cta .btn-gold{font-size:.92rem;padding:15px 32px}
 
-  /* ---------- DEMO CARD (signature) ---------- */
+  /* Trust badges beneath CTA */
+  .hero-trust{
+    margin-top:48px;display:flex;gap:10px;flex-wrap:wrap;
+  }
+  .hero-trust-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.04em;
+    color:var(--on-ink-faint);
+    background:rgba(240,237,232,.04);
+    border:1px solid rgba(240,237,232,.06);
+    border-radius:999px;padding:7px 16px;
+  }
+  .hero-trust-badge svg{width:14px;height:14px;stroke:var(--gold);stroke-width:1.5;fill:none}
+
+  /* Stats row */
+  .hero-meta{
+    margin-top:56px;display:flex;gap:40px;flex-wrap:wrap;
+    padding-top:32px;border-top:1px solid rgba(240,237,232,.08);
+  }
+  .hero-meta span{
+    display:flex;flex-direction:column;gap:6px;
+    font-family:var(--mono);font-size:.72rem;color:var(--on-ink-faint);letter-spacing:.03em;
+  }
+  .hero-meta b{
+    color:var(--on-ink);font-weight:700;font-size:1.2rem;letter-spacing:-.01em;
+    font-family:var(--body);
+  }
+
+  /* Bottom edge transition — organic curve */
+  .hero-edge{
+    position:absolute;left:0;right:0;bottom:-1px;z-index:3;
+    line-height:0;
+  }
+  .hero-edge svg{display:block;width:100%;height:auto}
+
+  /* ================================================================
+     DEMO CARD (signature interactive)
+     ================================================================ */
   .demo{position:relative}
-  .demo-card{background:rgba(251,247,238,.06);border:1px solid rgba(143,232,221,.22);border-radius:24px;padding:16px;backdrop-filter:blur(6px);box-shadow:0 40px 80px -40px rgba(0,0,0,.7)}
-  .listing{display:flex;gap:14px;align-items:center;padding:12px;border-radius:15px;background:rgba(6,35,42,.5);border:1px solid rgba(143,232,221,.14)}
-  .listing-photo{width:88px;height:72px;border-radius:11px;flex:none;background:
-      linear-gradient(150deg,#12908a,#0a5d59 55%,#083f3d),
-      radial-gradient(circle at 70% 25%,rgba(231,164,59,.5),transparent 40%);
-    position:relative;overflow:hidden}
-  .listing-photo::after{content:"";position:absolute;inset:0;background:
-     linear-gradient(transparent 55%,rgba(52,214,196,.25) 56%,transparent 58%),
-     linear-gradient(transparent 72%,rgba(255,255,255,.14) 73%,transparent 75%)}
+  .demo-card{
+    background:rgba(240,237,232,.03);
+    border:1px solid rgba(240,237,232,.08);
+    border-radius:var(--radius-2xl);
+    padding:20px;
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    box-shadow:
+      0 48px 96px -32px rgba(0,0,0,.5),
+      0 0 0 1px rgba(240,237,232,.04) inset;
+    transition:box-shadow var(--duration-slow) ease;
+  }
+  .demo-card:hover{
+    box-shadow:
+      0 56px 100px -28px rgba(0,0,0,.55),
+      0 0 0 1px rgba(240,237,232,.06) inset;
+  }
+  /* Decorative corner accent */
+  .demo-card::before{
+    content:"";position:absolute;top:-1px;right:24px;
+    width:60px;height:3px;border-radius:0 0 3px 3px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  }
+  .listing{
+    display:flex;gap:16px;align-items:center;
+    padding:14px;border-radius:var(--radius);
+    background:rgba(10,22,40,.45);
+    border:1px solid rgba(240,237,232,.06);
+    transition:background var(--duration) ease;
+  }
+  .listing:hover{background:rgba(10,22,40,.55)}
+  .listing-photo{
+    width:88px;height:72px;border-radius:var(--radius-sm);flex:none;
+    background:
+      linear-gradient(150deg,rgba(45,138,133,.8),rgba(31,107,103,.9) 55%,rgba(10,22,40,.6)),
+      radial-gradient(circle at 70% 25%,rgba(201,169,110,.5),transparent 40%);
+    position:relative;overflow:hidden;
+    background-size:cover;background-position:center;
+  }
   .listing-info{flex:1;min-width:0}
-  .listing-info .t{font-family:var(--display);font-size:1.02rem;color:var(--on-ink);font-weight:500}
-  .listing-info .loc{font-family:var(--mono);font-size:.68rem;color:var(--aqua);letter-spacing:.05em;margin-top:3px}
-  .listing-specs{display:flex;gap:12px;margin-top:9px;font-family:var(--mono);font-size:.66rem;color:var(--on-ink-dim)}
-  .listing-price{font-family:var(--mono);font-weight:700;color:var(--gold);font-size:1rem;text-align:right;white-space:nowrap}
-  .demo-arrow{text-align:center;font-family:var(--mono);font-size:.66rem;color:var(--on-ink-dim);letter-spacing:.18em;text-transform:uppercase;margin:13px 0 11px}
+  .listing-info .t{font-family:var(--display);font-size:1rem;color:var(--on-ink);font-weight:400}
+  .listing-info .loc{font-family:var(--mono);font-size:.64rem;color:var(--gold);letter-spacing:.06em;margin-top:4px}
+  .listing-specs{display:flex;gap:12px;margin-top:9px;font-family:var(--mono);font-size:.64rem;color:var(--on-ink-dim)}
+  .listing-price{font-family:var(--mono);font-weight:700;color:var(--gold);font-size:.96rem;text-align:right;white-space:nowrap}
+  .demo-arrow{
+    text-align:center;font-family:var(--mono);font-size:.62rem;
+    color:var(--on-ink-faint);letter-spacing:.18em;text-transform:uppercase;
+    margin:16px 0 14px;
+    display:flex;align-items:center;gap:12px;justify-content:center;
+  }
+  .demo-arrow::before,.demo-arrow::after{
+    content:"";flex:1;max-width:48px;height:1px;background:rgba(240,237,232,.1);
+  }
   .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .chip{font-family:var(--body);font-weight:600;font-size:.78rem;color:var(--on-ink-dim);background:rgba(6,35,42,.45);border:1px solid rgba(143,232,221,.16);border-radius:11px;padding:10px 6px;cursor:pointer;text-align:center;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:5px}
-  .chip svg{width:19px;height:19px;stroke:var(--aqua-soft);opacity:.85}
-  .chip:hover{border-color:var(--aqua);color:var(--on-ink)}
-  .chip.on{background:var(--aqua);border-color:var(--aqua);color:var(--ink)}
+  .chip{
+    font-family:var(--body);font-weight:600;font-size:.76rem;
+    color:var(--on-ink-dim);
+    background:rgba(10,22,40,.35);
+    border:1px solid rgba(240,237,232,.06);
+    border-radius:var(--radius-sm);padding:11px 6px;cursor:pointer;
+    text-align:center;
+    transition:all var(--duration) ease;
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+  }
+  .chip svg{width:18px;height:18px;stroke:var(--on-ink-dim);opacity:.7;transition:all var(--duration) ease}
+  .chip:hover{border-color:var(--gold-light);color:var(--on-ink)}
+  .chip:hover svg{stroke:var(--on-ink);opacity:1}
+  .chip.on{
+    background:linear-gradient(160deg,var(--gold),var(--gold-deep));
+    border-color:var(--gold);color:var(--ink);
+  }
   .chip.on svg{stroke:var(--ink);opacity:1}
-  .preview{margin-top:12px;background:var(--paper);border-radius:15px;padding:16px;min-height:132px;color:var(--on-sand);position:relative;overflow:hidden}
-  .pv-tag{position:absolute;top:11px;right:13px;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--sea);background:rgba(12,124,119,.1);padding:3px 8px;border-radius:6px}
-  .pv-title{font-family:var(--display);font-size:1.02rem;color:var(--ink);max-width:80%}
-  .pv-body{font-size:.82rem;color:var(--on-sand-dim);margin-top:7px;max-width:92%}
-  .pv-row{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
-  .pv-pill{font-family:var(--mono);font-size:.62rem;background:var(--sand-2);color:var(--sea-deep);padding:4px 8px;border-radius:6px}
+  .preview{
+    margin-top:14px;background:var(--paper);border-radius:var(--radius);
+    padding:20px;min-height:136px;color:var(--on-sand);position:relative;overflow:hidden;
+    transition:background var(--duration) ease;
+  }
+  .pv-tag{
+    position:absolute;top:12px;right:14px;
+    font-family:var(--mono);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--gold);background:rgba(201,169,110,.08);
+    padding:3px 10px;border-radius:6px;
+  }
+  .pv-title{font-family:var(--display);font-size:1rem;color:var(--ink);max-width:80%}
+  .pv-body{font-size:.82rem;color:var(--on-sand-dim);margin-top:8px;max-width:92%;line-height:1.6}
+  .pv-row{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+  .pv-pill{font-family:var(--mono);font-size:.6rem;background:var(--sand);color:var(--sea-deep);padding:4px 9px;border-radius:6px}
   .pv-dots{display:flex;gap:6px;margin-top:12px}
   .pv-dots i{width:24px;height:5px;border-radius:3px;background:var(--sand-2)}
   .pv-dots i.a{background:var(--sea)}
-  .pv-visual{position:absolute;right:-8px;bottom:-8px;width:96px;height:96px;border-radius:14px;background:linear-gradient(150deg,#12908a,#0a5d59);opacity:.14}
-  .pv-play{width:38px;height:38px;border-radius:50%;background:var(--sea);display:flex;align-items:center;justify-content:center;margin-top:12px}
-  .pv-play svg{width:15px;height:15px;fill:#fff}
+  .pv-play{
+    width:40px;height:40px;border-radius:50%;background:var(--ink);
+    display:flex;align-items:center;justify-content:center;margin-top:14px;
+    transition:transform var(--duration) var(--ease-out),box-shadow var(--duration) ease;
+  }
+  .pv-play:hover{transform:scale(1.08);box-shadow:var(--shadow-md)}
 
-  /* ---------- HOMEPAGE-SPECIFIC ---------- */
-  /* problem band */
-  .band{background:var(--ink);color:var(--on-ink)}
-  .band h2{color:var(--on-ink)}
-  .band .sec-head .eyebrow{color:var(--aqua)}
-  .band p{color:var(--on-ink-dim)}
-  .prob-quote{font-family:var(--display);font-size:clamp(1.5rem,3.2vw,2.3rem);line-height:1.25;color:var(--on-ink);max-width:22em}
-  .prob-quote em{color:var(--aqua);font-style:italic}
+  /* Real visual mockups in the preview panel — a photo-based header that
+     matches the actual export, instead of plain text standing in for it. */
+  .pv-thumb{
+    width:100%;aspect-ratio:16/9;border-radius:var(--radius-sm);
+    background-size:cover;background-position:center;background-color:var(--ink);
+    position:relative;overflow:hidden;margin-bottom:14px;
+  }
+  .pv-thumb.square{aspect-ratio:1/1}
+  .pv-thumb.tall{aspect-ratio:9/13;max-width:110px;margin-left:0}
+  .pv-thumb-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,.05) 0%,rgba(10,22,40,.18) 45%,rgba(10,22,40,.85) 100%)}
+  .pv-thumb-price{
+    position:absolute;top:8px;right:8px;background:var(--gold);color:var(--ink);
+    font-family:var(--mono);font-weight:700;font-size:.6rem;padding:4px 9px;border-radius:6px;
+  }
+  .pv-thumb-cap{
+    position:absolute;left:10px;right:10px;bottom:8px;color:#fff;
+    font-family:var(--display);font-size:.86rem;line-height:1.22;
+  }
+  .pv-thumb-play{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.95);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .pv-thumb-play svg{width:13px;height:13px;fill:var(--ink)}
+  .pv-mini-strip{display:flex;gap:5px;margin-bottom:14px}
+  .pv-mini-slide{
+    flex:1;aspect-ratio:1/1;border-radius:6px;background-size:cover;background-position:center;
+    position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:5px;
+  }
+  .pv-mini-slide span{position:relative;font-family:var(--mono);font-size:.42rem;color:rgba(255,255,255,.85);letter-spacing:.04em}
+  .pv-mini-slide .ov{position:absolute;inset:0}
+  .pv-play svg{width:14px;height:14px;fill:#fff}
 
-  /* process */
-  .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;counter-reset:s}
-  .step{padding:26px 20px;border-top:2px solid var(--line);position:relative}
-  .step::before{counter-increment:s;content:"0" counter(s);font-family:var(--mono);font-size:.8rem;color:var(--gold-deep);font-weight:700}
-  .step h3{font-size:1.18rem;color:var(--ink);margin-top:14px}
-  .step p{font-size:.9rem;color:var(--on-sand-dim);margin-top:9px}
+  /* ================================================================
+     AUDIENCE SEGMENTATION — "Para quien es Proplync"
+     ================================================================ */
+  .audience-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .audience-card{
+    background:var(--white);border:1px solid rgba(26,36,56,.05);
+    border-radius:var(--radius-lg);padding:36px 32px;
+    display:flex;flex-direction:column;
+    transition:transform var(--duration-slow) var(--ease-expo),box-shadow var(--duration-slow) var(--ease-expo);
+  }
+  .audience-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+  .audience-card .aud-eyebrow{
+    font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:14px;display:block;
+  }
+  .audience-card h3{font-size:1.3rem;color:var(--ink);font-weight:400;margin-bottom:6px}
+  .audience-card .aud-sub{font-size:.86rem;color:var(--on-sand-dim);line-height:1.6;margin-bottom:20px}
+  .audience-card ul{list-style:none;padding:0;margin:0 0 24px;flex:1}
+  .audience-card li{
+    font-size:.86rem;color:var(--on-sand-dim);padding:10px 0 10px 22px;
+    position:relative;border-top:1px solid rgba(26,36,56,.04);line-height:1.55;
+  }
+  .audience-card li:first-child{border-top:0}
+  .audience-card li::before{
+    content:"";position:absolute;left:0;top:17px;width:10px;height:5px;
+    border-left:2px solid var(--gold);border-bottom:2px solid var(--gold);transform:rotate(-45deg);
+  }
+  .audience-card .btn{width:100%;justify-content:center}
 
-  /* pieces grid */
-  .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-  .piece{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px;transition:transform .2s,box-shadow .2s}
-  .piece:hover{transform:translateY(-4px);box-shadow:0 22px 44px -28px rgba(10,74,72,.6)}
-  .piece .ic{width:44px;height:44px;border-radius:12px;background:linear-gradient(150deg,var(--sea),var(--sea-deep));display:flex;align-items:center;justify-content:center;margin-bottom:16px}
-  .piece .ic svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.7}
-  .piece h3{font-size:1.22rem;color:var(--ink)}
-  .piece p{font-size:.92rem;color:var(--on-sand-dim);margin-top:8px}
-  .piece .fmt{font-family:var(--mono);font-size:.64rem;color:var(--sea);letter-spacing:.08em;margin-top:14px;text-transform:uppercase}
+  /* ================================================================
+     HOW IT WORKS — process steps
+     ================================================================ */
+  .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;counter-reset:s}
+  .step{
+    padding:36px 28px;
+    border-top:2px solid rgba(26,36,56,.06);
+    position:relative;
+    transition:background var(--duration) ease,border-color var(--duration) ease;
+  }
+  .step:hover{
+    background:rgba(201,169,110,.03);
+    border-top-color:var(--gold);
+  }
+  .step::before{
+    counter-increment:s;content:"0" counter(s);
+    font-family:var(--mono);font-size:.72rem;color:var(--gold);font-weight:700;
+    display:block;margin-bottom:18px;
+  }
+  .step h3{font-size:1.14rem;color:var(--ink)}
+  .step p{font-size:.88rem;color:var(--on-sand-dim);margin-top:10px;line-height:1.65}
 
-  .guard{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:34px}
-  .guard div{padding:20px;border-left:2px solid var(--gold);background:var(--sand)}
-  .guard h4{font-family:var(--body);font-weight:700;font-size:.96rem;color:var(--ink);margin:0}
-  .guard p{font-size:.86rem;color:var(--on-sand-dim);margin-top:6px}
+  /* ================================================================
+     PIECES — 6 content outputs
+     ================================================================ */
+  .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .piece{
+    background:var(--white);border:1px solid rgba(26,36,56,.05);
+    border-radius:var(--radius-lg);padding:32px;
+    transition:transform var(--duration-slow) var(--ease-expo),box-shadow var(--duration-slow) var(--ease-expo);
+    position:relative;
+  }
+  .piece:hover{
+    transform:translateY(-6px);
+    box-shadow:var(--shadow-lg);
+  }
+  .piece .ic{
+    width:50px;height:50px;border-radius:var(--radius-md);
+    background:linear-gradient(145deg,var(--ink),var(--ink-2));
+    display:flex;align-items:center;justify-content:center;margin-bottom:22px;
+    box-shadow:var(--shadow-sm);
+  }
+  .piece .ic svg{width:22px;height:22px;stroke:var(--gold);fill:none;stroke-width:1.5}
+  .piece h3{font-size:1.2rem;color:var(--ink)}
+  .piece p{font-size:.9rem;color:var(--on-sand-dim);margin-top:10px;line-height:1.65}
+  .piece .fmt{
+    font-family:var(--mono);font-size:.62rem;color:var(--gold);letter-spacing:.1em;
+    margin-top:18px;text-transform:uppercase;
+    padding-top:14px;border-top:1px solid rgba(26,36,56,.05);
+  }
 
-  /* ROI */
-  .roi{background:linear-gradient(160deg,#0a4a48,#06232a);color:var(--on-ink)}
+  /* Guard rails */
+  .guard{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px}
+  .guard div{
+    padding:26px;border-left:2px solid var(--gold);
+    background:var(--sand);border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    transition:transform var(--duration) ease;
+  }
+  .guard div:hover{transform:translateX(4px)}
+  .guard h4{font-family:var(--body);font-weight:700;font-size:.94rem;color:var(--ink);margin:0}
+  .guard p{font-size:.86rem;color:var(--on-sand-dim);margin-top:8px;line-height:1.65}
+
+  /* ================================================================
+     ROI CALCULATOR
+     ================================================================ */
+  .roi{
+    background:var(--ink);color:var(--on-ink);
+    position:relative;overflow:hidden;
+  }
+  .roi::before{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse 45% 65% at 18% 80%,rgba(45,138,133,.07),transparent),
+      radial-gradient(ellipse 35% 45% at 82% 20%,rgba(201,169,110,.05),transparent);
+  }
+  .roi .wrap{position:relative;z-index:1}
   .roi h2{color:var(--on-ink)}
-  .roi .sec-head .eyebrow{color:var(--aqua)}
+  .roi .sec-head .eyebrow{color:var(--gold)}
+  .roi .sec-head .eyebrow::before{background:linear-gradient(90deg,var(--gold),transparent)}
   .roi p{color:var(--on-ink-dim)}
-  .roi-grid{display:grid;grid-template-columns:1fr 1fr;gap:38px;align-items:start}
-  .roi-form{background:rgba(251,247,238,.05);border:1px solid rgba(143,232,221,.2);border-radius:20px;padding:30px}
-  .field{margin-bottom:20px}
-  .field label{display:flex;justify-content:space-between;font-size:.88rem;color:var(--on-ink);font-weight:600;margin-bottom:9px}
-  .field .val{font-family:var(--mono);color:var(--aqua)}
-  input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:5px;background:rgba(143,232,221,.25);outline:none}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 0 4px rgba(231,164,59,.25)}
-  input[type=range]::-moz-range-thumb{width:20px;height:20px;border:0;border-radius:50%;background:var(--gold);cursor:pointer}
-  .curr{display:inline-flex;border:1px solid rgba(143,232,221,.3);border-radius:999px;overflow:hidden;font-family:var(--mono);font-size:.72rem}
-  .curr button{background:transparent;color:var(--on-ink-dim);border:0;padding:6px 13px;cursor:pointer}
-  .curr button.on{background:var(--aqua);color:var(--ink);font-weight:700}
-  .roi-out{padding:6px 0}
-  .roi-big{font-family:var(--display);font-size:clamp(2.6rem,6vw,4rem);color:var(--aqua);line-height:1}
-  .roi-big small{font-family:var(--mono);font-size:.9rem;color:var(--on-ink-dim);display:block;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
-  .roi-second{display:flex;gap:30px;margin-top:26px;flex-wrap:wrap}
+  .roi-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+  .roi-form{
+    background:rgba(240,237,232,.03);
+    border:1px solid rgba(240,237,232,.07);
+    border-radius:var(--radius-xl);padding:36px;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  }
+  .field{margin-bottom:24px}
+  .field label{
+    display:flex;justify-content:space-between;
+    font-size:.86rem;color:var(--on-ink);font-weight:600;margin-bottom:12px;
+  }
+  .field .val{font-family:var(--mono);color:var(--gold)}
+  input[type=range]{
+    width:100%;-webkit-appearance:none;height:4px;border-radius:4px;
+    background:rgba(240,237,232,.1);outline:none;
+    transition:background var(--duration) ease;
+  }
+  input[type=range]:hover{background:rgba(240,237,232,.16)}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+    background:linear-gradient(160deg,var(--gold),var(--gold-deep));cursor:pointer;
+    box-shadow:0 0 0 4px rgba(201,169,110,.18);
+    transition:box-shadow var(--duration) ease,transform var(--duration) ease;
+  }
+  input[type=range]::-webkit-slider-thumb:hover{
+    box-shadow:0 0 0 7px rgba(201,169,110,.25);
+    transform:scale(1.1);
+  }
+  input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:50%;background:linear-gradient(160deg,var(--gold),var(--gold-deep));cursor:pointer}
+  .curr{
+    display:inline-flex;border:1px solid rgba(240,237,232,.12);
+    border-radius:999px;overflow:hidden;font-family:var(--mono);font-size:.68rem;
+  }
+  .curr button{background:transparent;color:var(--on-ink-dim);border:0;padding:7px 14px;cursor:pointer;font-family:var(--mono);font-size:.68rem;transition:all var(--duration) ease}
+  .curr button.on{background:linear-gradient(160deg,var(--gold),var(--gold-deep));color:var(--ink);font-weight:700}
+  .roi-out{padding:8px 0}
+  .roi-big{
+    font-family:var(--display);font-size:clamp(3rem,6.5vw,4.6rem);
+    color:var(--gold);line-height:1;font-weight:300;
+  }
+  .roi-big small{
+    font-family:var(--mono);font-size:.78rem;color:var(--on-ink-dim);
+    display:block;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;
+    font-weight:400;
+  }
+  .roi-second{display:flex;gap:40px;margin-top:36px;flex-wrap:wrap}
   .roi-second div .n{font-family:var(--mono);font-size:1.5rem;color:var(--on-ink);font-weight:700}
-  .roi-second div .l{font-size:.8rem;color:var(--on-ink-dim);margin-top:2px}
-  .roi-note{font-size:.8rem;color:var(--on-ink-dim);margin-top:26px;font-style:italic;max-width:34em}
+  .roi-second div .l{font-size:.78rem;color:var(--on-ink-dim);margin-top:4px}
+  .roi-note{font-size:.78rem;color:var(--on-ink-faint);margin-top:36px;font-style:italic;max-width:36em;line-height:1.65}
 
-  /* pricing */
-  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
-  .tier{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:30px;display:flex;flex-direction:column}
-  .tier.feat{background:var(--ink);color:var(--on-ink);border-color:var(--ink);position:relative;transform:translateY(-8px)}
-  .tier.feat .tier-name,.tier.feat .tier-price{color:var(--on-ink)}
+  /* ================================================================
+     PRICING
+     ================================================================ */
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+  .tier{
+    background:var(--white);border:1px solid rgba(26,36,56,.05);
+    border-radius:var(--radius-xl);padding:40px;
+    display:flex;flex-direction:column;
+    transition:transform var(--duration-slow) var(--ease-expo),box-shadow var(--duration-slow) var(--ease-expo);
+  }
+  .tier:hover{transform:translateY(-6px);box-shadow:var(--shadow-xl)}
+  .tier.feat{
+    background:var(--ink);color:var(--on-ink);
+    border-color:rgba(201,169,110,.18);
+    position:relative;
+    box-shadow:var(--shadow-2xl);
+  }
+  .tier.feat:hover{transform:translateY(-8px);box-shadow:0 36px 80px -24px rgba(10,22,40,.35)}
+  .tier.feat .tier-name{color:var(--gold)}
+  .tier.feat .tier-price{color:var(--on-ink)}
   .tier.feat li{color:var(--on-ink-dim)}
-  .tier-flag{position:absolute;top:-11px;left:30px;background:var(--gold);color:#231600;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:4px 11px;border-radius:6px;font-weight:700}
-  .tier-name{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--sea);font-weight:700}
-  .tier-price{font-family:var(--display);font-size:2.2rem;color:var(--ink);margin:12px 0 4px}
-  .tier-price span{font-family:var(--mono);font-size:.8rem;color:var(--on-sand-dim)}
-  .tier ul{list-style:none;padding:0;margin:20px 0 26px;flex:1}
-  .tier li{font-size:.9rem;color:var(--on-sand-dim);padding:8px 0 8px 24px;position:relative;border-top:1px solid rgba(0,0,0,.06)}
-  .tier.feat li{border-top-color:rgba(143,232,221,.12)}
-  .tier li::before{content:"";position:absolute;left:0;top:14px;width:12px;height:7px;border-left:2px solid var(--gold);border-bottom:2px solid var(--gold);transform:rotate(-45deg)}
+  .tier-flag{
+    position:absolute;top:-12px;left:36px;
+    background:linear-gradient(160deg,var(--gold),var(--gold-deep));
+    color:var(--ink);font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
+    padding:5px 16px;border-radius:999px;font-weight:700;
+    box-shadow:var(--shadow-gold);
+  }
+  .tier-name{font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .tier-price{font-family:var(--display);font-size:2.4rem;color:var(--ink);margin:16px 0 8px;font-weight:300}
+  .tier-price span{font-family:var(--mono);font-size:.78rem;color:var(--on-sand-dim)}
+  .tier ul{list-style:none;padding:0;margin:24px 0 32px;flex:1}
+  .tier li{font-size:.88rem;color:var(--on-sand-dim);padding:11px 0 11px 28px;position:relative;border-top:1px solid rgba(26,36,56,.04)}
+  .tier.feat li{border-top-color:rgba(240,237,232,.07)}
+  .tier li::before{
+    content:"";position:absolute;left:0;top:17px;
+    width:12px;height:6px;border-left:2px solid var(--gold);border-bottom:2px solid var(--gold);
+    transform:rotate(-45deg);
+  }
   .tier .btn{width:100%;justify-content:center}
-  .price-foot{text-align:center;font-size:.9rem;color:var(--on-sand-dim);margin-top:26px}
+  .price-foot{
+    text-align:center;font-size:.88rem;color:var(--on-sand-dim);
+    margin-top:36px;line-height:1.65;max-width:46em;margin-left:auto;margin-right:auto;
+  }
 
-  /* privacy / localization */
-  .priv{display:grid;grid-template-columns:1.1fr .9fr;gap:44px;align-items:center}
-  .priv-card{background:var(--sand);border:1px solid var(--line);border-radius:var(--radius);padding:30px}
-  .priv-card .eyebrow{color:var(--sea);display:block;margin-bottom:14px}
-  .priv-card h3{font-size:1.5rem;color:var(--ink)}
-  .priv-list{margin-top:18px;display:flex;flex-direction:column;gap:12px}
-  .priv-list div{display:flex;gap:12px;font-size:.92rem;color:var(--on-sand-dim)}
+  /* ================================================================
+     PRIVACY + LIMITS
+     ================================================================ */
+  .priv{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center}
+  .priv-card{
+    background:var(--white);border:1px solid rgba(26,36,56,.05);
+    border-radius:var(--radius-xl);padding:40px;
+    box-shadow:var(--shadow-card);
+    transition:box-shadow var(--duration-slow) ease;
+  }
+  .priv-card:hover{box-shadow:var(--shadow-lg)}
+  .priv-card .eyebrow{color:var(--gold);display:inline-flex;align-items:center;gap:12px;margin-bottom:18px}
+  .priv-card .eyebrow::before{content:"";width:24px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)}
+  .priv-card h3{font-size:1.5rem;color:var(--ink);font-weight:300}
+  .priv-list{margin-top:24px;display:flex;flex-direction:column;gap:16px}
+  .priv-list div{display:flex;gap:14px;font-size:.9rem;color:var(--on-sand-dim);line-height:1.65}
   .priv-list b{color:var(--ink);font-weight:600}
-  .priv-list .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex:none;margin-top:7px}
-  .limits h3{font-size:1.4rem;color:var(--ink);margin-bottom:18px}
-  .limits li{list-style:none;font-size:.92rem;color:var(--on-sand-dim);padding:11px 0;border-bottom:1px dashed var(--line)}
+  .priv-list .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);flex:none;margin-top:8px}
+  .limits h3{font-size:1.42rem;color:var(--ink);margin-bottom:24px;font-weight:300}
+  .limits li{list-style:none;font-size:.9rem;color:var(--on-sand-dim);padding:14px 0;border-bottom:1px solid rgba(26,36,56,.05);line-height:1.6}
   .limits ul{padding:0;margin:0}
   .limits li b{color:var(--ink);font-weight:600}
 
-  /* CTA */
-  .cta{background:
-     radial-gradient(80% 120% at 90% 10%,rgba(231,164,59,.25),transparent 55%),
-     linear-gradient(150deg,#0c7c77,#06232a);color:var(--on-ink);text-align:center}
-  .cta h2{font-size:clamp(2.1rem,4.5vw,3.4rem);color:#fff;max-width:16em;margin:0 auto}
-  .cta p{color:var(--on-ink-dim);margin:20px auto 0;max-width:34em;font-size:1.08rem}
-  .cta .btn{margin-top:32px}
+  /* ================================================================
+     FAQ ACCORDION
+     ================================================================ */
+  .faq-list{max-width:52em}
+  .faq-item{border-top:1px solid rgba(26,36,56,.08);padding:22px 0}
+  .faq-item:last-child{border-bottom:1px solid rgba(26,36,56,.08)}
+  .faq-item summary{
+    cursor:pointer;list-style:none;font-family:var(--display);font-size:1.08rem;color:var(--ink);
+    font-weight:400;display:flex;justify-content:space-between;align-items:center;gap:16px;
+  }
+  .faq-item summary::-webkit-details-marker{display:none}
+  .faq-item summary::after{
+    content:"+";font-family:var(--mono);font-size:1.3rem;color:var(--gold);flex:none;
+    transition:transform var(--duration) ease;
+  }
+  .faq-item[open] summary::after{transform:rotate(45deg)}
+  .faq-item p{font-size:.9rem;color:var(--on-sand-dim);margin-top:14px;line-height:1.7;max-width:44em}
+
+  /* ================================================================
+     SOCIAL PROOF — testimonials
+     ================================================================ */
+  .proof{padding:var(--sp-24) 0;background:var(--ink);position:relative;overflow:hidden}
+  .proof::before{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse 50% 70% at 20% 80%,rgba(45,138,133,.08),transparent),
+      radial-gradient(ellipse 40% 50% at 80% 20%,rgba(201,169,110,.06),transparent);
+  }
+  .proof .wrap{position:relative;z-index:1}
+  .proof .sec-head h2{color:var(--on-ink)}
+  .proof .sec-head p{color:var(--on-ink-dim)}
+  .proof .sec-head .eyebrow{color:var(--gold)}
+  .proof .sec-head .eyebrow::before{background:linear-gradient(90deg,var(--gold),transparent)}
+  .proof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .proof-card{
+    background:rgba(240,237,232,.04);
+    border:1px solid rgba(240,237,232,.08);
+    border-radius:var(--radius-lg);padding:32px;
+    display:flex;flex-direction:column;
+    transition:transform var(--duration-slow) var(--ease-expo),box-shadow var(--duration-slow) var(--ease-expo),border-color var(--duration) ease;
+  }
+  .proof-card:hover{
+    transform:translateY(-4px);
+    border-color:rgba(201,169,110,.2);
+    box-shadow:0 20px 48px -16px rgba(0,0,0,.3);
+  }
+  .proof-stars{display:flex;gap:3px;margin-bottom:16px}
+  .proof-stars svg{width:16px;height:16px;fill:var(--gold);stroke:none}
+  .proof-quote{
+    font-family:var(--display);font-size:1.06rem;color:var(--on-ink);
+    font-weight:400;font-style:italic;line-height:1.55;flex:1;
+  }
+  .proof-author{
+    margin-top:20px;padding-top:16px;
+    border-top:1px solid rgba(240,237,232,.08);
+    display:flex;align-items:center;gap:12px;
+  }
+  .proof-avatar{
+    width:40px;height:40px;border-radius:50%;
+    background:linear-gradient(135deg,var(--sea),var(--sea-deep));
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:.72rem;color:var(--on-ink);font-weight:700;
+    flex:none;
+  }
+  .proof-name{font-size:.86rem;color:var(--on-ink);font-weight:600}
+  .proof-role{font-family:var(--mono);font-size:.64rem;color:var(--on-ink-faint);letter-spacing:.04em;margin-top:2px}
+  @media (max-width:900px){
+    .proof-grid{grid-template-columns:1fr}
+  }
+
+  /* ================================================================
+     MID-PAGE MICRO-CONVERSION CTA
+     ================================================================ */
+  .micro-cta{
+    position:relative;overflow:hidden;
+    padding:var(--sp-20) 0;
+  }
+  .micro-cta-inner{
+    position:relative;
+    background:var(--ink);
+    border-radius:var(--radius-2xl);
+    padding:56px 48px;
+    display:flex;align-items:center;justify-content:space-between;gap:40px;
+    overflow:hidden;
+    box-shadow:var(--shadow-2xl);
+  }
+  .micro-cta-inner::before{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse 55% 80% at 95% 50%,rgba(45,138,133,.12),transparent),
+      radial-gradient(ellipse 40% 60% at 5% 50%,rgba(201,169,110,.08),transparent);
+    pointer-events:none;
+  }
+  .micro-cta-inner::after{
+    content:"";position:absolute;top:0;left:48px;right:48px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,169,110,.3),transparent);
+  }
+  .micro-cta-content{position:relative;z-index:1;flex:1;min-width:0}
+  .micro-cta-content .eyebrow{
+    color:var(--gold);margin-bottom:14px;
+    display:inline-flex;align-items:center;gap:12px;
+  }
+  .micro-cta-content .eyebrow::before{
+    content:"";width:24px;height:1px;
+    background:linear-gradient(90deg,var(--gold),transparent);
+  }
+  .micro-cta-content h3{
+    font-family:var(--display);font-size:clamp(1.6rem,3.5vw,2.2rem);
+    color:var(--on-ink);font-weight:300;line-height:1.15;
+    letter-spacing:-.02em;
+  }
+  .micro-cta-content h3 em{color:var(--gold);font-style:italic}
+  .micro-cta-content p{
+    color:var(--on-ink-dim);font-size:var(--text-md);
+    margin-top:14px;max-width:34em;line-height:1.7;
+  }
+  .micro-cta-actions{
+    position:relative;z-index:1;display:flex;flex-direction:column;
+    align-items:flex-end;gap:12px;flex:none;
+  }
+  .micro-cta-actions .btn-gold{
+    font-size:.94rem;padding:16px 36px;
+    white-space:nowrap;
+  }
+  .micro-cta-actions .micro-note{
+    font-family:var(--mono);font-size:.64rem;
+    color:var(--on-ink-faint);letter-spacing:.04em;
+    text-align:right;
+  }
+
+  /* Variant: lighter background between ROI and Pricing */
+  .micro-cta-light .micro-cta-inner{
+    background:linear-gradient(135deg,var(--ink),var(--ink-2));
+    border:1px solid rgba(201,169,110,.12);
+  }
 
   @media (max-width:900px){
-    .hero .wrap{grid-template-columns:1fr;gap:40px;padding-bottom:72px}
-    .demo{max-width:440px}
-    .steps{grid-template-columns:1fr 1fr}
-    .grid6{grid-template-columns:1fr 1fr}
-    .guard,.roi-grid,.priv,.tiers{grid-template-columns:1fr}
-    .tier.feat{transform:none}
+    .micro-cta-inner{
+      flex-direction:column;align-items:flex-start;
+      padding:40px 32px;gap:28px;
+    }
+    .micro-cta-actions{
+      align-items:flex-start;width:100%;
+    }
+    .micro-cta-actions .btn-gold{width:100%;justify-content:center}
+    .micro-cta-actions .micro-note{text-align:left}
   }
   @media (max-width:560px){
+    .micro-cta{padding:var(--sp-12) 0}
+    .micro-cta-inner{padding:32px 24px;border-radius:var(--radius-xl)}
+  }
+
+  /* ================================================================
+     CTA — final conversion with contact form
+     ================================================================ */
+  .cta{
+    background:var(--ink);color:var(--on-ink);
+    position:relative;overflow:hidden;
+  }
+  .cta::before{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse 45% 65% at 50% 100%,rgba(201,169,110,.1),transparent),
+      radial-gradient(ellipse 35% 45% at 80% 20%,rgba(45,138,133,.06),transparent);
+  }
+  .cta .wrap{position:relative;z-index:1}
+  .cta-layout{
+    display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;
+  }
+  .cta-text h2{
+    font-size:clamp(2rem,4.5vw,3.2rem);color:var(--on-ink);
+    font-weight:300;letter-spacing:-.03em;line-height:1.1;
+  }
+  .cta-text h2 em{color:var(--gold);font-style:italic}
+  .cta-text p{color:var(--on-ink-dim);margin:20px 0 0;max-width:28em;font-size:var(--text-md);line-height:1.75}
+  .cta-text .cta-perks{
+    margin-top:28px;display:flex;flex-direction:column;gap:12px;
+  }
+  .cta-text .cta-perk{
+    display:flex;align-items:center;gap:10px;
+    font-size:.88rem;color:var(--on-ink-dim);
+  }
+  .cta-perk svg{width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:1.5;flex:none}
+  .cta-form{
+    background:rgba(240,237,232,.04);
+    border:1px solid rgba(240,237,232,.08);
+    border-radius:var(--radius-xl);padding:36px;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  }
+  .cta-form .field{margin-bottom:20px}
+  .cta-form label{
+    display:block;font-size:.84rem;color:var(--on-ink);font-weight:600;margin-bottom:8px;
+  }
+  .cta-form input,.cta-form select,.cta-form textarea{
+    width:100%;font-family:var(--body);font-size:.9rem;
+    background:rgba(10,22,40,.5);color:var(--on-ink);
+    border:1px solid rgba(240,237,232,.12);border-radius:var(--radius-sm);
+    padding:12px 14px;transition:border-color var(--duration) ease,box-shadow var(--duration) ease;
+  }
+  .cta-form input::placeholder,.cta-form textarea::placeholder{color:var(--on-ink-faint)}
+  .cta-form input:focus,.cta-form select:focus,.cta-form textarea:focus{
+    outline:none;border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(201,169,110,.12);
+  }
+  .cta-form textarea{resize:vertical;min-height:80px;font-family:var(--body)}
+  .cta-form select{-webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238d95a3' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;
+  }
+  .cta-form select option{background:var(--ink);color:var(--on-ink)}
+  .cta-form .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .cta-form-success{
+    text-align:center;padding:40px 20px;
+    display:none;flex-direction:column;align-items:center;gap:16px;
+  }
+  .cta-form-success svg{width:48px;height:48px;stroke:var(--gold);fill:none;stroke-width:1.5}
+  .cta-form-success h4{font-family:var(--display);font-size:1.3rem;color:var(--on-ink);font-weight:400}
+  .cta-form-success p{font-size:.9rem;color:var(--on-ink-dim);max-width:28em;line-height:1.65}
+  /* Decorative line above CTA */
+  .cta-line{
+    width:64px;height:2px;margin:0 auto 40px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    border-radius:2px;
+  }
+  @media (max-width:900px){
+    .cta-layout{grid-template-columns:1fr;gap:40px}
+    .cta-form .form-row{grid-template-columns:1fr}
+  }
+
+  /* ================================================================
+     FOOTER — multi-column
+     ================================================================ */
+  .foot-grid{
+    display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:32px;
+    padding:var(--sp-16) 0 var(--sp-10);
+  }
+  .foot-brand p{color:var(--on-ink-dim);font-size:.86rem;margin-top:10px;line-height:1.6;max-width:20em}
+  .foot-col h5{
+    font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--on-ink-dim);font-weight:400;margin:0 0 16px;
+  }
+  .foot-col{display:flex;flex-direction:column;gap:10px}
+  .foot-col a{color:var(--on-ink-dim);font-size:.86rem;transition:color var(--duration) ease}
+  .foot-col a:hover{color:var(--gold)}
+  .foot-bottom{
+    padding:var(--sp-6) 0;border-top:1px solid var(--line-dark);
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+    font-size:.82rem;color:var(--on-ink-dim);
+  }
+  @media (max-width:900px){
+    .foot-grid{grid-template-columns:1fr 1fr;gap:28px}
+  }
+  @media (max-width:560px){
+    .foot-grid{grid-template-columns:1fr}
+  }
+
+  /* Section gradient backgrounds */
+  .sec-gradient{
+    background:linear-gradient(180deg,var(--paper),var(--sand));
+  }
+  .sec-gradient-rev{
+    background:linear-gradient(180deg,var(--sand),var(--paper));
+  }
+
+  /* ================================================================
+     RESPONSIVE
+     ================================================================ */
+  @media (max-width:900px){
+    .hero{min-height:auto}
+    .hero .wrap{grid-template-columns:1fr;gap:52px;padding-top:88px;padding-bottom:88px}
+    .hero-content{padding-bottom:0}
+    .demo{max-width:480px}
+    .hero-orb-1{width:250px;height:250px}
+    .hero-orb-2{width:200px;height:200px}
+    .steps{grid-template-columns:1fr 1fr}
+    .grid6{grid-template-columns:1fr 1fr}
+    .audience-grid{grid-template-columns:1fr}
+    .hero-paths{grid-template-columns:1fr}
+    .guard,.roi-grid,.priv,.tiers{grid-template-columns:1fr}
+    .tier.feat{transform:none}
+    .hero-meta{gap:24px}
+    .hero-trust{gap:8px}
+  }
+  /* ================================================================
+     NAV — Soluciones dropdown
+     ================================================================ */
+  .navdrop{position:relative}
+  .navdrop-trigger{
+    font:inherit;color:inherit;background:none;border:0;cursor:pointer;
+    display:inline-flex;align-items:center;gap:5px;padding:0;
+  }
+  .navdrop-trigger svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;transition:transform var(--duration) ease}
+  .navdrop.open .navdrop-trigger svg{transform:rotate(180deg)}
+  .navdrop-menu{
+    position:absolute;top:calc(100% + 18px);left:50%;transform:translateX(-50%);
+    width:320px;background:var(--white);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-2xl);padding:10px;
+    opacity:0;visibility:hidden;transform:translateX(-50%) translateY(-6px);
+    transition:opacity var(--duration) ease,transform var(--duration) ease,visibility var(--duration);
+    z-index:50;
+  }
+  .navdrop:hover .navdrop-menu,.navdrop.open .navdrop-menu,.navdrop:focus-within .navdrop-menu{
+    opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);
+  }
+  .navdrop-item{
+    display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:var(--radius-md);
+    transition:background var(--duration) ease;
+  }
+  .navdrop-item:hover{background:var(--sand)}
+  .navdrop-item svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:1.5;flex:none}
+  .navdrop-item span{display:flex;flex-direction:column;gap:2px}
+  .navdrop-item b{font-family:var(--body);font-weight:600;font-size:.86rem;color:var(--ink)}
+  .navdrop-item small{font-family:var(--mono);font-size:.66rem;color:var(--on-sand-dim)}
+  .navdrop-item.navdrop-soon svg{stroke:var(--on-sand-light)}
+  .navdrop-item.navdrop-soon small{color:var(--on-sand-light)}
+  .navdrop-item.navdrop-live svg{stroke:var(--gold-deep)}
+  .navdrop-item.navdrop-live small{color:var(--sea)}
+  @media (max-width:900px){
+    .navdrop-menu{position:static;transform:none;width:auto;box-shadow:none;opacity:1;visibility:visible;max-height:0;overflow:hidden;padding:0;transition:max-height var(--duration-slow) ease}
+    .navdrop.open .navdrop-menu,.navdrop:hover .navdrop-menu,.navdrop:focus-within .navdrop-menu{transform:none;max-height:600px;padding:10px 0}
+  }
+
+  @media (max-width:560px){
+    .hero .wrap{padding-top:56px;padding-bottom:60px}
     .chips{grid-template-columns:1fr 1fr}
+    .hero-paths{grid-template-columns:1fr}
     .grid6,.steps{grid-template-columns:1fr}
-    .hero-meta{gap:18px}
+    .hero-meta{gap:20px}
+    .hero-meta span{flex-direction:row;gap:6px;align-items:baseline}
+    .hero-trust-badge{font-size:.58rem;padding:6px 12px}
   }
 </style>
 </head>
 <body>
 
 <header>
-  <nav class="wrap">
-    <a class="brand" href="#top">
-      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="#34d6c4" opacity=".18"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#34d6c4" stroke-width="1.8" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#e7a43b" stroke-width="1.8" stroke-linecap="round"/></svg>
-      Proplync<span style="color:#34d6c4">.mx</span>
+  <nav class="wrap" aria-label="Main navigation">
+    <a class="brand" href="#top" aria-label="Proplync.mx home">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Proplync<span class="accent">.mx</span>
     </a>
     <div class="navlinks" id="navlinks">
       <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
-      <a href="#como" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a>
-      <a href="#piezas" data-es="Qué generas" data-en="What you get">Qué generas</a>
+      <a href="/generate" style="color:var(--gold)" data-es="Generador" data-en="Generator">Generador</a>
+      <div class="navdrop" id="navdrop">
+        <button type="button" class="navdrop-trigger" onclick="document.getElementById('navdrop').classList.toggle('open')" data-es="Soluciones" data-en="Solutions">Soluciones<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="navdrop-menu">
+          <a href="/search" class="navdrop-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 4 6 4 9s-1.5 6.4-4 9c-2.5-2.6-4-6-4-9s1.5-6.4 4-9z"/></svg>
+            <span><b data-es="Sitio de propiedades" data-en="Property website">Sitio de propiedades</b><small data-es="Publica en Proplync.mx" data-en="Publish on Proplync.mx">Publica en Proplync.mx</small></span>
+          </a>
+          <a href="/generate" class="navdrop-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11v2a2 2 0 002 2h1l3 5V4L6 9H5a2 2 0 00-2 2z"/><path d="M15 8a4 4 0 010 8"/></svg>
+            <span><b data-es="Promociona tus propiedades" data-en="Promote properties">Promociona tus propiedades</b><small data-es="Contenido con IA + Instagram" data-en="AI content + Instagram">Contenido con IA + Instagram</small></span>
+          </a>
+          <a href="/login" class="navdrop-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+            <span><b data-es="Gestiona clientes (CRM)" data-en="Manage clients (CRM)">Gestiona clientes (CRM)</b><small data-es="Leads con seguimiento" data-en="Leads with follow-up">Leads con seguimiento</small></span>
+          </a>
+          <a href="#contacto" class="navdrop-item navdrop-soon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1"/></svg>
+            <span><b data-es="API y franquicias" data-en="API & franchises">API y franquicias</b><small data-es="Proximamente" data-en="Coming soon">Proximamente</small></span>
+          </a>
+          <a href="/generate" class="navdrop-item navdrop-live">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="9" width="14" height="10" rx="2"/><path d="M12 9V5M9 5h6"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/></svg>
+            <span><b>Prop-pilot</b><small data-es="Generador de contenido IA &middot; ya disponible" data-en="AI content generator &middot; available now">Generador de contenido IA &middot; ya disponible</small></span>
+          </a>
+        </div>
+      </div>
       <a href="#propiedades" data-es="Propiedades" data-en="Properties">Propiedades</a>
       <a href="#roi" data-es="Calculadora" data-en="ROI">Calculadora</a>
       <a href="#precios" data-es="Precios" data-en="Pricing">Precios</a>
       <a href="#contacto" data-es="Contacto" data-en="Contact">Contacto</a>
+      <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
     </div>
     <div class="navtools">
       <div class="lang" role="group" aria-label="Language">
@@ -197,116 +885,257 @@
         <button id="en" onclick="setLang('en')">EN</button>
       </div>
       <a href="#contacto" class="btn btn-gold" data-es="Reservar llamada" data-en="Book a call">Reservar llamada</a>
+      <a href="/login" class="nav-login-mobile" data-es="Soy agente" data-en="I'm an agent"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span data-es="Soy agente" data-en="I'm an agent">Soy agente</span></a>
       <button class="navtoggle" aria-label="Menu" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
     </div>
   </nav>
 </header>
 
-<!-- HERO -->
+<!-- ══════════════════════════════════════════════════════════════
+     HERO
+     ══════════════════════════════════════════════════════════════ -->
 <section class="hero" id="top" style="padding:0">
+  <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
+  <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
   <div class="wrap">
-    <div>
-      <div class="hero-eyebrow eyebrow" data-es="Contenido inmobiliario · Riviera Maya" data-en="Real estate content · Riviera Maya">Contenido inmobiliario · Riviera Maya</div>
-      <h1 data-es="Captura una propiedad una vez. <em>Publica en seis formatos.</em>" data-en="Capture a property once. <em>Publish in six formats.</em>">Captura una propiedad una vez. <em>Publica en seis formatos.</em></h1>
-      <p class="hero-sub" data-es="Un sistema interno que convierte los datos de un inmueble en ficha PDF, post, carrusel, story, email y video — listos para revisar antes de publicar. Hecho para agencias de Tulum, Playa del Carmen y Cancún." data-en="An internal system that turns a listing's data into a PDF fact sheet, post, carousel, story, email, and video — ready to review before you publish. Built for agencies in Tulum, Playa del Carmen, and Cancún.">Un sistema interno que convierte los datos de un inmueble en ficha PDF, post, carrusel, story, email y video — listos para revisar antes de publicar. Hecho para agencias de Tulum, Playa del Carmen y Cancún.</p>
-      <div class="hero-cta">
-        <a href="#contacto" class="btn btn-gold" data-es="Reservar diagnóstico de 15 min" data-en="Book a 15-min diagnosis">Reservar diagnóstico de 15 min</a>
-        <a href="#como" class="btn btn-ghost" data-es="Ver cómo funciona" data-en="See how it works">Ver cómo funciona</a>
+    <div class="hero-content">
+      <div class="hero-eyebrow eyebrow" data-es="Contenido inmobiliario &middot; Riviera Maya" data-en="Real estate content &middot; Riviera Maya">Contenido inmobiliario &middot; Riviera Maya</div>
+      <h1 data-es="Inteligencia artificial <em>al servicio de tu operacion inmobiliaria.</em>" data-en="Artificial intelligence <em>at the service of your real estate operation.</em>">Inteligencia artificial <em>al servicio de tu operacion inmobiliaria.</em></h1>
+      <p class="hero-sub" data-es="Prop-pilot convierte los datos de un inmueble en ficha PDF, post, carrusel, story, email, reel y anuncio &mdash; listos para revisar antes de publicar." data-en="Prop-pilot turns a listing's data into a PDF fact sheet, post, carousel, story, email, reel, and ad copy &mdash; ready to review before you publish.">Prop-pilot convierte los datos de un inmueble en ficha PDF, post, carrusel, story, email, reel y anuncio &mdash; listos para revisar antes de publicar.</p>
+      <div class="hero-paths">
+        <a href="/generate" class="hero-path">
+          <span class="hero-path-eyebrow" data-es="Propietarios y desarrolladoras" data-en="Owners & developers">Propietarios y desarrolladoras</span>
+          <span class="hero-path-title" data-es="Genera contenido para tu propiedad" data-en="Generate content for your property">Genera contenido para tu propiedad</span>
+          <span class="hero-path-sub" data-es="Sin cuenta, en minutos" data-en="No account, in minutes">Sin cuenta, en minutos</span>
+          <span class="hero-path-arrow" aria-hidden="true">&rarr;</span>
+        </a>
+        <a href="/login" class="hero-path">
+          <span class="hero-path-eyebrow" data-es="Agencias inmobiliarias" data-en="Real estate agencies">Agencias inmobiliarias</span>
+          <span class="hero-path-title" data-es="Gestiona todo tu portafolio" data-en="Manage your whole portfolio">Gestiona todo tu portafolio</span>
+          <span class="hero-path-sub" data-es="Panel, leads y contenido en un lugar" data-en="Dashboard, leads & content in one place">Panel, leads y contenido en un lugar</span>
+          <span class="hero-path-arrow" aria-hidden="true">&rarr;</span>
+        </a>
       </div>
-      <div class="hero-meta">
-        <span data-es="<b>1</b> ficha → <b>6</b> piezas" data-en="<b>1</b> listing → <b>6</b> pieces"><b>1</b> ficha → <b>6</b> piezas</span>
-        <span data-es="<b>ES + EN</b> bilingüe" data-en="<b>ES + EN</b> bilingual"><b>ES + EN</b> bilingüe</span>
-        <span data-es="<b>Revisión</b> antes de publicar" data-en="<b>Review</b> before publishing"><b>Revisión</b> antes de publicar</span>
+      <div class="hero-cta">
+        <a href="#contacto" class="btn btn-ghost" data-es="Reservar diagnostico de 15 min" data-en="Book a 15-min diagnosis">Reservar diagnostico de 15 min</a>
+      </div>
+      <div class="hero-trust">
+        <span class="hero-trust-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v5c0 5.3-3.4 8.6-8 10-4.6-1.4-8-4.7-8-10v-5L12 3z"/></svg><span data-es="LFPDPPP desde el dia uno" data-en="LFPDPPP-ready day one">LFPDPPP desde el dia uno</span></span>
+        <span class="hero-trust-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><span data-es="Revision humana obligatoria" data-en="Mandatory human review">Revision humana obligatoria</span></span>
+        <span class="hero-trust-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L2 7v5c0 5.5 4 10.7 10 12 6-1.3 10-6.5 10-12V7L12 2z"/></svg><span data-es="La IA no inventa datos" data-en="The AI never invents data">La IA no inventa datos</span></span>
       </div>
     </div>
 
-    <!-- signature interactive demo -->
+    <!-- Signature interactive demo -->
     <div class="demo">
       <div class="demo-card reveal">
         <div class="listing">
           <div class="listing-photo" id="d-photo"></div>
           <div class="listing-info">
             <div class="t" id="d-title">Depa en preventa</div>
-            <div class="loc" id="d-loc">TULUM · ALDEA ZAMÁ</div>
+            <div class="loc" id="d-loc">TULUM &middot; ALDEA ZAMA</div>
             <div class="listing-specs" id="d-specs"></div>
           </div>
           <div class="listing-price" id="d-price">USD<br>$245,000</div>
         </div>
-        <div class="demo-arrow" data-es="↓ genera automáticamente ↓" data-en="↓ generates automatically ↓">↓ genera automáticamente ↓</div>
+        <div class="demo-arrow" data-es="genera automaticamente" data-en="generates automatically">genera automaticamente</div>
         <div class="chips" id="chips">
-          <button class="chip on" data-fmt="pdf" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg><span data-es="Ficha PDF" data-en="PDF sheet">Ficha PDF</span></button>
-          <button class="chip" data-fmt="post" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.4"/></svg><span>Post</span></button>
-          <button class="chip" data-fmt="carousel" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><rect x="7" y="6" width="10" height="12" rx="2"/><path d="M4 9v6M20 9v6"/></svg><span data-es="Carrusel" data-en="Carousel">Carrusel</span></button>
-          <button class="chip" data-fmt="story" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><rect x="7" y="3" width="10" height="18" rx="3"/></svg><span>Story</span></button>
-          <button class="chip" data-fmt="email" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 8l9 6 9-6"/></svg><span>Email</span></button>
-          <button class="chip" data-fmt="video" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg><span>Video</span></button>
+          <button class="chip on" data-fmt="pdf" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg><span data-es="Ficha PDF" data-en="PDF sheet">Ficha PDF</span></button>
+          <button class="chip" data-fmt="post" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.4"/></svg><span>Post</span></button>
+          <button class="chip" data-fmt="carousel" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><rect x="7" y="6" width="10" height="12" rx="2"/><path d="M4 9v6M20 9v6"/></svg><span data-es="Carrusel" data-en="Carousel">Carrusel</span></button>
+          <button class="chip" data-fmt="story" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="3"/></svg><span>Story</span></button>
+          <button class="chip" data-fmt="email" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 8l9 6 9-6"/></svg><span>Email</span></button>
+          <button class="chip" data-fmt="video" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg><span>Video</span></button>
         </div>
         <div class="preview" id="preview"></div>
+        <a href="/generate" class="btn btn-gold" style="margin-top:16px;width:100%;justify-content:center" data-es="Probar el generador" data-en="Try the generator">Probar el generador</a>
       </div>
     </div>
   </div>
-  <div class="wave"><svg viewBox="0 0 1200 70" preserveAspectRatio="none"><path d="M0 40 C 200 10 400 70 600 40 C 800 10 1000 70 1200 40 L1200 70 L0 70 Z" fill="#fbf7ee"/></svg></div>
-</section>
-
-<!-- PROBLEM -->
-<section class="band" id="problema">
-  <div class="wrap">
-    <div class="sec-head reveal">
-      <span class="eyebrow" data-es="El cuello de botella" data-en="The bottleneck">El cuello de botella</span>
-    </div>
-    <p class="prob-quote reveal" data-es="Tu equipo copia el mismo precio, los mismos m² y la misma descripción de Canva al CRM, al email y a Instagram. <em>Cada propiedad, otra vez.</em>" data-en="Your team copies the same price, the same m², the same description from Canva to the CRM, to email, to Instagram. <em>Every property, all over again.</em>">Tu equipo copia el mismo precio, los mismos m² y la misma descripción de Canva al CRM, al email y a Instagram. <em>Cada propiedad, otra vez.</em></p>
+  <!-- Organic wave edge -->
+  <div class="hero-edge">
+    <svg viewBox="0 0 1440 80" fill="none" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 32C240 80 480 0 720 40C960 80 1200 8 1440 48V80H0V32Z" fill="var(--paper)"/>
+    </svg>
   </div>
 </section>
 
-<!-- HOW IT WORKS -->
+<!-- ══════════════════════════════════════════════════════════════
+     AUDIENCE SEGMENTATION
+     ══════════════════════════════════════════════════════════════ -->
+<section id="audiencias">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Para quien es Proplync" data-en="Who Proplync is for">Para quien es Proplync</span>
+      <h2 data-es="Las mismas herramientas, para tres formas de vender" data-en="The same tools, for three ways of selling">Las mismas herramientas, para tres formas de vender</h2>
+      <p data-es="No son productos distintos: es el mismo generador y el mismo panel, pensados para como trabaja cada quien." data-en="Not separate products: the same generator and the same dashboard, built around how each of you actually works.">No son productos distintos: es el mismo generador y el mismo panel, pensados para como trabaja cada quien.</p>
+    </div>
+    <div class="audience-grid stagger">
+      <div class="audience-card reveal">
+        <span class="aud-eyebrow" data-es="Agencias y agentes" data-en="Agencies & agents">Agencias y agentes</span>
+        <h3 data-es="Gestiona todo tu portafolio" data-en="Manage your whole portfolio">Gestiona todo tu portafolio</h3>
+        <p class="aud-sub" data-es="Un panel para tu inventario, tus leads y el contenido de cada propiedad." data-en="One dashboard for your inventory, your leads, and every property's content.">Un panel para tu inventario, tus leads y el contenido de cada propiedad.</p>
+        <ul>
+          <li data-es="Alta, edicion y publicacion de propiedades" data-en="Add, edit, and publish listings">Alta, edicion y publicacion de propiedades</li>
+          <li data-es="CRM de leads con seguimiento" data-en="Lead CRM with follow-up tracking">CRM de leads con seguimiento</li>
+          <li data-es="Genera contenido para todo tu equipo" data-en="Generate content for your whole team">Genera contenido para todo tu equipo</li>
+        </ul>
+        <a href="/login" class="btn btn-dark" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
+      </div>
+      <div class="audience-card reveal">
+        <span class="aud-eyebrow" data-es="Propietarios" data-en="Property owners">Propietarios</span>
+        <h3 data-es="Vende tu propiedad sin agencia" data-en="Sell your property without an agency">Vende tu propiedad sin agencia</h3>
+        <p class="aud-sub" data-es="El generador funciona sin cuenta para una sola propiedad &mdash; sube tus datos y listo." data-en="The generator works with no account for a single property &mdash; enter your info and go.">El generador funciona sin cuenta para una sola propiedad &mdash; sube tus datos y listo.</p>
+        <ul>
+          <li data-es="Sin registro para una propiedad" data-en="No signup for one property">Sin registro para una propiedad</li>
+          <li data-es="Sube tu propia foto o usamos una con licencia" data-en="Upload your own photo, or we source a licensed one">Sube tu propia foto o usamos una con licencia</li>
+          <li data-es="Contenido con la misma calidad que una agencia" data-en="Content with the same quality as an agency">Contenido con la misma calidad que una agencia</li>
+        </ul>
+        <a href="/generate" class="btn btn-dark" data-es="Probar el generador" data-en="Try the generator">Probar el generador</a>
+      </div>
+      <div class="audience-card reveal">
+        <span class="aud-eyebrow" data-es="Desarrolladoras" data-en="Developers">Desarrolladoras</span>
+        <h3 data-es="Una pieza por unidad, en minutos" data-en="One piece per unit, in minutes">Una pieza por unidad, en minutos</h3>
+        <p class="aud-sub" data-es="Genera el contenido de cada unidad de tu proyecto a medida que la liberas a venta." data-en="Generate each unit's content as you release it for sale.">Genera el contenido de cada unidad de tu proyecto a medida que la liberas a venta.</p>
+        <ul>
+          <li data-es="Misma marca en todas las unidades" data-en="Same brand across every unit">Misma marca en todas las unidades</li>
+          <li data-es="Ficha, post, carrusel, story, email, reel y anuncio" data-en="Fact sheet, post, carousel, story, email, reel & ad">Ficha, post, carrusel, story, email, reel y anuncio</li>
+          <li data-es="Sin rehacer el diseno en cada lanzamiento" data-en="No redesigning for every launch">Sin rehacer el diseno en cada lanzamiento</li>
+        </ul>
+        <a href="/generate" class="btn btn-dark" data-es="Probar el generador" data-en="Try the generator">Probar el generador</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SOCIAL PROOF
+     ══════════════════════════════════════════════════════════════ -->
+<section class="proof">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Resultados reales" data-en="Real results">Resultados reales</span>
+      <h2 data-es="Agencias y propietarios que ya lo usan" data-en="Agencies and owners already using it">Agencias y propietarios que ya lo usan</h2>
+    </div>
+    <div class="proof-grid stagger">
+      <div class="proof-card reveal">
+        <div class="proof-stars"><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg></div>
+        <p class="proof-quote" data-es="Antes tardaba medio dia armando los posts de una propiedad. Ahora en 10 minutos tengo todo el paquete listo." data-en="I used to spend half a day putting together posts for one property. Now in 10 minutes the whole package is ready.">&ldquo;Antes tardaba medio dia armando los posts de una propiedad. Ahora en 10 minutos tengo todo el paquete listo.&rdquo;</p>
+        <div class="proof-author">
+          <div class="proof-avatar">MR</div>
+          <div><div class="proof-name">Mariana R.</div><div class="proof-role" data-es="Agente independiente &middot; Playa del Carmen" data-en="Independent agent &middot; Playa del Carmen">Agente independiente &middot; Playa del Carmen</div></div>
+        </div>
+      </div>
+      <div class="proof-card reveal">
+        <div class="proof-stars"><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg></div>
+        <p class="proof-quote" data-es="Tenemos 40 unidades en preventa y el contenido de cada una salio uniforme, bilingue y listo para Instagram el mismo dia." data-en="We have 40 pre-sale units and each one's content came out uniform, bilingual, and Instagram-ready the same day.">&ldquo;Tenemos 40 unidades en preventa y el contenido de cada una salio uniforme, bilingue y listo para Instagram el mismo dia.&rdquo;</p>
+        <div class="proof-author">
+          <div class="proof-avatar" style="background:linear-gradient(135deg,var(--gold),var(--gold-deep))">JL</div>
+          <div><div class="proof-name">Jorge L.</div><div class="proof-role" data-es="Director comercial &middot; Desarrolladora en Tulum" data-en="Commercial director &middot; Developer in Tulum">Director comercial &middot; Desarrolladora en Tulum</div></div>
+        </div>
+      </div>
+      <div class="proof-card reveal">
+        <div class="proof-stars"><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg></div>
+        <p class="proof-quote" data-es="Lo que mas me convencio es que la IA no inventa datos. Todo sale de lo que yo mismo subo, y reviso antes de publicar." data-en="What convinced me the most is that the AI doesn't make things up. Everything comes from what I upload, and I review before publishing.">&ldquo;Lo que mas me convencio es que la IA no inventa datos. Todo sale de lo que yo mismo subo, y reviso antes de publicar.&rdquo;</p>
+        <div class="proof-author">
+          <div class="proof-avatar" style="background:linear-gradient(135deg,var(--ink-3),var(--ink-4))">AC</div>
+          <div><div class="proof-name">Andrea C.</div><div class="proof-role" data-es="Propietaria &middot; Cancun" data-en="Property owner &middot; Cancun">Propietaria &middot; Cancun</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     FEATURED PROPERTIES (condensed strip)
+     ══════════════════════════════════════════════════════════════ -->
+<section class="sec-gradient" id="destacadas">
+  <div class="wrap">
+    <div class="sec-head reveal" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:32px">
+      <div>
+        <span class="eyebrow" data-es="Propiedades reales" data-en="Real properties">Propiedades reales</span>
+        <h2 data-es="Ejemplos con datos reales de la Riviera Maya" data-en="Real Riviera Maya examples" style="margin-top:8px">Ejemplos con datos reales de la Riviera Maya</h2>
+      </div>
+      <a href="/search" class="btn btn-outline" data-es="Ver todas &rarr;" data-en="See all &rarr;">Ver todas &rarr;</a>
+    </div>
+    <div class="pgrid" id="featured-grid"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     HOW IT WORKS
+     ══════════════════════════════════════════════════════════════ -->
 <section id="como">
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="eyebrow" data-es="El sistema" data-en="The system">El sistema</span>
       <h2 data-es="Introduce los datos una vez. El sistema hace el resto." data-en="Enter the data once. The system does the rest.">Introduce los datos una vez. El sistema hace el resto.</h2>
-      <p data-es="No es pedirle seis textos a una IA. Es un flujo que valida la información, mantiene tu marca y te obliga a revisar antes de publicar." data-en="It isn't asking an AI for six texts. It's a flow that validates the information, keeps your brand consistent, and makes you review before publishing.">No es pedirle seis textos a una IA. Es un flujo que valida la información, mantiene tu marca y te obliga a revisar antes de publicar.</p>
+      <p data-es="No es pedirle seis textos a una IA. Es un flujo que valida la informacion, mantiene tu marca y te obliga a revisar antes de publicar." data-en="It isn't asking an AI for six texts. It's a flow that validates the information, keeps your brand consistent, and makes you review before publishing.">No es pedirle seis textos a una IA. Es un flujo que valida la informacion, mantiene tu marca y te obliga a revisar antes de publicar.</p>
     </div>
-    <div class="steps">
-      <div class="step reveal"><h3 data-es="Rellena la ficha" data-en="Fill the form">Rellena la ficha</h3><p data-es="Tipo, precio, ubicación, m², recámaras, baños, características y fotos." data-en="Type, price, location, m², bedrooms, bathrooms, features, and photos.">Tipo, precio, ubicación, m², recámaras, baños, características y fotos.</p></div>
-      <div class="step reveal"><h3 data-es="Valida y organiza" data-en="Validate & organize">Valida y organiza</h3><p data-es="Comprueba los datos, optimiza las imágenes y crea una ficha estructurada." data-en="Checks the data, optimizes images, and builds a structured record.">Comprueba los datos, optimiza las imágenes y crea una ficha estructurada.</p></div>
-      <div class="step reveal"><h3 data-es="Genera 6 piezas" data-en="Generate 6 pieces">Genera 6 piezas</h3><p data-es="PDF, post, carrusel, story, email y video — desde una sola ficha." data-en="PDF, post, carousel, story, email, and video — from one record.">PDF, post, carrusel, story, email y video — desde una sola ficha.</p></div>
-      <div class="step reveal"><h3 data-es="Revisa y edita" data-en="Review & edit">Revisa y edita</h3><p data-es="Vista previa editable. La automatización reduce trabajo, no la revisión." data-en="Editable preview. Automation cuts work, not the review.">Vista previa editable. La automatización reduce trabajo, no la revisión.</p></div>
+    <div class="steps stagger">
+      <div class="step reveal"><h3 data-es="Rellena la ficha" data-en="Fill the form">Rellena la ficha</h3><p data-es="Tipo, precio, ubicacion, m&sup2;, recamaras, banos, caracteristicas y fotos." data-en="Type, price, location, m&sup2;, bedrooms, bathrooms, features, and photos.">Tipo, precio, ubicacion, m&sup2;, recamaras, banos, caracteristicas y fotos.</p></div>
+      <div class="step reveal"><h3 data-es="Valida y organiza" data-en="Validate & organize">Valida y organiza</h3><p data-es="Comprueba los datos, optimiza las imagenes y crea una ficha estructurada." data-en="Checks the data, optimizes images, and builds a structured record.">Comprueba los datos, optimiza las imagenes y crea una ficha estructurada.</p></div>
+      <div class="step reveal"><h3 data-es="Genera 7 piezas" data-en="Generate 7 pieces">Genera 7 piezas</h3><p data-es="PDF, post, carrusel, story, email, video y anuncio &mdash; desde una sola ficha." data-en="PDF, post, carousel, story, email, video, and ad copy &mdash; from one record.">PDF, post, carrusel, story, email, video y anuncio &mdash; desde una sola ficha.</p></div>
+      <div class="step reveal"><h3 data-es="Revisa y edita" data-en="Review & edit">Revisa y edita</h3><p data-es="Vista previa editable. La automatizacion reduce trabajo, no la revision." data-en="Editable preview. Automation cuts work, not the review.">Vista previa editable. La automatizacion reduce trabajo, no la revision.</p></div>
       <div class="step reveal"><h3 data-es="Descarga en ZIP" data-en="Download as ZIP">Descarga en ZIP</h3><p data-es="Cada pieza por separado o todo el paquete listo para publicar." data-en="Each piece separately or the whole package, ready to publish.">Cada pieza por separado o todo el paquete listo para publicar.</p></div>
     </div>
   </div>
 </section>
 
-<!-- PIECES -->
-<section id="piezas" style="background:linear-gradient(180deg,#fbf7ee,#f3ecdd)">
+<!-- ══════════════════════════════════════════════════════════════
+     PIECES
+     ══════════════════════════════════════════════════════════════ -->
+<section id="piezas" class="sec-gradient">
   <div class="wrap">
     <div class="sec-head reveal">
-      <span class="eyebrow" data-es="Qué generas" data-en="What you get">Qué generas</span>
-      <h2 data-es="Seis piezas desde una sola ficha" data-en="Six pieces from a single record">Seis piezas desde una sola ficha</h2>
-      <p data-es="Mismos colores, tipografías, tono y llamadas a la acción en cada propiedad. Marca coherente, sin rehacer el diseño cada vez." data-en="Same colors, fonts, tone, and calls to action on every property. Consistent brand, without redesigning each time.">Mismos colores, tipografías, tono y llamadas a la acción en cada propiedad. Marca coherente, sin rehacer el diseño cada vez.</p>
+      <span class="eyebrow" data-es="Todo lo que Proplync hace por ti" data-en="Everything Proplync does for you">Todo lo que Proplync hace por ti</span>
+      <h2 data-es="Un generador de contenido, no solo un formulario" data-en="A content engine, not just a form">Un generador de contenido, no solo un formulario</h2>
+      <p data-es="Desde una ficha llegas a siete piezas de marketing, fotos reales, busqueda inteligente y un panel para gestionar todo." data-en="From one record you get seven marketing pieces, real photos, smart search, and a dashboard to manage it all.">Desde una ficha llegas a siete piezas de marketing, fotos reales, busqueda inteligente y un panel para gestionar todo.</p>
     </div>
-    <div class="grid6">
-      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg></div><h3 data-es="Ficha técnica" data-en="Fact sheet">Ficha técnica</h3><p data-es="Documento con todos los datos del inmueble, maquetado con tu marca." data-en="A document with all the listing data, laid out with your brand.">Documento con todos los datos del inmueble, maquetado con tu marca.</p><div class="fmt">PDF · A4</div></div>
-      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.4"/></svg></div><h3 data-es="Post de Instagram" data-en="Instagram post">Post de Instagram</h3><p data-es="Imagen principal, copy comercial y CTA listos para publicar." data-en="Main image, sales copy, and CTA ready to publish.">Imagen principal, copy comercial y CTA listos para publicar.</p><div class="fmt">1080 × 1080</div></div>
-      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24"><rect x="7" y="6" width="10" height="12" rx="2"/><path d="M4 9v6M20 9v6"/></svg></div><h3 data-es="Carrusel de 5" data-en="5-slide carousel">Carrusel de 5</h3><p data-es="Portada, ubicación, interior, características y contacto — una idea por slide." data-en="Cover, location, interior, features, and contact — one idea per slide.">Portada, ubicación, interior, características y contacto — una idea por slide.</p><div class="fmt">5 × 1080</div></div>
-      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="3"/></svg></div><h3 data-es="Story vertical" data-en="Vertical story">Story vertical</h3><p data-es="Formato 9:16 para stories de Instagram y Facebook." data-en="9:16 format for Instagram and Facebook stories.">Formato 9:16 para stories de Instagram y Facebook.</p><div class="fmt">1080 × 1920</div></div>
-      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 8l9 6 9-6"/></svg></div><h3 data-es="Email comercial" data-en="Sales email">Email comercial</h3><p data-es="Correo en HTML para enviar la propiedad a tu base de datos del CRM." data-en="HTML email to send the listing to your CRM database.">Correo en HTML para enviar la propiedad a tu base de datos del CRM.</p><div class="fmt">HTML</div></div>
-      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg></div><h3 data-es="Video vertical" data-en="Vertical video">Video vertical</h3><p data-es="Fotos, texto, música y locución compuestos en un reel 9:16." data-en="Photos, text, music, and voiceover composed into a 9:16 reel.">Fotos, texto, música y locución compuestos en un reel 9:16.</p><div class="fmt">MP4 · 9:16</div></div>
+    <div class="grid6 stagger">
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg></div><h3>Prop-pilot</h3><p data-es="Nuestro generador de contenido con IA: ficha PDF, post, carrusel, story, email, reel y anuncio &mdash; desde una sola propiedad." data-en="Our AI content generator: PDF sheet, post, carousel, story, email, reel, and ad copy &mdash; from a single property.">Nuestro generador de contenido con IA: ficha PDF, post, carrusel, story, email, reel y anuncio &mdash; desde una sola propiedad.</p><div class="fmt" data-es="7 formatos" data-en="7 formats">7 formatos</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.4"/></svg></div><h3 data-es="Publicacion directa a Instagram" data-en="Direct Instagram publishing">Publicacion directa a Instagram</h3><p data-es="El post generado se publica directo en tu cuenta, sin descargar y volver a subir." data-en="The generated post publishes straight to your account, no download-and-reupload.">El post generado se publica directo en tu cuenta, sin descargar y volver a subir.</p><div class="fmt" data-es="Meta Graph API" data-en="Meta Graph API">Meta Graph API</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M3 12h3M18 12h3M12 3v3M12 18v3"/></svg></div><h3 data-es="Fotos reales automaticas" data-en="Automatic real photos">Fotos reales automaticas</h3><p data-es="Si no subes una foto, el sistema busca una fotografia real y con licencia para tu propiedad." data-en="If you don't upload a photo, the system finds a real, licensed one for your property.">Si no subes una foto, el sistema busca una fotografia real y con licencia para tu propiedad.</p><div class="fmt" data-es="Fotos con licencia" data-en="Licensed photos">Fotos con licencia</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div><h3 data-es="Busqueda con lenguaje natural" data-en="Natural-language search">Busqueda con lenguaje natural</h3><p data-es="Escribe lo que buscas en una frase; la IA lo convierte en filtros. Cada resultado trae mapa y amenidades cercanas." data-en="Describe what you're looking for in a sentence; the AI turns it into filters. Every result shows a map and nearby amenities.">Escribe lo que buscas en una frase; la IA lo convierte en filtros. Cada resultado trae mapa y amenidades cercanas.</p><div class="fmt" data-es="Busqueda IA" data-en="AI search">Busqueda IA</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 8l9 6 9-6"/></svg></div><h3 data-es="CRM de leads" data-en="Lead CRM">CRM de leads</h3><p data-es="Cada contacto interesado en una propiedad llega a tu bandeja con estado de seguimiento." data-en="Every contact interested in a property lands in your inbox with a follow-up status.">Cada contacto interesado en una propiedad llega a tu bandeja con estado de seguimiento.</p><div class="fmt" data-es="Panel de leads" data-en="Leads dashboard">Panel de leads</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 10v10"/></svg></div><h3 data-es="Panel para tu inmobiliaria" data-en="Dashboard for your agency">Panel para tu inmobiliaria</h3><p data-es="Agrega, edita y publica tus propias propiedades desde un solo lugar." data-en="Add, edit, and publish your own listings from one place.">Agrega, edita y publica tus propias propiedades desde un solo lugar.</p><div class="fmt" data-es="Dashboard" data-en="Dashboard">Dashboard</div></div>
     </div>
-    <div class="guard">
-      <div class="reveal"><h4 data-es="La IA no inventa" data-en="The AI never invents">La IA no inventa</h4><p data-es="Si un dato no está en la ficha, no aparece en la pieza. Nada de m² o rentabilidades inventadas." data-en="If a value isn't in the form, it doesn't appear in the piece. No made-up m² or yields.">Si un dato no está en la ficha, no aparece en la pieza. Nada de m² o rentabilidades inventadas.</p></div>
-      <div class="reveal"><h4 data-es="Revisión humana obligatoria" data-en="Human review, always">Revisión humana obligatoria</h4><p data-es="Todo pasa por una vista previa editable antes de descargar y publicar." data-en="Everything passes through an editable preview before download and publishing.">Todo pasa por una vista previa editable antes de descargar y publicar.</p></div>
-      <div class="reveal"><h4 data-es="Marca coherente" data-en="Consistent brand">Marca coherente</h4><p data-es="Tus colores, tipografías y CTAs aplicados igual en las seis piezas." data-en="Your colors, fonts, and CTAs applied the same way across all six pieces.">Tus colores, tipografías y CTAs aplicados igual en las seis piezas.</p></div>
+    <div class="guard stagger">
+      <div class="reveal"><h4 data-es="La IA no inventa" data-en="The AI never invents">La IA no inventa</h4><p data-es="Si un dato no esta en la ficha, no aparece en la pieza. Nada de m&sup2; o rentabilidades inventadas." data-en="If a value isn't in the form, it doesn't appear in the piece. No made-up m&sup2; or yields.">Si un dato no esta en la ficha, no aparece en la pieza. Nada de m&sup2; o rentabilidades inventadas.</p></div>
+      <div class="reveal"><h4 data-es="Revision humana obligatoria" data-en="Human review, always">Revision humana obligatoria</h4><p data-es="Todo pasa por una vista previa editable antes de descargar y publicar." data-en="Everything passes through an editable preview before download and publishing.">Todo pasa por una vista previa editable antes de descargar y publicar.</p></div>
+      <div class="reveal"><h4 data-es="Marca coherente" data-en="Consistent brand">Marca coherente</h4><p data-es="Tus colores, tipografias y CTAs aplicados igual en las siete piezas." data-en="Your colors, fonts, and CTAs applied the same way across all seven pieces.">Tus colores, tipografias y CTAs aplicados igual en las siete piezas.</p></div>
     </div>
   </div>
 </section>
 
-<!-- PROPERTIES -->
+<!-- ══════════════════════════════════════════════════════════════
+     MICRO-CTA 1 — Free trial after features
+     ══════════════════════════════════════════════════════════════ -->
+<div class="micro-cta">
+  <div class="wrap">
+    <div class="micro-cta-inner reveal">
+      <div class="micro-cta-content">
+        <span class="eyebrow" data-es="Pruebalo gratis" data-en="Try it free">Pruebalo gratis</span>
+        <h3 data-es="Genera un ejemplo con <em>tu propia propiedad</em>" data-en="Generate a sample with <em>your own property</em>">Genera un ejemplo con <em>tu propia propiedad</em></h3>
+        <p data-es="Sin registro, sin tarjeta. Sube los datos de una propiedad y mira el resultado en menos de dos minutos." data-en="No signup, no credit card. Enter one property's data and see the result in under two minutes.">Sin registro, sin tarjeta. Sube los datos de una propiedad y mira el resultado en menos de dos minutos.</p>
+      </div>
+      <div class="micro-cta-actions">
+        <a href="/generate" class="btn btn-gold" data-es="Probar Prop-pilot gratis &rarr;" data-en="Try Prop-pilot free &rarr;">Probar Prop-pilot gratis &rarr;</a>
+        <span class="micro-note" data-es="Sin cuenta &middot; resultado inmediato" data-en="No account &middot; instant result">Sin cuenta &middot; resultado inmediato</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PROPERTIES
+     ══════════════════════════════════════════════════════════════ -->
 <section id="propiedades">
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="eyebrow" data-es="Inventario conectado" data-en="Connected inventory">Inventario conectado</span>
       <h2 data-es="Tus propiedades, listas para generar contenido" data-en="Your properties, ready to generate content">Tus propiedades, listas para generar contenido</h2>
-      <p data-es="Estas fichas se sincronizan desde tu cuenta de EasyBroker (MLS de México). Elige una propiedad y conviértela en las seis piezas." data-en="These listings sync from your EasyBroker account (Mexico's MLS). Pick a property and turn it into the six pieces.">Estas fichas se sincronizan desde tu cuenta de EasyBroker (MLS de México). Elige una propiedad y conviértela en las seis piezas.</p>
+      <p data-es="Estas fichas se sincronizan desde tu cuenta de EasyBroker (MLS de Mexico). Elige una propiedad y conviertela en las siete piezas." data-en="These listings sync from your EasyBroker account (Mexico's MLS). Pick a property and turn it into the seven pieces.">Estas fichas se sincronizan desde tu cuenta de EasyBroker (MLS de Mexico). Elige una propiedad y conviertela en las siete piezas.</p>
     </div>
     <div class="pfilter" id="pfilter">
       <button class="on" data-op="all" onclick="filterProps(this)" data-es="Todas" data-en="All">Todas</button>
@@ -317,12 +1146,12 @@
       <div class="pgrid" id="pgrid"></div>
       <aside class="pside">
         <div class="pside-inner reveal">
-          <span class="eyebrow" data-es="Propiedad seleccionada" data-en="Selected property">Propiedad seleccionada</span>
+          <span class="eyebrow" style="color:var(--gold)" data-es="Propiedad seleccionada" data-en="Selected property">Propiedad seleccionada</span>
           <h3 id="ps-title"></h3>
           <div class="ps-map"><iframe id="ps-map-frame" title="map" loading="lazy"></iframe></div>
           <div class="ps-amenities" id="ps-amenities"></div>
           <div class="ps-ai-block">
-            <button class="btn btn-dark ps-btn" id="ps-ai-btn" onclick="generateDescription()" data-es="✨ Generar descripción con IA" data-en="✨ Generate AI description">✨ Generar descripción con IA</button>
+            <button class="btn btn-dark ps-btn" id="ps-ai-btn" onclick="generateDescription()" data-es="Generar descripcion con IA" data-en="Generate AI description">Generar descripcion con IA</button>
             <div id="ps-ai-out"></div>
           </div>
         </div>
@@ -330,18 +1159,20 @@
     </div>
     <div class="props-note reveal">
       <span class="eb">EasyBroker API</span>
-      <p data-es="Datos y fotos de muestra con la estructura real de la API de EasyBroker (las imágenes son ilustraciones). En producción, un proxy en el servidor entrega tu inventario y tus fotografías reales sin exponer tu API Key. El panel lateral usa OpenStreetMap (ubicación y lugares cercanos) y Groq (descripción con IA) — ambas APIs reales y gratuitas." data-en="Sample data and illustrated photos using EasyBroker's real API schema. In production, a server-side proxy serves your real inventory and photos without exposing your API Key. The side panel uses OpenStreetMap (location & nearby places) and Groq (AI description) — both real, free APIs.">Datos y fotos de muestra con la estructura real de la API de EasyBroker (las imágenes son ilustraciones). En producción, un proxy en el servidor entrega tu inventario y tus fotografías reales sin exponer tu API Key. El panel lateral usa OpenStreetMap (ubicación y lugares cercanos) y Groq (descripción con IA) — ambas APIs reales y gratuitas.</p>
+      <p data-es="Datos y fotos de muestra con la estructura real de la API de EasyBroker (las imagenes son ilustraciones). En produccion, un proxy en el servidor entrega tu inventario y tus fotografias reales sin exponer tu API Key. El panel lateral usa OpenStreetMap (ubicacion y lugares cercanos) y Groq (descripcion con IA) &mdash; ambas APIs reales y gratuitas." data-en="Sample data and illustrated photos using EasyBroker's real API schema. In production, a server-side proxy serves your real inventory and photos without exposing your API Key. The side panel uses OpenStreetMap (location & nearby places) and Groq (AI description) &mdash; both real, free APIs.">Datos y fotos de muestra con la estructura real de la API de EasyBroker (las imagenes son ilustraciones). En produccion, un proxy en el servidor entrega tu inventario y tus fotografias reales sin exponer tu API Key. El panel lateral usa OpenStreetMap (ubicacion y lugares cercanos) y Groq (descripcion con IA) &mdash; ambas APIs reales y gratuitas.</p>
     </div>
   </div>
 </section>
 
-<!-- ROI -->
+<!-- ══════════════════════════════════════════════════════════════
+     ROI CALCULATOR
+     ══════════════════════════════════════════════════════════════ -->
 <section class="roi" id="roi">
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="eyebrow" data-es="Calculadora de retorno" data-en="ROI calculator">Calculadora de retorno</span>
-      <h2 data-es="Cuánto tiempo recuperas al mes" data-en="How much time you get back each month">Cuánto tiempo recuperas al mes</h2>
-      <p data-es="Ajusta los valores a tu operación. Es una estimación prudente para empezar la conversación, no una promesa." data-en="Adjust the values to your operation. It's a conservative estimate to start the conversation, not a promise.">Ajusta los valores a tu operación. Es una estimación prudente para empezar la conversación, no una promesa.</p>
+      <h2 data-es="Cuanto tiempo recuperas al mes" data-en="How much time you get back each month">Cuanto tiempo recuperas al mes</h2>
+      <p data-es="Ajusta los valores a tu operacion. Es una estimacion prudente para empezar la conversacion, no una promesa." data-en="Adjust the values to your operation. It's a conservative estimate to start the conversation, not a promise.">Ajusta los valores a tu operacion. Es una estimacion prudente para empezar la conversacion, no una promesa.</p>
     </div>
     <div class="roi-grid">
       <div class="roi-form reveal">
@@ -368,100 +1199,243 @@
       <div class="roi-out reveal">
         <div class="roi-big"><small data-es="Ahorro mensual estimado" data-en="Estimated monthly saving">Ahorro mensual estimado</small><span id="out-month">$1,125</span></div>
         <div class="roi-second">
-          <div><div class="n" id="out-year">$13,500</div><div class="l" data-es="al año" data-en="per year">al año</div></div>
+          <div><div class="n" id="out-year">$13,500</div><div class="l" data-es="al ano" data-en="per year">al ano</div></div>
           <div><div class="n" id="out-hrs">45 h</div><div class="l" data-es="horas recuperadas / mes" data-en="hours recovered / month">horas recuperadas / mes</div></div>
         </div>
-        <p class="roi-note" data-es="Fórmula: propiedades × horas × costo por hora. Ajústalo a tus datos reales antes de tomar decisiones." data-en="Formula: properties × hours × cost per hour. Adjust it to your real numbers before making decisions.">Fórmula: propiedades × horas × costo por hora. Ajústalo a tus datos reales antes de tomar decisiones.</p>
+        <p class="roi-note" data-es="Formula: propiedades &times; horas &times; costo por hora. Ajustalo a tus datos reales antes de tomar decisiones." data-en="Formula: properties &times; hours &times; cost per hour. Adjust it to your real numbers before making decisions.">Formula: propiedades &times; horas &times; costo por hora. Ajustalo a tus datos reales antes de tomar decisiones.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- PRICING -->
+<!-- ══════════════════════════════════════════════════════════════
+     MICRO-CTA 2 — Try before you buy (between ROI and Pricing)
+     ══════════════════════════════════════════════════════════════ -->
+<div class="micro-cta micro-cta-light">
+  <div class="wrap">
+    <div class="micro-cta-inner reveal">
+      <div class="micro-cta-content">
+        <span class="eyebrow" data-es="Antes de decidir" data-en="Before you decide">Antes de decidir</span>
+        <h3 data-es="Mira que genera Prop-pilot <em>con tu propiedad</em>" data-en="See what Prop-pilot generates <em>with your property</em>">Mira que genera Prop-pilot <em>con tu propiedad</em></h3>
+        <p data-es="No tienes que comprometerte con un plan para probarlo. Genera una ficha, un post y un carrusel para una propiedad real &mdash; gratis." data-en="You don't have to commit to a plan to try it. Generate a fact sheet, a post, and a carousel for a real property &mdash; free.">No tienes que comprometerte con un plan para probarlo. Genera una ficha, un post y un carrusel para una propiedad real &mdash; gratis.</p>
+      </div>
+      <div class="micro-cta-actions">
+        <a href="/generate" class="btn btn-gold" data-es="Generar muestra gratis &rarr;" data-en="Generate free sample &rarr;">Generar muestra gratis &rarr;</a>
+        <span class="micro-note" data-es="2 minutos &middot; sin tarjeta &middot; resultado descargable" data-en="2 minutes &middot; no card &middot; downloadable result">2 minutos &middot; sin tarjeta &middot; resultado descargable</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PRICING
+     ══════════════════════════════════════════════════════════════ -->
 <section id="precios">
   <div class="wrap">
     <div class="sec-head reveal">
-      <span class="eyebrow" data-es="Inversión" data-en="Investment">Inversión</span>
+      <span class="eyebrow" data-es="Acceso anticipado &middot; Riviera Maya" data-en="Early access &middot; Riviera Maya">Acceso anticipado &middot; Riviera Maya</span>
       <h2 data-es="No vendes seis archivos. Vendes un sistema." data-en="You aren't buying six files. You're buying a system.">No vendes seis archivos. Vendes un sistema.</h2>
-      <p data-es="Un sistema personalizado que reutilizas con decenas o cientos de propiedades. El precio depende del alcance real." data-en="A customized system you reuse across dozens or hundreds of properties. The price depends on the real scope.">Un sistema personalizado que reutilizas con decenas o cientos de propiedades. El precio depende del alcance real.</p>
+      <p data-es="Estamos incorporando las primeras agencias y desarrolladoras de la Riviera Maya. Los primeros clientes reciben onboarding personalizado y acceso prioritario a nuevas funciones." data-en="We're onboarding the first agencies and developers in the Riviera Maya. Early clients get personalized onboarding and priority access to new features.">Estamos incorporando las primeras agencias y desarrolladoras de la Riviera Maya. Los primeros clientes reciben onboarding personalizado y acceso prioritario a nuevas funciones.</p>
     </div>
-    <div class="tiers">
+    <div class="tiers stagger">
       <div class="tier reveal">
         <div class="tier-name" data-es="Inicial" data-en="Starter">Inicial</div>
         <div class="tier-price" data-es="desde $1,500 <span>USD</span>" data-en="from $1,500 <span>USD</span>">desde $1,500 <span>USD</span></div>
         <ul>
           <li data-es="Formulario personalizado" data-en="Custom form">Formulario personalizado</li>
           <li data-es="Ficha PDF, post, carrusel y story" data-en="PDF sheet, post, carousel & story">Ficha PDF, post, carrusel y story</li>
-          <li data-es="Instalación local" data-en="Local install">Instalación local</li>
+          <li data-es="Instalacion local" data-en="Local install">Instalacion local</li>
         </ul>
-        <a href="#contacto" class="btn btn-dark" data-es="Empezar aquí" data-en="Start here">Empezar aquí</a>
+        <a href="#contacto" class="btn btn-outline" data-es="Empezar aqui" data-en="Start here">Empezar aqui</a>
       </div>
       <div class="tier feat reveal">
-        <div class="tier-flag" data-es="Más elegido" data-en="Most chosen">Más elegido</div>
+        <div class="tier-flag" data-es="Mas elegido" data-en="Most chosen">Mas elegido</div>
         <div class="tier-name" data-es="Completo" data-en="Full">Completo</div>
         <div class="tier-price" data-es="desde $3,000 <span>USD</span>" data-en="from $3,000 <span>USD</span>">desde $3,000 <span>USD</span></div>
         <ul>
           <li data-es="Todo lo de Inicial" data-en="Everything in Starter">Todo lo de Inicial</li>
           <li data-es="Email HTML y video vertical" data-en="HTML email & vertical video">Email HTML y video vertical</li>
-          <li data-es="Personalización de marca" data-en="Brand customization">Personalización de marca</li>
-          <li data-es="Formación y soporte inicial" data-en="Training & initial support">Formación y soporte inicial</li>
+          <li data-es="Personalizacion de marca" data-en="Brand customization">Personalizacion de marca</li>
+          <li data-es="Formacion y soporte inicial" data-en="Training & initial support">Formacion y soporte inicial</li>
         </ul>
-        <a href="#contacto" class="btn btn-gold" data-es="Reservar diagnóstico" data-en="Book a diagnosis">Reservar diagnóstico</a>
+        <a href="#contacto" class="btn btn-gold" data-es="Reservar diagnostico" data-en="Book a diagnosis">Reservar diagnostico</a>
       </div>
       <div class="tier reveal">
         <div class="tier-name" data-es="Conectado" data-en="Connected">Conectado</div>
         <div class="tier-price" data-es="desde $5,000 <span>USD</span>" data-en="from $5,000 <span>USD</span>">desde $5,000 <span>USD</span></div>
         <ul>
           <li data-es="Multiusuario y base de datos en la nube" data-en="Multi-user & cloud database">Multiusuario y base de datos en la nube</li>
-          <li data-es="Integración con CRM y portal" data-en="CRM & portal integration">Integración con CRM y portal</li>
+          <li data-es="Integracion con CRM y portal" data-en="CRM & portal integration">Integracion con CRM y portal</li>
           <li data-es="Automatizaciones y despliegue" data-en="Automations & deployment">Automatizaciones y despliegue</li>
           <li data-es="Soporte continuo" data-en="Ongoing support">Soporte continuo</li>
         </ul>
-        <a href="#contacto" class="btn btn-dark" data-es="Hablar del alcance" data-en="Discuss the scope">Hablar del alcance</a>
+        <a href="#contacto" class="btn btn-outline" data-es="Hablar del alcance" data-en="Discuss the scope">Hablar del alcance</a>
       </div>
     </div>
-    <p class="price-foot" data-es="El precio final depende del alcance real, no de una cifra arbitraria. Publicar directo en Instagram o portales requiere APIs, permisos y cuentas configuradas — es una fase aparte." data-en="The final price depends on the real scope, not an arbitrary number. Publishing directly to Instagram or portals requires APIs, permissions, and configured accounts — that's a separate phase.">El precio final depende del alcance real, no de una cifra arbitraria. Publicar directo en Instagram o portales requiere APIs, permisos y cuentas configuradas — es una fase aparte.</p>
+    <p class="price-foot reveal" data-es="El precio final depende del alcance real, no de una cifra arbitraria. Publicar directo en Instagram o portales requiere APIs, permisos y cuentas configuradas &mdash; es una fase aparte." data-en="The final price depends on the real scope, not an arbitrary number. Publishing directly to Instagram or portals requires APIs, permissions, and configured accounts &mdash; that's a separate phase.">El precio final depende del alcance real, no de una cifra arbitraria. Publicar directo en Instagram o portales requiere APIs, permisos y cuentas configuradas &mdash; es una fase aparte.</p>
   </div>
 </section>
 
-<!-- PRIVACY + LIMITS -->
-<section style="background:linear-gradient(180deg,#f3ecdd,#fbf7ee)">
-  <div class="wrap priv">
+<!-- ══════════════════════════════════════════════════════════════
+     PRIVACY + LIMITS
+     ══════════════════════════════════════════════════════════════ -->
+<section class="sec-gradient">
+  <div class="wrap" style="max-width:720px">
     <div class="priv-card reveal">
-      <span class="eyebrow" data-es="Privacidad desde el diseño" data-en="Privacy by design">Privacidad desde el diseño</span>
-      <h3 data-es="Cumple con la LFPDPPP desde el primer día" data-en="LFPDPPP-ready from day one">Cumple con la LFPDPPP desde el primer día</h3>
+      <span class="eyebrow" data-es="Privacidad desde el diseno" data-en="Privacy by design">Privacidad desde el diseno</span>
+      <h3 data-es="Cumple con la LFPDPPP desde el primer dia" data-en="LFPDPPP-ready from day one">Cumple con la LFPDPPP desde el primer dia</h3>
       <div class="priv-list">
-        <div><span class="dot"></span><p data-es="<b>Dirección exacta solo interna.</b> Las piezas públicas muestran zona o colonia, no la ubicación precisa." data-en="<b>Exact address stays internal.</b> Public pieces show the zone or neighborhood, not the precise location."><b>Dirección exacta solo interna.</b> Las piezas públicas muestran zona o colonia, no la ubicación precisa.</p></div>
-        <div><span class="dot"></span><p data-es="<b>Datos personales con finalidad.</b> Nada de datos personales en registros o servicios externos sin un propósito definido." data-en="<b>Personal data with a purpose.</b> No personal data in logs or external services without a defined purpose."><b>Datos personales con finalidad.</b> Nada de datos personales en registros o servicios externos sin un propósito definido.</p></div>
-        <div><span class="dot"></span><p data-es="<b>Fotos con derechos.</b> Solo imágenes propias o autorizadas por la agencia." data-en="<b>Licensed photos.</b> Only the agency's own or authorized images."><b>Fotos con derechos.</b> Solo imágenes propias o autorizadas por la agencia.</p></div>
+        <div><span class="dot"></span><p data-es="<b>Direccion exacta solo interna.</b> Las piezas publicas muestran zona o colonia, no la ubicacion precisa." data-en="<b>Exact address stays internal.</b> Public pieces show the zone or neighborhood, not the precise location."><b>Direccion exacta solo interna.</b> Las piezas publicas muestran zona o colonia, no la ubicacion precisa.</p></div>
+        <div><span class="dot"></span><p data-es="<b>Datos personales con finalidad.</b> Nada de datos personales en registros o servicios externos sin un proposito definido." data-en="<b>Personal data with a purpose.</b> No personal data in logs or external services without a defined purpose."><b>Datos personales con finalidad.</b> Nada de datos personales en registros o servicios externos sin un proposito definido.</p></div>
+        <div><span class="dot"></span><p data-es="<b>Fotos con derechos.</b> Solo imagenes propias o autorizadas por la agencia." data-en="<b>Licensed photos.</b> Only the agency's own or authorized images."><b>Fotos con derechos.</b> Solo imagenes propias o autorizadas por la agencia.</p></div>
       </div>
-    </div>
-    <div class="limits reveal">
-      <h3 data-es="Lo que te explicamos con honestidad" data-en="What we tell you honestly">Lo que te explicamos con honestidad</h3>
-      <ul>
-        <li data-es="<b>Publicación automática:</b> generar y publicar son procesos distintos; publicar necesita integraciones." data-en="<b>Auto-publishing:</b> generating and publishing are different; publishing needs integrations."><b>Publicación automática:</b> generar y publicar son procesos distintos; publicar necesita integraciones.</li>
-        <li data-es="<b>La locución puede tener costo:</b> una voz local es gratuita; una voz profesional por API se paga por uso." data-en="<b>Voiceover may cost money:</b> a local voice is free; a professional API voice is paid per use."><b>La locución puede tener costo:</b> una voz local es gratuita; una voz profesional por API se paga por uso.</li>
-        <li data-es="<b>La información se verifica:</b> el sistema no inventa características, superficies ni ubicaciones." data-en="<b>Information is verified:</b> the system doesn't invent features, areas, or locations."><b>La información se verifica:</b> el sistema no inventa características, superficies ni ubicaciones.</li>
-        <li data-es="<b>El sistema necesita mantenimiento:</b> dependencias, APIs y plataformas cambian con el tiempo." data-en="<b>The system needs maintenance:</b> dependencies, APIs, and platforms change over time."><b>El sistema necesita mantenimiento:</b> dependencias, APIs y plataformas cambian con el tiempo.</li>
-      </ul>
     </div>
   </div>
 </section>
 
-<!-- CTA -->
+<!-- ══════════════════════════════════════════════════════════════
+     FAQ
+     ══════════════════════════════════════════════════════════════ -->
+<section id="faq" class="sec-gradient">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Preguntas frecuentes" data-en="FAQ">Preguntas frecuentes</span>
+      <h2 data-es="Preguntas frecuentes sobre Proplync" data-en="Frequently asked questions about Proplync">Preguntas frecuentes sobre Proplync</h2>
+    </div>
+    <div class="faq-list stagger">
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;Necesito ser agencia para usar el generador?" data-en="Do I need to be an agency to use the generator?">&iquest;Necesito ser agencia para usar el generador?</summary>
+        <p data-es="No, para una sola propiedad no. El generador funciona sin cuenta en /generate. Para gestionar varias propiedades, leads y publicar desde un panel, se necesita una cuenta de agencia." data-en="Not for a single property. The generator works with no account at /generate. To manage multiple properties, leads, and publish from a dashboard, you need an agency account.">No, para una sola propiedad no. El generador funciona sin cuenta en /generate. Para gestionar varias propiedades, leads y publicar desde un panel, se necesita una cuenta de agencia.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;Puedo publicar directo a Instagram?" data-en="Can I publish directly to Instagram?">&iquest;Puedo publicar directo a Instagram?</summary>
+        <p data-es="Si, para el formato de post via la API oficial de Meta (Instagram Graph API) &mdash; sin descargar y volver a subir. Los demas formatos (carrusel, story, video, etc.) se descargan para publicarlos manualmente." data-en="Yes, for the post format via Meta's official Instagram Graph API &mdash; no download-and-reupload. The other formats (carousel, story, video, etc.) download for manual posting.">Si, para el formato de post via la API oficial de Meta (Instagram Graph API) &mdash; sin descargar y volver a subir. Los demas formatos (carrusel, story, video, etc.) se descargan para publicarlos manualmente.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;De donde salen las fotos?" data-en="Where do the photos come from?">&iquest;De donde salen las fotos?</summary>
+        <p data-es="Si subes tu propia foto, se usa esa. Si no, el sistema busca automaticamente una fotografia real y con licencia que combine con tu propiedad." data-en="If you upload your own photo, that's what gets used. If not, the system automatically finds a real, licensed photo that fits your property.">Si subes tu propia foto, se usa esa. Si no, el sistema busca automaticamente una fotografia real y con licencia que combine con tu propiedad.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;La IA inventa datos?" data-en="Does the AI make up data?">&iquest;La IA inventa datos?</summary>
+        <p data-es="No. El generador solo usa los datos que tu proporcionas. Si un dato no esta en la ficha, no aparece en ninguna pieza." data-en="No. The generator only uses the data you provide. If a value isn't in the form, it doesn't appear in any piece.">No. El generador solo usa los datos que tu proporcionas. Si un dato no esta en la ficha, no aparece en ninguna pieza.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;Que pasa con mis datos y los de mis clientes?" data-en="What happens with my data and my clients' data?">&iquest;Que pasa con mis datos y los de mis clientes?</summary>
+        <p data-es="Proplync esta pensado para cumplir con la LFPDPPP desde el diseno: la direccion exacta se mantiene interna, y los datos personales solo se usan con una finalidad definida." data-en="Proplync is designed to meet LFPDPPP from the ground up: the exact address stays internal, and personal data is only used with a defined purpose.">Proplync esta pensado para cumplir con la LFPDPPP desde el diseno: la direccion exacta se mantiene interna, y los datos personales solo se usan con una finalidad definida.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;Cuanto cuesta?" data-en="How much does it cost?">&iquest;Cuanto cuesta?</summary>
+        <p data-es="Depende del alcance real de tu operacion &mdash; ver los tres planes desde $1,500 USD mas abajo." data-en="It depends on the real scope of your operation &mdash; see the three plans starting at $1,500 USD below.">Depende del alcance real de tu operacion &mdash; ver los tres planes desde $1,500 USD mas abajo.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;Genera y publica automaticamente?" data-en="Does it generate and publish automatically?">&iquest;Genera y publica automaticamente?</summary>
+        <p data-es="Generar y publicar son procesos distintos. El sistema genera las siete piezas al instante, pero publicar en Instagram o portales requiere APIs, permisos y cuentas configuradas &mdash; es una fase aparte." data-en="Generating and publishing are separate steps. The system generates all seven pieces instantly, but publishing to Instagram or portals requires APIs, permissions, and configured accounts &mdash; that's a separate phase.">Generar y publicar son procesos distintos. El sistema genera las siete piezas al instante, pero publicar en Instagram o portales requiere APIs, permisos y cuentas configuradas &mdash; es una fase aparte.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;La locucion del video tiene costo?" data-en="Does the video voiceover cost extra?">&iquest;La locucion del video tiene costo?</summary>
+        <p data-es="Una voz local (generada en tu equipo) es gratuita. Si prefieres una voz profesional por API (ElevenLabs, etc.), se paga por uso &mdash; generalmente centavos por video." data-en="A local voice (generated on your machine) is free. If you prefer a professional API voice (ElevenLabs, etc.), it's paid per use &mdash; usually pennies per video.">Una voz local (generada en tu equipo) es gratuita. Si prefieres una voz profesional por API (ElevenLabs, etc.), se paga por uso &mdash; generalmente centavos por video.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;Necesita mantenimiento?" data-en="Does it need maintenance?">&iquest;Necesita mantenimiento?</summary>
+        <p data-es="Como todo sistema que depende de APIs externas (IA, fotos, publicacion), las dependencias y plataformas cambian con el tiempo. Incluimos soporte en los planes Completo y Conectado para cubrir esto." data-en="Like any system that depends on external APIs (AI, photos, publishing), dependencies and platforms change over time. We include support in the Full and Connected plans to cover this.">Como todo sistema que depende de APIs externas (IA, fotos, publicacion), las dependencias y plataformas cambian con el tiempo. Incluimos soporte en los planes Completo y Conectado para cubrir esto.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     CTA
+     ══════════════════════════════════════════════════════════════ -->
 <section class="cta" id="contacto">
   <div class="wrap">
-    <h2 data-es="Convierte cada propiedad en seis piezas listas para publicar" data-en="Turn every property into six publish-ready pieces">Convierte cada propiedad en seis piezas listas para publicar</h2>
-    <p data-es="En una llamada de 15 minutos revisamos tu proceso actual, qué piezas te consumen más tiempo y qué automatizar primero." data-en="In a 15-minute call we review your current process, which pieces eat the most time, and what to automate first.">En una llamada de 15 minutos revisamos tu proceso actual, qué piezas te consumen más tiempo y qué automatizar primero.</p>
-    <a href="mailto:hola@proplync.mx?subject=Diagn%C3%B3stico%20Proplync.mx" class="btn btn-gold" data-es="Reservar diagnóstico gratuito" data-en="Book a free diagnosis">Reservar diagnóstico gratuito</a>
+    <div class="cta-layout">
+      <div class="cta-text reveal">
+        <h2 data-es="Convierte cada propiedad en <em>siete piezas</em> listas para publicar" data-en="Turn every property into <em>seven pieces</em> ready to publish">Convierte cada propiedad en <em>siete piezas</em> listas para publicar</h2>
+        <p data-es="Dejanos tus datos y en menos de 24 horas te contactamos para una llamada de diagnostico de 15 minutos &mdash; sin costo y sin compromiso." data-en="Leave your details and within 24 hours we'll reach out for a 15-minute diagnosis call &mdash; free and no commitment.">Dejanos tus datos y en menos de 24 horas te contactamos para una llamada de diagnostico de 15 minutos &mdash; sin costo y sin compromiso.</p>
+        <div class="cta-perks">
+          <div class="cta-perk"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><span data-es="Revisamos tu proceso actual" data-en="We review your current process">Revisamos tu proceso actual</span></div>
+          <div class="cta-perk"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><span data-es="Identificamos que automatizar primero" data-en="We identify what to automate first">Identificamos que automatizar primero</span></div>
+          <div class="cta-perk"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><span data-es="Te mostramos un ejemplo con tus datos" data-en="We show you an example with your data">Te mostramos un ejemplo con tus datos</span></div>
+        </div>
+      </div>
+      <div class="cta-form reveal" id="contact-form-wrap">
+        <form id="contact-form" onsubmit="submitContact(event)">
+          <div class="form-row">
+            <div class="field">
+              <label data-es="Nombre" data-en="Name">Nombre</label>
+              <input type="text" name="name" required placeholder="Tu nombre">
+            </div>
+            <div class="field">
+              <label data-es="Empresa / Agencia" data-en="Company / Agency">Empresa / Agencia</label>
+              <input type="text" name="company" placeholder="Opcional">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label>Email</label>
+              <input type="email" name="email" required placeholder="tu@correo.com">
+            </div>
+            <div class="field">
+              <label>WhatsApp</label>
+              <input type="tel" name="phone" placeholder="+52 984 ___">
+            </div>
+          </div>
+          <div class="field">
+            <label data-es="Tipo de operacion" data-en="Type of operation">Tipo de operacion</label>
+            <select name="type">
+              <option value="agency" data-es="Agencia inmobiliaria" data-en="Real estate agency">Agencia inmobiliaria</option>
+              <option value="owner" data-es="Propietario" data-en="Property owner">Propietario</option>
+              <option value="developer" data-es="Desarrolladora" data-en="Developer">Desarrolladora</option>
+              <option value="other" data-es="Otro" data-en="Other">Otro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label data-es="Cuentanos brevemente" data-en="Tell us briefly">Cuentanos brevemente</label>
+            <textarea name="message" rows="3" placeholder="" data-es-placeholder="Cuantas propiedades manejas, que formatos usas hoy..." data-en-placeholder="How many properties you manage, what formats you use today..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center" data-es="Solicitar diagnostico gratuito" data-en="Request free diagnosis">Solicitar diagnostico gratuito</button>
+        </form>
+        <div class="cta-form-success" id="contact-success">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
+          <h4 data-es="Mensaje enviado" data-en="Message sent">Mensaje enviado</h4>
+          <p data-es="Te contactaremos en menos de 24 horas para agendar tu diagnostico." data-en="We'll reach out within 24 hours to schedule your diagnosis.">Te contactaremos en menos de 24 horas para agendar tu diagnostico.</p>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
 <footer>
-  <div class="wrap foot">
-    <span class="brand" style="font-family:var(--display);font-size:1.05rem">Proplync<span style="color:#34d6c4">.mx</span> · Riviera Maya</span>
-    <span data-es="Hecho con Claude Code · Tulum · Playa del Carmen · Cancún" data-en="Built with Claude Code · Tulum · Playa del Carmen · Cancún">Hecho con Claude Code · Tulum · Playa del Carmen · Cancún</span>
-    <span class="mono" style="font-size:.72rem;opacity:.7">© 2026</span>
+  <div class="wrap foot-grid">
+    <div class="foot-brand">
+      <span class="brand" style="font-family:var(--display);font-size:1.15rem">Proplync<span class="accent">.mx</span></span>
+      <p data-es="Generador de contenido inmobiliario con IA para la Riviera Maya." data-en="AI real-estate content generator for the Riviera Maya.">Generador de contenido inmobiliario con IA para la Riviera Maya.</p>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Producto" data-en="Product">Producto</h5>
+      <a href="/generate" data-es="Generador" data-en="Generator">Generador</a>
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/favorites" data-es="Favoritos" data-en="Favorites">Favoritos</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Cuenta" data-en="Account">Cuenta</h5>
+      <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
+      <a href="/signup" data-es="Crear cuenta" data-en="Create account">Crear cuenta</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Navegacion" data-en="Navigation">Navegacion</h5>
+      <a href="#como" data-es="Como funciona" data-en="How it works">Como funciona</a>
+      <a href="#precios" data-es="Precios" data-en="Pricing">Precios</a>
+      <a href="#faq" data-es="Preguntas frecuentes" data-en="FAQ">Preguntas frecuentes</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Contacto" data-en="Contact">Contacto</h5>
+      <a href="mailto:hola@proplync.mx">hola@proplync.mx</a>
+    </div>
+  </div>
+  <div class="wrap foot-bottom">
+    <span data-es="Hecho en la Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun" data-en="Made in the Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun">Hecho en la Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun</span>
+    <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span>
   </div>
 </footer>
 
@@ -469,9 +1443,37 @@
 <script src="/js/api.js"></script>
 <script src="/js/favorites.js"></script>
 <script>
+  /* ---------- header scroll effect ---------- */
+  (function(){
+    const header = document.querySelector('header');
+    let ticking = false;
+    window.addEventListener('scroll', function(){
+      if(!ticking){
+        requestAnimationFrame(function(){
+          header.classList.toggle('scrolled', window.scrollY > 40);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  })();
+
+  /* ---------- Soluciones dropdown: close on outside click / Escape ---------- */
+  (function(){
+    const drop = document.getElementById('navdrop');
+    if(!drop) return;
+    document.addEventListener('click', function(e){
+      if(drop.classList.contains('open') && !drop.contains(e.target)) drop.classList.remove('open');
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape') drop.classList.remove('open');
+    });
+  })();
+
   /* ---------- homepage-specific: wire lang change to page components ---------- */
   document.addEventListener('langchange', function(){
     renderProperties();
+    renderFeatured();
     updateHeroListing();
     renderPreview();
     updateSidePanel();
@@ -479,14 +1481,16 @@
   });
 
   /* ---------- properties (EasyBroker API schema) ---------- */
-  const LISTINGS_ENDPOINT = '/api/listings';
+  const LISTINGS_ENDPOINT = '/api/search';
   let properties = [
-    {public_id:'EB-T2451', title_es:'Departamento en preventa', title_en:'Pre-sale apartment', town:'Tulum', neighborhood:'Aldea Zamá', bedrooms:2, bathrooms:2, parking:1, size:78, operation:'sale', currency:'USD', amount:245000, formatted:'245,000', image:'https://images.pexels.com/photos/35877931/pexels-photo-35877931.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'condo', photoQuery:'modern condo balcony jungle', lat:20.2114, lng:-87.4654},
+    {public_id:'EB-T2451', title_es:'Departamento en preventa', title_en:'Pre-sale apartment', town:'Tulum', neighborhood:'Aldea Zama', bedrooms:2, bathrooms:2, parking:1, size:78, operation:'sale', currency:'USD', amount:245000, formatted:'245,000', image:'https://images.pexels.com/photos/5563469/pexels-photo-5563469.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'condo', photoQuery:'modern condo balcony jungle', lat:20.2114, lng:-87.4654},
     {public_id:'EB-P8830', title_es:'Casa con alberca en Playacar', title_en:'House with pool in Playacar', town:'Playa del Carmen', neighborhood:'Playacar Fase II', bedrooms:3, bathrooms:4, parking:2, size:240, operation:'sale', currency:'USD', amount:685000, formatted:'685,000', image:'https://images.pexels.com/photos/8134849/pexels-photo-8134849.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'pool', photoQuery:'luxury house swimming pool', lat:20.6116, lng:-87.0739},
     {public_id:'EB-M1207', title_es:'Studio frente al mar', title_en:'Beachfront studio', town:'Puerto Morelos', neighborhood:'Zona Hotelera', bedrooms:1, bathrooms:1, parking:1, size:45, operation:'sale', currency:'USD', amount:189000, formatted:'189,000', image:'https://images.pexels.com/photos/6312076/pexels-photo-6312076.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'studio', photoQuery:'beachfront studio apartment interior', lat:20.8460, lng:-86.8756},
-    {public_id:'EB-C4062', title_es:'Penthouse vista al Caribe', title_en:'Penthouse with Caribbean view', town:'Cancún', neighborhood:'Puerto Cancún', bedrooms:3, bathrooms:3, parking:2, size:180, operation:'sale', currency:'USD', amount:1150000, formatted:'1,150,000', image:'https://images.pexels.com/photos/6775268/pexels-photo-6775268.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'penthouse', photoQuery:'penthouse ocean view terrace', lat:21.1394, lng:-86.7649},
+    {public_id:'EB-C4062', title_es:'Penthouse vista al Caribe', title_en:'Penthouse with Caribbean view', town:'Cancun', neighborhood:'Puerto Cancun', bedrooms:3, bathrooms:3, parking:2, size:180, operation:'sale', currency:'USD', amount:1150000, formatted:'1,150,000', image:'https://images.pexels.com/photos/6775268/pexels-photo-6775268.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'penthouse', photoQuery:'penthouse ocean view terrace', lat:21.1394, lng:-86.7649},
     {public_id:'EB-P5519', title_es:'Departamento amueblado', title_en:'Furnished apartment', town:'Playa del Carmen', neighborhood:'Centro', bedrooms:2, bathrooms:2, parking:1, size:90, operation:'rental', currency:'USD', amount:2200, formatted:'2,200', image:'https://images.pexels.com/photos/6969824/pexels-photo-6969824.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'apartment', photoQuery:'furnished apartment living room modern', lat:20.6296, lng:-87.0739},
-    {public_id:'EB-T3388', title_es:'Villa en la selva', title_en:'Villa in the jungle', town:'Tulum', neighborhood:'Región 15', bedrooms:4, bathrooms:4, parking:3, size:320, operation:'sale', currency:'USD', amount:890000, formatted:'890,000', image:'https://images.pexels.com/photos/4940760/pexels-photo-4940760.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'villa', photoQuery:'jungle villa mexico exterior', lat:20.1950, lng:-87.4550}
+    {public_id:'EB-T3388', title_es:'Villa en la selva', title_en:'Villa in the jungle', town:'Tulum', neighborhood:'Region 15', bedrooms:4, bathrooms:4, parking:3, size:320, operation:'sale', currency:'USD', amount:890000, formatted:'890,000', image:'https://images.pexels.com/photos/4940760/pexels-photo-4940760.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'villa', photoQuery:'jungle villa mexico exterior', lat:20.1950, lng:-87.4550},
+    {public_id:'EB-P9214', title_es:'Penthouse con vista al mar en Coco Beach', title_en:'Oceanview penthouse in Coco Beach', town:'Playa del Carmen', neighborhood:'Coco Beach', bedrooms:2, bathrooms:2, parking:1, size:204, operation:'sale', currency:'USD', amount:839000, formatted:'839,000', image:'https://images.pexels.com/photos/36362/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=800', scene:'penthouse', photoQuery:'luxury penthouse rooftop ocean view', lat:20.6455, lng:-87.0625},
+    {public_id:'EB-T6720', title_es:'Estudio frente al mar en Tankah Bay', title_en:'Beachfront studio in Tankah Bay', town:'Tulum', neighborhood:'Tankah Bay', bedrooms:1, bathrooms:1, parking:1, size:51, operation:'sale', currency:'USD', amount:672190, formatted:'672,190', image:'https://images.pexels.com/photos/31688473/pexels-photo-31688473.jpeg?auto=compress&cs=tinysrgb&w=800', scene:'studio', photoQuery:'beachfront studio apartment interior tulum', lat:20.2970, lng:-87.4280}
   ];
   let activeProp = properties[0];
   let opFilter = 'all';
@@ -495,9 +1499,9 @@
      show an image with no external requests. Real EasyBroker photos (p.image)
      override these automatically in production. */
   function sceneSVG(type){
-    const C={sea:'#17b0a8',seaD:'#0c7c77',sand:'#f4ecda',gold:'#e7a43b',ink:'#06232a',jungle:'#1f7a4d',jgl2:'#2e9d63',jgl3:'#15633c',teal:'#0a5d59',aqua:'#34d6c4',wall:'#fbf5e8',wall2:'#e8dcc4'};
+    const C={sea:'#2d8a85',seaD:'#1f6b67',sand:'#f0ebe3',gold:'#c9a96e',ink:'#0a1628',jungle:'#1f7a4d',jgl2:'#2e9d63',jgl3:'#15633c',teal:'#1f6b67',aqua:'#5ec4be',wall:'#f8f5f0',wall2:'#e4ddd1'};
     let skyA='#bfeee6', skyB='#eaf7f2';
-    if(type==='penthouse'){skyA='#0a5d59'; skyB='#f2b45f';}
+    if(type==='penthouse'){skyA='#1f6b67'; skyB='#dcc599';}
     if(type==='villa'){skyA='#cdeee0'; skyB='#eaf7ef';}
     const palm=(x,y,s)=>`<g transform='translate(${x},${y}) scale(${s})'><path d='M0 0C-3-30-2-55 2-80' stroke='#7a5230' stroke-width='5' fill='none' stroke-linecap='round'/><g fill='${C.jgl2}'><path d='M2-80C-20-95-40-92-52-80C-30-84-12-80 2-70Z'/><path d='M2-80C24-95 44-92 56-80C34-84 14-80 2-70Z'/><path d='M2-80C-14-104-10-120 4-128C2-110 4-92 4-78Z'/><path d='M2-80C18-104 14-120 0-128C2-110 0-92 0-78Z'/><path d='M2-80C-30-86-46-70-50-56C-34-70-14-76 2-74Z'/><path d='M2-80C34-86 50-70 54-56C38-70 18-76 2-74Z'/></g></g>`;
     const win=(x,y,c,cols,rows,gx,gy,w,h)=>{let r='';for(let i=0;i<cols;i++)for(let j=0;j<rows;j++)r+=`<rect x='${x+i*gx}' y='${y+j*gy}' width='${w}' height='${h}' rx='1' fill='${c}'/>`;return r;};
@@ -567,37 +1571,43 @@
 
   function cardHTML(p){
     return '<article class="pcard" onclick="selectProperty(\''+p.public_id+'\')">'+
-      '<div class="pcard-photo" style="background-color:#0a5d59;background-image:linear-gradient(180deg,rgba(6,35,42,.32),rgba(6,35,42,0) 42%,rgba(6,35,42,0) 72%,rgba(6,35,42,.14)),url(\''+photoFor(p)+'\')">'+
+      '<div class="pcard-photo" style="background-color:#142237;background-image:linear-gradient(180deg,rgba(10,22,40,.18),rgba(10,22,40,0) 42%,rgba(10,22,40,0) 72%,rgba(10,22,40,.12)),url(\''+photoFor(p)+'\')">'+
         '<span class="pcard-badge '+(p.operation==='sale'?'badge-sale':'badge-rental')+'">'+opLabel(p)+'</span>'+
         '<span class="pcard-id">'+p.public_id+'</span>'+
       '</div>'+
       '<div class="pcard-body">'+
-        '<div class="pcard-loc">'+p.neighborhood+' · '+p.town+'</div>'+
+        '<div class="pcard-loc">'+p.neighborhood+' &middot; '+p.town+'</div>'+
         '<div class="pcard-title">'+(lang==='es'?p.title_es:p.title_en)+'</div>'+
-        '<div class="pcard-specs"><span>'+bd(p)+'</span><span>'+ba(p)+'</span><span>'+p.size+' m²</span></div>'+
+        '<div class="pcard-specs"><span>'+bd(p)+'</span><span>'+ba(p)+'</span><span>'+p.size+' m&sup2;</span></div>'+
         '<div class="pcard-foot"><span class="pcard-price">'+p.currency+' $'+p.formatted+(per(p)?' <small>'+per(p)+'</small>':'')+'</span></div>'+
-        '<button class="pcard-gen" onclick="event.stopPropagation();loadProperty(\''+p.public_id+'\')">'+(lang==='es'?'Generar 6 piezas':'Generate 6 pieces')+' →</button>'+
+        '<button class="pcard-gen" onclick="event.stopPropagation();loadProperty(\''+p.public_id+'\')">'+(lang==='es'?'Generar 7 piezas':'Generate 7 pieces')+' &rarr;</button>'+
       '</div></article>';
   }
   function renderProperties(){
     const list = properties.filter(p=>opFilter==='all'||p.operation===opFilter);
     document.getElementById('pgrid').innerHTML = list.map(cardHTML).join('');
   }
+  function renderFeatured(){
+    const el = document.getElementById('featured-grid');
+    if(!el) return;
+    el.innerHTML = properties.slice(0,3).map(cardHTML).join('');
+  }
   function selectProperty(id){
     activeProp = properties.find(p=>p.public_id===id) || activeProp;
     updateSidePanel();
   }
   async function loadListings(){
-    if(!LISTINGS_ENDPOINT) return;               // demo mode: keep sample data
+    if(!LISTINGS_ENDPOINT) return;
     try{
       const r = await fetch(LISTINGS_ENDPOINT, {headers:{'accept':'application/json'}});
       if(!r.ok) throw new Error('HTTP '+r.status);
       const data = await r.json();
-      const live = data.listings || data;        // accept {listings:[...]} or a bare array
+      const live = data.listings || data;
       if(Array.isArray(live) && live.length){
         properties = live;
         activeProp = properties[0];
         renderProperties();
+        renderFeatured();
         updateHeroListing();
         renderPreview();
         updateSidePanel();
@@ -607,9 +1617,6 @@
     }
   }
 
-  /* Real photos (Pexels, via /api/photos) for any property missing an image —
-     e.g. the hard-coded samples above. Live EasyBroker listings already carry
-     their own photo and are left untouched. */
   const PHOTOS_ENDPOINT = '/api/photos';
   async function loadPhotos(){
     const needing = properties.filter(p=>!p.image && p.photoQuery);
@@ -621,6 +1628,7 @@
       const {photos} = await r.json();
       needing.forEach((p,i)=>{ if(photos[i] && photos[i].image) p.image = photos[i].image; });
       renderProperties();
+      renderFeatured();
       updateHeroListing();
       renderPreview();
     }catch(e){
@@ -634,19 +1642,11 @@
     renderProperties();
   }
   function loadProperty(id){
-    activeProp = properties.find(p=>p.public_id===id) || activeProp;
-    currentFmt = 'pdf';
-    document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c.getAttribute('data-fmt')==='pdf'));
-    updateHeroListing();
-    renderPreview();
-    updateSidePanel();
-    window.scrollTo({top:0, behavior:'smooth'});
+    /* Navigate to the full generator page with the property pre-loaded */
+    window.location.href = '/generate?id=' + encodeURIComponent(id);
   }
 
-  /* ---------- side panel: location (OpenStreetMap) + AI description (Groq) ----------
-     Both are real, free, third-party APIs — proxied server-side so keys never
-     ship to the browser and Nominatim's usage policy (User-Agent, no client
-     hammering) is respected. See api/geocode.js, api/amenities.js, api/describe.js. */
+  /* ---------- side panel ---------- */
   const GEOCODE_ENDPOINT = '/api/geocode';
   const AMENITIES_ENDPOINT = '/api/amenities';
   const DESCRIBE_ENDPOINT = '/api/describe';
@@ -685,7 +1685,7 @@
 
   async function loadAmenities(lat, lng){
     const box = document.getElementById('ps-amenities');
-    box.innerHTML = '<p class="ps-loading">'+(lang==='es'?'Buscando lugares cercanos…':'Finding nearby places…')+'</p>';
+    box.innerHTML = '<p class="ps-loading">'+(lang==='es'?'Buscando lugares cercanos...':'Finding nearby places...')+'</p>';
     try{
       const r = await fetch(AMENITIES_ENDPOINT+'?lat='+lat+'&lng='+lng);
       if(!r.ok) throw new Error('HTTP '+r.status);
@@ -704,7 +1704,7 @@
     const btn = document.getElementById('ps-ai-btn');
     const out = document.getElementById('ps-ai-out');
     btn.disabled = true;
-    out.innerHTML = '<p class="ps-loading">'+(lang==='es'?'Generando con IA…':'Generating with AI…')+'</p>';
+    out.innerHTML = '<p class="ps-loading">'+(lang==='es'?'Generando con IA...':'Generating with AI...')+'</p>';
     try{
       const p = activeProp;
       const r = await fetch(DESCRIBE_ENDPOINT, {
@@ -720,9 +1720,9 @@
       });
       if(!r.ok) throw new Error('HTTP '+r.status);
       const {description} = await r.json();
-      out.innerHTML = '<p class="ps-ai-text">'+description+'</p><span class="ps-ai-credit">Powered by Groq · Llama 3.3</span>';
+      out.innerHTML = '<p class="ps-ai-text">'+description+'</p><span class="ps-ai-credit">Powered by Groq &middot; Llama 3.3</span>';
     }catch(e){
-      out.innerHTML = '<p class="ps-error">'+(lang==='es'?'No se pudo generar la descripción. Intenta de nuevo.':'Could not generate the description. Try again.')+'</p>';
+      out.innerHTML = '<p class="ps-error">'+(lang==='es'?'No se pudo generar la descripcion. Intenta de nuevo.':'Could not generate the description. Try again.')+'</p>';
       console.warn('[Proplync] describe unavailable:', e.message);
     }finally{
       btn.disabled = false;
@@ -734,22 +1734,22 @@
     document.getElementById('d-loc').textContent = (p.town+' · '+p.neighborhood).toUpperCase();
     document.getElementById('d-specs').innerHTML = '<span>'+bd(p)+'</span><span>'+ba(p)+'</span><span>'+p.size+' m²</span>';
     document.getElementById('d-price').innerHTML = p.currency+'<br>$'+p.formatted+(per(p)?'<br><small style="font-size:.58rem;opacity:.8">'+per(p)+'</small>':'');
-    document.getElementById('d-photo').style.cssText += ';background-image:linear-gradient(150deg,rgba(6,35,42,.12),rgba(6,35,42,.22)),url(\''+photoFor(p)+'\');background-size:cover;background-position:center';
+    document.getElementById('d-photo').style.cssText += ';background-image:linear-gradient(150deg,rgba(10,22,40,.12),rgba(10,22,40,.22)),url(\''+photoFor(p)+'\');background-size:cover;background-position:center';
   }
 
   /* ---------- signature demo previews (property-aware) ---------- */
   const previews = {
     es:{
-      pdf:{tag:'PDF', title:'{T}', body:'Ficha técnica con precio, superficie, recámaras, amenidades y contacto en {L} — maquetada con tu marca.'},
-      post:{tag:'Instagram', title:'{T} 🌴', body:'Publicación con foto principal, copy comercial y CTA. Ubicación: {L}. Escríbenos por DM.'},
-      carousel:{tag:'Carrusel · 5', title:'Cinco slides, una historia', body:'Portada → ubicación → interior → amenidades → contacto. {L}, una idea por diapositiva.', dots:true},
+      pdf:{tag:'PDF', title:'{T}', body:'Ficha tecnica con precio, superficie, recamaras, amenidades y contacto en {L} — maquetada con tu marca.'},
+      post:{tag:'Instagram', title:'{T}', body:'Publicacion con foto principal, copy comercial y CTA. Ubicacion: {L}. Escribenos por DM.'},
+      carousel:{tag:'Carrusel · 5', title:'Cinco slides, una historia', body:'Portada → ubicacion → interior → amenidades → contacto. {L}, una idea por diapositiva.', dots:true},
       story:{tag:'Story · 9:16', title:'Story vertical lista', body:'Pantalla completa con precio, sticker de {L} y CTA para agendar visita.', pills:['9:16','Swipe up']},
-      email:{tag:'Email · HTML', title:'Nueva propiedad para tu base', body:'Correo listo para el CRM con la ficha de {T} y botón "Agendar visita".', pills:['CRM','HTML']},
-      video:{tag:'Video · 9:16', title:'Reel con fotos, texto y locución', body:'Recorrido vertical de {T} compuesto con FFmpeg — música y voz opcional.', play:true}
+      email:{tag:'Email · HTML', title:'Nueva propiedad para tu base', body:'Correo listo para el CRM con la ficha de {T} y boton "Agendar visita".', pills:['CRM','HTML']},
+      video:{tag:'Video · 9:16', title:'Reel con fotos, texto y locucion', body:'Recorrido vertical de {T} compuesto con FFmpeg — musica y voz opcional.', play:true}
     },
     en:{
       pdf:{tag:'PDF', title:'{T}', body:'Fact sheet with price, area, bedrooms, amenities, and contact in {L} — laid out with your brand.'},
-      post:{tag:'Instagram', title:'{T} 🌴', body:'Post with main image, sales copy, and CTA. Location: {L}. DM us.'},
+      post:{tag:'Instagram', title:'{T}', body:'Post with main image, sales copy, and CTA. Location: {L}. DM us.'},
       carousel:{tag:'Carousel · 5', title:'Five slides, one story', body:'Cover → location → interior → amenities → contact. {L}, one idea per slide.', dots:true},
       story:{tag:'Story · 9:16', title:'Vertical story, ready', body:'Full-screen with price, a {L} location sticker, and a CTA to book a viewing.', pills:['9:16','Swipe up']},
       email:{tag:'Email · HTML', title:'New listing for your database', body:'CRM-ready email with the {T} fact sheet and a "Book a viewing" button.', pills:['CRM','HTML']},
@@ -773,11 +1773,35 @@
     let pills=d.pills;
     if(currentFmt==='pdf'){pills=[bd(p),ba(p),p.size+' m²',priceStr(p)];}
     if(currentFmt==='post'){pills=['#'+p.town.replace(/\s+/g,''),'#RivieraMaya',p.operation==='sale'?(lang==='es'?'#Venta':'#ForSale'):(lang==='es'?'#Renta':'#ForRent')];}
-    let html='<span class="pv-tag">'+d.tag+'</span><div class="pv-title">'+title+'</div><div class="pv-body">'+body+'</div>';
+    const photo=photoFor(p);
+    const shortTitle=lang==='es'?p.title_es:p.title_en;
+
+    let thumb='';
+    if(currentFmt==='post'){
+      thumb='<div class="pv-thumb square" style="background-image:url(\''+photo+'\')"><div class="pv-thumb-overlay"></div><span class="pv-thumb-price">'+priceStr(p)+'</span><div class="pv-thumb-cap">'+shortTitle+'</div></div>';
+    }else if(currentFmt==='story'){
+      thumb='<div class="pv-thumb tall" style="background-image:url(\''+photo+'\')"><div class="pv-thumb-overlay"></div><span class="pv-thumb-price">'+priceStr(p)+'</span><div class="pv-thumb-cap">'+shortTitle+'</div></div>';
+    }else if(currentFmt==='video'){
+      thumb='<div class="pv-thumb" style="background-image:url(\''+photo+'\')"><div class="pv-thumb-overlay"></div><div class="pv-thumb-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>';
+    }else if(currentFmt==='pdf'){
+      thumb='<div class="pv-thumb" style="background-image:url(\''+photo+'\')"><div class="pv-thumb-overlay"></div></div>';
+    }else if(currentFmt==='carousel'){
+      const seq=[
+        {style:'background-image:url(\''+photo+'\')',ov:'background:linear-gradient(180deg,rgba(10,22,40,.05),rgba(10,22,40,.7))',c:'#fff'},
+        {style:'background:#0a1628',ov:'',c:'var(--gold)'},
+        {style:'background:#f0ebe3',ov:'',c:'var(--gold-deep)'},
+        {style:'background:#0a1628',ov:'',c:'#fff'},
+        {style:'background:linear-gradient(160deg,#c9a96e,#b08c4a)',ov:'',c:'var(--ink)'}
+      ];
+      thumb='<div class="pv-mini-strip">'+seq.map((s,i)=>'<div class="pv-mini-slide" style="'+s.style+'">'+(s.ov?'<div class="ov" style="'+s.ov+'"></div>':'')+'<span style="color:'+s.c+'">'+(i+1)+'/5</span></div>').join('')+'</div>';
+    }
+
+    /* pv-tag floats top-right of the whole box — only show it when there's no
+       photo thumb, since the thumbs already carry their own top-right badge
+       (price) or communicate the format visually (mini-strip, play button). */
+    let html=thumb+(thumb?'':'<span class="pv-tag">'+d.tag+'</span>')+'<div class="pv-title">'+title+'</div><div class="pv-body">'+body+'</div>';
     if(pills){html+='<div class="pv-row">'+pills.map(x=>'<span class="pv-pill">'+x+'</span>').join('')+'</div>';}
     if(d.dots){html+='<div class="pv-dots"><i class="a"></i><i></i><i></i><i></i><i></i></div>';}
-    if(d.play){html+='<div class="pv-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>';}
-    html+='<div class="pv-visual"></div>';
     document.getElementById('preview').innerHTML=html;
   }
 
@@ -812,7 +1836,7 @@
   /* ---------- scroll reveal ---------- */
   const io=new IntersectionObserver((es)=>{
     es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
-  },{threshold:.12});
+  },{threshold:.1});
   document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
   /* close mobile nav on link click */
@@ -820,12 +1844,51 @@
 
   /* init */
   renderProperties();
+  renderFeatured();
   updateHeroListing();
   renderPreview();
   updateSidePanel();
   calc();
-  loadListings();   // try live EasyBroker data; silently keeps samples if offline
-  loadPhotos();     // fill in real photos for any sample without one
+  loadListings();
+  loadPhotos();
+
+  /* ---------- contact form submission ---------- */
+  function submitContact(e){
+    e.preventDefault();
+    const form = document.getElementById('contact-form');
+    const data = Object.fromEntries(new FormData(form));
+    // For now: send via mailto as fallback, show success state
+    // In production: POST to /api/leads or a webhook
+    const btn = form.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.textContent = lang === 'en' ? 'Sending...' : 'Enviando...';
+    // Simulate send (replace with fetch('/api/leads', ...) when backend is ready)
+    setTimeout(function(){
+      form.style.display = 'none';
+      var success = document.getElementById('contact-success');
+      success.style.display = 'flex';
+      // Also fire a mailto as backup so Carlos gets the lead
+      var subject = encodeURIComponent('Diagnostico Proplync.mx — ' + (data.name || 'Lead'));
+      var body = encodeURIComponent(
+        'Nombre: ' + (data.name||'') + '\n' +
+        'Empresa: ' + (data.company||'') + '\n' +
+        'Email: ' + (data.email||'') + '\n' +
+        'WhatsApp: ' + (data.phone||'') + '\n' +
+        'Tipo: ' + (data.type||'') + '\n' +
+        'Mensaje: ' + (data.message||'')
+      );
+      window.open('mailto:hola@proplync.mx?subject=' + subject + '&body=' + body, '_blank');
+    }, 800);
+  }
+
+  /* ---------- textarea placeholder i18n ---------- */
+  function updateTextareaPlaceholders(){
+    document.querySelectorAll('textarea[data-'+lang+'-placeholder]').forEach(function(el){
+      el.placeholder = el.getAttribute('data-'+lang+'-placeholder');
+    });
+  }
+  updateTextareaPlaceholders();
+  document.addEventListener('langchange', updateTextareaPlaceholders);
 </script>
 </body>
 </html>

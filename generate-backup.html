@@ -1,0 +1,2205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="Prop-pilot · Proplync.mx" data-en="Prop-pilot · Proplync.mx">Prop-pilot · Proplync.mx</title>
+<meta name="description" content="Genera ficha PDF, post, carrusel, story, email y video desde una sola propiedad.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+
+<!-- CDN libraries for rendering & download (loaded before body scripts) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<style>
+  /* ---------- PAGE LAYOUT ---------- */
+  .gen-hero{
+    background:var(--ink);color:var(--on-ink);
+    padding:120px 0 60px;position:relative;overflow:hidden;
+  }
+  .gen-hero::before{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse 80% 60% at 75% 20%, rgba(201,169,110,.08), transparent 60%),
+      radial-gradient(ellipse 60% 80% at 10% 80%, rgba(45,138,133,.12), transparent 50%);
+  }
+  .gen-hero .wrap{position:relative;z-index:2}
+  .gen-hero .eyebrow{color:var(--gold);display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .gen-hero .eyebrow::before{content:"";width:32px;height:1px;background:var(--gold)}
+  .gen-hero h1{
+    font-size:clamp(1.8rem,4vw,3rem);font-weight:300;letter-spacing:-.025em;
+    max-width:36em;
+  }
+  .gen-hero h1 em{font-style:italic;color:var(--gold);font-weight:300}
+  .gen-hero p{margin-top:16px;color:var(--on-ink-dim);font-size:1rem;max-width:38em;line-height:1.7}
+
+  /* ---------- PROPERTY INPUT FORM ---------- */
+  .gen-form-section{padding:48px 0 0}
+  .gen-form-card{
+    background:var(--white);
+    border:1px solid rgba(26,36,56,.06);
+    border-radius:var(--radius-lg);
+    padding:32px;
+    box-shadow:var(--shadow-card);
+    max-width:800px;
+  }
+  .gen-form-card h2{font-size:1.5rem;color:var(--ink);margin-bottom:6px}
+  .gen-form-card .sub{font-size:.88rem;color:var(--on-sand-dim);margin-bottom:24px;line-height:1.6}
+  .gen-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .gen-form-grid .field{margin-bottom:0}
+  .gen-form-grid .full{grid-column:1/-1}
+  .gen-form-actions{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;align-items:center}
+
+  /* Manual-form photo upload — lets a user attach their own property photo instead of pasting a URL */
+  .f-image-row{display:flex;gap:10px}
+  .f-image-row .form-input{flex:1}
+  .f-image-row .btn{flex:none;font-size:.8rem;padding:0 18px;white-space:nowrap}
+  .f-image-preview{display:flex;align-items:center;gap:12px;margin-top:10px}
+  .f-image-preview img{width:72px;height:56px;object-fit:cover;border-radius:var(--radius-sm);flex:none}
+  .f-image-preview .f-image-remove{
+    font-family:var(--mono);font-size:.7rem;color:var(--on-sand-dim);
+    background:none;border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;
+  }
+  .f-image-preview .f-image-remove:hover{color:var(--ink);border-color:var(--on-sand-dim)}
+
+  /* Example gallery — clickable real listings so the page shows more than one static demo */
+  .gen-examples{margin-bottom:28px}
+  .gen-examples-label{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--on-sand-dim);margin-bottom:12px}
+  .gen-examples-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px}
+  .gen-example-chip{
+    flex:none;width:132px;cursor:pointer;border-radius:var(--radius-sm);overflow:hidden;
+    background:var(--white);box-shadow:var(--shadow-card);border:2px solid transparent;
+    transition:border-color var(--duration) ease,transform var(--duration) ease;
+  }
+  .gen-example-chip:hover{border-color:var(--gold);transform:translateY(-2px)}
+  .gen-example-chip.active{border-color:var(--gold)}
+  .gen-example-chip img{width:100%;height:88px;object-fit:cover;display:block}
+  .gen-example-chip .ec-title{font-size:.72rem;font-weight:600;color:var(--ink);padding:8px 10px 2px;line-height:1.25}
+  .gen-example-chip .ec-loc{font-family:var(--mono);font-size:.58rem;color:var(--gold);padding:0 10px 8px;text-transform:uppercase;letter-spacing:.06em}
+  .gen-example-own{border-style:dashed;border-color:var(--sand-3);display:flex;flex-direction:column}
+  .gen-example-own:hover{border-style:solid}
+  .gen-example-own .ec-own-icon{
+    height:88px;display:flex;align-items:center;justify-content:center;
+    font-size:2rem;font-weight:300;color:var(--gold);background:var(--sand);
+  }
+
+  /* Property summary (when loaded from ?id=) */
+  .gen-prop-loaded{
+    display:flex;gap:20px;align-items:center;
+    background:var(--sand);border-radius:var(--radius);
+    padding:16px 20px;margin-bottom:24px;
+  }
+  .gen-prop-loaded img{width:120px;height:80px;object-fit:cover;border-radius:var(--radius-sm);flex:none}
+  .gen-prop-loaded .info{flex:1;min-width:0}
+  .gen-prop-loaded .info h3{font-size:1.1rem;color:var(--ink);margin-bottom:4px}
+  .gen-prop-loaded .info .loc{font-family:var(--mono);font-size:.68rem;color:var(--gold);letter-spacing:.08em;text-transform:uppercase}
+  .gen-prop-loaded .info .specs{font-family:var(--mono);font-size:.72rem;color:var(--on-sand-dim);margin-top:6px}
+  .gen-prop-loaded .price-tag{
+    font-family:var(--mono);font-weight:700;font-size:1.1rem;color:var(--ink);
+    text-align:right;white-space:nowrap;
+  }
+
+  /* ---------- GENERATE BUTTON ---------- */
+  .gen-trigger{text-align:center;padding:36px 0}
+  .gen-trigger .btn{font-size:1rem;padding:16px 40px}
+
+  /* ---------- RESULTS GRID ---------- */
+  .gen-results{padding:0 0 80px}
+  .gen-results-head{margin-bottom:36px}
+  .gen-results-head h2{font-size:clamp(1.6rem,3vw,2.2rem);color:var(--ink)}
+  .gen-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+
+  .gen-card{
+    background:var(--white);
+    border:1px solid rgba(26,36,56,.06);
+    border-radius:var(--radius-lg);
+    overflow:hidden;
+    display:flex;flex-direction:column;
+    box-shadow:var(--shadow-card);
+    transition:box-shadow var(--duration) ease;
+  }
+  .gen-card:hover{box-shadow:var(--shadow-card-hover)}
+  .gen-card-head{
+    display:flex;align-items:center;gap:12px;
+    padding:18px 22px;
+    border-bottom:1px solid rgba(26,36,56,.06);
+  }
+  .gen-card-head svg{width:22px;height:22px;stroke:var(--sea);fill:none;stroke-width:1.5;flex:none}
+  .gen-card-head .name{font-family:var(--display);font-weight:400;font-size:1.05rem;color:var(--ink);flex:1}
+  .gen-card-head .dim{
+    font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;
+    background:var(--sand);color:var(--sea-deep);
+    padding:4px 10px;border-radius:6px;
+  }
+  .gen-card-body{padding:20px 22px;flex:1;overflow:hidden}
+  .gen-card-preview{
+    background:var(--paper);border-radius:var(--radius-sm);
+    padding:16px;min-height:120px;overflow:auto;max-height:340px;
+    font-size:.84rem;color:var(--on-sand-dim);line-height:1.6;
+  }
+  .gen-card-preview h4{font-family:var(--display);font-size:1rem;color:var(--ink);margin-bottom:8px;font-weight:400}
+  .gen-card-preview ul{margin:8px 0 0;padding-left:18px}
+  .gen-card-preview li{margin-bottom:3px}
+  .gen-card-preview .hashtags{color:var(--sea);font-family:var(--mono);font-size:.72rem;margin-top:8px}
+  .gen-card-preview .slide{
+    background:var(--white);border:1px solid var(--line);border-radius:var(--radius-sm);
+    padding:10px 12px;margin-bottom:8px;
+  }
+  .gen-card-preview .slide .sn{font-family:var(--mono);font-size:.58rem;color:var(--gold);letter-spacing:.1em;text-transform:uppercase}
+  .gen-card-preview .slide h5{font-size:.88rem;color:var(--ink);margin:4px 0 2px;font-weight:600}
+  .gen-card-preview .email-subject{
+    font-family:var(--mono);font-size:.72rem;color:var(--ink);
+    background:var(--sand);padding:8px 12px;border-radius:6px;margin-bottom:10px;
+  }
+  .gen-card-preview .scene{
+    display:flex;align-items:center;gap:8px;padding:6px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .gen-card-preview .scene:last-child{border:0}
+  .gen-card-preview .scene .num{
+    font-family:var(--mono);font-size:.6rem;color:var(--gold);
+    background:rgba(201,169,110,.1);padding:3px 8px;border-radius:4px;flex:none;
+  }
+
+  /* Visual mockups — real scaled previews of the branded exports, not text summaries */
+  .mock-post{
+    position:relative;width:100%;aspect-ratio:1/1;border-radius:var(--radius-sm);
+    overflow:hidden;background-size:cover;background-position:center;background-color:var(--ink);
+    font-family:var(--body);
+  }
+  .mock-post .mock-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,.05) 0%,rgba(10,22,40,.18) 45%,rgba(10,22,40,.88) 100%)}
+  .mock-post .mock-price{position:absolute;top:6%;right:6%;background:var(--gold);color:var(--ink);font-family:var(--mono);font-weight:700;font-size:.76rem;padding:5px 10px;border-radius:6px}
+  .mock-post .mock-bottom{position:absolute;left:6%;right:6%;bottom:6%}
+  .mock-post .mock-title{font-family:var(--display);color:#fff;font-size:1.08rem;line-height:1.18;margin-bottom:5px;font-weight:400}
+  .mock-post .mock-loc{font-family:var(--mono);color:var(--gold);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase}
+
+  .mock-story{
+    position:relative;width:100%;max-width:190px;margin:0 auto;aspect-ratio:9/16;
+    border-radius:var(--radius-sm);overflow:hidden;background-size:cover;background-position:center;
+    background-color:var(--ink);font-family:var(--body);
+  }
+  .mock-story .mock-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,.05) 0%,rgba(10,22,40,.12) 40%,rgba(10,22,40,.88) 100%)}
+  .mock-story .mock-sticker{position:absolute;top:7%;right:7%;background:var(--gold);color:var(--ink);font-family:var(--mono);font-weight:700;font-size:.64rem;padding:4px 9px;border-radius:6px;transform:rotate(3deg)}
+  .mock-story .mock-content{position:absolute;left:9%;right:9%;bottom:17%}
+  .mock-story .mock-title{font-family:var(--display);color:#fff;font-size:.96rem;line-height:1.18;margin-bottom:5px}
+  .mock-story .mock-loc{font-family:var(--mono);color:var(--gold);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase}
+  .mock-story .mock-cta{position:absolute;left:0;right:0;bottom:5%;text-align:center;font-family:var(--body);font-weight:600;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.8)}
+
+  .mock-carousel-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+  .mock-slide{
+    flex:none;width:108px;aspect-ratio:1/1;border-radius:8px;position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;
+    background-size:cover;background-position:center;font-family:var(--body);
+  }
+  .mock-slide .mock-overlay{position:absolute;inset:0}
+  .mock-slide .mock-num{position:absolute;bottom:6px;right:7px;font-family:var(--mono);font-size:.48rem}
+  .mock-slide .mock-text{position:relative;font-family:var(--display);font-size:.66rem;line-height:1.22}
+  .mock-slide .mock-eyebrow{position:relative;font-family:var(--mono);font-size:.42rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;display:block}
+
+  .gen-card-foot{
+    padding:14px 22px;border-top:1px solid rgba(26,36,56,.06);
+    display:flex;gap:10px;
+  }
+  .gen-card-foot .btn{font-size:.78rem;padding:9px 16px;flex:1;justify-content:center}
+
+  /* Download all bar */
+  .gen-download-all{
+    text-align:center;padding:16px 0 0;
+  }
+  .gen-download-all .btn{font-size:.92rem;padding:14px 32px}
+
+  /* ---------- LOADING STATE ---------- */
+  .gen-loading{
+    text-align:center;padding:48px 0;
+    display:none;
+  }
+  .gen-loading.active{display:block}
+  .gen-spinner{
+    width:44px;height:44px;border:3px solid var(--sand-2);
+    border-top-color:var(--gold);border-radius:50%;
+    margin:0 auto 18px;animation:spin 1s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .gen-loading p{font-size:.92rem;color:var(--on-sand-dim)}
+
+  /* ---------- HIDDEN RENDER AREAS ---------- */
+  .render-area{
+    position:absolute;left:-9999px;top:-9999px;
+    pointer-events:none;overflow:hidden;
+  }
+
+  /* Instagram post template (1080x1080) */
+  .tpl-post{
+    width:1080px;height:1080px;position:relative;overflow:hidden;
+    font-family:'Hanken Grotesk',system-ui,sans-serif;
+  }
+  .tpl-post .bg{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+  .tpl-post .overlay{
+    position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(10,22,40,.05) 0%,rgba(10,22,40,.15) 50%,rgba(10,22,40,.75) 100%);
+  }
+  .tpl-post .price-badge{
+    position:absolute;top:40px;right:40px;
+    background:#c9a96e;color:#0a1628;
+    font-family:'Space Mono',monospace;font-weight:700;font-size:32px;
+    padding:16px 28px;border-radius:10px;
+  }
+  .tpl-post .bottom{position:absolute;bottom:40px;left:40px;right:40px}
+  .tpl-post .title{font-family:'Fraunces',Georgia,serif;font-size:48px;color:#fff;font-weight:400;line-height:1.15;margin-bottom:12px}
+  .tpl-post .location{font-family:'Space Mono',monospace;font-size:18px;color:#c9a96e;letter-spacing:.12em;text-transform:uppercase}
+  .tpl-post .brand-wm{position:absolute;bottom:40px;left:40px;font-family:'Fraunces',Georgia,serif;font-size:16px;color:rgba(255,255,255,.5)}
+
+  /* Carousel slide template (1080x1080) */
+  .tpl-slide{
+    width:1080px;height:1080px;position:relative;overflow:hidden;
+    font-family:'Hanken Grotesk',system-ui,sans-serif;
+  }
+
+  /* Story template (1080x1920) */
+  .tpl-story{
+    width:1080px;height:1920px;position:relative;overflow:hidden;
+    font-family:'Hanken Grotesk',system-ui,sans-serif;
+  }
+  .tpl-story .bg{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+  .tpl-story .overlay{
+    position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(10,22,40,.05) 0%,rgba(10,22,40,.1) 40%,rgba(10,22,40,.8) 100%);
+  }
+  .tpl-story .price-sticker{
+    position:absolute;top:80px;right:60px;
+    background:#c9a96e;color:#0a1628;
+    font-family:'Space Mono',monospace;font-weight:700;font-size:36px;
+    padding:20px 32px;border-radius:12px;
+    transform:rotate(3deg);
+  }
+  .tpl-story .content{position:absolute;bottom:200px;left:60px;right:60px}
+  .tpl-story .title{font-family:'Fraunces',Georgia,serif;font-size:56px;color:#fff;font-weight:400;line-height:1.15;margin-bottom:16px}
+  .tpl-story .location{font-family:'Space Mono',monospace;font-size:20px;color:#c9a96e;letter-spacing:.12em;text-transform:uppercase}
+  .tpl-story .cta{
+    position:absolute;bottom:80px;left:0;right:0;text-align:center;
+    font-family:'Hanken Grotesk',sans-serif;font-size:22px;color:rgba(255,255,255,.7);
+    letter-spacing:.1em;text-transform:uppercase;
+  }
+  .tpl-story .brand-wm{position:absolute;top:80px;left:60px;font-family:'Fraunces',Georgia,serif;font-size:18px;color:rgba(255,255,255,.5)}
+
+  /* ---------- AI ENHANCE TOGGLE ---------- */
+  .f-enhance-toggle{
+    display:flex!important;align-items:center;gap:14px;
+    margin-top:14px;padding:14px 16px;
+    background:var(--sand);border-radius:var(--radius-sm);
+  }
+  .f-enhance-toggle[style*="display:none"]{display:none!important}
+  .enhance-switch{position:relative;width:44px;height:24px;flex:none}
+  .enhance-switch input{opacity:0;width:0;height:0}
+  .enhance-slider{
+    position:absolute;inset:0;cursor:pointer;border-radius:24px;
+    background:var(--line);transition:background var(--duration) ease;
+  }
+  .enhance-slider::before{
+    content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;
+    border-radius:50%;background:var(--white);
+    transition:transform var(--duration) ease;box-shadow:var(--shadow-sm);
+  }
+  .enhance-switch input:checked + .enhance-slider{background:var(--sea)}
+  .enhance-switch input:checked + .enhance-slider::before{transform:translateX(20px)}
+  .enhance-label{display:flex;flex-direction:column;gap:2px}
+  .enhance-title{font-size:.86rem;font-weight:600;color:var(--ink)}
+  .enhance-desc{font-size:.72rem;color:var(--on-sand-dim)}
+  .enhance-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;
+    color:var(--sea);background:rgba(45,138,133,.08);
+    padding:4px 10px;border-radius:6px;margin-top:8px;
+  }
+  .enhance-badge svg{width:12px;height:12px;stroke:var(--sea);fill:none;stroke-width:2}
+
+  /* Day-to-Dusk toggle */
+  .f-dusk-toggle{
+    display:flex!important;align-items:center;gap:14px;
+    margin-top:8px;padding:14px 16px;
+    background:linear-gradient(135deg,#1a1040 0%,#2d1855 40%,#4a2040 100%);
+    border-radius:var(--radius-sm);
+  }
+  .f-dusk-toggle[style*="display:none"]{display:none!important}
+  .dusk-switch{position:relative;width:44px;height:24px;flex:none}
+  .dusk-switch input{opacity:0;width:0;height:0}
+  .dusk-slider{
+    position:absolute;inset:0;cursor:pointer;border-radius:24px;
+    background:rgba(255,255,255,.18);transition:background var(--duration) ease;
+  }
+  .dusk-slider::before{
+    content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;
+    border-radius:50%;background:var(--white);
+    transition:transform var(--duration) ease;box-shadow:var(--shadow-sm);
+  }
+  .dusk-switch input:checked + .dusk-slider{background:var(--gold)}
+  .dusk-switch input:checked + .dusk-slider::before{transform:translateX(20px)}
+  .dusk-label{display:flex;flex-direction:column;gap:2px}
+  .dusk-title{font-size:.86rem;font-weight:600;color:var(--on-ink)}
+  .dusk-desc{font-size:.72rem;color:rgba(240,237,232,.55)}
+  .dusk-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;
+    color:var(--gold);background:rgba(201,169,110,.12);
+    padding:4px 10px;border-radius:6px;margin-top:8px;
+  }
+  .dusk-badge svg{width:12px;height:12px;stroke:var(--gold);fill:none;stroke-width:2}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:900px){
+    .gen-hero{padding:100px 0 48px}
+    .gen-form-grid{grid-template-columns:1fr}
+    .gen-grid{grid-template-columns:1fr}
+    .gen-prop-loaded{flex-direction:column;text-align:center}
+    .gen-prop-loaded .price-tag{text-align:center}
+  }
+  @media (max-width:560px){
+    .gen-hero{padding:80px 0 36px}
+    .gen-form-card{padding:24px 20px}
+    .gen-card-head{padding:14px 16px}
+    .gen-card-body{padding:16px}
+    .gen-card-foot{padding:12px 16px}
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER — same nav as rest of site -->
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Proplync<span class="accent">.mx</span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/" data-es="Inicio" data-en="Home">Inicio</a>
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/generate" style="color:var(--gold)" data-es="Generador" data-en="Generator">Generador</a>
+      <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
+    </div>
+    <div class="navtools">
+      <div class="lang" role="group" aria-label="Language">
+        <button id="es" class="on" onclick="setLang('es')">ES</button>
+        <button id="en" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="/#contacto" class="btn btn-gold" data-es="Reservar llamada" data-en="Book a call">Reservar llamada</a>
+      <button class="navtoggle" aria-label="Menu" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="gen-hero">
+  <div class="wrap">
+    <span class="eyebrow" data-es="Prop-pilot &middot; Generador de contenido" data-en="Prop-pilot &middot; Content generator">Prop-pilot &middot; Generador de contenido</span>
+    <h1 data-es="Captura una propiedad. <em>Descarga 7 piezas.</em>" data-en="Capture a property. <em>Download 7 pieces.</em>">Captura una propiedad. <em>Descarga 7 piezas.</em></h1>
+    <p data-es="Introduce los datos del inmueble, la IA genera el copy y tu descargas ficha PDF, post, carrusel, story, email, video y anuncio &mdash; listos para revisar y publicar." data-en="Enter the property data, AI generates the copy, and you download PDF sheet, post, carousel, story, email, video, and ad copy &mdash; ready to review and publish.">Introduce los datos del inmueble, la IA genera el copy y tu descargas ficha PDF, post, carrusel, story, email, video y anuncio &mdash; listos para revisar y publicar.</p>
+  </div>
+</section>
+
+<!-- PROPERTY INPUT SECTION -->
+<section class="gen-form-section" id="input-section">
+  <div class="wrap">
+    <!-- Example gallery: real sample listings, click any to see fresh AI-generated content -->
+    <div class="gen-examples">
+      <div class="gen-examples-label" data-es="Prueba con otro ejemplo real:" data-en="Try another real example:">Prueba con otro ejemplo real:</div>
+      <div class="gen-examples-row" id="examples-row"><!-- injected by JS --></div>
+    </div>
+
+    <!-- Property loaded display (hidden by default, shown when ?id= is used) -->
+    <div class="gen-prop-loaded" id="prop-loaded" style="display:none">
+      <img id="prop-loaded-img" src="" alt="">
+      <div class="info">
+        <h3 id="prop-loaded-title"></h3>
+        <div class="loc" id="prop-loaded-loc"></div>
+        <div class="specs" id="prop-loaded-specs"></div>
+      </div>
+      <div class="price-tag" id="prop-loaded-price"></div>
+    </div>
+
+    <!-- Manual form (shown when no ?id=) -->
+    <div class="gen-form-card" id="prop-form">
+      <h2 data-es="Datos de la propiedad" data-en="Property data">Datos de la propiedad</h2>
+      <p class="sub" data-es="Introduce la informacion del inmueble. Solo los datos que proporciones apareceran en las piezas generadas." data-en="Enter the property information. Only the data you provide will appear in the generated pieces.">Introduce la informacion del inmueble. Solo los datos que proporciones apareceran en las piezas generadas.</p>
+      <div class="gen-form-grid">
+        <div class="field full">
+          <label class="form-label" data-es="Titulo de la propiedad *" data-en="Property title *">Titulo de la propiedad *</label>
+          <input class="form-input" id="f-title" type="text" placeholder="Departamento en preventa" required>
+        </div>
+        <div class="field">
+          <label class="form-label" data-es="Ciudad / Pueblo *" data-en="City / Town *">Ciudad / Pueblo *</label>
+          <input class="form-input" id="f-town" type="text" placeholder="Tulum">
+        </div>
+        <div class="field">
+          <label class="form-label" data-es="Colonia / Zona" data-en="Neighborhood">Colonia / Zona</label>
+          <input class="form-input" id="f-neighborhood" type="text" placeholder="Aldea Zama">
+        </div>
+        <div class="field">
+          <label class="form-label" data-es="Recamaras" data-en="Bedrooms">Recamaras</label>
+          <input class="form-input" id="f-bedrooms" type="number" min="0" value="2">
+        </div>
+        <div class="field">
+          <label class="form-label" data-es="Banos" data-en="Bathrooms">Banos</label>
+          <input class="form-input" id="f-bathrooms" type="number" min="0" value="2">
+        </div>
+        <div class="field">
+          <label class="form-label" data-es="Superficie (m&sup2;)" data-en="Size (m&sup2;)">Superficie (m&sup2;)</label>
+          <input class="form-input" id="f-size" type="number" min="0" value="78">
+        </div>
+        <div class="field">
+          <label class="form-label" data-es="Estacionamientos" data-en="Parking">Estacionamientos</label>
+          <input class="form-input" id="f-parking" type="number" min="0" value="1">
+        </div>
+        <div class="field">
+          <label class="form-label" data-es="Tipo de operacion" data-en="Operation type">Tipo de operacion</label>
+          <select class="form-select" id="f-operation">
+            <option value="sale" data-es="Venta" data-en="For sale">Venta</option>
+            <option value="rental" data-es="Renta" data-en="For rent">Renta</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="form-label" data-es="Moneda" data-en="Currency">Moneda</label>
+          <select class="form-select" id="f-currency">
+            <option value="USD">USD</option>
+            <option value="MXN">MXN</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="form-label" data-es="Precio" data-en="Price">Precio</label>
+          <input class="form-input" id="f-amount" type="number" min="0" value="245000">
+        </div>
+        <div class="field full">
+          <label class="form-label" data-es="Foto de la propiedad" data-en="Property photo">Foto de la propiedad</label>
+          <div class="f-image-row">
+            <input class="form-input" id="f-image" type="url" placeholder="https://..." oninput="clearManualPhoto(true); showPhotoToggles(this.value.length > 8)">
+            <button type="button" class="btn btn-dark" onclick="document.getElementById('f-image-file').click()" data-es="Subir foto" data-en="Upload photo">Subir foto</button>
+            <input type="file" id="f-image-file" accept="image/*" style="display:none" onchange="handleManualPhotoUpload(event)">
+          </div>
+          <div class="f-image-preview" id="f-image-preview" style="display:none">
+            <img id="f-image-preview-img" src="" alt="">
+            <button type="button" class="f-image-remove" onclick="clearManualPhoto()" data-es="Quitar foto" data-en="Remove photo">Quitar foto</button>
+          </div>
+          <p class="form-hint" data-es="Opcional. Pega una URL o sube tu propia foto (se usara como portada en las piezas)." data-en="Optional. Paste a URL or upload your own photo (used as the cover photo in the pieces).">Opcional. Pega una URL o sube tu propia foto (se usara como portada en las piezas).</p>
+          <!-- AI Photo Enhancement toggle -->
+          <div class="f-enhance-toggle" id="f-enhance-toggle" style="display:none">
+            <label class="enhance-switch">
+              <input type="checkbox" id="f-enhance" checked>
+              <span class="enhance-slider"></span>
+            </label>
+            <div class="enhance-label">
+              <span class="enhance-title" data-es="Mejorar foto con IA" data-en="AI photo enhancement">Mejorar foto con IA</span>
+              <span class="enhance-desc" data-es="Ajusta brillo, contraste, nitidez y color automaticamente" data-en="Auto-adjusts brightness, contrast, sharpness, and color">Ajusta brillo, contraste, nitidez y color automaticamente</span>
+            </div>
+          </div>
+          <!-- Day-to-Dusk toggle -->
+          <div class="f-dusk-toggle" id="f-dusk-toggle" style="display:none">
+            <label class="dusk-switch">
+              <input type="checkbox" id="f-dusk">
+              <span class="dusk-slider"></span>
+            </label>
+            <div class="dusk-label">
+              <span class="dusk-title" data-es="Day to Dusk · Twilight" data-en="Day to Dusk · Twilight">Day to Dusk · Twilight</span>
+              <span class="dusk-desc" data-es="Convierte fotos de dia a atardecer con cielo dramatico y luz calida" data-en="Converts daytime photos to dusk with dramatic sky and warm lighting">Convierte fotos de dia a atardecer con cielo dramatico y luz calida</span>
+              <span class="dusk-badge">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <span data-es="EXTERIOR · FACHADA" data-en="EXTERIOR · FACADE">EXTERIOR · FACHADA</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generate button -->
+    <div class="gen-trigger">
+      <button class="btn btn-gold" id="gen-btn" onclick="handleGenerate()" data-es="Generar 7 formatos" data-en="Generate 7 formats">Generar 7 formatos</button>
+    </div>
+
+    <!-- Loading state -->
+    <div class="gen-loading" id="gen-loading">
+      <div class="gen-spinner"></div>
+      <p data-es="Generando copy para 7 formatos con IA..." data-en="Generating copy for 7 formats with AI...">Generando copy para 7 formatos con IA...</p>
+    </div>
+
+    <!-- Error state -->
+    <div id="gen-error" style="display:none"></div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section class="gen-results" id="results-section" style="display:none">
+  <div class="wrap">
+    <div class="gen-results-head">
+      <span class="eyebrow" style="color:var(--gold);display:flex;align-items:center;gap:12px;margin-bottom:14px" data-es="Resultado" data-en="Result"><span style="display:inline-block;width:24px;height:1px;background:var(--gold)"></span>Resultado</span>
+      <h2 data-es="7 piezas generadas" data-en="7 pieces generated">7 piezas generadas</h2>
+    </div>
+
+    <div class="gen-grid" id="gen-grid">
+      <!-- Cards injected by JS -->
+    </div>
+
+    <div class="gen-download-all">
+      <button class="btn btn-dark" onclick="downloadAllZip()" data-es="Descargar todo en ZIP" data-en="Download all as ZIP">Descargar todo en ZIP</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap foot">
+    <span class="brand" style="font-family:var(--display);font-size:1.05rem">Proplync<span class="accent">.mx</span> &middot; Riviera Maya</span>
+    <span data-es="Hecho con Claude Code &middot; Tulum &middot; Playa del Carmen &middot; Cancun" data-en="Built with Claude Code &middot; Tulum &middot; Playa del Carmen &middot; Cancun">Hecho con Claude Code &middot; Tulum &middot; Playa del Carmen &middot; Cancun</span>
+    <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span>
+  </div>
+</footer>
+
+<!-- Hidden render templates -->
+<div class="render-area" id="render-area"></div>
+
+<script src="/js/i18n.js"></script>
+<script>
+/* ============================================================================
+   Proplync.mx · Content Generator
+   ============================================================================ */
+
+/* ---------- header scroll effect ---------- */
+(function(){
+  const header = document.querySelector('header');
+  let ticking = false;
+  window.addEventListener('scroll', function(){
+    if(!ticking){
+      requestAnimationFrame(function(){
+        header.classList.toggle('scrolled', window.scrollY > 40);
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+})();
+
+/* close mobile nav on link click */
+document.querySelectorAll('#navlinks a').forEach(a => a.addEventListener('click', () => document.getElementById('navlinks').classList.remove('open')));
+
+/* ---------- sample listings (same data as index.html) ---------- */
+const SAMPLE_LISTINGS = [
+  {public_id:'EB-T2451', title_es:'Departamento en preventa', title_en:'Pre-sale apartment', town:'Tulum', neighborhood:'Aldea Zama', bedrooms:2, bathrooms:2, parking:1, size:78, operation:'sale', currency:'USD', amount:245000, formatted:'245,000', image:'https://images.pexels.com/photos/35877931/pexels-photo-35877931.jpeg?auto=compress&cs=tinysrgb&w=800'},
+  {public_id:'EB-P8830', title_es:'Casa con alberca en Playacar', title_en:'House with pool in Playacar', town:'Playa del Carmen', neighborhood:'Playacar Fase II', bedrooms:3, bathrooms:4, parking:2, size:240, operation:'sale', currency:'USD', amount:685000, formatted:'685,000', image:'https://images.pexels.com/photos/8134849/pexels-photo-8134849.jpeg?auto=compress&cs=tinysrgb&w=800'},
+  {public_id:'EB-M1207', title_es:'Studio frente al mar', title_en:'Beachfront studio', town:'Puerto Morelos', neighborhood:'Zona Hotelera', bedrooms:1, bathrooms:1, parking:1, size:45, operation:'sale', currency:'USD', amount:189000, formatted:'189,000', image:'https://images.pexels.com/photos/6312076/pexels-photo-6312076.jpeg?auto=compress&cs=tinysrgb&w=800'},
+  {public_id:'EB-C4062', title_es:'Penthouse vista al Caribe', title_en:'Penthouse with Caribbean view', town:'Cancun', neighborhood:'Puerto Cancun', bedrooms:3, bathrooms:3, parking:2, size:180, operation:'sale', currency:'USD', amount:1150000, formatted:'1,150,000', image:'https://images.pexels.com/photos/6775268/pexels-photo-6775268.jpeg?auto=compress&cs=tinysrgb&w=800'},
+  {public_id:'EB-P5519', title_es:'Departamento amueblado', title_en:'Furnished apartment', town:'Playa del Carmen', neighborhood:'Centro', bedrooms:2, bathrooms:2, parking:1, size:90, operation:'rental', currency:'USD', amount:2200, formatted:'2,200', image:'https://images.pexels.com/photos/6969824/pexels-photo-6969824.jpeg?auto=compress&cs=tinysrgb&w=800'},
+  {public_id:'EB-T3388', title_es:'Villa en la selva', title_en:'Villa in the jungle', town:'Tulum', neighborhood:'Region 15', bedrooms:4, bathrooms:4, parking:3, size:320, operation:'sale', currency:'USD', amount:890000, formatted:'890,000', image:'https://images.pexels.com/photos/4940760/pexels-photo-4940760.jpeg?auto=compress&cs=tinysrgb&w=800'},
+  {public_id:'EB-P9214', title_es:'Penthouse con vista al mar en Coco Beach', title_en:'Oceanview penthouse in Coco Beach', town:'Playa del Carmen', neighborhood:'Coco Beach', bedrooms:2, bathrooms:2, parking:1, size:204, operation:'sale', currency:'USD', amount:839000, formatted:'839,000', image:'https://images.pexels.com/photos/36362/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=800'},
+  {public_id:'EB-T6720', title_es:'Estudio frente al mar en Tankah Bay', title_en:'Beachfront studio in Tankah Bay', town:'Tulum', neighborhood:'Tankah Bay', bedrooms:1, bathrooms:1, parking:1, size:51, operation:'sale', currency:'USD', amount:672190, formatted:'672,190', image:'https://images.pexels.com/photos/31688473/pexels-photo-31688473.jpeg?auto=compress&cs=tinysrgb&w=800'}
+];
+
+/* ---------- state ---------- */
+let currentProperty = null;
+let generatedContent = null;
+let propertyImageUrl = '';
+let isDemoMode = false;
+let manualUploadedImage = ''; // data: URL when the user uploads their own photo in the manual form
+
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB
+
+function handleManualPhotoUpload(evt) {
+  const file = evt.target.files && evt.target.files[0];
+  if (!file) return;
+  if (file.size > MAX_UPLOAD_BYTES) {
+    alert(lang === 'es' ? 'La foto es muy pesada (max 8MB).' : 'Photo is too large (max 8MB).');
+    evt.target.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function() {
+    manualUploadedImage = reader.result;
+    const urlField = document.getElementById('f-image');
+    urlField.value = '';
+    urlField.disabled = true;
+    document.getElementById('f-image-preview-img').src = manualUploadedImage;
+    document.getElementById('f-image-preview').style.display = 'flex';
+    showPhotoToggles(true);
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ---------- AI photo enhancement ---------- */
+function showEnhanceToggle(show) {
+  const el = document.getElementById('f-enhance-toggle');
+  if (el) el.style.display = show ? 'flex' : 'none';
+}
+
+function showDuskToggle(show) {
+  const el = document.getElementById('f-dusk-toggle');
+  if (el) el.style.display = show ? 'flex' : 'none';
+}
+
+function showPhotoToggles(show) {
+  showEnhanceToggle(show);
+  showDuskToggle(show);
+}
+
+async function enhancePhoto(imageSource) {
+  const payload = imageSource.startsWith('data:')
+    ? { action: 'enhance', base64: imageSource, quality: 'high' }
+    : { action: 'enhance', url: imageSource, quality: 'high' };
+
+  const r = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err.detail || 'Enhancement failed');
+  }
+
+  const result = await r.json();
+  return result.enhanced;
+}
+
+/* ---------- Day-to-Dusk conversion ---------- */
+async function dayToDuskPhoto(imageSource) {
+  const payload = imageSource.startsWith('data:')
+    ? { action: 'day-to-dusk', base64: imageSource }
+    : { action: 'day-to-dusk', url: imageSource };
+
+  const r = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err.detail || 'Day-to-dusk conversion failed');
+  }
+
+  const result = await r.json();
+  return result.enhanced;
+}
+
+/* keepTyping: true when called from the URL field's own oninput (typing a URL
+   should just clear any prior upload, not fight the field the user is using) */
+function clearManualPhoto(keepTyping) {
+  manualUploadedImage = '';
+  document.getElementById('f-image-file').value = '';
+  document.getElementById('f-image-preview').style.display = 'none';
+  if (!keepTyping) showPhotoToggles(false);
+  const urlField = document.getElementById('f-image');
+  urlField.disabled = false;
+  if (!keepTyping) urlField.value = '';
+}
+
+/* ---------- pre-generated demo content (both languages) ---------- */
+const DEMO_LISTING = SAMPLE_LISTINGS.find(p => p.public_id === 'EB-M1207');
+const DEMO_CONTENT = {
+  es: {
+    pdf: {
+      headline: "Vivienda frente al mar en Puerto Morelos",
+      description: "Studio de 45 m² en Zona Hotelera, con vista al mar y 1 estacionamiento. En venta por USD $189000.",
+      features_list: [
+        "1 recámara",
+        "1 baño",
+        "45 m²",
+        "1 estacionamiento",
+        "Vista al mar"
+      ]
+    },
+    post: {
+      caption: "Estudio frente al mar en Puerto Morelos 🌊🏠 Con vista directa al mar Caribe, es la opción ideal para tu próxima inversión. ☀️",
+      hashtags: "#PuertoMorelos #FrenteAlMar #RivieraMaya #Mexico #BienesRaices"
+    },
+    carousel: [
+      { slide_title: "Estudio Frente al Mar", slide_text: "Ubicado en Zona Hotelera, Puerto Morelos — vista directa al Caribe" },
+      { slide_title: "Puerto Morelos", slide_text: "Un destino tranquilo en la Riviera Maya, cerca del segundo arrecife mas grande del mundo" },
+      { slide_title: "Espacio eficiente", slide_text: "1 recámara y 1 baño en 45 m², ideal para inversión o uso personal" },
+      { slide_title: "Vista al mar", slide_text: "Despierta cada día con vista directa al mar Caribe" },
+      { slide_title: "¿Te interesa?", slide_text: "¡Contáctanos para conocer este estudio frente al mar!" }
+    ],
+    story: {
+      headline: "¡Estudio Frente al Mar!",
+      cta_text: "¡Conoce Puerto Morelos hoy!"
+    },
+    email: {
+      subject: "Estudio Frente al Mar en Puerto Morelos — USD $189,000",
+      preview_text: "1 recámara, vista al mar, Zona Hotelera",
+      body_html: "Te presentamos un estudio frente al mar en la Zona Hotelera de Puerto Morelos, con 1 recámara, 1 baño y vista directa al Caribe en 45 m². Precio: USD $189,000. ¿Interesado? ¡Contáctanos para agendar una visita!"
+    },
+    video: {
+      reel_type: "Por que me encanta esta casa",
+      hook_text: "Despierta así todos los días...",
+      scene_texts: [
+        "Estudio de 45 m² en Zona Hotelera, Puerto Morelos",
+        "1 recámara, 1 baño, vista directa al mar"
+      ],
+      cta_text: "Escribe MAR para más información"
+    },
+    ad: {
+      primary_text: "Estudio frente al mar en Puerto Morelos con vista directa al Caribe — 45 m², USD $189,000.",
+      headline: "Estudio Frente al Mar, Puerto Morelos",
+      description: "1 rec · 1 baño · vista al mar",
+      cta_label: "Más información"
+    }
+  },
+  en: {
+    pdf: {
+      headline: "Oceanfront Home in Puerto Morelos",
+      description: "45 m² studio in the Hotel Zone, with ocean views and 1 parking spot. For sale at USD $189,000.",
+      features_list: [
+        "1 bedroom",
+        "1 bathroom",
+        "45 m²",
+        "1 parking spot",
+        "Ocean view"
+      ]
+    },
+    post: {
+      caption: "Oceanfront studio in Puerto Morelos 🌊🏠 With direct Caribbean Sea views, it's the ideal choice for your next investment. ☀️",
+      hashtags: "#PuertoMorelos #Oceanfront #RivieraMaya #MexicoRealEstate #InvestmentProperty"
+    },
+    carousel: [
+      { slide_title: "Oceanfront Studio", slide_text: "Located in the Hotel Zone, Puerto Morelos — direct Caribbean views" },
+      { slide_title: "Puerto Morelos", slide_text: "A quiet Riviera Maya destination, near the world's second-largest reef" },
+      { slide_title: "Efficient Space", slide_text: "1 bedroom and 1 bathroom in 45 m², ideal for investment or personal use" },
+      { slide_title: "Ocean View", slide_text: "Wake up every day to direct Caribbean Sea views" },
+      { slide_title: "Interested?", slide_text: "Contact us to learn more about this oceanfront studio!" }
+    ],
+    story: {
+      headline: "Oceanfront Studio!",
+      cta_text: "Discover Puerto Morelos today!"
+    },
+    email: {
+      subject: "Oceanfront Studio in Puerto Morelos — USD $189,000",
+      preview_text: "1 bedroom, ocean views, Hotel Zone",
+      body_html: "Introducing an oceanfront studio in Puerto Morelos' Hotel Zone, with 1 bedroom, 1 bathroom, and direct Caribbean views in 45 m². Price: USD $189,000. Interested? Contact us to schedule a viewing!"
+    },
+    video: {
+      reel_type: "Why I love this house",
+      hook_text: "Wake up to this every day...",
+      scene_texts: [
+        "45 m² studio in Puerto Morelos' Hotel Zone",
+        "1 bedroom, 1 bathroom, direct ocean views"
+      ],
+      cta_text: "DM OCEAN for more info"
+    },
+    ad: {
+      primary_text: "Oceanfront studio in Puerto Morelos with direct Caribbean views — 45 m², USD $189,000.",
+      headline: "Oceanfront Studio, Puerto Morelos",
+      description: "1 bd · 1 ba · ocean view",
+      cta_label: "Learn More"
+    }
+  }
+};
+
+/* ---------- init: check for ?id= or load demo ---------- */
+/* Clickable gallery of the real sample listings — lets visitors see fresh,
+   genuinely different AI-generated examples instead of just the one static
+   demo, without needing to know the manual-entry form exists. */
+function renderExampleGallery(){
+  const row = document.getElementById('examples-row');
+  if (!row) return;
+  const showingOwn = !currentProperty && !isDemoMode;
+  const activeId = currentProperty ? currentProperty.public_id : (isDemoMode ? DEMO_LISTING.public_id : null);
+  row.innerHTML = `
+    <div class="gen-example-chip gen-example-own${showingOwn ? ' active' : ''}" onclick="showManualForm()">
+      <div class="ec-own-icon">+</div>
+      <div class="ec-title" data-es="Mi propiedad" data-en="My property">Mi propiedad</div>
+      <div class="ec-loc" data-es="Sube tus datos" data-en="Upload your own">Sube tus datos</div>
+    </div>
+  ` + SAMPLE_LISTINGS.map(p => `
+    <div class="gen-example-chip${p.public_id === activeId ? ' active' : ''}" onclick="tryExample('${p.public_id}')">
+      <img src="${p.image}" alt="">
+      <div class="ec-title">${lang === 'es' ? p.title_es : p.title_en}</div>
+      <div class="ec-loc">${p.town}</div>
+    </div>
+  `).join('');
+}
+
+function showManualForm(){
+  currentProperty = null;
+  isDemoMode = false;
+  const badge = document.getElementById('demo-badge');
+  if (badge) badge.remove();
+  document.getElementById('prop-loaded').style.display = 'none';
+  document.getElementById('prop-form').style.display = '';
+  document.getElementById('results-section').style.display = 'none';
+  renderExampleGallery();
+  document.getElementById('prop-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function tryExample(id){
+  const found = SAMPLE_LISTINGS.find(p => p.public_id === id);
+  if (!found) return;
+  isDemoMode = false;
+  const badge = document.getElementById('demo-badge');
+  if (badge) badge.remove();
+  loadPropertyFromListing(found);
+  renderExampleGallery();
+  handleGenerate();
+}
+
+(function init(){
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if (id) {
+    const found = SAMPLE_LISTINGS.find(p => p.public_id === id);
+    if (found) {
+      loadPropertyFromListing(found);
+    }
+  } else {
+    /* No id param — load the live demo automatically */
+    loadPropertyFromListing(DEMO_LISTING);
+    loadDemo();
+  }
+  renderExampleGallery();
+})();
+
+function loadDemo() {
+  isDemoMode = true;
+  const content = DEMO_CONTENT[lang] || DEMO_CONTENT.es;
+  const propData = getPropertyData();
+  generatedContent = content;
+  propertyImageUrl = DEMO_LISTING.image;
+  renderResults(propData, content, true);
+
+  /* Show a demo badge so visitors know this is a real example */
+  const badge = document.createElement('div');
+  badge.id = 'demo-badge';
+  badge.style.cssText = 'text-align:center;padding:12px 0 0';
+  badge.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;background:rgba(45,138,133,.08);color:var(--sea-deep);font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;padding:8px 18px;border-radius:999px;border:1px solid rgba(45,138,133,.15)">' +
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>' +
+    '<span data-es="Ejemplo real generado con IA &mdash; prueba con tu propia propiedad arriba" data-en="Real AI-generated example &mdash; try it with your own property above">' +
+    (lang === 'es' ? 'Ejemplo real generado con IA &mdash; prueba con tu propia propiedad arriba' : 'Real AI-generated example &mdash; try it with your own property above') +
+    '</span></span>';
+  const resultsHead = document.querySelector('.gen-results-head');
+  if (resultsHead) resultsHead.appendChild(badge);
+}
+
+function loadPropertyFromListing(p) {
+  currentProperty = p;
+  propertyImageUrl = p.image || '';
+  showPhotoToggles(!!propertyImageUrl);
+
+  /* Show loaded display, hide form */
+  document.getElementById('prop-form').style.display = 'none';
+  const loaded = document.getElementById('prop-loaded');
+  loaded.style.display = 'flex';
+
+  const title = lang === 'es' ? p.title_es : p.title_en;
+  document.getElementById('prop-loaded-title').textContent = title;
+  document.getElementById('prop-loaded-loc').textContent = (p.neighborhood + ' · ' + p.town).toUpperCase();
+  document.getElementById('prop-loaded-specs').textContent =
+    p.bedrooms + (lang === 'es' ? ' rec' : ' bd') + ' · ' +
+    p.bathrooms + (lang === 'es' ? ' banos' : ' bath') + ' · ' +
+    p.size + ' m²' +
+    (p.parking ? ' · ' + p.parking + (lang === 'es' ? ' est' : ' pkg') : '');
+  document.getElementById('prop-loaded-price').textContent =
+    p.currency + ' $' + p.formatted +
+    (p.operation === 'rental' ? (lang === 'es' ? ' /mes' : ' /mo') : '');
+
+  if (p.image) {
+    document.getElementById('prop-loaded-img').src = p.image;
+  } else {
+    document.getElementById('prop-loaded-img').style.display = 'none';
+  }
+}
+
+/* ---------- collect property data ---------- */
+function getPropertyData() {
+  if (currentProperty) {
+    return {
+      title: lang === 'es' ? currentProperty.title_es : currentProperty.title_en,
+      town: currentProperty.town,
+      neighborhood: currentProperty.neighborhood || '',
+      bedrooms: currentProperty.bedrooms,
+      bathrooms: currentProperty.bathrooms,
+      size: currentProperty.size,
+      parking: currentProperty.parking || 0,
+      operation: currentProperty.operation,
+      currency: currentProperty.currency,
+      amount: currentProperty.amount,
+      formatted: currentProperty.formatted,
+      image: currentProperty.image || '',
+      lang: lang
+    };
+  }
+
+  /* Read from form */
+  const title = document.getElementById('f-title').value.trim();
+  const town = document.getElementById('f-town').value.trim();
+  if (!title || !town) {
+    return null;
+  }
+
+  const amount = parseInt(document.getElementById('f-amount').value) || 0;
+  return {
+    title: title,
+    town: town,
+    neighborhood: document.getElementById('f-neighborhood').value.trim(),
+    bedrooms: parseInt(document.getElementById('f-bedrooms').value) || 0,
+    bathrooms: parseInt(document.getElementById('f-bathrooms').value) || 0,
+    size: parseInt(document.getElementById('f-size').value) || 0,
+    parking: parseInt(document.getElementById('f-parking').value) || 0,
+    operation: document.getElementById('f-operation').value,
+    currency: document.getElementById('f-currency').value,
+    amount: amount,
+    formatted: amount.toLocaleString('en-US'),
+    image: manualUploadedImage || document.getElementById('f-image').value.trim(),
+    lang: lang
+  };
+}
+
+/* ---------- generate handler ---------- */
+async function handleGenerate() {
+  const data = getPropertyData();
+  if (!data) {
+    showError(lang === 'es'
+      ? 'Por favor completa al menos el titulo y la ciudad.'
+      : 'Please fill in at least the title and city.');
+    return;
+  }
+
+  propertyImageUrl = data.image || '';
+
+  /* UI: loading state */
+  document.getElementById('gen-btn').disabled = true;
+  document.getElementById('gen-loading').classList.add('active');
+  document.getElementById('results-section').style.display = 'none';
+  hideError();
+
+  try {
+    /* ── AI Photo Enhancement (if toggle is on and there's a photo) ── */
+    const enhanceCheckbox = document.getElementById('f-enhance');
+    const shouldEnhance = enhanceCheckbox && enhanceCheckbox.checked && propertyImageUrl;
+    if (shouldEnhance) {
+      try {
+        document.querySelector('#gen-loading p').textContent =
+          lang === 'es' ? 'Mejorando foto con IA...' : 'Enhancing photo with AI...';
+        const enhanced = await enhancePhoto(propertyImageUrl);
+        propertyImageUrl = enhanced;
+        data.image = enhanced;
+      } catch (enhErr) {
+        console.warn('Photo enhancement failed, using original:', enhErr.message);
+      }
+    }
+
+    /* ── Day-to-Dusk conversion (if toggle is on and there's a photo) ── */
+    const duskCheckbox = document.getElementById('f-dusk');
+    const shouldDusk = duskCheckbox && duskCheckbox.checked && propertyImageUrl;
+    if (shouldDusk) {
+      try {
+        document.querySelector('#gen-loading p').textContent =
+          lang === 'es' ? 'Convirtiendo a atardecer...' : 'Converting to dusk...';
+        const duskResult = await dayToDuskPhoto(propertyImageUrl);
+        propertyImageUrl = duskResult;
+        data.image = duskResult;
+      } catch (duskErr) {
+        console.warn('Day-to-dusk conversion failed, using current photo:', duskErr.message);
+      }
+    }
+
+    /* Reset loading text for content generation */
+    document.querySelector('#gen-loading p').textContent =
+      lang === 'es' ? 'Generando copy para 7 formatos con IA...' : 'Generating copy for 7 formats with AI...';
+
+    const r = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const result = await r.json();
+    if (result.error) throw new Error(result.detail || result.error);
+
+    isDemoMode = false;
+    generatedContent = result.content;
+    renderResults(data, result.content, false);
+  } catch (err) {
+    showError((lang === 'es'
+      ? 'No se pudo generar el contenido. '
+      : 'Could not generate content. ') + err.message);
+  } finally {
+    document.getElementById('gen-btn').disabled = false;
+    document.getElementById('gen-loading').classList.remove('active');
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('gen-error');
+  el.className = 'form-error';
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideError() {
+  document.getElementById('gen-error').style.display = 'none';
+}
+
+/* ---------- render 6 format cards ---------- */
+function renderResults(propData, content, skipScroll) {
+  const grid = document.getElementById('gen-grid');
+  const isEs = lang === 'es';
+
+  const cards = [
+    /* PDF */
+    {
+      icon: '<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg>',
+      name: isEs ? 'Ficha PDF' : 'PDF Fact Sheet',
+      dim: 'PDF · A4',
+      preview: renderPDFPreview(content.pdf, propData),
+      downloadLabel: isEs ? 'Descargar PDF' : 'Download PDF',
+      downloadFn: 'downloadPDF'
+    },
+    /* POST */
+    {
+      icon: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.4"/></svg>',
+      name: isEs ? 'Post de Instagram' : 'Instagram Post',
+      dim: '1080 × 1080',
+      preview: renderPostPreview(content.post, propData),
+      downloadLabel: isEs ? 'Descargar PNG' : 'Download PNG',
+      downloadFn: 'downloadPost',
+      publishLabel: isEs ? 'Publicar en Instagram' : 'Publish to Instagram',
+      publishFn: 'publishInstagram'
+    },
+    /* CAROUSEL */
+    {
+      icon: '<svg viewBox="0 0 24 24"><rect x="7" y="6" width="10" height="12" rx="2"/><path d="M4 9v6M20 9v6"/></svg>',
+      name: isEs ? 'Carrusel (5 slides)' : 'Carousel (5 slides)',
+      dim: '5 × 1080',
+      preview: renderCarouselPreview(content.carousel, propData),
+      downloadLabel: isEs ? 'Descargar slides' : 'Download slides',
+      downloadFn: 'downloadCarousel'
+    },
+    /* STORY */
+    {
+      icon: '<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="3"/></svg>',
+      name: isEs ? 'Story vertical' : 'Vertical Story',
+      dim: '1080 × 1920',
+      preview: renderStoryPreview(content.story, propData),
+      downloadLabel: isEs ? 'Descargar PNG' : 'Download PNG',
+      downloadFn: 'downloadStory'
+    },
+    /* EMAIL */
+    {
+      icon: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 8l9 6 9-6"/></svg>',
+      name: isEs ? 'Email comercial' : 'Sales Email',
+      dim: 'HTML',
+      preview: renderEmailPreview(content.email),
+      downloadLabel: isEs ? 'Descargar HTML' : 'Download HTML',
+      downloadFn: 'downloadEmail'
+    },
+    /* VIDEO */
+    {
+      icon: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>',
+      name: isEs ? 'Video vertical' : 'Vertical Video',
+      dim: 'WebM · 9:16',
+      preview: renderVideoPreview(content.video),
+      downloadLabel: isEs ? 'Generar y descargar' : 'Generate & download',
+      downloadFn: 'downloadVideo'
+    },
+    /* AD */
+    {
+      icon: '<svg viewBox="0 0 24 24"><path d="M3 11v2a2 2 0 002 2h1l3 5V4L6 9H5a2 2 0 00-2 2z"/><path d="M15 8a4 4 0 010 8"/></svg>',
+      name: isEs ? 'Anuncio (Ads)' : 'Ad Copy',
+      dim: 'Facebook · Instagram · Google',
+      preview: renderAdPreview(content.ad),
+      downloadLabel: isEs ? 'Descargar TXT' : 'Download TXT',
+      downloadFn: 'downloadAd'
+    }
+  ];
+
+  grid.innerHTML = cards.map((c, i) => `
+    <div class="gen-card">
+      <div class="gen-card-head">
+        ${c.icon}
+        <span class="name">${c.name}</span>
+        <span class="dim">${c.dim}</span>
+      </div>
+      <div class="gen-card-body">
+        <div class="gen-card-preview">${c.preview}</div>
+      </div>
+      <div class="gen-card-foot">
+        <button class="btn btn-dark" onclick="${c.downloadFn}()">${c.downloadLabel}</button>
+        ${c.publishFn ? `<button class="btn btn-gold" onclick="${c.publishFn}()">${c.publishLabel}</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('results-section').style.display = '';
+  if (!skipScroll) {
+    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+/* ---------- preview renderers (for the preview cards) ---------- */
+
+function renderPDFPreview(pdf, prop) {
+  if (!pdf) return '<p>No data</p>';
+  return `
+    <h4>${pdf.headline || ''}</h4>
+    <p>${pdf.description || ''}</p>
+    <ul>${(pdf.features_list || []).map(f => '<li>' + f + '</li>').join('')}</ul>
+    <div style="margin-top:10px;font-family:var(--mono);font-size:.68rem;color:var(--on-sand-dim)">
+      ${prop.bedrooms} ${lang === 'es' ? 'rec' : 'bd'} · ${prop.bathrooms} ${lang === 'es' ? 'banos' : 'bath'} · ${prop.size} m² · ${prop.currency} $${prop.formatted}
+    </div>
+  `;
+}
+
+function renderPostPreview(post, prop) {
+  if (!post) return '<p>No data</p>';
+  const bg = propertyImageUrl
+    ? `background-image:url('${propertyImageUrl}')`
+    : 'background:linear-gradient(135deg,#1f6b67,#0a1628)';
+  return `
+    <div class="mock-post" style="${bg}">
+      <div class="mock-overlay"></div>
+      <div class="mock-price">${prop.currency} $${prop.formatted}</div>
+      <div class="mock-bottom">
+        <div class="mock-title">${prop.title || ''}</div>
+        <div class="mock-loc">${(prop.neighborhood ? prop.neighborhood + ' · ' : '') + prop.town}</div>
+      </div>
+    </div>
+    <p style="margin-top:12px">${post.caption || ''}</p>
+    <div class="hashtags">${post.hashtags || ''}</div>
+  `;
+}
+
+function renderCarouselPreview(carousel, prop) {
+  if (!carousel || !carousel.length) return '<p>No data</p>';
+  const bg = propertyImageUrl ? `background-image:url('${propertyImageUrl}')` : '';
+  /* Same 5-beat sequence and color logic as the real export: photo cover,
+     dark location statement, light specs grid, dark feature copy, gold CTA. */
+  const slideStyles = [
+    { style: `${bg};background-color:#0a1628`, overlay: 'background:linear-gradient(180deg,rgba(10,22,40,.05),rgba(10,22,40,.75))', text: '#fff', eyebrow: 'var(--gold)' },
+    { style: 'background:#0a1628', overlay: 'background:radial-gradient(ellipse at 50% 50%,rgba(45,138,133,.2),transparent 70%)', text: '#fff', eyebrow: 'var(--gold)' },
+    { style: 'background:#f0ebe3', overlay: '', text: 'var(--ink)', eyebrow: 'var(--gold-deep)' },
+    { style: 'background:#0a1628', overlay: '', text: 'rgba(255,255,255,.9)', eyebrow: 'var(--gold)' },
+    { style: 'background:linear-gradient(160deg,#c9a96e,#b08c4a)', overlay: '', text: 'var(--ink)', eyebrow: 'rgba(10,22,40,.6)' }
+  ];
+  return `
+    <div class="mock-carousel-strip">
+      ${carousel.slice(0, 5).map((s, i) => {
+        const st = slideStyles[i] || slideStyles[slideStyles.length - 1];
+        return `
+          <div class="mock-slide" style="${st.style}">
+            ${st.overlay ? `<div class="mock-overlay" style="${st.overlay}"></div>` : ''}
+            <div>
+              <span class="mock-eyebrow" style="color:${st.eyebrow}">${i === 0 ? (prop.town || '') : (i + 1) + '/5'}</span>
+              <div class="mock-text" style="color:${st.text}">${s.slide_title || ''}</div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    ${carousel.map((s, i) => `
+      <div class="slide">
+        <span class="sn">SLIDE ${i + 1}</span>
+        <h5>${s.slide_title || ''}</h5>
+        <p>${s.slide_text || ''}</p>
+      </div>
+    `).join('')}
+  `;
+}
+
+function renderStoryPreview(story, prop) {
+  if (!story) return '<p>No data</p>';
+  const bg = propertyImageUrl
+    ? `background-image:url('${propertyImageUrl}')`
+    : 'background:linear-gradient(180deg,#1f6b67,#0a1628)';
+  return `
+    <div class="mock-story" style="${bg}">
+      <div class="mock-overlay"></div>
+      <div class="mock-sticker">${prop.currency} $${prop.formatted}</div>
+      <div class="mock-content">
+        <div class="mock-title">${story.headline || prop.title || ''}</div>
+        <div class="mock-loc">${(prop.neighborhood ? prop.neighborhood + ' · ' : '') + prop.town}</div>
+      </div>
+      <div class="mock-cta">${story.cta_text || ''}</div>
+    </div>
+  `;
+}
+
+function renderEmailPreview(email) {
+  if (!email) return '<p>No data</p>';
+  return `
+    <div class="email-subject">${lang === 'es' ? 'Asunto' : 'Subject'}: ${email.subject || ''}</div>
+    <p style="font-size:.72rem;color:var(--on-sand-light);margin-bottom:8px">${email.preview_text || ''}</p>
+    <p>${email.body_html || ''}</p>
+  `;
+}
+
+function renderAdPreview(ad) {
+  if (!ad) return '<p>No data</p>';
+  return `
+    <p style="font-weight:600;margin-bottom:6px">${ad.headline || ''}</p>
+    <p style="margin-bottom:8px">${ad.primary_text || ''}</p>
+    <p style="font-size:.72rem;color:var(--on-sand-light);margin-bottom:10px">${ad.description || ''}</p>
+    <span style="display:inline-block;padding:6px 14px;border-radius:6px;background:var(--sand);font-size:.72rem;font-weight:600">${ad.cta_label || ''}</span>
+  `;
+}
+
+function renderVideoPreview(video) {
+  if (!video) return '<p>No data</p>';
+  const beats = [
+    ...(video.hook_text ? [{ label: 'HOOK', text: video.hook_text, gold: true }] : []),
+    ...(video.scene_texts || []).map((s, i) => ({ label: String(i + 1), text: s, gold: false })),
+    ...(video.cta_text ? [{ label: 'CTA', text: video.cta_text, gold: true }] : [])
+  ];
+  return `
+    ${video.reel_type ? `<div class="hashtags" style="margin-bottom:10px">${video.reel_type}</div>` : ''}
+    ${beats.map(b => `
+      <div class="scene">
+        <span class="num" style="${b.gold ? 'background:var(--gold);color:var(--ink)' : ''}">${b.label}</span>
+        <span>${b.text}</span>
+      </div>
+    `).join('')}
+  `;
+}
+
+/* ============================================================================
+   DOWNLOAD FUNCTIONS
+   ============================================================================ */
+
+/* Helper: load an image as a data URL for canvas/pdf usage */
+function loadImageAsDataURL(url) {
+  return new Promise((resolve) => {
+    if (!url) { resolve(null); return; }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+      try {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        c.getContext('2d').drawImage(img, 0, 0);
+        resolve(c.toDataURL('image/jpeg', 0.85));
+      } catch(e) {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+/* Helper: render an HTML element to canvas via html2canvas.
+   Waits for web fonts to finish loading first — html2canvas snapshots
+   whatever is painted at call time, and font-display:swap paints the
+   fallback font immediately, so without this the exported image silently
+   renders in Georgia/system-ui instead of the brand typefaces. */
+async function renderToCanvas(el) {
+  if (document.fonts && document.fonts.ready) {
+    try { await document.fonts.ready; } catch (e) { /* proceed anyway */ }
+  }
+  return html2canvas(el, {
+    scale: 1,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null,
+    width: parseInt(el.style.width) || el.offsetWidth,
+    height: parseInt(el.style.height) || el.offsetHeight
+  });
+}
+
+/* Helper: trigger a download */
+function triggerDownload(blob, filename) {
+  if (typeof saveAs === 'function') {
+    saveAs(blob, filename);
+  } else {
+    /* FileSaver.js fallback: manual download link */
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  }
+}
+
+/* Helper: check if CDN libs are loaded, warn if not */
+function checkLibsLoaded() {
+  const missing = [];
+  if (typeof html2canvas !== 'function') missing.push('html2canvas');
+  if (!window.jspdf) missing.push('jsPDF');
+  if (typeof JSZip !== 'function') missing.push('JSZip');
+  if (missing.length) {
+    alert((lang === 'es'
+      ? 'Cargando librerias, intenta de nuevo en un momento...'
+      : 'Loading libraries, please try again in a moment...'));
+    return false;
+  }
+  return true;
+}
+
+/* ---------- 1. PDF DOWNLOAD (jsPDF) ---------- */
+async function downloadPDF() {
+  if (!checkLibsLoaded()) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const prop = getPropertyData();
+  const pdf = generatedContent.pdf;
+  const W = 210, H = 297;
+
+  /* Gold header bar */
+  doc.setFillColor(201, 169, 110);
+  doc.rect(0, 0, W, 18, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(10, 22, 40);
+  doc.text('Proplync.mx', 14, 12);
+  doc.setFontSize(8);
+  doc.text('Riviera Maya', W - 14, 12, { align: 'right' });
+
+  /* Property photo */
+  let yPos = 24;
+  const imgData = await loadImageAsDataURL(propertyImageUrl);
+  if (imgData) {
+    try {
+      doc.addImage(imgData, 'JPEG', 14, yPos, W - 28, 70);
+      yPos += 76;
+    } catch(e) {
+      yPos += 4;
+    }
+  }
+
+  /* Title */
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(10, 22, 40);
+  const titleLines = doc.splitTextToSize(pdf.headline || prop.title, W - 28);
+  doc.text(titleLines, 14, yPos);
+  yPos += titleLines.length * 8 + 4;
+
+  /* Location */
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(201, 169, 110);
+  doc.text((prop.neighborhood + ' · ' + prop.town).toUpperCase(), 14, yPos);
+  yPos += 10;
+
+  /* Specs grid */
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(10, 22, 40);
+  const specs = [
+    (prop.bedrooms || 0) + (lang === 'es' ? ' Recamaras' : ' Bedrooms'),
+    (prop.bathrooms || 0) + (lang === 'es' ? ' Banos' : ' Bathrooms'),
+    (prop.size || 0) + ' m²',
+    prop.currency + ' $' + prop.formatted
+  ];
+  const specW = (W - 28) / 4;
+  specs.forEach((s, i) => {
+    doc.setFillColor(240, 235, 227);
+    doc.roundedRect(14 + i * specW, yPos, specW - 4, 14, 2, 2, 'F');
+    doc.text(s, 14 + i * specW + (specW - 4) / 2, yPos + 9, { align: 'center' });
+  });
+  yPos += 22;
+
+  /* Description */
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(60, 70, 85);
+  const descLines = doc.splitTextToSize(pdf.description || '', W - 28);
+  doc.text(descLines, 14, yPos);
+  yPos += descLines.length * 5 + 8;
+
+  /* Features list */
+  if (pdf.features_list && pdf.features_list.length) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(10, 22, 40);
+    doc.text(lang === 'es' ? 'Caracteristicas' : 'Features', 14, yPos);
+    yPos += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(60, 70, 85);
+    pdf.features_list.forEach(f => {
+      doc.text('•  ' + f, 18, yPos);
+      yPos += 5;
+    });
+  }
+
+  /* Footer */
+  doc.setFillColor(10, 22, 40);
+  doc.rect(0, H - 20, W, 20, 'F');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(200, 200, 200);
+  doc.text('Proplync.mx · Riviera Maya · hola@proplync.mx', 14, H - 10);
+  doc.text(lang === 'es'
+    ? 'Informacion sujeta a cambios sin previo aviso. Verificar datos antes de tomar decisiones.'
+    : 'Information subject to change without notice. Verify data before making decisions.',
+    W - 14, H - 10, { align: 'right' });
+
+  doc.save('proplync-ficha-' + (prop.title || 'propiedad').replace(/\s+/g, '-').toLowerCase() + '.pdf');
+}
+
+/* ---------- 2. INSTAGRAM POST (html2canvas) ---------- */
+async function downloadPost() {
+  if (!checkLibsLoaded()) return;
+  const prop = getPropertyData();
+  const post = generatedContent.post;
+  const area = document.getElementById('render-area');
+
+  const div = document.createElement('div');
+  div.className = 'tpl-post';
+  div.style.width = '1080px';
+  div.style.height = '1080px';
+
+  const bgStyle = propertyImageUrl
+    ? `background-image:url('${propertyImageUrl}');background-size:cover;background-position:center;`
+    : `background:linear-gradient(135deg,#1f6b67,#0a1628);`;
+
+  div.innerHTML = `
+    <div style="position:absolute;inset:0;${bgStyle}"></div>
+    <div class="overlay"></div>
+    <div class="price-badge">${prop.currency} $${prop.formatted}</div>
+    <div class="bottom">
+      <div class="title">${prop.title}</div>
+      <div class="location">${prop.neighborhood} · ${prop.town}</div>
+    </div>
+    <div class="brand-wm">Proplync.mx</div>
+  `;
+
+  area.appendChild(div);
+
+  try {
+    const canvas = await renderToCanvas(div);
+    canvas.toBlob(blob => {
+      triggerDownload(blob, 'proplync-post-1080x1080.png');
+    }, 'image/png');
+  } catch(e) {
+    alert((lang === 'es' ? 'Error al renderizar: ' : 'Render error: ') + e.message);
+  } finally {
+    area.removeChild(div);
+  }
+}
+
+/* Publishes via Meta's official Instagram Graph API (api/instagram-publish.js) —
+   uses the property's real public photo URL, since Meta must be able to fetch
+   the image itself; the branded 1080x1080 canvas render above isn't hosted
+   anywhere, so it can't be used as image_url. */
+async function publishInstagram() {
+  const post = generatedContent.post;
+  const isEs = lang === 'es';
+
+  if (!propertyImageUrl) {
+    alert(isEs ? 'Esta propiedad no tiene una foto publica para publicar.' : 'This property has no public photo to publish.');
+    return;
+  }
+  if (propertyImageUrl.startsWith('data:')) {
+    alert(isEs
+      ? 'Instagram necesita una foto con URL publica, no una subida localmente. Descarga el PNG y publicalo manualmente, o usa una propiedad con URL de foto.'
+      : 'Instagram needs a publicly reachable photo URL, not a locally uploaded one. Download the PNG and post it manually, or use a property with a photo URL.');
+    return;
+  }
+
+  const caption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
+  if (!confirm((isEs ? 'Esto publicara de inmediato en tu cuenta real de Instagram:' : 'This will publish immediately to your real Instagram account:') + '\n\n' + caption)) {
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/instagram-publish', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ imageUrl: propertyImageUrl, caption })
+    });
+    const data = await r.json();
+    if (!r.ok || data.error) {
+      if (data.error === 'missing_instagram_credentials') {
+        alert(isEs
+          ? 'Instagram no esta configurado todavia. Falta IG_ACCESS_TOKEN / IG_BUSINESS_ACCOUNT_ID en Vercel.'
+          : 'Instagram is not configured yet. Missing IG_ACCESS_TOKEN / IG_BUSINESS_ACCOUNT_ID in Vercel.');
+      } else {
+        throw new Error(data.detail || data.error || ('HTTP ' + r.status));
+      }
+      return;
+    }
+    alert(isEs ? 'Publicado en Instagram.' : 'Published to Instagram.');
+  } catch (e) {
+    alert((isEs ? 'No se pudo publicar: ' : 'Could not publish: ') + e.message);
+  }
+}
+
+/* ---------- 3. CAROUSEL (5 slides) ---------- */
+async function downloadCarousel() {
+  if (!checkLibsLoaded()) return;
+  const prop = getPropertyData();
+  const carousel = generatedContent.carousel;
+  if (!carousel || carousel.length < 5) return;
+
+  const area = document.getElementById('render-area');
+  const zip = new JSZip();
+
+  const bgImg = propertyImageUrl
+    ? `background-image:url('${propertyImageUrl}');background-size:cover;background-position:center;`
+    : '';
+
+  const slideConfigs = [
+    /* Slide 1: Cover — photo + title + price */
+    {
+      bg: bgImg || 'background:linear-gradient(135deg,#1f6b67,#0a1628);',
+      html: `
+        <div style="position:absolute;inset:0;${bgImg || 'background:linear-gradient(135deg,#1f6b67,#0a1628);'}"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,.1),rgba(10,22,40,.7))"></div>
+        <div style="position:absolute;top:50px;right:50px;background:#c9a96e;color:#0a1628;font-family:'Space Mono',monospace;font-weight:700;font-size:32px;padding:16px 28px;border-radius:10px">${prop.currency} $${prop.formatted}</div>
+        <div style="position:absolute;bottom:60px;left:60px;right:60px">
+          <div style="font-family:'Fraunces',Georgia,serif;font-size:52px;color:#fff;font-weight:400;line-height:1.15;margin-bottom:14px">${carousel[0].slide_title}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:18px;color:#c9a96e;letter-spacing:.12em;text-transform:uppercase">${prop.neighborhood} · ${prop.town}</div>
+        </div>
+        <div style="position:absolute;bottom:60px;right:60px;font-family:'Fraunces',Georgia,serif;font-size:14px;color:rgba(255,255,255,.4)">1/5</div>
+      `
+    },
+    /* Slide 2: Location */
+    {
+      bg: 'background:#0a1628;',
+      html: `
+        <div style="position:absolute;inset:0;background:#0a1628"></div>
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(45,138,133,.15),transparent 70%)"></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%">
+          <div style="font-family:'Space Mono',monospace;font-size:16px;color:#c9a96e;letter-spacing:.2em;text-transform:uppercase;margin-bottom:20px">${lang === 'es' ? 'UBICACION' : 'LOCATION'}</div>
+          <div style="font-family:'Fraunces',Georgia,serif;font-size:60px;color:#fff;font-weight:300;line-height:1.1;margin-bottom:20px">${prop.town}</div>
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-size:20px;color:rgba(255,255,255,.6);line-height:1.6">${carousel[1].slide_text}</div>
+        </div>
+        <div style="position:absolute;bottom:50px;right:60px;font-family:'Fraunces',Georgia,serif;font-size:14px;color:rgba(255,255,255,.3)">2/5</div>
+      `
+    },
+    /* Slide 3: Interior / Specs */
+    {
+      bg: 'background:#f0ebe3;',
+      html: `
+        <div style="position:absolute;inset:0;background:#f0ebe3"></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%">
+          <div style="font-family:'Space Mono',monospace;font-size:16px;color:#c9a96e;letter-spacing:.2em;text-transform:uppercase;margin-bottom:20px">${carousel[2].slide_title}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:30px">
+            <div style="background:#fff;border-radius:14px;padding:32px;text-align:center">
+              <div style="font-family:'Fraunces',Georgia,serif;font-size:52px;color:#0a1628;font-weight:300">${prop.bedrooms}</div>
+              <div style="font-family:'Space Mono',monospace;font-size:14px;color:#5c6577;letter-spacing:.1em;margin-top:6px">${lang === 'es' ? 'RECAMARAS' : 'BEDROOMS'}</div>
+            </div>
+            <div style="background:#fff;border-radius:14px;padding:32px;text-align:center">
+              <div style="font-family:'Fraunces',Georgia,serif;font-size:52px;color:#0a1628;font-weight:300">${prop.bathrooms}</div>
+              <div style="font-family:'Space Mono',monospace;font-size:14px;color:#5c6577;letter-spacing:.1em;margin-top:6px">${lang === 'es' ? 'BANOS' : 'BATHROOMS'}</div>
+            </div>
+            <div style="background:#fff;border-radius:14px;padding:32px;text-align:center">
+              <div style="font-family:'Fraunces',Georgia,serif;font-size:52px;color:#0a1628;font-weight:300">${prop.size}</div>
+              <div style="font-family:'Space Mono',monospace;font-size:14px;color:#5c6577;letter-spacing:.1em;margin-top:6px">M²</div>
+            </div>
+            <div style="background:#fff;border-radius:14px;padding:32px;text-align:center">
+              <div style="font-family:'Fraunces',Georgia,serif;font-size:52px;color:#0a1628;font-weight:300">${prop.parking || 0}</div>
+              <div style="font-family:'Space Mono',monospace;font-size:14px;color:#5c6577;letter-spacing:.1em;margin-top:6px">${lang === 'es' ? 'ESTAC.' : 'PARKING'}</div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;bottom:50px;right:60px;font-family:'Fraunces',Georgia,serif;font-size:14px;color:rgba(10,22,40,.3)">3/5</div>
+      `
+    },
+    /* Slide 4: Features / Description */
+    {
+      bg: 'background:#0a1628;',
+      html: `
+        <div style="position:absolute;inset:0;background:#0a1628"></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:75%">
+          <div style="font-family:'Space Mono',monospace;font-size:16px;color:#c9a96e;letter-spacing:.2em;text-transform:uppercase;margin-bottom:20px;text-align:center">${carousel[3].slide_title}</div>
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-size:24px;color:rgba(255,255,255,.85);line-height:1.65;text-align:center">${carousel[3].slide_text}</div>
+        </div>
+        <div style="position:absolute;bottom:50px;right:60px;font-family:'Fraunces',Georgia,serif;font-size:14px;color:rgba(255,255,255,.3)">4/5</div>
+      `
+    },
+    /* Slide 5: Contact CTA */
+    {
+      bg: 'background:linear-gradient(160deg,#c9a96e,#b08c4a);',
+      html: `
+        <div style="position:absolute;inset:0;background:linear-gradient(160deg,#c9a96e,#b08c4a)"></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:75%">
+          <div style="font-family:'Fraunces',Georgia,serif;font-size:52px;color:#0a1628;font-weight:300;line-height:1.15;margin-bottom:24px">${carousel[4].slide_title}</div>
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;color:rgba(10,22,40,.7);line-height:1.5;margin-bottom:40px">${carousel[4].slide_text}</div>
+          <div style="display:inline-block;background:#0a1628;color:#f0ebe3;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:20px;padding:18px 48px;border-radius:999px">${lang === 'es' ? 'hola@proplync.mx' : 'hello@proplync.mx'}</div>
+        </div>
+        <div style="position:absolute;bottom:50px;left:60px;font-family:'Fraunces',Georgia,serif;font-size:16px;color:rgba(10,22,40,.4)">Proplync.mx</div>
+        <div style="position:absolute;bottom:50px;right:60px;font-family:'Fraunces',Georgia,serif;font-size:14px;color:rgba(10,22,40,.3)">5/5</div>
+      `
+    }
+  ];
+
+  for (let i = 0; i < slideConfigs.length; i++) {
+    const div = document.createElement('div');
+    div.className = 'tpl-slide';
+    div.style.width = '1080px';
+    div.style.height = '1080px';
+    div.style.position = 'relative';
+    div.innerHTML = slideConfigs[i].html;
+    area.appendChild(div);
+
+    try {
+      const canvas = await renderToCanvas(div);
+      const dataUrl = canvas.toDataURL('image/png');
+      const base64 = dataUrl.split(',')[1];
+      zip.file(`slide-${i + 1}.png`, base64, { base64: true });
+    } catch(e) {
+      console.warn('Slide ' + (i + 1) + ' render failed:', e);
+    } finally {
+      area.removeChild(div);
+    }
+  }
+
+  const blob = await zip.generateAsync({ type: 'blob' });
+  triggerDownload(blob, 'proplync-carousel-5-slides.zip');
+}
+
+/* ---------- 4. STORY (1080x1920) ---------- */
+async function downloadStory() {
+  if (!checkLibsLoaded()) return;
+  const prop = getPropertyData();
+  const story = generatedContent.story;
+  const area = document.getElementById('render-area');
+
+  const div = document.createElement('div');
+  div.className = 'tpl-story';
+  div.style.width = '1080px';
+  div.style.height = '1920px';
+
+  const bgStyle = propertyImageUrl
+    ? `background-image:url('${propertyImageUrl}');background-size:cover;background-position:center;`
+    : 'background:linear-gradient(180deg,#1f6b67,#0a1628);';
+
+  div.innerHTML = `
+    <div style="position:absolute;inset:0;${bgStyle}"></div>
+    <div class="overlay"></div>
+    <div class="brand-wm">Proplync.mx</div>
+    <div class="price-sticker">${prop.currency} $${prop.formatted}</div>
+    <div class="content">
+      <div class="title">${story.headline || prop.title}</div>
+      <div class="location">${prop.neighborhood} · ${prop.town}</div>
+    </div>
+    <div class="cta">${story.cta_text || (lang === 'es' ? 'Desliza para ver mas' : 'Swipe up to see more')}</div>
+  `;
+
+  area.appendChild(div);
+
+  try {
+    const canvas = await renderToCanvas(div);
+    canvas.toBlob(blob => {
+      triggerDownload(blob, 'proplync-story-1080x1920.png');
+    }, 'image/png');
+  } catch(e) {
+    alert((lang === 'es' ? 'Error al renderizar: ' : 'Render error: ') + e.message);
+  } finally {
+    area.removeChild(div);
+  }
+}
+
+/* ---------- 5. EMAIL (HTML download) ---------- */
+function downloadEmail() {
+  const prop = getPropertyData();
+  const email = generatedContent.email;
+  const isEs = lang === 'es';
+
+  const opLabel = prop.operation === 'sale'
+    ? (isEs ? 'En venta' : 'For sale')
+    : (isEs ? 'En renta' : 'For rent');
+
+  const htmlContent = `<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${email.subject || ''}</title>
+</head>
+<body style="margin:0;padding:0;background:#f8f5f0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#1a2438;line-height:1.6">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f5f0">
+<tr><td align="center" style="padding:32px 16px">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(10,22,40,.08)">
+
+<!-- Header -->
+<tr><td style="background:linear-gradient(160deg,#c9a96e,#b08c4a);padding:20px 32px">
+<span style="font-size:18px;font-weight:bold;color:#0a1628;letter-spacing:-.01em">Proplync<span style="opacity:.7">.mx</span></span>
+<span style="float:right;font-size:12px;color:rgba(10,22,40,.6)">${isEs ? 'Riviera Maya' : 'Riviera Maya'}</span>
+</td></tr>
+
+<!-- Hero image -->
+${propertyImageUrl ? `<tr><td style="padding:0"><img src="${propertyImageUrl}" alt="${prop.title}" style="width:100%;height:auto;display:block"></td></tr>` : ''}
+
+<!-- Content -->
+<tr><td style="padding:32px">
+<span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#c9a96e;font-weight:bold">${opLabel} · ${prop.neighborhood} · ${prop.town}</span>
+<h1 style="font-size:26px;font-weight:600;color:#0a1628;margin:12px 0 8px;line-height:1.2">${prop.title}</h1>
+<p style="font-size:22px;font-weight:bold;color:#0a1628;margin:0 0 20px">${prop.currency} $${prop.formatted}${prop.operation === 'rental' ? (isEs ? ' /mes' : ' /mo') : ''}</p>
+
+<!-- Specs table -->
+<table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:24px">
+<tr>
+<td style="background:#f0ebe3;border-radius:8px;padding:14px;text-align:center;width:33%">
+<div style="font-size:22px;font-weight:bold;color:#0a1628">${prop.bedrooms}</div>
+<div style="font-size:11px;color:#5c6577;letter-spacing:.08em;text-transform:uppercase">${isEs ? 'Recamaras' : 'Bedrooms'}</div>
+</td>
+<td style="width:8px"></td>
+<td style="background:#f0ebe3;border-radius:8px;padding:14px;text-align:center;width:33%">
+<div style="font-size:22px;font-weight:bold;color:#0a1628">${prop.bathrooms}</div>
+<div style="font-size:11px;color:#5c6577;letter-spacing:.08em;text-transform:uppercase">${isEs ? 'Banos' : 'Bathrooms'}</div>
+</td>
+<td style="width:8px"></td>
+<td style="background:#f0ebe3;border-radius:8px;padding:14px;text-align:center;width:33%">
+<div style="font-size:22px;font-weight:bold;color:#0a1628">${prop.size}</div>
+<div style="font-size:11px;color:#5c6577;letter-spacing:.08em;text-transform:uppercase">m²</div>
+</td>
+</tr>
+</table>
+
+<p style="font-size:15px;color:#5c6577;line-height:1.7;margin:0 0 28px">${email.body_html || ''}</p>
+
+<!-- CTA button -->
+<table cellpadding="0" cellspacing="0" style="width:100%">
+<tr><td align="center">
+<a href="mailto:hola@proplync.mx?subject=${encodeURIComponent(prop.title)}" style="display:inline-block;background:linear-gradient(160deg,#c9a96e,#b08c4a);color:#0a1628;font-size:15px;font-weight:bold;padding:14px 40px;border-radius:999px;text-decoration:none">${isEs ? 'Agendar visita' : 'Book a viewing'}</a>
+</td></tr>
+</table>
+</td></tr>
+
+<!-- Footer -->
+<tr><td style="background:#0a1628;padding:20px 32px;text-align:center">
+<p style="font-size:12px;color:rgba(255,255,255,.5);margin:0">Proplync.mx · Riviera Maya · Tulum · Playa del Carmen · Cancun</p>
+<p style="font-size:11px;color:rgba(255,255,255,.3);margin:8px 0 0"><a href="#" style="color:rgba(255,255,255,.4);text-decoration:underline">${isEs ? 'Cancelar suscripcion' : 'Unsubscribe'}</a></p>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  triggerDownload(blob, 'proplync-email-' + (prop.title || 'property').replace(/\s+/g, '-').toLowerCase() + '.html');
+}
+
+function downloadAd() {
+  const prop = getPropertyData();
+  const ad = generatedContent.ad;
+  const isEs = lang === 'es';
+  const textContent = [
+    (isEs ? 'TITULO' : 'HEADLINE') + ': ' + (ad.headline || ''),
+    (isEs ? 'TEXTO PRINCIPAL' : 'PRIMARY TEXT') + ': ' + (ad.primary_text || ''),
+    (isEs ? 'DESCRIPCION' : 'DESCRIPTION') + ': ' + (ad.description || ''),
+    (isEs ? 'BOTON CTA' : 'CTA BUTTON') + ': ' + (ad.cta_label || '')
+  ].join('\n\n');
+
+  const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+  triggerDownload(blob, 'proplync-ad-' + (prop.title || 'property').replace(/\s+/g, '-').toLowerCase() + '.txt');
+}
+
+/* ---------- 6. VIDEO / REEL (Canvas animation + MediaRecorder) ---------- */
+async function downloadVideo() {
+  const prop = getPropertyData();
+  const video = generatedContent.video;
+  if (!video || !video.scene_texts || !video.scene_texts.length) return;
+
+  /* Hook/core/CTA structure per the real-estate-content skill's Reel guidance:
+     a short punchy hook, core scenes sharing the remaining time evenly, and a
+     CTA that lingers slightly longer — not just N equal-length generic scenes. */
+  const scenes = [
+    ...(video.hook_text ? [{ text: video.hook_text, kind: 'hook' }] : []),
+    ...video.scene_texts.map(t => ({ text: t, kind: 'core' })),
+    ...(video.cta_text ? [{ text: video.cta_text, kind: 'cta' }] : [])
+  ];
+
+  const W = 1080, H = 1920;
+  const DURATION = 15; /* seconds */
+  const FPS = 30;
+  const TOTAL_FRAMES = DURATION * FPS;
+
+  const HOOK_FRAMES = video.hook_text ? Math.round(2 * FPS) : 0;
+  const CTA_FRAMES = video.cta_text ? Math.round(2.5 * FPS) : 0;
+  const coreCount = video.scene_texts.length;
+  const coreBudget = Math.max(TOTAL_FRAMES - HOOK_FRAMES - CTA_FRAMES, coreCount * FPS);
+  const coreSceneFrames = Math.floor(coreBudget / coreCount);
+  const sceneFrameCounts = scenes.map(s => s.kind === 'hook' ? HOOK_FRAMES : s.kind === 'cta' ? CTA_FRAMES : coreSceneFrames);
+  const sceneStartFrames = [];
+  sceneFrameCounts.reduce((acc, n) => { sceneStartFrames.push(acc); return acc + n; }, 0);
+  const ACTUAL_TOTAL_FRAMES = sceneFrameCounts.reduce((a, b) => a + b, 0);
+
+  /* Create offscreen canvas */
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  /* Load background image */
+  let bgImg = null;
+  if (propertyImageUrl) {
+    bgImg = await new Promise(resolve => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = propertyImageUrl;
+    });
+  }
+
+  /* Setup MediaRecorder */
+  const stream = canvas.captureStream(FPS);
+  const chunks = [];
+  const recorder = new MediaRecorder(stream, {
+    mimeType: 'video/webm;codecs=vp9',
+    videoBitsPerSecond: 5000000
+  });
+  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+  const recordingDone = new Promise(resolve => {
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      resolve(blob);
+    };
+  });
+
+  recorder.start();
+
+  /* Animation loop */
+  for (let frame = 0; frame < ACTUAL_TOTAL_FRAMES; frame++) {
+    let sceneIdx = scenes.length - 1;
+    for (let i = 0; i < scenes.length; i++) {
+      if (frame < sceneStartFrames[i] + sceneFrameCounts[i]) { sceneIdx = i; break; }
+    }
+    const sceneFrames = sceneFrameCounts[sceneIdx] || 1;
+    const sceneProgress = (frame - sceneStartFrames[sceneIdx]) / sceneFrames;
+    const scene = scenes[sceneIdx];
+    const text = scene.text;
+
+    /* Ken Burns: slow zoom and pan */
+    const zoom = 1.0 + sceneIdx * 0.05 + sceneProgress * 0.05;
+    const panX = Math.sin(sceneIdx * 1.2 + sceneProgress * 0.5) * 40;
+    const panY = Math.cos(sceneIdx * 0.8 + sceneProgress * 0.3) * 30;
+
+    /* Clear */
+    ctx.fillStyle = '#0a1628';
+    ctx.fillRect(0, 0, W, H);
+
+    /* Draw background with Ken Burns */
+    if (bgImg) {
+      ctx.save();
+      ctx.translate(W / 2 + panX, H / 2 + panY);
+      ctx.scale(zoom, zoom);
+      ctx.translate(-W / 2, -H / 2);
+      /* Cover the 9:16 canvas with the image */
+      const imgRatio = bgImg.width / bgImg.height;
+      const canvasRatio = W / H;
+      let drawW, drawH, drawX, drawY;
+      if (imgRatio > canvasRatio) {
+        drawH = H;
+        drawW = H * imgRatio;
+        drawX = (W - drawW) / 2;
+        drawY = 0;
+      } else {
+        drawW = W;
+        drawH = W / imgRatio;
+        drawX = 0;
+        drawY = (H - drawH) / 2;
+      }
+      ctx.drawImage(bgImg, drawX, drawY, drawW, drawH);
+      ctx.restore();
+    } else {
+      /* Gradient fallback */
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#1f6b67');
+      grad.addColorStop(1, '#0a1628');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    /* Dark overlay */
+    ctx.fillStyle = 'rgba(10,22,40,0.45)';
+    ctx.fillRect(0, 0, W, H);
+
+    /* Text overlay — fade in/out */
+    let alpha = 1;
+    if (sceneProgress < 0.15) alpha = sceneProgress / 0.15;
+    else if (sceneProgress > 0.85) alpha = (1 - sceneProgress) / 0.15;
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+
+    /* Scene text — hook and CTA get distinct treatment, not the same generic style as core beats */
+    ctx.fillStyle = scene.kind === 'hook' ? '#c9a96e' : '#ffffff';
+    const fontWeight = scene.kind === 'hook' ? 700 : 600;
+    const fontSize = scene.kind === 'hook' ? 58 : 52;
+    ctx.font = `${fontWeight} ${fontSize}px "Hanken Grotesk", system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+    words.forEach(word => {
+      const test = currentLine ? currentLine + ' ' + word : word;
+      if (ctx.measureText(test).width > W * 0.75) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = test;
+      }
+    });
+    if (currentLine) lines.push(currentLine);
+    const lineH = 66;
+    const textY = scene.kind === 'cta' ? H * 0.72 - (lines.length * lineH) / 2 : H / 2 - (lines.length * lineH) / 2;
+    lines.forEach((line, i) => {
+      ctx.fillText(line, W / 2, textY + i * lineH);
+    });
+
+    /* CTA scenes get a real button-style pill, not just floating text — matches how a Reel's final beat actually reads */
+    if (scene.kind === 'cta') {
+      ctx.font = '700 34px "Hanken Grotesk", system-ui, sans-serif';
+      const btnLabel = lang === 'es' ? 'Contactar' : 'Contact us';
+      const btnW = ctx.measureText(btnLabel).width + 72;
+      ctx.fillStyle = '#c9a96e';
+      roundRect(ctx, W / 2 - btnW / 2, H * 0.82, btnW, 84, 42);
+      ctx.fill();
+      ctx.fillStyle = '#0a1628';
+      ctx.textAlign = 'center';
+      ctx.fillText(btnLabel, W / 2, H * 0.82 + 54);
+    }
+
+    /* Price badge on first scene */
+    if (sceneIdx === 0) {
+      ctx.font = 'bold 36px "Space Mono", monospace';
+      const priceText = prop.currency + ' $' + prop.formatted;
+      const pW = ctx.measureText(priceText).width + 56;
+      ctx.fillStyle = '#c9a96e';
+      roundRect(ctx, W - pW - 50, 100, pW, 68, 12);
+      ctx.fill();
+      ctx.fillStyle = '#0a1628';
+      ctx.textAlign = 'center';
+      ctx.fillText(priceText, W - pW / 2 - 50, 146);
+    }
+
+    /* Brand watermark */
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '400 20px "Fraunces", Georgia, serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Proplync.mx', 60, H - 60);
+
+    ctx.globalAlpha = 1;
+
+    /* Wait for next frame (~33ms for 30fps) */
+    await new Promise(r => setTimeout(r, 1000 / FPS));
+  }
+
+  recorder.stop();
+  const blob = await recordingDone;
+  triggerDownload(blob, 'proplync-video-9x16.webm');
+
+  /* Notify user about WebM format */
+  const note = lang === 'es'
+    ? 'Video descargado en formato WebM. Para convertir a MP4, usa un conversor como CloudConvert o HandBrake.'
+    : 'Video downloaded in WebM format. To convert to MP4, use a converter like CloudConvert or HandBrake.';
+  setTimeout(() => alert(note), 500);
+}
+
+/* Canvas rounded rect helper */
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+/* ---------- DOWNLOAD ALL ZIP ---------- */
+async function downloadAllZip() {
+  if (!checkLibsLoaded()) return;
+  const prop = getPropertyData();
+  const zip = new JSZip();
+
+  /* 1. PDF */
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pdf = generatedContent.pdf;
+    const W = 210, H = 297;
+
+    doc.setFillColor(201, 169, 110);
+    doc.rect(0, 0, W, 18, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(10, 22, 40);
+    doc.text('Proplync.mx', 14, 12);
+
+    let yPos = 24;
+    const imgData = await loadImageAsDataURL(propertyImageUrl);
+    if (imgData) {
+      try { doc.addImage(imgData, 'JPEG', 14, yPos, W - 28, 70); yPos += 76; } catch(e) { yPos += 4; }
+    }
+
+    doc.setFontSize(20);
+    doc.setTextColor(10, 22, 40);
+    const titleLines = doc.splitTextToSize(pdf.headline || prop.title, W - 28);
+    doc.text(titleLines, 14, yPos);
+    yPos += titleLines.length * 8 + 4;
+    doc.setFont('courier', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(201, 169, 110);
+    doc.text((prop.neighborhood + ' · ' + prop.town).toUpperCase(), 14, yPos);
+    yPos += 10;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 70, 85);
+    const descLines = doc.splitTextToSize(pdf.description || '', W - 28);
+    doc.text(descLines, 14, yPos);
+    yPos += descLines.length * 5 + 8;
+
+    if (pdf.features_list) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(10, 22, 40);
+      doc.text(lang === 'es' ? 'Caracteristicas' : 'Features', 14, yPos);
+      yPos += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(60, 70, 85);
+      pdf.features_list.forEach(f => { doc.text('•  ' + f, 18, yPos); yPos += 5; });
+    }
+
+    doc.setFillColor(10, 22, 40);
+    doc.rect(0, H - 20, W, 20, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(200, 200, 200);
+    doc.text('Proplync.mx · Riviera Maya', 14, H - 10);
+
+    zip.file('ficha.pdf', doc.output('blob'));
+  } catch(e) { console.warn('PDF zip error:', e); }
+
+  /* 2. Post PNG */
+  try {
+    const area = document.getElementById('render-area');
+    const div = document.createElement('div');
+    div.className = 'tpl-post';
+    div.style.width = '1080px';
+    div.style.height = '1080px';
+    const bgStyle = propertyImageUrl
+      ? `background-image:url('${propertyImageUrl}');background-size:cover;background-position:center;`
+      : 'background:linear-gradient(135deg,#1f6b67,#0a1628);';
+    div.innerHTML = `
+      <div style="position:absolute;inset:0;${bgStyle}"></div>
+      <div class="overlay"></div>
+      <div class="price-badge">${prop.currency} $${prop.formatted}</div>
+      <div class="bottom"><div class="title">${prop.title}</div><div class="location">${prop.neighborhood} · ${prop.town}</div></div>
+      <div class="brand-wm">Proplync.mx</div>`;
+    area.appendChild(div);
+    const canvas = await renderToCanvas(div);
+    area.removeChild(div);
+    const dataUrl = canvas.toDataURL('image/png');
+    zip.file('post-1080x1080.png', dataUrl.split(',')[1], { base64: true });
+  } catch(e) { console.warn('Post zip error:', e); }
+
+  /* 3. Story PNG */
+  try {
+    const area = document.getElementById('render-area');
+    const story = generatedContent.story;
+    const div = document.createElement('div');
+    div.className = 'tpl-story';
+    div.style.width = '1080px';
+    div.style.height = '1920px';
+    const bgStyle = propertyImageUrl
+      ? `background-image:url('${propertyImageUrl}');background-size:cover;background-position:center;`
+      : 'background:linear-gradient(180deg,#1f6b67,#0a1628);';
+    div.innerHTML = `
+      <div style="position:absolute;inset:0;${bgStyle}"></div>
+      <div class="overlay"></div>
+      <div class="brand-wm">Proplync.mx</div>
+      <div class="price-sticker">${prop.currency} $${prop.formatted}</div>
+      <div class="content"><div class="title">${story.headline || prop.title}</div><div class="location">${prop.neighborhood} · ${prop.town}</div></div>
+      <div class="cta">${story.cta_text || ''}</div>`;
+    area.appendChild(div);
+    const canvas = await renderToCanvas(div);
+    area.removeChild(div);
+    const dataUrl = canvas.toDataURL('image/png');
+    zip.file('story-1080x1920.png', dataUrl.split(',')[1], { base64: true });
+  } catch(e) { console.warn('Story zip error:', e); }
+
+  /* 4. Email HTML */
+  try {
+    const email = generatedContent.email;
+    const isEs = lang === 'es';
+    const emailHTML = buildEmailHTML(prop, email, isEs);
+    zip.file('email.html', emailHTML);
+  } catch(e) { console.warn('Email zip error:', e); }
+
+  /* 5. Ad copy TXT */
+  try {
+    const ad = generatedContent.ad;
+    const isEs = lang === 'es';
+    const adText = [
+      (isEs ? 'TITULO' : 'HEADLINE') + ': ' + (ad.headline || ''),
+      (isEs ? 'TEXTO PRINCIPAL' : 'PRIMARY TEXT') + ': ' + (ad.primary_text || ''),
+      (isEs ? 'DESCRIPCION' : 'DESCRIPTION') + ': ' + (ad.description || ''),
+      (isEs ? 'BOTON CTA' : 'CTA BUTTON') + ': ' + (ad.cta_label || '')
+    ].join('\n\n');
+    zip.file('ad.txt', adText);
+  } catch(e) { console.warn('Ad zip error:', e); }
+
+  /* 6. Carousel slides */
+  /* Note: skipping carousel in ZIP for speed — user can download separately */
+
+  /* Generate and download */
+  const blob = await zip.generateAsync({ type: 'blob' });
+  triggerDownload(blob, 'proplync-7-formatos-' + (prop.title || 'propiedad').replace(/\s+/g, '-').toLowerCase() + '.zip');
+}
+
+/* Build email HTML (shared between single download and ZIP) */
+function buildEmailHTML(prop, email, isEs) {
+  const opLabel = prop.operation === 'sale'
+    ? (isEs ? 'En venta' : 'For sale')
+    : (isEs ? 'En renta' : 'For rent');
+  return `<!DOCTYPE html>
+<html lang="${lang}">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${email.subject || ''}</title></head>
+<body style="margin:0;padding:0;background:#f8f5f0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#1a2438;line-height:1.6">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f5f0"><tr><td align="center" style="padding:32px 16px">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(10,22,40,.08)">
+<tr><td style="background:linear-gradient(160deg,#c9a96e,#b08c4a);padding:20px 32px"><span style="font-size:18px;font-weight:bold;color:#0a1628">Proplync<span style="opacity:.7">.mx</span></span></td></tr>
+${propertyImageUrl ? `<tr><td><img src="${propertyImageUrl}" alt="${prop.title}" style="width:100%;display:block"></td></tr>` : ''}
+<tr><td style="padding:32px">
+<span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#c9a96e;font-weight:bold">${opLabel} · ${prop.neighborhood} · ${prop.town}</span>
+<h1 style="font-size:26px;font-weight:600;color:#0a1628;margin:12px 0 8px">${prop.title}</h1>
+<p style="font-size:22px;font-weight:bold;color:#0a1628;margin:0 0 20px">${prop.currency} $${prop.formatted}</p>
+<p style="font-size:15px;color:#5c6577;line-height:1.7;margin:0 0 28px">${email.body_html || ''}</p>
+<table cellpadding="0" cellspacing="0" style="width:100%"><tr><td align="center">
+<a href="mailto:hola@proplync.mx" style="display:inline-block;background:linear-gradient(160deg,#c9a96e,#b08c4a);color:#0a1628;font-size:15px;font-weight:bold;padding:14px 40px;border-radius:999px;text-decoration:none">${isEs ? 'Agendar visita' : 'Book a viewing'}</a>
+</td></tr></table></td></tr>
+<tr><td style="background:#0a1628;padding:20px 32px;text-align:center">
+<p style="font-size:12px;color:rgba(255,255,255,.5);margin:0">Proplync.mx · Riviera Maya</p>
+<p style="font-size:11px;color:rgba(255,255,255,.3);margin:8px 0 0"><a href="#" style="color:rgba(255,255,255,.4);text-decoration:underline">${isEs ? 'Cancelar suscripcion' : 'Unsubscribe'}</a></p>
+</td></tr></table></td></tr></table></body></html>`;
+}
+
+/* ---------- lang change listener ---------- */
+document.addEventListener('langchange', function() {
+  renderExampleGallery();
+  /* If we have a loaded property, refresh its display */
+  if (currentProperty) {
+    loadPropertyFromListing(currentProperty);
+  }
+  /* If in demo mode, swap to the correct language's demo content */
+  if (isDemoMode) {
+    const content = DEMO_CONTENT[lang] || DEMO_CONTENT.es;
+    generatedContent = content;
+    renderResults(getPropertyData(), content, true);
+  } else if (generatedContent) {
+    /* If we have API-generated content, just re-render (same content) */
+    renderResults(getPropertyData(), generatedContent, true);
+  }
+});
+</script>
+</body>
+</html>

@@ -1,17 +1,24 @@
 {
   "cleanUrls": true,
   "functions": {
-    "api/listings.js": { "maxDuration": 30 },
     "api/photos.js": { "maxDuration": 10 },
     "api/geocode.js": { "maxDuration": 10 },
     "api/amenities.js": { "maxDuration": 15 },
     "api/describe.js": { "maxDuration": 15 },
     "api/search.js": { "maxDuration": 30 },
-    "api/property.js": { "maxDuration": 15 }
+    "api/property.js": { "maxDuration": 15 },
+    "api/nlsearch.js": { "maxDuration": 15 },
+    "api/onboard.js": { "maxDuration": 15 },
+    "api/my-listings.js": { "maxDuration": 15 },
+    "api/leads.js": { "maxDuration": 15 },
+    "api/generate.js": { "maxDuration": 30 },
+    "api/instagram-publish.js": { "maxDuration": 15 }
   },
   "rewrites": [
-    { "source": "/propiedad/:id", "destination": "/property.html?id=:id" },
-    { "source": "/property/:id", "destination": "/property.html?id=:id" },
-    { "source": "/favoritos", "destination": "/favorites.html" }
+    { "source": "/generar", "destination": "/generate" },
+    { "source": "/propiedad/:id", "destination": "/property?id=:id" },
+    { "source": "/property/:id", "destination": "/property?id=:id" },
+    { "source": "/favoritos", "destination": "/favorites" },
+    { "source": "/dashboard/leads", "destination": "/dashboard-leads" }
   ]
 }

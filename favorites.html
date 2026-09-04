@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="Favoritos · Proplync.mx" data-en="Favorites · Proplync.mx">Favoritos · Proplync.mx</title>
+<meta name="description" content="Tus propiedades guardadas en la Riviera Maya.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .favs-main{padding:48px 0 88px}
+  .favs-head{margin-bottom:32px}
+  .favs-head h1{font-size:clamp(1.6rem,3vw,2.2rem);color:var(--ink)}
+  .favs-head p{font-size:.92rem;color:var(--on-sand-dim);margin-top:6px}
+  .favs-count{font-family:var(--mono);font-size:.72rem;color:var(--sea);margin-top:8px}
+  .favs-empty{text-align:center;padding:80px 20px}
+  .favs-empty h3{color:var(--ink);font-size:1.4rem}
+  .favs-empty p{color:var(--on-sand-dim);margin-top:8px;max-width:30em;margin-left:auto;margin-right:auto}
+  .favs-empty .btn{margin-top:24px}
+  .favs-loading{text-align:center;padding:80px 20px;color:var(--on-sand-dim);font-style:italic}
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="#34d6c4" opacity=".18"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#34d6c4" stroke-width="1.8" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#e7a43b" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Proplync<span style="color:#34d6c4">.mx</span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/#como" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a>
+      <a href="/#precios" data-es="Precios" data-en="Pricing">Precios</a>
+      <a href="/favoritos" style="color:var(--aqua)" data-es="Favoritos" data-en="Favorites">Favoritos <span id="fav-badge" style="display:none;background:var(--gold);color:#231600;font-family:var(--mono);font-size:.58rem;font-weight:700;padding:2px 6px;border-radius:999px;margin-left:4px">0</span></a>
+      <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
+    </div>
+    <div class="navtools">
+      <div class="lang"><button id="es" class="on" onclick="setLang('es')">ES</button><button id="en" onclick="setLang('en')">EN</button></div>
+    </div>
+    <button class="navtoggle" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<main class="favs-main">
+  <div class="wrap">
+    <div class="favs-head">
+      <h1 data-es="Tus propiedades guardadas" data-en="Your saved properties">Tus propiedades guardadas</h1>
+      <p data-es="Propiedades que marcaste con el corazón, guardadas en este navegador." data-en="Properties you've hearted, saved in this browser.">Propiedades que marcaste con el corazón, guardadas en este navegador.</p>
+      <div class="favs-count" id="favs-count"></div>
+    </div>
+    <div id="favs-grid"></div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="#34d6c4" opacity=".18"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#34d6c4" stroke-width="1.8" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#e7a43b" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Proplync<span style="color:#34d6c4">.mx</span>
+    </a>
+    <span data-es="Riviera Maya · Tulum · Playa del Carmen · Cancún" data-en="Riviera Maya · Tulum · Playa del Carmen · Cancún">Riviera Maya · Tulum · Playa del Carmen · Cancún</span>
+    <span class="mono" style="font-size:.72rem;opacity:.7">© 2026</span>
+  </div>
+</footer>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/favorites.js"></script>
+<script>
+  /* ---------- state ---------- */
+  let favProps = [];
+
+  /* ---------- card (same shape as search.html, but the heart removes the
+     card from this page immediately instead of just toggling its state) ---------- */
+  function favCardHTML(p) {
+    const title = lang === 'es' ? p.title_es : p.title_en;
+    const opLbl = p.operation === 'sale' ? (lang === 'es' ? 'Venta' : 'For sale') : (lang === 'es' ? 'Renta' : 'For rent');
+    const perLbl = p.operation === 'rental' ? (lang === 'es' ? '/mes' : '/mo') : '';
+    return '<article class="pcard" data-id="' + p.public_id + '" onclick="window.location.href=\'/propiedad/' + p.public_id + '\'">' +
+      '<div class="pcard-photo" style="background-color:#0a5d59;background-image:linear-gradient(180deg,rgba(6,35,42,.32),rgba(6,35,42,0) 42%,rgba(6,35,42,0) 72%,rgba(6,35,42,.14)),url(\'' + (p.image || '') + '\')">' +
+        '<span class="pcard-badge ' + (p.operation === 'sale' ? 'badge-sale' : 'badge-rental') + '">' + opLbl + '</span>' +
+        '<button class="pcard-fav saved" onclick="event.stopPropagation();removeFavorite(\'' + p.public_id + '\')" title="' + (lang === 'es' ? 'Quitar' : 'Remove') + '">' + heartSVG() + '</button>' +
+      '</div>' +
+      '<div class="pcard-body">' +
+        '<div class="pcard-loc">' + p.neighborhood + ' · ' + p.town + '</div>' +
+        '<div class="pcard-title">' + title + '</div>' +
+        '<div class="pcard-specs"><span>' + p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') + '</span><span>' + p.bathrooms + ' ' + (lang === 'es' ? 'baños' : 'bath') + '</span><span>' + p.size + ' m²</span></div>' +
+        '<div class="pcard-foot"><span class="pcard-price">' + p.currency + ' $' + p.formatted + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
+      '</div></article>';
+  }
+
+  function removeFavorite(id) {
+    toggleFavorite(id);
+    favProps = favProps.filter(p => p.public_id !== id);
+    renderFavorites();
+  }
+
+  function renderFavorites() {
+    const grid = document.getElementById('favs-grid');
+    const count = document.getElementById('favs-count');
+    if (!favProps.length) {
+      count.textContent = '';
+      grid.innerHTML = '<div class="favs-empty">' +
+        '<h3 data-es="Aún no tienes favoritos" data-en="No favorites yet">' + (lang === 'es' ? 'Aún no tienes favoritos' : 'No favorites yet') + '</h3>' +
+        '<p data-es="Toca el corazón en cualquier propiedad para guardarla aquí." data-en="Tap the heart on any property to save it here.">' + (lang === 'es' ? 'Toca el corazón en cualquier propiedad para guardarla aquí.' : 'Tap the heart on any property to save it here.') + '</p>' +
+        '<a href="/search" class="btn btn-dark" data-es="Buscar propiedades" data-en="Search properties">' + (lang === 'es' ? 'Buscar propiedades' : 'Search properties') + '</a>' +
+        '</div>';
+      return;
+    }
+    count.textContent = favProps.length + (lang === 'es' ? ' propiedades guardadas' : ' saved properties');
+    grid.className = 'pgrid';
+    grid.innerHTML = favProps.map(favCardHTML).join('');
+  }
+
+  /* ---------- load ---------- */
+  async function loadFavorites() {
+    const ids = getFavorites();
+    const grid = document.getElementById('favs-grid');
+    if (!ids.length) {
+      renderFavorites();
+      return;
+    }
+    grid.innerHTML = '<p class="favs-loading" data-es="Cargando tus favoritos…" data-en="Loading your favorites…">' + (lang === 'es' ? 'Cargando tus favoritos…' : 'Loading your favorites…') + '</p>';
+    const results = await Promise.allSettled(ids.map(id => fetchProperty(id)));
+    favProps = results
+      .filter(r => r.status === 'fulfilled' && r.value.property)
+      .map(r => r.value.property);
+    renderFavorites();
+  }
+
+  /* ---------- lang change ---------- */
+  document.addEventListener('langchange', renderFavorites);
+
+  /* ---------- mobile nav ---------- */
+  document.querySelectorAll('#navlinks a').forEach(a => a.addEventListener('click', () => document.getElementById('navlinks').classList.remove('open')));
+
+  /* ---------- init ---------- */
+  loadFavorites();
+  updateFavBadge();
+</script>
+</body>
+</html>
