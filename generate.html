@@ -52,7 +52,33 @@
   /* Example chips — dark style */
   .gen-examples{margin-bottom:0}
   .gen-examples-label{display:none}
-  .gen-examples-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+  /* Horizontal rail. It always scrolled, but nothing said so: no visible
+     scrollbar, and a trackpad swipe is not discoverable. Arrows + snap fix that. */
+  .gen-examples-wrap{position:relative}
+  .gen-examples-row{
+    display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;
+    scroll-behavior:smooth;scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;scrollbar-color:rgba(240,237,232,.22) transparent;
+  }
+  .gen-examples-row > *{scroll-snap-align:start}
+  .gen-examples-row::-webkit-scrollbar{height:6px}
+  .gen-examples-row::-webkit-scrollbar-track{background:rgba(240,237,232,.05);border-radius:99px}
+  .gen-examples-row::-webkit-scrollbar-thumb{background:rgba(240,237,232,.22);border-radius:99px}
+  .gen-examples-row::-webkit-scrollbar-thumb:hover{background:rgba(240,237,232,.4)}
+  .rail-btn{
+    position:absolute;top:38%;transform:translateY(-50%);z-index:4;
+    width:30px;height:30px;border-radius:50%;cursor:pointer;
+    border:1px solid rgba(240,237,232,.18);
+    background:rgba(10,22,40,.86);color:var(--on-ink);
+    display:flex;align-items:center;justify-content:center;font-size:1rem;line-height:1;
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    transition:opacity var(--duration) ease,background var(--duration) ease;
+  }
+  .rail-btn:hover{background:var(--ink-3);border-color:var(--gold)}
+  .rail-btn[hidden]{display:none}
+  .rail-prev{left:-6px}
+  .rail-next{right:-6px}
   .gen-example-chip{
     flex:none;width:100px;cursor:pointer;border-radius:8px;overflow:hidden;
     background:rgba(240,237,232,.04);border:1.5px solid rgba(240,237,232,.08);
@@ -429,7 +455,11 @@
   .dusk-badge svg{width:12px;height:12px;stroke:var(--gold);fill:none;stroke-width:2}
 
   /* ---------- RESPONSIVE ---------- */
-  @media (max-width:900px){
+  /* The two-column studio needs a fixed 380px left panel. Below ~1100px that
+     leaves the panel too cramped to use — the property rail collapses to about
+     330px, showing one and a half cards with no hint that it scrolls. Stack the
+     panels instead, and let the left one use the full width. */
+  @media (max-width:1100px){
     .studio{flex-direction:column;height:auto;overflow:auto}
     html,body{overflow:auto;height:auto}
     .studio-left{width:100%;min-width:0;max-height:none;overflow:visible;border-right:0;border-bottom:1px solid rgba(240,237,232,.06)}
@@ -482,7 +512,11 @@
   <div class="sl-section">
     <div class="sl-label" data-es="Propiedades" data-en="Properties">Propiedades</div>
     <div class="gen-examples">
-      <div class="gen-examples-row" id="examples-row"><!-- injected by JS --></div>
+      <div class="gen-examples-wrap">
+        <button type="button" class="rail-btn rail-prev" id="rail-prev" hidden onclick="scrollRail(-1)" aria-label="Anterior">&#8249;</button>
+        <div class="gen-examples-row" id="examples-row"><!-- injected by JS --></div>
+        <button type="button" class="rail-btn rail-next" id="rail-next" hidden onclick="scrollRail(1)" aria-label="Siguiente">&#8250;</button>
+      </div>
     </div>
   </div>
 
@@ -922,7 +956,35 @@ function renderExampleGallery(){
       <div class="ec-loc">${p.town}</div>
     </div>
   `).join('');
+  updateRailButtons();
 }
+
+/* The rail scrolled from the start, but silently: no scrollbar, and a trackpad
+   swipe isn't something you guess at. Show arrows only when there is somewhere
+   to go, so they never sit there dead. */
+function scrollRail(direction){
+  const row = document.getElementById('examples-row');
+  if (!row) return;
+  row.scrollBy({ left: direction * Math.max(180, row.clientWidth * 0.8), behavior: 'smooth' });
+}
+
+function updateRailButtons(){
+  const row = document.getElementById('examples-row');
+  const prev = document.getElementById('rail-prev');
+  const next = document.getElementById('rail-next');
+  if (!row || !prev || !next) return;
+  const overflowing = row.scrollWidth - row.clientWidth > 4;
+  prev.hidden = !overflowing || row.scrollLeft <= 4;
+  next.hidden = !overflowing || row.scrollLeft >= row.scrollWidth - row.clientWidth - 4;
+}
+
+(function bindRail(){
+  const row = document.getElementById('examples-row');
+  if (!row) return;
+  row.addEventListener('scroll', updateRailButtons, { passive: true });
+  window.addEventListener('resize', updateRailButtons);
+  updateRailButtons();
+})();
 
 function showManualForm(){
   currentProperty = null;
