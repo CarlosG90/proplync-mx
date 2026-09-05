@@ -9,8 +9,8 @@
    SUPABASE_URL/ANON_KEY are public by design — protected by Postgres
    RLS, not by secrecy. Safe to ship in client-side code. */
 
-const SUPABASE_URL = 'https://cyfoblrbsgsusmenjwps.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5Zm9ibHJic2dzdXNtZW5qd3BzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzOTEzNDAsImV4cCI6MjEwMTk2NzM0MH0.0XO2_SXWYJgVoPyI9JNJ_7Wfg33J7vcQQOOBcwe_G5I';
+const SUPABASE_URL = 'https://rznuuykmtvbgmnczbqiq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6bnV1eWttdHZiZ21uY3picWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1ODc2OTcsImV4cCI6MjEwNDE2MzY5N30.HZBU0dmvyQTeHNb3MViqykca0uvvoui5M32_mkxvh2A';
 
 let sb;
 function initSupabase() {
