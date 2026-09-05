@@ -140,6 +140,13 @@
   .studio-left .form-input::placeholder{color:rgba(240,237,232,.25)}
   .studio-left .form-hint{color:var(--on-ink-dim);font-size:.66rem}
 
+  .mp-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:7px;margin-top:9px}
+  .mp-tile{position:relative;aspect-ratio:4/3;border-radius:7px;background-size:cover;background-position:center;background-color:rgba(240,237,232,.06);border:1px solid rgba(240,237,232,.12)}
+  .mp-tile.is-cover{border-color:var(--gold)}
+  .mp-cover{position:absolute;left:4px;top:4px;font-family:var(--mono);font-size:.44rem;letter-spacing:.08em;text-transform:uppercase;background:var(--gold);color:var(--ink);padding:2px 6px;border-radius:999px;font-weight:700}
+  .mp-acts{position:absolute;right:3px;top:3px;display:flex;gap:3px}
+  .mp-acts button{width:19px;height:19px;border-radius:50%;border:0;cursor:pointer;background:rgba(10,22,40,.72);color:#fff;font-size:.62rem;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+  .mp-acts button:hover{background:var(--ink-3)}
   .f-image-row{display:flex;gap:8px}
   .f-image-row .form-input{flex:1}
   .f-image-row .btn{flex:none;font-size:.72rem;padding:0 14px;white-space:nowrap}
@@ -589,9 +596,10 @@
           <label class="form-label" data-es="Foto de la propiedad" data-en="Property photo">Foto de la propiedad</label>
           <div class="f-image-row">
             <input class="form-input" id="f-image" type="url" placeholder="https://..." oninput="clearManualPhoto(true); showPhotoToggles(this.value.length > 8)">
-            <button type="button" class="btn btn-dark" onclick="document.getElementById('f-image-file').click()" data-es="Subir foto" data-en="Upload photo">Subir foto</button>
-            <input type="file" id="f-image-file" accept="image/*" style="display:none" onchange="handleManualPhotoUpload(event)">
+            <button type="button" class="btn btn-dark" onclick="document.getElementById('f-image-file').click()" data-es="Subir fotos" data-en="Upload photos">Subir fotos</button>
+            <input type="file" id="f-image-file" accept="image/jpeg,image/png,image/webp,image/avif" multiple style="display:none" onchange="handleManualPhotoUpload(event)">
           </div>
+          <div class="mp-strip" id="f-photo-strip" style="display:none"></div>
           <div class="f-image-preview" id="f-image-preview" style="display:none">
             <img id="f-image-preview-img" src="" alt="">
             <button type="button" class="f-image-remove" onclick="clearManualPhoto()" data-es="Quitar foto" data-en="Remove photo">Quitar foto</button>
@@ -745,29 +753,101 @@ let currentProperty = null;
 let generatedContent = null;
 let propertyImageUrl = '';
 let isDemoMode = false;
-let manualUploadedImage = ''; // data: URL when the user uploads their own photo in the manual form
+let manualUploadedImage = ''; // cover photo (data: URL) — always manualPhotos[0]
+let manualPhotos = [];         // every uploaded photo, in order; the first is the cover
+const MAX_MANUAL_PHOTOS = 10;
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB
 
-function handleManualPhotoUpload(evt) {
-  const file = evt.target.files && evt.target.files[0];
-  if (!file) return;
-  if (file.size > MAX_UPLOAD_BYTES) {
-    alert(lang === 'es' ? 'La foto es muy pesada (max 8MB).' : 'Photo is too large (max 8MB).');
-    evt.target.value = '';
-    return;
+/* A phone photo is 3-8MB, and base64 adds a third on top. Sent whole it blew
+   past the serverless request limit and generation failed with HTTP 413.
+   Downscaling here keeps every later step small: the request body, the enhance
+   round trip, and the canvas work behind the mockups. */
+const MAX_PHOTO_EDGE = 1600;
+const PHOTO_QUALITY = 0.82;
+
+function downscaleToDataUrl(file) {
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onerror = function () { reject(new Error('read_failed')); };
+    reader.onload = function () {
+      const img = new Image();
+      img.onerror = function () { reject(new Error('decode_failed')); };
+      img.onload = function () {
+        const scale = Math.min(1, MAX_PHOTO_EDGE / Math.max(img.width, img.height));
+        if (scale === 1 && String(reader.result).length < 1200000) { resolve(reader.result); return; }
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', PHOTO_QUALITY));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleManualPhotoUpload(evt) {
+  const files = Array.from(evt.target.files || []);
+  if (!files.length) return;
+  const room = Math.max(0, MAX_MANUAL_PHOTOS - manualPhotos.length);
+  const accepted = files.slice(0, room);
+  let skipped = files.length - accepted.length;
+
+  for (const file of accepted) {
+    if (file.size > MAX_UPLOAD_BYTES) { skipped++; continue; }
+    try {
+      manualPhotos.push(await downscaleToDataUrl(file));
+    } catch (e) { skipped++; }
   }
-  const reader = new FileReader();
-  reader.onload = function() {
-    manualUploadedImage = reader.result;
+  evt.target.value = '';
+
+  if (manualPhotos.length) {
     const urlField = document.getElementById('f-image');
     urlField.value = '';
     urlField.disabled = true;
-    document.getElementById('f-image-preview-img').src = manualUploadedImage;
-    document.getElementById('f-image-preview').style.display = 'flex';
     showPhotoToggles(true);
-  };
-  reader.readAsDataURL(file);
+  }
+  renderManualPhotos();
+  if (skipped) {
+    alert(lang === 'es'
+      ? 'Se omitieron ' + skipped + ' foto(s): supera 8MB o el maximo de ' + MAX_MANUAL_PHOTOS + '.'
+      : skipped + ' photo(s) skipped: over 8MB, or past the ' + MAX_MANUAL_PHOTOS + ' photo maximum.');
+  }
+}
+
+/* The first photo is the cover — it drives every mockup and the listing card. */
+function renderManualPhotos() {
+  manualUploadedImage = manualPhotos[0] || '';
+  const strip = document.getElementById('f-photo-strip');
+  const preview = document.getElementById('f-image-preview');
+  if (!strip) return;
+  strip.innerHTML = manualPhotos.map(function (src, i) {
+    return '<div class="mp-tile' + (i === 0 ? ' is-cover' : '') + '" style="background-image:url(&quot;' + src + '&quot;)">' +
+      (i === 0 ? '<span class="mp-cover">' + (lang === 'es' ? 'Portada' : 'Cover') + '</span>' : '') +
+      '<div class="mp-acts">' +
+        (i > 0 ? '<button type="button" title="' + (lang === 'es' ? 'Hacer portada' : 'Make cover') + '" onclick="setManualCover(' + i + ')">&#9650;</button>' : '') +
+        '<button type="button" onclick="removeManualPhoto(' + i + ')" title="' + (lang === 'es' ? 'Quitar' : 'Remove') + '">&times;</button>' +
+      '</div></div>';
+  }).join('');
+  strip.style.display = manualPhotos.length ? 'grid' : 'none';
+  if (preview) preview.style.display = 'none';
+}
+
+function setManualCover(i) {
+  if (i <= 0 || i >= manualPhotos.length) return;
+  manualPhotos.unshift(manualPhotos.splice(i, 1)[0]);
+  renderManualPhotos();
+}
+
+function removeManualPhoto(i) {
+  manualPhotos.splice(i, 1);
+  if (!manualPhotos.length) {
+    document.getElementById('f-image').disabled = false;
+    showPhotoToggles(false);
+  }
+  renderManualPhotos();
 }
 
 /* ---------- AI photo enhancement ---------- */
@@ -831,6 +911,8 @@ async function dayToDuskPhoto(imageSource) {
    should just clear any prior upload, not fight the field the user is using) */
 function clearManualPhoto(keepTyping) {
   manualUploadedImage = '';
+  manualPhotos = [];
+  if (document.getElementById('f-photo-strip')) renderManualPhotos();
   document.getElementById('f-image-file').value = '';
   document.getElementById('f-image-preview').style.display = 'none';
   if (!keepTyping) showPhotoToggles(false);
@@ -1122,7 +1204,10 @@ function getPropertyData() {
     currency: document.getElementById('f-currency').value,
     amount: amount,
     formatted: amount.toLocaleString('en-US'),
+    // Cover photo for the on-page mockups. Never sent to the text endpoint —
+    // see stripPhotos() — because a data: URL is megabytes and unused there.
     image: manualUploadedImage || document.getElementById('f-image').value.trim(),
+    images: manualPhotos.slice(),
     lang: lang
   };
 }
@@ -1193,6 +1278,18 @@ function handlePublish() {
   window.location.href = '/dashboard?publish=1';
 }
 
+/* The copy is written from the listing's facts — title, town, size, price —
+   and never from the photo. Sending an uploaded photo along was pure weight:
+   a data: URL runs to megabytes and pushed the request past the serverless
+   body limit, so generation failed with HTTP 413 the moment anyone attached
+   a picture. Hosted URLs are short and harmless, so only data: URLs are cut. */
+function stripPhotos(data) {
+  const out = Object.assign({}, data);
+  delete out.images;
+  if (typeof out.image === 'string' && out.image.indexOf('data:') === 0) delete out.image;
+  return out;
+}
+
 /* ---------- generate handler ---------- */
 async function handleGenerate() {
   const data = getPropertyData();
@@ -1249,7 +1346,7 @@ async function handleGenerate() {
     const r = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify(stripPhotos(data))
     });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const result = await r.json();

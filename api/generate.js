@@ -385,7 +385,7 @@ export default async function handler(req, res) {
 Reglas obligatorias (aplican a los 7 formatos):
 - Nunca inventes ni infles datos (metros, anio, permisos, vistas, escuelas). Usa solo lo que se te dio.
 - Lidera cada pieza con la caracteristica mas fuerte del inmueble, no con un listado seco de datos.
-- Se especifico y sensorial ("luz de la manana entra por la cocina"), evita cliches vacios ("no te lo puedes perder", "unico en su tipo") y el exceso de signos de exclamacion.
+- Se breve: cada pieza lo mas corta posible sin perder la informacion. Se especifico y sensorial ("luz de la manana entra por la cocina"), evita cliches vacios ("no te lo puedes perder", "unico en su tipo") y el exceso de signos de exclamacion.
 - Describe la propiedad y el trato, nunca al comprador ideal (nada de "perfecto para una familia joven" ni lenguaje que discrimine o segregue por caracteristicas protegidas).
 - No inventes urgencia falsa ("se va a acabar") salvo que sea un plazo real dado en los datos.
 - El copy publicitario (formato "ad") es el mas sensible: usa vocabulario real de botones de CTA (Mas informacion, Contactar, Agendar visita), sin superlativos no verificables.
@@ -407,7 +407,7 @@ Responde UNICAMENTE con un objeto JSON valido (sin markdown, sin backticks, sin 
 {
   "pdf": {
     "headline": "titulo atractivo para la ficha",
-    "description": "descripcion comercial de 60-80 palabras",
+    "description": "descripcion comercial de 45-55 palabras",
     "features_list": ["caracteristica 1", "caracteristica 2", "caracteristica 3", "caracteristica 4", "caracteristica 5"]
   },
   "post": {
@@ -428,7 +428,7 @@ Responde UNICAMENTE con un objeto JSON valido (sin markdown, sin backticks, sin 
   "email": {
     "subject": "asunto del correo",
     "preview_text": "texto de previsualizacion (max 90 caracteres)",
-    "body_html": "1-2 parrafos de texto comercial en texto plano (sin HTML)"
+    "body_html": "un parrafo breve de texto comercial en texto plano (sin HTML)"
   },
   "video": {
     "reel_type": "uno de los 12 tipos de Reel listados arriba",
@@ -448,7 +448,7 @@ Responde UNICAMENTE con un objeto JSON valido (sin markdown, sin backticks, sin 
 Mandatory rules (apply to all 7 formats):
 - Never invent or inflate facts (size, year, permits, views, schools). Use only what was given.
 - Lead every piece with the property's strongest feature, not a dry spec dump.
-- Be specific and sensory ("morning light pours into the kitchen"), avoid empty cliches ("must see", "one of a kind") and exclamation-mark overload.
+- Be brief: keep every piece as short as it can be without losing the facts. Be specific and sensory ("morning light pours into the kitchen"), avoid empty cliches ("must see", "one of a kind") and exclamation-mark overload.
 - Describe the property and the deal, never the ideal buyer (no "perfect for a young family" or language that discriminates/steers by protected characteristics).
 - Do not fabricate urgency ("won't last") unless it's a real deadline given in the data.
 - The ad format is the most compliance-sensitive: use real CTA button vocabulary (Learn More, Contact Us, Book a Tour), no unverifiable superlatives.
@@ -469,7 +469,7 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no extra text)
 {
   "pdf": {
     "headline": "attractive headline for the fact sheet",
-    "description": "sales description of 60-80 words",
+    "description": "sales description of 45-55 words",
     "features_list": ["feature 1", "feature 2", "feature 3", "feature 4", "feature 5"]
   },
   "post": {
@@ -490,7 +490,7 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no extra text)
   "email": {
     "subject": "email subject line",
     "preview_text": "preview text (max 90 characters)",
-    "body_html": "1-2 paragraphs of sales copy in plain text (no HTML)"
+    "body_html": "one short paragraph of sales copy in plain text (no HTML)"
   },
   "video": {
     "reel_type": "one of the 12 Reel types listed above",
@@ -552,7 +552,11 @@ Respond ONLY with a valid JSON object, no markdown: {"description":"...","featur
         { role: 'user', content: user }
       ],
       temperature: 0.7,
-      max_tokens: 2000
+      // Groq's on-demand tier caps output at 1000 tokens per minute, and a
+      // request asking for more than the ceiling is rejected outright rather
+      // than queued — this path used to ask for 2000 and always 429'd in
+      // production. The prompt below asks for correspondingly tighter copy.
+      max_tokens: 950
     });
 
     const content = JSON.parse(messageText(data));
