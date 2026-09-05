@@ -54,6 +54,10 @@
   .gen-examples-label{display:none}
   /* Horizontal rail. It always scrolled, but nothing said so: no visible
      scrollbar, and a trackpad swipe is not discoverable. Arrows + snap fix that. */
+  .btn-publish{width:100%;justify-content:center;margin-top:10px}
+  .publish-hint{font-size:.74rem;color:var(--on-ink-dim);line-height:1.5;margin:10px 0 0;text-align:center}
+  .publish-hint.err{color:#ffb3a0}
+
   .gen-examples-wrap{position:relative}
   .gen-examples-row{
     display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;
@@ -627,6 +631,8 @@
 
   <div class="gen-trigger">
     <button class="btn btn-gold" id="gen-btn" onclick="handleGenerate()" data-es="Generar 7 formatos" data-en="Generate 7 formats">Generar 7 formatos</button>
+    <button class="btn btn-outline btn-publish" id="publish-btn" onclick="handlePublish()" data-es="Publicar en Proplync" data-en="Publish on Proplync">Publicar en Proplync</button>
+    <p class="publish-hint" id="publish-hint" data-es="Publicala en el listado publico y obten su mini-pagina para compartir. Gratis." data-en="List it publicly and get its shareable mini-site. Free.">Publicala en el listado publico y obten su mini-pagina para compartir. Gratis.</p>
   </div>
 
 </div><!-- /studio-left -->
@@ -1119,6 +1125,72 @@ function getPropertyData() {
     image: manualUploadedImage || document.getElementById('f-image').value.trim(),
     lang: lang
   };
+}
+
+/* ---------- publish handler ----------
+   The homepage promises a listing of properties from agents *and* owners
+   selling directly, but this page never saved anything — an owner could
+   generate content and then had nowhere to put the property.
+
+   No auth code here on purpose: /generate is public and should stay free of
+   the Supabase SDK. The property is stashed and the dashboard finishes the
+   job, since it already enforces auth and both /login and /signup land there.
+   ------------------------------------------------------------------------ */
+var PENDING_KEY = 'proplync:pendingListing';
+
+function handlePublish() {
+  var hint = document.getElementById('publish-hint');
+  var data = getPropertyData();
+  if (!data) {
+    hint.className = 'publish-hint err';
+    hint.textContent = lang === 'es'
+      ? 'Escribe al menos el titulo y la ciudad antes de publicar.'
+      : 'Add at least a title and a city before publishing.';
+    return;
+  }
+  // A sample listing belongs to whoever already published it, not to this visitor.
+  if (currentProperty && currentProperty.public_id) {
+    hint.className = 'publish-hint err';
+    hint.textContent = lang === 'es'
+      ? 'Esta es una propiedad de ejemplo. Elige "Mi propiedad" para publicar la tuya.'
+      : 'This is a sample listing. Pick "My property" to publish your own.';
+    return;
+  }
+
+  var pending = {
+    title_es: data.title,
+    title_en: data.title,
+    town: data.town,
+    neighborhood: data.neighborhood,
+    bedrooms: data.bedrooms,
+    bathrooms: data.bathrooms,
+    parking: data.parking,
+    size: data.size,
+    operation: data.operation,
+    currency: data.currency,
+    amount: data.amount,
+    image: data.image || undefined,
+    status: 'published'
+  };
+  // Reuse the copy already generated, so publishing doesn't re-spend tokens.
+  if (generatedContent && generatedContent.pdf) {
+    pending.description_es = generatedContent.pdf.description || '';
+    pending.description_en = generatedContent.pdf.description || '';
+    pending.features = generatedContent.pdf.features_list || [];
+  }
+
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+  } catch (e) {
+    hint.className = 'publish-hint err';
+    hint.textContent = lang === 'es'
+      ? 'Tu navegador bloquea el almacenamiento local. Publica desde el panel.'
+      : 'Your browser is blocking local storage. Publish from the dashboard instead.';
+    return;
+  }
+  // The dashboard bounces to /login when there's no session, and login returns
+  // there — so this one destination covers both the signed-in and new-user case.
+  window.location.href = '/dashboard?publish=1';
 }
 
 /* ---------- generate handler ---------- */

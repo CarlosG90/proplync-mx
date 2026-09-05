@@ -718,6 +718,43 @@
     }
   }
 
+  /* Finish a publish started on /generate.
+     That page is public and holds no session, so it stashes the property and
+     sends the visitor here. Anyone without an account passes through /login or
+     /signup first, both of which land back on this page — so by the time this
+     runs there is always a session to attach the listing to. */
+  const PENDING_KEY = 'proplync:pendingListing';
+
+  async function completePendingPublish() {
+    let pending;
+    try {
+      const raw = localStorage.getItem(PENDING_KEY);
+      if (!raw) return;
+      pending = JSON.parse(raw);
+    } catch (e) { return; }
+
+    // Clear first: a failure should not leave the listing queued to be created
+    // again on every future visit to the dashboard.
+    try { localStorage.removeItem(PENDING_KEY); } catch (e) { /* nothing to undo */ }
+    if (!pending || !pending.title_es || !pending.town) return;
+
+    try {
+      const r = await authedFetch('/api/my-listings', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(pending)
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || data.error);
+      await loadListings();
+      if (data.listing && data.listing.public_id) openShareModal(data.listing.public_id);
+    } catch (e) {
+      alert((lang === 'es'
+        ? 'No pudimos publicar la propiedad automaticamente. Creala desde "+ Nueva propiedad". '
+        : 'We could not publish that property automatically. Please create it with "+ New listing". ') + e.message);
+    }
+  }
+
   /* The public portfolio: every published listing on one shareable page. */
   function showPortfolioLink(slug) {
     if (!slug) return;
@@ -803,6 +840,8 @@
         }
       }
     } catch (e) { /* the dashboard still works without the portfolio shortcut */ }
+
+    await completePendingPublish();
   })();
 </script>
 </body>
