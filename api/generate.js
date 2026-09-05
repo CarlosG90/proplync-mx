@@ -15,6 +15,8 @@
 
 import sharp from 'sharp';
 import { groqChat, messageText } from './_lib/groq.js';
+import { enforceRateLimit } from './_lib/ratelimit.js';
+import { safeDetail } from './_lib/health.js';
 
 /* ── Photo enhancement constants ── */
 const MAX_DIMENSION = 2400;
@@ -68,7 +70,7 @@ async function handleEnhance(req, res) {
     });
   } catch (err) {
     console.error('enhance error:', err);
-    res.status(500).json({ error: 'enhancement_failed', detail: err.message });
+    res.status(500).json({ error: 'enhancement_failed', detail: safeDetail(err) });
   }
 }
 
@@ -180,7 +182,7 @@ async function handleDayToDusk(req, res) {
     });
   } catch (err) {
     console.error('day-to-dusk error:', err);
-    res.status(500).json({ error: 'day_to_dusk_failed', detail: err.message });
+    res.status(500).json({ error: 'day_to_dusk_failed', detail: safeDetail(err) });
   }
 }
 
@@ -198,6 +200,12 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'method_not_allowed' });
     return;
   }
+
+  // One AI Assist click sends 2 requests (ES + EN), so 16/min is ~8 clicks a
+  // minute per IP: generous for a working agent, far below what it takes to
+  // drain the Groq quota. Image work is CPU-bound rather than token-bound but
+  // is throttled by the same budget.
+  if (await enforceRateLimit(req, res, { bucket: 'generate', limit: 16, windowSec: 60 })) return;
 
   /* ── Route to sub-handlers by action ── */
   const { action } = req.body || {};
@@ -394,7 +402,7 @@ Respond ONLY with a valid JSON object, no markdown: {"description":"...","featur
         }
       });
     } catch (err) {
-      res.status(502).json({ error: 'generation_unavailable', detail: String(err.message) });
+      res.status(502).json({ error: 'generation_unavailable', detail: safeDetail(err) });
     }
     return;
   }
@@ -412,6 +420,6 @@ Respond ONLY with a valid JSON object, no markdown: {"description":"...","featur
     const content = JSON.parse(messageText(data));
     res.status(200).json({ content });
   } catch (err) {
-    res.status(502).json({ error: 'generation_unavailable', detail: String(err.message) });
+    res.status(502).json({ error: 'generation_unavailable', detail: safeDetail(err) });
   }
 }

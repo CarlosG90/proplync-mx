@@ -13,6 +13,8 @@
  */
 
 import { groqChat, messageText } from './_lib/groq.js';
+import { enforceRateLimit } from './_lib/ratelimit.js';
+import { safeDetail } from './_lib/health.js';
 
 const TOWNS = ['Tulum', 'Playa del Carmen', 'Puerto Morelos', 'Cancún', 'Cancun'];
 
@@ -45,6 +47,9 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'method_not_allowed' });
     return;
   }
+
+  // Typed into the search box, so a person can legitimately fire several.
+  if (await enforceRateLimit(req, res, { bucket: 'nlsearch', limit: 25, windowSec: 60 })) return;
 
   const key = process.env.GROQ_API_KEY;
   if (!key) {
@@ -93,6 +98,6 @@ export default async function handler(req, res) {
 
     res.status(200).json({ filters });
   } catch (err) {
-    res.status(502).json({ error: 'nlsearch_unavailable', detail: String(err.message) });
+    res.status(502).json({ error: 'nlsearch_unavailable', detail: safeDetail(err) });
   }
 }

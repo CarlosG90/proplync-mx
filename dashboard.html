@@ -350,14 +350,47 @@
     await loadListings();
   }
 
+  /* Storage is a public bucket on a free tier: without these checks any file
+     of any size and type goes straight in, and the <input accept> attribute is
+     only a file-picker filter, not a guarantee. */
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+  const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+
+  function validateImage(file) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return lang === 'es'
+        ? 'Formato no valido. Usa JPG, PNG, WEBP o AVIF.'
+        : 'Unsupported format. Use JPG, PNG, WEBP or AVIF.';
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      const mb = (file.size / 1024 / 1024).toFixed(1);
+      return lang === 'es'
+        ? 'La imagen pesa ' + mb + ' MB. El maximo es 8 MB.'
+        : 'That image is ' + mb + ' MB. The maximum is 8 MB.';
+    }
+    return null;
+  }
+
+  /* Derive the extension from the MIME type rather than the filename, so a
+     file called "photo.jpg.exe" can't set the stored object's extension. */
+  function extensionFor(type) {
+    return { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/avif': 'avif' }[type] || 'jpg';
+  }
+
   async function handlePhotoUpload(evt) {
     const file = evt.target.files[0];
     if (!file || !currentAgencyId) return;
     const statusEl = document.getElementById('l-photo-status');
+    const invalid = validateImage(file);
+    if (invalid) {
+      statusEl.textContent = invalid;
+      evt.target.value = '';
+      return;
+    }
     statusEl.textContent = lang === 'es' ? 'Subiendo...' : 'Uploading...';
     try {
       const sbClient = initSupabase();
-      const ext = file.name.split('.').pop();
+      const ext = extensionFor(file.type);
       const path = currentAgencyId + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
       const { error } = await sbClient.storage.from('listing-photos').upload(path, file);
       if (error) throw error;
@@ -494,10 +527,16 @@
     const file = evt.target.files[0];
     if (!file || !currentAgencyId) return;
     const statusEl = document.getElementById('s-logo-status');
+    const invalid = validateImage(file);
+    if (invalid) {
+      statusEl.textContent = invalid;
+      evt.target.value = '';
+      return;
+    }
     statusEl.textContent = lang === 'es' ? 'Subiendo...' : 'Uploading...';
     try {
       const sbClient = initSupabase();
-      const ext = file.name.split('.').pop();
+      const ext = extensionFor(file.type);
       const path = currentAgencyId + '/logo-' + Date.now() + '.' + ext;
       const { error } = await sbClient.storage.from('listing-photos').upload(path, file);
       if (error) throw error;

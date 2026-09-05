@@ -12,11 +12,17 @@
 
 import { requireAgencyUser } from './_lib/auth.js';
 import { getUserClient, getServiceClient } from './_lib/supabase.js';
+import { safeDetail } from './_lib/health.js';
+import { enforceRateLimit } from './_lib/ratelimit.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   if (req.method === 'POST') {
+    // Public inbox: an agent's CRM is worth little if anyone can flood it.
+    // Only the POST is limited; the authenticated GET/PATCH below are not.
+    if (await enforceRateLimit(req, res, { bucket: 'leads', limit: 8, windowSec: 3600 })) return;
+
     const { listingPublicId, name, email, phone, message } = req.body || {};
     if (!listingPublicId || !name || !email) {
       res.status(400).json({ error: 'missing_required_fields' });
@@ -45,7 +51,7 @@ export default async function handler(req, res) {
       message: message || null
     });
     if (error) {
-      res.status(500).json({ error: 'lead_capture_failed', detail: String(error.message) });
+      res.status(500).json({ error: 'lead_capture_failed', detail: safeDetail(error) });
       return;
     }
     res.status(200).json({ ok: true });
@@ -66,7 +72,7 @@ export default async function handler(req, res) {
       .eq('agency_id', auth.agencyId)
       .order('created_at', { ascending: false });
     if (error) {
-      res.status(500).json({ error: 'leads_fetch_failed', detail: String(error.message) });
+      res.status(500).json({ error: 'leads_fetch_failed', detail: safeDetail(error) });
       return;
     }
     res.status(200).json({ leads: data });
@@ -88,7 +94,7 @@ export default async function handler(req, res) {
       .select('*')
       .single();
     if (error) {
-      res.status(500).json({ error: 'lead_update_failed', detail: String(error.message) });
+      res.status(500).json({ error: 'lead_update_failed', detail: safeDetail(error) });
       return;
     }
     res.status(200).json({ lead: data });

@@ -9,6 +9,8 @@
  * -----------------------------------------------------------------------------
  */
 
+
+import { safeDetail } from './_lib/health.js';
 const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 const RADIUS_M = 1200;
 
@@ -76,6 +78,6 @@ export default async function handler(req, res) {
       .slice(0, 12);
     res.status(200).json({ places });
   } catch (err) {
-    res.status(502).json({ error: 'amenities_unavailable', detail: String(err.message) });
+    res.status(502).json({ error: 'amenities_unavailable', detail: safeDetail(err) });
   }
 }

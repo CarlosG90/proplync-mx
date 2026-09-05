@@ -16,6 +16,7 @@
 import { requireAgencyUser } from './_lib/auth.js';
 import { getUserClient, getServiceClient } from './_lib/supabase.js';
 import { findStockPhoto } from './_lib/photos.js';
+import { safeDetail } from './_lib/health.js';
 
 const AGENCY_WRITABLE_FIELDS = ['name', 'logo_url', 'primary_color', 'whatsapp_number'];
 
@@ -179,6 +180,6 @@ export default async function handler(req, res) {
 
     res.status(405).json({ error: 'method_not_allowed' });
   } catch (err) {
-    res.status(500).json({ error: 'listings_operation_failed', detail: String(err.message) });
+    res.status(500).json({ error: 'listings_operation_failed', detail: safeDetail(err) });
   }
 }

@@ -17,6 +17,8 @@
  */
 
 import { getServiceClient } from './_lib/supabase.js';
+import { enforceRateLimit } from './_lib/ratelimit.js';
+import { safeDetail } from './_lib/health.js';
 
 const DIACRITICS_RE = new RegExp('[̀-ͯ]', 'g');
 
@@ -46,6 +48,11 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'method_not_allowed' });
     return;
   }
+
+  // Creating an account is free and permanent, so this is the endpoint worth
+  // guarding hardest. A real person signs up once; 5/hour per IP leaves room
+  // for a retry or a shared office NAT without allowing scripted signups.
+  if (await enforceRateLimit(req, res, { bucket: 'onboard', limit: 5, windowSec: 3600 })) return;
 
   const { agencyName, email, password } = req.body || {};
   if (!agencyName || !String(agencyName).trim()) {
@@ -100,6 +107,6 @@ export default async function handler(req, res) {
     res.status(200).json({ agencyId: agency.id, slug: agency.slug });
   } catch (err) {
     await svc.auth.admin.deleteUser(userId).catch(() => {});
-    res.status(500).json({ error: 'onboard_failed', detail: String(err.message) });
+    res.status(500).json({ error: 'onboard_failed', detail: safeDetail(err) });
   }
 }

@@ -26,6 +26,24 @@ export const DEGRADED_PREFIX = '[DEGRADED]';
  * @param {string} scope  where it broke, e.g. 'supabase:listings.byPublicId'
  * @param {unknown} err   the error/PostgrestError that caused it
  */
+/**
+ * A client-safe `detail` string for an error response.
+ *
+ * Handlers were returning String(err.message) straight to the caller, which
+ * hands an attacker whatever Postgres, Supabase or an upstream API happened to
+ * say — table and column names, RLS policy hints, internal hostnames. The
+ * message is still written to the server log; only the client view is generic.
+ *
+ * Set PROPLYNC_VERBOSE_ERRORS=1 locally to get the real text back in responses.
+ */
+export function safeDetail(err, scope = 'handler') {
+  logDegraded(scope, err);
+  if (process.env.PROPLYNC_VERBOSE_ERRORS === '1') {
+    return String(err && err.message ? err.message : err);
+  }
+  return 'Request failed. If this keeps happening, contact support.';
+}
+
 export function logDegraded(scope, err) {
   try {
     const detail = err && (err.message || err.error_description || err.code)

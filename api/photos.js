@@ -15,6 +15,7 @@
  */
 
 import { findStockPhoto } from './_lib/photos.js';
+import { safeDetail } from './_lib/health.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');       // tighten to your domain in prod
@@ -32,6 +33,6 @@ export default async function handler(req, res) {
     const photos = await Promise.all(queries.map(q => findStockPhoto(q)));
     res.status(200).json({ photos });
   } catch (err) {
-    res.status(502).json({ error: 'photos_unavailable', detail: String(err.message) });
+    res.status(502).json({ error: 'photos_unavailable', detail: safeDetail(err) });
   }
 }

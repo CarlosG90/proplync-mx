@@ -12,6 +12,8 @@
  */
 
 import { groqChat, messageText } from './_lib/groq.js';
+import { enforceRateLimit } from './_lib/ratelimit.js';
+import { safeDetail } from './_lib/health.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -20,6 +22,9 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'method_not_allowed' });
     return;
   }
+
+  // Buyer-facing "Generar con IA" on the property page: one call per click.
+  if (await enforceRateLimit(req, res, { bucket: 'describe', limit: 20, windowSec: 60 })) return;
 
   const key = process.env.GROQ_API_KEY;
   if (!key) {
@@ -54,6 +59,6 @@ export default async function handler(req, res) {
     });
     res.status(200).json({ description: messageText(data) });
   } catch (err) {
-    res.status(502).json({ error: 'description_unavailable', detail: String(err.message) });
+    res.status(502).json({ error: 'description_unavailable', detail: safeDetail(err) });
   }
 }

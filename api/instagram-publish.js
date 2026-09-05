@@ -18,6 +18,8 @@
  * -----------------------------------------------------------------------------
  */
 
+
+import { safeDetail } from './_lib/health.js';
 const GRAPH_VERSION = 'v21.0';
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
 
@@ -77,6 +79,6 @@ export default async function handler(req, res) {
     const publishedId = await publishContainer(igUserId, token, creationId);
     res.status(200).json({ published: true, id: publishedId });
   } catch (err) {
-    res.status(502).json({ error: 'instagram_publish_failed', detail: String(err.message) });
+    res.status(502).json({ error: 'instagram_publish_failed', detail: safeDetail(err) });
   }
 }

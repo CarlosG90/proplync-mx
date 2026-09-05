@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getServiceClient } from './_lib/supabase.js';
 import { redisGet, redisSet } from './_lib/redis.js';
-import { logDegraded } from './_lib/health.js';
+import { logDegraded, safeDetail } from './_lib/health.js';
 
 const EB_URL = 'https://api.easybroker.com/v1';
 
@@ -280,6 +280,6 @@ export default async function handler(req, res) {
     respond(404, { error: 'property_not_found' });
   } catch (err) {
     logDegraded('property:handler', err);
-    respond(502, { error: 'property_unavailable', detail: String(err.message) });
+    respond(502, { error: 'property_unavailable', detail: safeDetail(err) });
   }
 }

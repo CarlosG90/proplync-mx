@@ -10,6 +10,8 @@
  * -----------------------------------------------------------------------------
  */
 
+
+import { safeDetail } from './_lib/health.js';
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 
 export default async function handler(req, res) {
@@ -36,6 +38,6 @@ export default async function handler(req, res) {
     }
     res.status(200).json({ lat: parseFloat(hit.lat), lng: parseFloat(hit.lon) });
   } catch (err) {
-    res.status(502).json({ error: 'geocode_unavailable', detail: String(err.message) });
+    res.status(502).json({ error: 'geocode_unavailable', detail: safeDetail(err) });
   }
 }

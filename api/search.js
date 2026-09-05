@@ -14,7 +14,7 @@
 
 import { getServiceClient } from './_lib/supabase.js';
 import { redisGet, redisSet } from './_lib/redis.js';
-import { logDegraded } from './_lib/health.js';
+import { logDegraded, safeDetail } from './_lib/health.js';
 
 const EB_URL = 'https://api.easybroker.com/v1';
 const PAGE_LIMIT = 50;
@@ -193,6 +193,6 @@ export default async function handler(req, res) {
 
     res.status(200).json({ listings, towns, total: listings.length });
   } catch (err) {
-    res.status(502).json({ error: 'search_unavailable', detail: String(err.message) });
+    res.status(502).json({ error: 'search_unavailable', detail: safeDetail(err) });
   }
 }
