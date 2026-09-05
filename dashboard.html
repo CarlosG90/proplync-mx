@@ -50,11 +50,11 @@
 
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}
   .form-grid .field-full{grid-column:1/-1}
-  #listing-modal,#settings-modal,#share-modal{
+  #listing-modal,#settings-modal,#share-modal,#preview-modal{
     display:none;position:fixed;inset:0;background:rgba(10,22,40,.5);
     z-index:100;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;
   }
-  #listing-modal.open,#settings-modal.open,#share-modal.open{display:flex}
+  #listing-modal.open,#settings-modal.open,#share-modal.open,#preview-modal.open{display:flex}
   .modal-card{
     background:var(--white);border-radius:var(--radius-lg);padding:32px;
     max-width:640px;width:100%;box-shadow:var(--shadow-xl);
@@ -110,6 +110,29 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;
   }
   .browser-frame-body{width:100%;height:280px;border:0;display:block;background:var(--white)}
+  /* preview: check the page before sending it. Most of these links are opened
+     on a phone from WhatsApp, so the mobile view is the one that matters. */
+  .preview-card{max-width:940px}
+  .preview-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .preview-head h2{margin:0}
+  .preview-devices{display:flex;gap:6px}
+  .preview-devices button{
+    font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;
+    padding:8px 16px;border-radius:999px;border:1px solid var(--line);
+    background:var(--white);color:var(--on-sand-dim);cursor:pointer;
+    transition:all var(--duration) ease;
+  }
+  .preview-devices button.on{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+  .preview-stage{display:flex;justify-content:center;background:var(--sand);border-radius:var(--radius);padding:18px}
+  .preview-stage .browser-frame{width:100%;transition:width var(--duration) var(--ease-out)}
+  .preview-stage.mobile .browser-frame{width:390px;max-width:100%}
+  .preview-body{width:100%;height:560px;border:0;display:block;background:var(--white)}
+  .preview-stage.mobile .preview-body{height:620px}
+  .preview-note{
+    font-size:.78rem;color:var(--gold-deep);background:rgba(201,169,110,.12);
+    border-radius:var(--radius-sm);padding:10px 14px;margin:0 0 14px;
+  }
+
   .share-url-row{display:flex;align-items:center;gap:10px;margin-top:16px}
   .share-qr-mini{width:52px;height:52px;border-radius:8px;border:1px solid var(--line);flex:none}
   .share-url-row .form-input{margin:0}
@@ -258,6 +281,32 @@
   </div>
 </div>
 
+<div id="preview-modal">
+  <div class="modal-card preview-card">
+    <div class="preview-head">
+      <h2 data-es="Vista previa" data-en="Preview">Vista previa</h2>
+      <div class="preview-devices">
+        <button type="button" id="pv-desktop" class="on" onclick="setPreviewDevice('desktop')" data-es="Escritorio" data-en="Desktop">Escritorio</button>
+        <button type="button" id="pv-mobile" onclick="setPreviewDevice('mobile')" data-es="Movil" data-en="Mobile">Movil</button>
+      </div>
+    </div>
+    <p class="preview-note" id="preview-draft-note" style="display:none" data-es="Esta propiedad es un borrador: no aparece en las busquedas. Asi se veria al publicarla." data-en="This listing is a draft: it doesn't appear in search. This is how it would look once published.">Esta propiedad es un borrador: no aparece en las busquedas. Asi se veria al publicarla.</p>
+    <div class="preview-stage" id="preview-stage">
+      <div class="browser-frame">
+        <div class="browser-frame-bar">
+          <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+          <span class="browser-frame-url" id="preview-url-pill"></span>
+        </div>
+        <iframe id="preview-iframe" class="preview-body" title="Preview" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div class="modal-actions" style="justify-content:center">
+      <a id="preview-open" class="btn btn-gold" target="_blank" rel="noopener" data-es="Abrir en pestana nueva" data-en="Open in new tab">Abrir en pestana nueva</a>
+      <button type="button" class="btn btn-outline" onclick="closePreviewModal()" data-es="Cerrar" data-en="Close">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div id="share-modal">
   <div class="modal-card share-card" style="text-align:center">
     <h2 id="share-modal-title" data-es="Tu pagina esta lista" data-en="Your page is live">Tu pagina esta lista</h2>
@@ -311,6 +360,7 @@
       '</div>' +
       '<span class="dash-item-status status-' + l.status + '">' + statusLabel(l.status) + '</span>' +
       '<div class="dash-item-actions">' +
+        '<button onclick="openPreviewModal(\'' + l.public_id + '\',\'' + l.status + '\')" data-es="Vista previa" data-en="Preview">' + (lang === 'es' ? 'Vista previa' : 'Preview') + '</button>' +
         '<button onclick="openShareModal(\'' + l.public_id + '\')" data-es="Compartir" data-en="Share">' + (lang === 'es' ? 'Compartir' : 'Share') + '</button>' +
         '<button onclick="editListing(\'' + l.id + '\')" data-es="Editar" data-en="Edit">' + (lang === 'es' ? 'Editar' : 'Edit') + '</button>' +
         '<button class="danger" onclick="deleteListing(\'' + l.id + '\')" data-es="Eliminar" data-en="Delete">' + (lang === 'es' ? 'Eliminar' : 'Delete') + '</button>' +
@@ -664,6 +714,31 @@
     } finally {
       btn.disabled = false;
     }
+  }
+
+  /* ---------- preview the mini-site before sending it ---------- */
+  let previewUrl = '';
+
+  function openPreviewModal(publicId, status) {
+    previewUrl = window.location.origin + '/property/' + publicId;
+    document.getElementById('preview-url-pill').textContent = previewUrl.replace(/^https?:\/\//, '');
+    document.getElementById('preview-open').href = previewUrl;
+    // cache-bust so a just-saved edit isn't hidden by the page's s-maxage=600
+    document.getElementById('preview-iframe').src = previewUrl + '?t=' + Date.now();
+    document.getElementById('preview-draft-note').style.display = status === 'published' ? 'none' : '';
+    setPreviewDevice('desktop');
+    document.getElementById('preview-modal').classList.add('open');
+  }
+
+  function setPreviewDevice(device) {
+    document.getElementById('preview-stage').classList.toggle('mobile', device === 'mobile');
+    document.getElementById('pv-desktop').classList.toggle('on', device !== 'mobile');
+    document.getElementById('pv-mobile').classList.toggle('on', device === 'mobile');
+  }
+
+  function closePreviewModal() {
+    document.getElementById('preview-modal').classList.remove('open');
+    document.getElementById('preview-iframe').src = 'about:blank';
   }
 
   /* ---------- share a listing's mini-site (URL + QR) ---------- */
