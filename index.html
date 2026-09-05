@@ -79,8 +79,42 @@
     color:var(--gold-light);line-height:1.8;max-width:34em;
   }
   .hero-paths{
-    margin-top:36px;display:grid;grid-template-columns:1fr 1fr;gap:14px;
+    margin-top:36px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
   }
+  /* The buyer path is the one a visitor with no account can act on immediately,
+     so it reads as the bright option rather than a third equal tile. */
+  .hero-path-find{
+    background:linear-gradient(160deg,rgba(201,169,110,.16),rgba(201,169,110,.05));
+    border-color:rgba(201,169,110,.42);
+  }
+  .hero-path-find:hover{border-color:var(--gold)}
+  .hero-path-find .hero-path-title{color:var(--gold-light)}
+  @media (max-width:900px){
+    .hero-paths{grid-template-columns:1fr}
+  }
+
+  /* ── Three pillars: what Proplync actually does, said plainly ── */
+  .pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px}
+  .pillar{
+    background:var(--white);border:1px solid rgba(26,36,56,.06);
+    border-radius:var(--radius-lg);padding:32px 28px;
+    box-shadow:var(--shadow-card);display:flex;flex-direction:column;
+    transition:transform var(--duration) var(--ease-out),box-shadow var(--duration) ease;
+  }
+  .pillar:hover{transform:translateY(-3px);box-shadow:var(--shadow-card-hover)}
+  .pillar-num{
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;color:var(--gold);
+    display:flex;align-items:center;gap:10px;margin-bottom:16px;
+  }
+  .pillar-num::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(201,169,110,.4),transparent)}
+  .pillar h3{font-family:var(--display);font-size:1.28rem;font-weight:400;color:var(--ink);line-height:1.25}
+  .pillar p{margin-top:12px;font-size:.9rem;color:var(--on-sand-dim);line-height:1.7;flex:1}
+  .pillar .btn{margin-top:22px;align-self:flex-start}
+  .pillar-for{
+    font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--on-sand-light);margin-top:16px;
+  }
+  @media (max-width:900px){.pillars{grid-template-columns:1fr}}
   .hero-path{
     position:relative;display:flex;flex-direction:column;gap:6px;
     padding:22px 24px 24px;border-radius:var(--radius-lg);
@@ -846,7 +880,7 @@
       Proplync<span class="accent">.mx</span>
     </a>
     <div class="navlinks" id="navlinks">
-      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/search" data-es="Buscar propiedades" data-en="Find properties">Buscar propiedades</a>
       <a href="/generate" style="color:var(--gold)" data-es="Generador" data-en="Generator">Generador</a>
       <div class="navdrop" id="navdrop">
         <button type="button" class="navdrop-trigger" onclick="document.getElementById('navdrop').classList.toggle('open')" data-es="Soluciones" data-en="Solutions">Soluciones<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
@@ -915,6 +949,12 @@
           <span class="hero-path-sub" data-es="Panel, leads y contenido en un lugar" data-en="Dashboard, leads & content in one place">Panel, leads y contenido en un lugar</span>
           <span class="hero-path-arrow" aria-hidden="true">&rarr;</span>
         </a>
+        <a href="/search" class="hero-path hero-path-find">
+          <span class="hero-path-eyebrow" data-es="Compradores e inversionistas" data-en="Buyers & investors">Compradores e inversionistas</span>
+          <span class="hero-path-title" data-es="Encuentra tu propiedad" data-en="Find your property">Encuentra tu propiedad</span>
+          <span class="hero-path-sub" data-es="Venta y renta en la Riviera Maya" data-en="For sale and rent in the Riviera Maya">Venta y renta en la Riviera Maya</span>
+          <span class="hero-path-arrow" aria-hidden="true">&rarr;</span>
+        </a>
       </div>
       <div class="hero-cta">
         <a href="#contacto" class="btn btn-ghost" data-es="Reservar diagnostico de 15 min" data-en="Book a 15-min diagnosis">Reservar diagnostico de 15 min</a>
@@ -957,6 +997,45 @@
     <svg viewBox="0 0 1440 80" fill="none" preserveAspectRatio="none" aria-hidden="true">
       <path d="M0 32C240 80 480 0 720 40C960 80 1200 8 1440 48V80H0V32Z" fill="var(--paper)"/>
     </svg>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     THE THREE PILLARS — what Proplync does, in plain terms
+     ══════════════════════════════════════════════════════════════ -->
+<section id="que-hacemos">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Que hace Proplync" data-en="What Proplync does">Que hace Proplync</span>
+      <h2 data-es="Tres cosas, y las tres conectadas" data-en="Three things, and all three connected">Tres cosas, y las tres conectadas</h2>
+      <p data-es="Para el agente: crea su marketing digital y lo comparte con sus clientes de forma profesional. Para el comprador o inversionista: encuentra la propiedad correcta para comprar o rentar." data-en="For agents: create your digital marketing and share it with clients professionally. For buyers and investors: find the right property to buy or rent.">Para el agente: crea su marketing digital y lo comparte con sus clientes de forma profesional. Para el comprador o inversionista: encuentra la propiedad correcta para comprar o rentar.</p>
+    </div>
+
+    <div class="pillars stagger">
+      <article class="pillar reveal">
+        <div class="pillar-num">01</div>
+        <h3 data-es="Contenido con IA para tus propiedades" data-en="AI content for your properties">Contenido con IA para tus propiedades</h3>
+        <p data-es="De los datos de un inmueble a ficha PDF, post, carrusel, story, email, reel y anuncio. La IA nunca inventa datos: escribe solo con lo que tu le diste, y tu revisas antes de publicar." data-en="From a listing's data to a PDF fact sheet, post, carousel, story, email, reel and ad. The AI never invents facts: it writes only from what you gave it, and you review before publishing.">De los datos de un inmueble a ficha PDF, post, carrusel, story, email, reel y anuncio. La IA nunca inventa datos: escribe solo con lo que tu le diste, y tu revisas antes de publicar.</p>
+        <div class="pillar-for" data-es="Para agentes, propietarios y desarrolladoras" data-en="For agents, owners and developers">Para agentes, propietarios y desarrolladoras</div>
+        <a href="/generate" class="btn btn-outline" data-es="Generar contenido" data-en="Generate content">Generar contenido</a>
+      </article>
+
+      <article class="pillar reveal">
+        <div class="pillar-num">02</div>
+        <h3 data-es="Mini-sitio y CRM en un solo lugar" data-en="Mini-site and CRM in one place">Mini-sitio y CRM en un solo lugar</h3>
+        <p data-es="Cada propiedad recibe su propia pagina con tu marca, boton de WhatsApp y codigo QR. Administra tu portafolio completo, compartelo con un enlace y recibe los leads en tu panel." data-en="Every property gets its own page with your branding, a WhatsApp button and a QR code. Manage your whole portfolio, share it with one link, and receive leads in your dashboard.">Cada propiedad recibe su propia pagina con tu marca, boton de WhatsApp y codigo QR. Administra tu portafolio completo, compartelo con un enlace y recibe los leads en tu panel.</p>
+        <div class="pillar-for" data-es="Para agencias e inmobiliarias" data-en="For agencies and brokerages">Para agencias e inmobiliarias</div>
+        <a href="/login" class="btn btn-outline" data-es="Ver mi panel" data-en="Open my dashboard">Ver mi panel</a>
+      </article>
+
+      <article class="pillar reveal">
+        <div class="pillar-num">03</div>
+        <h3 data-es="Encuentra propiedades" data-en="Find properties">Encuentra propiedades</h3>
+        <p data-es="Todas las propiedades publicadas por agentes y por propietarios que venden directo, en un solo listado. Filtra por ciudad, precio, recamaras y operacion, y contacta al responsable sin intermediarios." data-en="Every property published by agents and by owners selling directly, in one listing. Filter by city, price, bedrooms and operation, then contact whoever is responsible with no middleman.">Todas las propiedades publicadas por agentes y por propietarios que venden directo, en un solo listado. Filtra por ciudad, precio, recamaras y operacion, y contacta al responsable sin intermediarios.</p>
+        <div class="pillar-for" data-es="Para compradores e inversionistas" data-en="For buyers and investors">Para compradores e inversionistas</div>
+        <a href="/search" class="btn btn-gold" data-es="Buscar propiedades" data-en="Find properties">Buscar propiedades</a>
+      </article>
+    </div>
   </div>
 </section>
 
