@@ -364,6 +364,53 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no extra text)
 
   const user = propertyLine;
 
+  /* ── Compact mode for the dashboard's AI Assist: only what a listing page
+     needs (description + features). ~5x fewer tokens than the 7-format run,
+     which matters on Groq's free tier (8k tokens/min): two parallel full
+     generations from a single click were enough to trip 429s in production. ── */
+  if (action === 'listing') {
+    const compactSystem = isEs
+      ? `Eres un especialista en contenido inmobiliario para la Riviera Maya. A partir de los datos del listado escribe una descripcion comercial de 60-80 palabras y una lista de exactamente 5 caracteristicas cortas.
+Reglas: nunca inventes ni infles datos (metros, vistas, acabados, amenidades, "techado", "frente al mar") — usa unicamente lo que se te dio; lidera con la caracteristica mas fuerte; se especifico y sensorial; evita cliches y exceso de exclamaciones; describe la propiedad, nunca al comprador ideal.
+Responde UNICAMENTE con un objeto JSON valido, sin markdown: {"description":"...","features_list":["...","...","...","...","..."]}`
+      : `You are a real estate content specialist for Mexico's Riviera Maya. From the listing data write a 60-80 word sales description and a list of exactly 5 short features.
+Rules: never invent or inflate facts (size, views, finishes, amenities, "covered", "beachfront") — use only what was given; lead with the strongest feature; be specific and sensory; avoid cliches and exclamation overload; describe the property, never the ideal buyer.
+Respond ONLY with a valid JSON object, no markdown: {"description":"...","features_list":["...","...","...","...","..."]}`;
+    try {
+      const r = await fetch(GROQ_URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            { role: 'system', content: compactSystem },
+            { role: 'user', content: user }
+          ],
+          temperature: 0.5,
+          max_tokens: 450,
+          response_format: { type: 'json_object' }
+        })
+      });
+      if (!r.ok) throw new Error(`Groq responded ${r.status}`);
+      const data = await r.json();
+      let raw = data.choices?.[0]?.message?.content?.trim();
+      if (!raw) throw new Error('empty_completion');
+      raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+      const parsed = JSON.parse(raw);
+      res.status(200).json({
+        content: {
+          pdf: {
+            description: String(parsed.description || ''),
+            features_list: Array.isArray(parsed.features_list) ? parsed.features_list.slice(0, 6).map(String) : []
+          }
+        }
+      });
+    } catch (err) {
+      res.status(502).json({ error: 'generation_unavailable', detail: String(err.message) });
+    }
+    return;
+  }
+
   try {
     const r = await fetch(GROQ_URL, {
       method: 'POST',

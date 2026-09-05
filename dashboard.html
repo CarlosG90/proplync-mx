@@ -448,8 +448,8 @@
     };
     try {
       const [esRes, enRes] = await Promise.all([
-        fetch('/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ lang: 'es' }, base)) }),
-        fetch('/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ lang: 'en' }, base)) })
+        fetch('/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ action: 'listing', lang: 'es' }, base)) }),
+        fetch('/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ action: 'listing', lang: 'en' }, base)) })
       ]);
       const esData = await esRes.json();
       if (!esRes.ok) throw new Error(esData.detail || esData.error);
