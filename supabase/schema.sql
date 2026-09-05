@@ -91,6 +91,19 @@ create index if not exists leads_agency_idx on leads(agency_id);
 -- so a fresh project is one paste, not two.
 alter table agencies add column if not exists whatsapp_number text;
 
+-- Plan tier. Drives the listing and photo caps enforced in api/_lib/plans.js.
+-- Everyone starts free; upgrades are set here until billing exists.
+alter table agencies add column if not exists plan text not null default 'free';
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'agencies_plan_check') then
+    alter table agencies add constraint agencies_plan_check check (plan in ('free','pro','vip'));
+  end if;
+end $$;
+
+-- Property type, for the badge on the public listing card and detail page.
+alter table listings add column if not exists property_type text;
+
 -- ============================================================
 -- helper: current user's agency_id. SECURITY DEFINER to avoid
 -- recursive RLS evaluation when referenced from other tables' policies.

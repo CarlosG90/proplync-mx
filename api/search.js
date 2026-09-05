@@ -82,6 +82,181 @@ function formatAmount(amount) {
   return Number(amount || 0).toLocaleString('en-US');
 }
 
+/* ── City landing page rendering ─────────────────────────────────────────── */
+
+const DIACRITICS = new RegExp('[̀-ͯ]', 'g');
+
+export function slugify(text) {
+  return String(text || '').toLowerCase().normalize('NFD').replace(DIACRITICS, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function unslugify(slug) {
+  return String(slug || '').split('-').filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+function escXml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+/** Listing titles are agent-supplied; this is where their text becomes markup. */
+function esc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function money(p) {
+  return `${p.currency || ''} $${Number(p.amount || 0).toLocaleString('en-US')}` +
+         (p.operation === 'rental' ? '/mes' : '');
+}
+
+/**
+ * A full HTML page per city. Rendered server-side so the listings are in the
+ * markup a crawler sees, with JSON-LD ItemList so results can show rich data.
+ */
+function renderCityPage(town, slug, listings, canonical) {
+  const count = listings.length;
+  const title = `Propiedades en ${town} · ${count} en venta y renta | Proplync.mx`;
+  const desc = count
+    ? `${count} propiedades en ${town}: casas, departamentos y terrenos en venta y renta, publicados por agentes y propietarios directos.`
+    : `Propiedades en ${town} en venta y renta en la Riviera Maya.`;
+
+  const cards = listings.map(p => `
+      <a class="ct-card" href="/property/${esc(p.public_id)}">
+        <div class="ct-photo" style="background-image:url('${esc((p.image || '').replace(/'/g, '%27'))}')">
+          <span class="ct-badge">${p.operation === 'sale' ? 'Venta' : 'Renta'}</span>
+        </div>
+        <div class="ct-body">
+          <div class="ct-loc">${esc([p.neighborhood, p.town].filter(Boolean).join(' · '))}</div>
+          <h2 class="ct-title">${esc(p.title_es || p.title_en)}</h2>
+          <div class="ct-specs">${p.bedrooms || 0} rec · ${p.bathrooms || 0} baños · ${p.size || 0} m²</div>
+          <div class="ct-price">${esc(money(p))}</div>
+        </div>
+      </a>`).join('');
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: `Propiedades en ${town}`,
+    numberOfItems: count,
+    itemListElement: listings.slice(0, 25).map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: `${canonical.replace(/\/propiedades-en-.*$/, '')}/property/${p.public_id}`,
+      name: p.title_es || p.title_en
+    }))
+  };
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(title)}</title>
+<meta name="description" content="${esc(desc)}">
+<link rel="canonical" href="${esc(canonical)}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(desc)}">
+<meta property="og:url" content="${esc(canonical)}">
+${listings[0] && listings[0].image ? `<meta property="og:image" content="${esc(listings[0].image)}">` : ''}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .ct-hero{background:var(--ink);color:var(--on-ink);padding:52px 0 44px}
+  .ct-eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .ct-eyebrow::before{content:"";width:28px;height:1px;background:var(--gold)}
+  .ct-hero h1{font-family:var(--display);font-size:clamp(1.9rem,4vw,3rem);font-weight:300;line-height:1.12;color:var(--on-ink);margin:0}
+  .ct-hero p{margin-top:14px;color:var(--on-ink-dim);font-size:.95rem;max-width:46em;line-height:1.7}
+  .ct-body-wrap{padding:48px 0 90px}
+  .ct-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .ct-card{background:var(--white);border:1px solid rgba(26,36,56,.06);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-card);display:block;transition:transform var(--duration) var(--ease-out),box-shadow var(--duration) ease}
+  .ct-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-card-hover)}
+  .ct-photo{position:relative;height:190px;background-size:cover;background-position:center;background-color:var(--sand)}
+  .ct-badge{position:absolute;top:12px;left:12px;font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:5px 11px;border-radius:999px;background:rgba(45,138,133,.92);color:#fff}
+  .ct-body{padding:18px 20px 20px}
+  .ct-loc{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+  .ct-title{font-family:var(--display);font-size:1.04rem;font-weight:400;color:var(--ink);margin:7px 0 0;line-height:1.3}
+  .ct-specs{font-family:var(--mono);font-size:.66rem;color:var(--on-sand-dim);margin-top:9px}
+  .ct-price{font-family:var(--mono);font-weight:700;color:var(--ink);margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+  .ct-empty{text-align:center;padding:70px 20px;color:var(--on-sand-dim)}
+  .ct-links{margin-top:56px;padding-top:32px;border-top:1px solid var(--line)}
+  .ct-links h2{font-family:var(--display);font-size:1.2rem;font-weight:400;color:var(--ink);margin:0 0 18px}
+  .ct-links-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  .ct-links-cols h3{font-size:.78rem;color:var(--ink);margin:0 0 10px}
+  .ct-links-cols a{display:block;font-size:.82rem;color:var(--on-sand-dim);padding:4px 0}
+  .ct-links-cols a:hover{color:var(--sea)}
+  @media (max-width:900px){.ct-grid{grid-template-columns:repeat(2,1fr)}.ct-links-cols{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:560px){.ct-grid{grid-template-columns:1fr}}
+</style>
+<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+</head>
+<body>
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/">Proplync<span class="accent">.mx</span></a>
+    <div class="navlinks"><a href="/search">Buscar propiedades</a><a href="/generate">Generador</a></div>
+    <div class="navtools"><a href="/search" class="btn btn-gold">Ver todas</a></div>
+  </nav>
+</header>
+
+<section class="ct-hero">
+  <div class="wrap">
+    <div class="ct-eyebrow">Riviera Maya</div>
+    <h1>Propiedades en ${esc(town)}</h1>
+    <p>${esc(desc)}</p>
+  </div>
+</section>
+
+<main class="ct-body-wrap">
+  <div class="wrap">
+    ${count ? `<div class="ct-grid">${cards}</div>` : `<p class="ct-empty">Aun no hay propiedades publicadas en ${esc(town)}. <a href="/generate" style="color:var(--sea)">Publica la primera</a>.</p>`}
+
+    <div class="ct-links">
+      <h2>Enlaces inmobiliarios utiles</h2>
+      <div class="ct-links-cols">
+        <div>
+          <h3>En venta</h3>
+          <a href="/search?op=sale&town=${encodeURIComponent(town)}">Casas en venta en ${esc(town)}</a>
+          <a href="/search?op=sale&town=${encodeURIComponent(town)}">Departamentos en venta en ${esc(town)}</a>
+        </div>
+        <div>
+          <h3>En renta</h3>
+          <a href="/search?op=rental&town=${encodeURIComponent(town)}">Casas en renta en ${esc(town)}</a>
+          <a href="/search?op=rental&town=${encodeURIComponent(town)}">Departamentos en renta en ${esc(town)}</a>
+        </div>
+        <div>
+          <h3>Otras ciudades</h3>
+          <a href="/propiedades-en-tulum">Propiedades en Tulum</a>
+          <a href="/propiedades-en-playa-del-carmen">Propiedades en Playa del Carmen</a>
+          <a href="/propiedades-en-cancun">Propiedades en Cancun</a>
+        </div>
+        <div>
+          <h3>Explorar</h3>
+          <a href="/search">Todas las propiedades</a>
+          <a href="/generate">Publicar mi propiedad</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span class="brand">Proplync<span class="accent">.mx</span></span>
+    <span>Riviera Maya · Tulum · Playa del Carmen · Cancun</span>
+  </div>
+</footer>
+</body>
+</html>`;
+}
+
 /* One agency row -> the same object shape the rest of the site renders. */
 function mapAgencyRow(row) {
   return {
@@ -153,6 +328,48 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=60');
 
   try {
+    /* ── City landing pages + sitemap ──────────────────────────────────────
+       Their acquisition engine is one indexable page per city. Ours has to be
+       server-rendered for the same reason the property page is: crawlers do
+       not run JS, so a client-rendered grid indexes as an empty page.
+       Both live in this handler because of the 12-function cap.
+       ──────────────────────────────────────────────────────────────────── */
+    if (req.query.format === 'sitemap') {
+      const all = await getInventory();
+      const base = `https://${req.headers['x-forwarded-host'] || req.headers.host || 'proplync.mx'}`;
+      const towns = [...new Set(all.map(p => p.town).filter(Boolean))];
+      const urls = [
+        { loc: `${base}/`, pri: '1.0' },
+        { loc: `${base}/search`, pri: '0.9' },
+        ...towns.map(t => ({ loc: `${base}/propiedades-en-${slugify(t)}`, pri: '0.8' })),
+        ...all.map(p => ({ loc: `${base}/property/${encodeURIComponent(p.public_id)}`, pri: '0.7' }))
+      ];
+      res.setHeader('content-type', 'application/xml; charset=utf-8');
+      res.status(200).send(
+        `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+        urls.map(u => `  <url><loc>${escXml(u.loc)}</loc><priority>${u.pri}</priority></url>`).join('\n') +
+        `\n</urlset>\n`
+      );
+      return;
+    }
+
+    if (req.query.city) {
+      const all = await getInventory();
+      const wanted = slugify(req.query.city);
+      const matches = all.filter(p => slugify(p.town) === wanted);
+      const townName = matches.length ? matches[0].town : unslugify(req.query.city);
+      const base = `https://${req.headers['x-forwarded-host'] || req.headers.host || 'proplync.mx'}`;
+      const canonical = `${base}/propiedades-en-${wanted}`;
+
+      if (req.query.format === 'page') {
+        res.setHeader('content-type', 'text/html; charset=utf-8');
+        res.status(200).send(renderCityPage(townName, wanted, matches, canonical));
+        return;
+      }
+      res.status(200).json({ town: townName, listings: matches, total: matches.length });
+      return;
+    }
+
     /* ── Agency portfolio ──────────────────────────────────────────────────
        ?agency=<slug> returns one agency plus every published listing it owns,
        which is what /agencia/:slug and the "more from this agency" rail on a

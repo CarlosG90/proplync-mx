@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Signed-in surfaces have nothing to index and shouldn't compete with the
+# public listings for crawl budget.
+Disallow: /dashboard
+Disallow: /dashboard-leads
+Disallow: /login
+Disallow: /signup
+
+Sitemap: https://proplync.mx/sitemap.xml

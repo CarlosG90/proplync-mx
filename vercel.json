@@ -18,6 +18,8 @@
     { "source": "/generar", "destination": "/generate" },
     { "source": "/propiedad/:id", "destination": "/api/property?id=:id&format=page" },
     { "source": "/property/:id", "destination": "/api/property?id=:id&format=page" },
+    { "source": "/propiedades-en-:city", "destination": "/api/search?city=:city&format=page" },
+    { "source": "/sitemap.xml", "destination": "/api/search?format=sitemap" },
     { "source": "/agencia/:slug", "destination": "/agency?slug=:slug" },
     { "source": "/agency/:slug", "destination": "/agency?slug=:slug" },
     { "source": "/favoritos", "destination": "/favorites" },

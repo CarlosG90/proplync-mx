@@ -17,6 +17,7 @@ import { requireAgencyUser } from './_lib/auth.js';
 import { getUserClient, getServiceClient } from './_lib/supabase.js';
 import { findStockPhoto } from './_lib/photos.js';
 import { safeDetail } from './_lib/health.js';
+import { planFor, planStatus } from './_lib/plans.js';
 
 const AGENCY_WRITABLE_FIELDS = ['name', 'logo_url', 'primary_color', 'whatsapp_number'];
 
@@ -67,8 +68,17 @@ async function handleAgencyResource(req, res, auth) {
 const WRITABLE_FIELDS = [
   'title_es', 'title_en', 'town', 'neighborhood', 'bedrooms', 'bathrooms',
   'parking', 'size', 'operation', 'currency', 'amount', 'image', 'images',
-  'description_es', 'description_en', 'lat', 'lng', 'features', 'status'
+  'description_es', 'description_en', 'lat', 'lng', 'features', 'status',
+  'property_type'
 ];
+
+/** Trim the gallery to what the plan allows, keeping the cover photo first. */
+function capPhotos(fields, plan) {
+  if (!Array.isArray(fields.images)) return fields;
+  if (fields.images.length <= plan.photos) return fields;
+  const images = fields.images.slice(0, plan.photos);
+  return { ...fields, images, image: fields.image || images[0] };
+}
 
 function pickWritable(body) {
   const out = {};
@@ -121,7 +131,14 @@ export default async function handler(req, res) {
         .eq('agency_id', auth.agencyId)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      res.status(200).json({ listings: data });
+      // Usage travels with the list so the dashboard can show "3 de 10" and
+      // disable the create button without a second round trip.
+      const { data: agencyRow } = await getServiceClient()
+        .from('agencies').select('plan').eq('id', auth.agencyId).maybeSingle();
+      res.status(200).json({
+        listings: data,
+        plan: planStatus(agencyRow, (data || []).length)
+      });
       return;
     }
 
@@ -131,6 +148,25 @@ export default async function handler(req, res) {
         res.status(400).json({ error: 'missing_operation' });
         return;
       }
+
+      // Plan caps. Enforced here rather than only in the dashboard, because a
+      // limit the client draws but the server ignores is decoration — the
+      // /generate publish handoff and any direct API call walk straight past it.
+      const svc = getServiceClient();
+      const [agencyRes, countRes] = await Promise.all([
+        svc.from('agencies').select('plan').eq('id', auth.agencyId).maybeSingle(),
+        svc.from('listings').select('id', { count: 'exact', head: true }).eq('agency_id', auth.agencyId)
+      ]);
+      const plan = planFor(agencyRes.data);
+      const used = countRes.count || 0;
+      if (used >= plan.listings) {
+        res.status(409).json({
+          error: 'listing_limit_reached', plan: plan.id, limit: plan.listings, used
+        });
+        return;
+      }
+      fields = capPhotos(fields, plan);
+
       fields = await fillMissingPhoto(fields);
       const { data, error } = await db
         .from('listings')
@@ -148,7 +184,12 @@ export default async function handler(req, res) {
         res.status(400).json({ error: 'missing_id' });
         return;
       }
-      const fields = pickWritable(req.body || {});
+      let fields = pickWritable(req.body || {});
+      // The photo cap applies on edit too, or it would be trivially bypassed by
+      // creating within the limit and then adding more.
+      const { data: agencyRow } = await getServiceClient()
+        .from('agencies').select('plan').eq('id', auth.agencyId).maybeSingle();
+      fields = capPhotos(fields, planFor(agencyRow));
       fields.updated_at = new Date().toISOString();
       const { data, error } = await db
         .from('listings')

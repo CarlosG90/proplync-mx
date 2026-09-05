@@ -47,6 +47,13 @@
   .dash-item-actions button.danger:hover{border-color:#b3452f;color:#b3452f}
 
   .dash-empty{text-align:center;padding:60px 20px;color:var(--on-sand-dim)}
+  .plan-usage{
+    font-family:var(--mono);font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--on-sand-dim);background:var(--white);border:1px solid var(--line);
+    padding:9px 14px;border-radius:999px;align-self:center;
+  }
+  .plan-usage.at-limit{color:var(--gold-deep);border-color:var(--gold);background:rgba(201,169,110,.1)}
+  #new-listing-btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
 
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}
   .form-grid .field-full{grid-column:1/-1}
@@ -173,7 +180,8 @@
     <div style="display:flex;gap:10px">
       <a class="btn btn-ghost" id="portfolio-link" href="#" target="_blank" rel="noopener" style="display:none" data-es="Mi portafolio" data-en="My portfolio">Mi portafolio</a>
       <button class="btn btn-ghost" onclick="openSettingsModal()" data-es="Mi agencia" data-en="My agency">Mi agencia</button>
-      <button class="btn btn-gold" onclick="openListingModal()" data-es="+ Nueva propiedad" data-en="+ New listing">+ Nueva propiedad</button>
+      <span class="plan-usage" id="plan-usage"></span>
+      <button class="btn btn-gold" id="new-listing-btn" onclick="openListingModal()" data-es="+ Nueva propiedad" data-en="+ New listing">+ Nueva propiedad</button>
     </div>
   </div>
 
@@ -376,6 +384,7 @@
     if (r.status === 401) { window.location.href = '/login'; return; }
     const data = await r.json();
     myListings = data.listings || [];
+    if (data.plan) applyPlan(data.plan);
     const box = document.getElementById('dash-listings');
     if (!myListings.length) {
       box.innerHTML = '<p class="dash-empty" data-es="Aun no tienes propiedades. Crea la primera." data-en="No listings yet. Create your first one.">' +
@@ -445,6 +454,29 @@
   /* Storage is a public bucket on a free tier: without these checks any file
      of any size and type goes straight in, and the <input accept> attribute is
      only a file-picker filter, not a guarantee. */
+  /* Plan limits arrive with the listing list. The server enforces them; this
+     just stops someone reaching the wall without warning. */
+  let currentPlan = { plan: 'free', listingsUsed: 0, listingsLimit: 10, photosPerListing: 10, atListingLimit: false };
+
+  function applyPlan(p) {
+    currentPlan = p;
+    const usage = document.getElementById('plan-usage');
+    const newBtn = document.getElementById('new-listing-btn');
+    if (usage) {
+      usage.textContent = p.listingsLimit === null
+        ? (lang === 'es' ? p.label + ' · propiedades ilimitadas' : p.label + ' · unlimited listings')
+        : p.label + ' · ' + p.listingsUsed + '/' + p.listingsLimit +
+          (lang === 'es' ? ' propiedades' : ' listings');
+      usage.classList.toggle('at-limit', !!p.atListingLimit);
+    }
+    if (newBtn) {
+      newBtn.disabled = !!p.atListingLimit;
+      newBtn.title = p.atListingLimit
+        ? (lang === 'es' ? 'Alcanzaste el limite de tu plan' : 'You have reached your plan limit')
+        : '';
+    }
+  }
+
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
   const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
@@ -507,12 +539,19 @@
   }
 
   async function handlePhotoUpload(evt) {
-    const files = Array.from(evt.target.files || []);
+    let files = Array.from(evt.target.files || []);
     if (!files.length || !currentAgencyId) return;
     const statusEl = document.getElementById('l-photo-status');
     const sbClient = initSupabase();
     let uploaded = 0;
     const problems = [];
+    const room = Math.max(0, currentPlan.photosPerListing - listingImages.length);
+    if (files.length > room) {
+      problems.push(lang === 'es'
+        ? 'Tu plan permite ' + currentPlan.photosPerListing + ' fotos por propiedad.'
+        : 'Your plan allows ' + currentPlan.photosPerListing + ' photos per listing.');
+      files = files.slice(0, room);
+    }
 
     // Sequential rather than parallel: a handful of listing photos is not worth
     // opening N concurrent uploads, and one failure shouldn't lose the others.
@@ -584,6 +623,11 @@
       const method = id ? 'PATCH' : 'POST';
       const r = await authedFetch(url, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await r.json();
+      if (r.status === 409 && data.error === 'listing_limit_reached') {
+        throw new Error(lang === 'es'
+          ? 'Llegaste al limite de ' + data.limit + ' propiedades del plan ' + data.plan + '. Archiva o elimina una para publicar otra.'
+          : 'You have reached the ' + data.plan + ' plan limit of ' + data.limit + ' listings. Archive or delete one to publish another.');
+      }
       if (!r.ok) throw new Error(data.detail || data.error);
       closeListingModal();
       await loadListings();
