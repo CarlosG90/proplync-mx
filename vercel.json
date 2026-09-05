@@ -6,7 +6,7 @@
     "api/amenities.js": { "maxDuration": 15 },
     "api/describe.js": { "maxDuration": 15 },
     "api/search.js": { "maxDuration": 30 },
-    "api/property.js": { "maxDuration": 15 },
+    "api/property.js": { "maxDuration": 15, "includeFiles": "property.html" },
     "api/nlsearch.js": { "maxDuration": 15 },
     "api/onboard.js": { "maxDuration": 15 },
     "api/my-listings.js": { "maxDuration": 15 },
@@ -16,8 +16,8 @@
   },
   "rewrites": [
     { "source": "/generar", "destination": "/generate" },
-    { "source": "/propiedad/:id", "destination": "/property?id=:id" },
-    { "source": "/property/:id", "destination": "/property?id=:id" },
+    { "source": "/propiedad/:id", "destination": "/api/property?id=:id&format=page" },
+    { "source": "/property/:id", "destination": "/api/property?id=:id&format=page" },
     { "source": "/favoritos", "destination": "/favorites" },
     { "source": "/dashboard/leads", "destination": "/dashboard-leads" }
   ]

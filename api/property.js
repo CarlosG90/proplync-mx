@@ -7,6 +7,8 @@
  * -----------------------------------------------------------------------------
  */
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { getServiceClient } from './_lib/supabase.js';
 import { redisGet, redisSet } from './_lib/redis.js';
 import { logDegraded } from './_lib/health.js';
@@ -23,6 +25,93 @@ const SAMPLES = [
   {public_id:'EB-P9214',title_es:'Penthouse con vista al mar en Coco Beach',title_en:'Oceanview penthouse in Coco Beach',town:'Playa del Carmen',neighborhood:'Coco Beach',bedrooms:2,bathrooms:2,parking:1,size:204,operation:'sale',currency:'USD',amount:839000,formatted:'839,000',image:'https://images.pexels.com/photos/36362/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=800',description_es:'Penthouse de 2 recámaras en Coco Beach, Playa del Carmen, con terraza privada en la azotea y vista al mar Caribe.',description_en:'2-bedroom penthouse in Coco Beach, Playa del Carmen, with a private rooftop terrace and Caribbean Sea views.',lat:20.6455,lng:-87.0625,images:[]},
   {public_id:'EB-T6720',title_es:'Estudio frente al mar en Tankah Bay',title_en:'Beachfront studio in Tankah Bay',town:'Tulum',neighborhood:'Tankah Bay',bedrooms:1,bathrooms:1,parking:1,size:51,operation:'sale',currency:'USD',amount:672190,formatted:'672,190',image:'https://images.pexels.com/photos/31688473/pexels-photo-31688473.jpeg?auto=compress&cs=tinysrgb&w=800',description_es:'Estudio frente al mar en Tankah Bay, Tulum, con vistas directas al Caribe.',description_en:'Beachfront studio in Tankah Bay, Tulum, with direct Caribbean views.',lat:20.2970,lng:-87.4280,images:[]}
 ];
+
+/* ── Share previews ───────────────────────────────────────────────────────────
+   property.html renders entirely client-side, so a link pasted into WhatsApp,
+   Facebook or iMessage showed a bare URL: scrapers don't run JS, and the only
+   <title> in the file is the literal string "Propiedad · Proplync.mx". For a
+   product whose deliverable IS the shared link, that's the difference between
+   a listing card with a photo and an unclickable-looking blob of text.
+
+   So when the page (not the JSON) is requested, this function serves
+   property.html with real meta tags injected. It lives here rather than in a
+   new api/og.js because the project sits exactly on Vercel Hobby's
+   12-serverless-function cap, and this handler already loads the listing.
+   ────────────────────────────────────────────────────────────────────────── */
+
+const SITE_NAME = 'Proplync.mx';
+
+/** Escape for an HTML attribute value. Listing titles are agent-supplied, so
+    this is the boundary where their text becomes markup. */
+function esc(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function shareTitle(p) {
+  const name = p.title_es || p.title_en || 'Propiedad';
+  const where = [p.neighborhood, p.town].filter(Boolean).join(', ');
+  const amount = Number(p.amount || 0);
+  const price = amount
+    ? `${p.currency || ''} $${amount.toLocaleString('en-US')}${p.operation === 'rental' ? '/mes' : ''}`.trim()
+    : '';
+  return [name, where, price].filter(Boolean).join(' · ');
+}
+
+function shareDescription(p) {
+  const desc = (p.description_es || p.description_en || '').trim();
+  if (desc) return desc.length > 200 ? `${desc.slice(0, 197)}...` : desc;
+  const bits = [];
+  if (p.bedrooms) bits.push(`${p.bedrooms} recámaras`);
+  if (p.bathrooms) bits.push(`${p.bathrooms} baños`);
+  if (p.size) bits.push(`${p.size} m²`);
+  if (p.parking) bits.push(`${p.parking} estacionamiento(s)`);
+  const where = [p.neighborhood, p.town].filter(Boolean).join(', ');
+  return bits.length
+    ? `${bits.join(' · ')}${where ? ` en ${where}` : ''}.`
+    : `Propiedad${where ? ` en ${where}` : ''} en la Riviera Maya.`;
+}
+
+let cachedShell = null;
+function pageShell() {
+  // Bundled via functions."api/property.js".includeFiles in vercel.json.
+  if (!cachedShell) cachedShell = readFileSync(join(process.cwd(), 'property.html'), 'utf8');
+  return cachedShell;
+}
+
+function renderPage(p, canonicalUrl) {
+  const title = shareTitle(p);
+  const description = shareDescription(p);
+  const image = p.image || '';
+
+  const tags = [
+    `<title data-es="${esc(title)}" data-en="${esc(title)}">${esc(title)}</title>`,
+    `<meta name="description" content="${esc(description)}">`,
+    `<link rel="canonical" href="${esc(canonicalUrl)}">`,
+    `<meta property="og:type" content="website">`,
+    `<meta property="og:site_name" content="${esc(SITE_NAME)}">`,
+    `<meta property="og:title" content="${esc(title)}">`,
+    `<meta property="og:description" content="${esc(description)}">`,
+    `<meta property="og:url" content="${esc(canonicalUrl)}">`,
+    image ? `<meta property="og:image" content="${esc(image)}">` : '',
+    image ? `<meta property="og:image:alt" content="${esc(p.title_es || p.title_en || '')}">` : '',
+    `<meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}">`,
+    `<meta name="twitter:title" content="${esc(title)}">`,
+    `<meta name="twitter:description" content="${esc(description)}">`,
+    image ? `<meta name="twitter:image" content="${esc(image)}">` : ''
+  ].filter(Boolean).join('\n');
+
+  // Replace the placeholder title + description rather than appending, so a
+  // crawler can't pick the generic ones instead.
+  return pageShell()
+    .replace(/<title[^>]*>[\s\S]*?<\/title>/i, '')
+    .replace(/<meta\s+name="description"[^>]*>/i, '')
+    .replace('</head>', `${tags}\n</head>`);
+}
 
 function mapEBProperty(p) {
   const loc = p.location || {};
@@ -61,10 +150,35 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=600');
 
   const { id } = req.query;
+  // format=page -> the shareable HTML page (see the rewrites in vercel.json).
+  // Anything else keeps the original JSON contract that property.html's own
+  // client-side fetch and every other caller already rely on.
+  const wantsPage = req.query.format === 'page';
+
   if (!id) {
+    if (wantsPage) {
+      res.status(400).setHeader('content-type', 'text/html; charset=utf-8');
+      res.send(pageShell());
+      return;
+    }
     res.status(400).json({ error: 'missing_property_id' });
     return;
   }
+
+  const canonicalUrl = `https://${req.headers['x-forwarded-host'] || req.headers.host || 'proplync.mx'}/property/${encodeURIComponent(id)}`;
+
+  /** Send either the rendered page or the JSON body, depending on the caller. */
+  const respond = (status, payload) => {
+    if (wantsPage) {
+      res.status(payload && payload.property ? 200 : status);
+      res.setHeader('content-type', 'text/html; charset=utf-8');
+      // No listing (404/503) still returns the shell: the client-side code
+      // renders its own "not found" state, so the page never hard-fails.
+      res.send(payload && payload.property ? renderPage(payload.property, canonicalUrl) : pageShell());
+      return;
+    }
+    res.status(status).json(payload);
+  };
 
   // Set when Supabase can't be reached: the response still serves whatever the
   // EasyBroker/sample chain can produce, but says so, so a health check can see
@@ -90,7 +204,7 @@ export default async function handler(req, res) {
           .select('name, logo_url, primary_color, whatsapp_number')
           .eq('id', row.agency_id)
           .maybeSingle();
-        res.status(200).json({
+        respond(200, {
           property: {
             public_id: row.public_id,
             title_es: row.title_es,
@@ -130,7 +244,7 @@ export default async function handler(req, res) {
     const cacheKey = `eb:property:${id}`;
     const cached = await redisGet(cacheKey);
     if (cached) {
-      res.status(200).json({ property: cached, degraded });
+      respond(200, { property: cached, degraded });
       return;
     }
 
@@ -144,7 +258,7 @@ export default async function handler(req, res) {
         const data = await r.json();
         const property = mapEBProperty(data);
         await redisSet(cacheKey, property, 600);
-        res.status(200).json({ property, degraded });
+        respond(200, { property, degraded });
         return;
       }
     }
@@ -152,19 +266,20 @@ export default async function handler(req, res) {
     // 4. Fall back to sample
     const sample = SAMPLES.find(p => p.public_id === id);
     if (sample) {
-      res.status(200).json({ property: sample, degraded });
+      respond(200, { property: sample, degraded });
       return;
     }
 
     // A real agency listing is indistinguishable from a typo'd id while the
     // database is unreachable, so don't claim "not found" when we can't know.
     if (degraded) {
-      res.status(503).json({ error: 'listings_database_unavailable', degraded: true });
+      respond(503, { error: 'listings_database_unavailable', degraded: true });
       return;
     }
 
-    res.status(404).json({ error: 'property_not_found' });
+    respond(404, { error: 'property_not_found' });
   } catch (err) {
-    res.status(502).json({ error: 'property_unavailable', detail: String(err.message) });
+    logDegraded('property:handler', err);
+    respond(502, { error: 'property_unavailable', detail: String(err.message) });
   }
 }
