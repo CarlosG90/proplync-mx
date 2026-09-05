@@ -578,6 +578,24 @@
   }
 
   /* ---------- amenities ---------- */
+  /* Categories arrive as the raw OSM-derived keys from /api/amenities
+     (restaurant, cafe, supermarket, pharmacy, gym, beach, place). */
+  var AMENITY_LABELS = {
+    restaurant: { es: 'Restaurante', en: 'Restaurant' },
+    cafe:       { es: 'Café',        en: 'Cafe' },
+    supermarket:{ es: 'Super',       en: 'Market' },
+    pharmacy:   { es: 'Farmacia',    en: 'Pharmacy' },
+    gym:        { es: 'Gimnasio',    en: 'Gym' },
+    beach:      { es: 'Playa',       en: 'Beach' },
+    place:      { es: 'Lugar',       en: 'Place' }
+  };
+
+  function amenityLabel(category) {
+    var entry = AMENITY_LABELS[category];
+    if (entry) return entry[lang === 'es' ? 'es' : 'en'];
+    return category || (lang === 'es' ? 'Lugar' : 'Place');
+  }
+
   async function loadAmenities(lat, lng) {
     var container = document.getElementById('prop-amenities');
     try {
@@ -588,9 +606,14 @@
       }
       var html = '';
       places.slice(0, 12).forEach(function(p) {
-        var dist = p.dist < 1000 ? Math.round(p.dist) + ' m' : (p.dist / 1000).toFixed(1) + ' km';
+        // /api/amenities returns { name, category, distance_m }. Reading p.cat
+        // and p.dist here is what printed "UNDEFINED" and "NaN km" on every row.
+        var meters = Number(p.distance_m);
+        var dist = Number.isFinite(meters)
+          ? (meters < 1000 ? Math.round(meters) + ' m' : (meters / 1000).toFixed(1) + ' km')
+          : '';
         html += '<div class="ps-poi">' +
-          '<span class="ps-poi-cat">' + p.cat + '</span>' +
+          '<span class="ps-poi-cat">' + amenityLabel(p.category) + '</span>' +
           '<span class="ps-poi-name">' + p.name + '</span>' +
           '<span class="ps-poi-dist">' + dist + '</span>' +
           '</div>';
