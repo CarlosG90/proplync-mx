@@ -11,8 +11,7 @@
  * -----------------------------------------------------------------------------
  */
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'qwen/qwen3.8-27b';
+import { groqChat, messageText } from './_lib/groq.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -45,24 +44,15 @@ export default async function handler(req, res) {
     : `Property: ${title}, in ${neighborhood}, ${town}. ${bedrooms} bedrooms, ${bathrooms} bathrooms, ${size} m². For ${opWord} at ${currency} $${amount}. Write a sales description.`;
 
   try {
-    const r = await fetch(GROQ_URL, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user }
-        ],
-        temperature: 0.7,
-        max_tokens: 200
-      })
+    const data = await groqChat({
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user }
+      ],
+      temperature: 0.7,
+      max_tokens: 200
     });
-    if (!r.ok) throw new Error(`Groq responded ${r.status}`);
-    const data = await r.json();
-    const description = data.choices?.[0]?.message?.content?.trim();
-    if (!description) throw new Error('empty_completion');
-    res.status(200).json({ description });
+    res.status(200).json({ description: messageText(data) });
   } catch (err) {
     res.status(502).json({ error: 'description_unavailable', detail: String(err.message) });
   }

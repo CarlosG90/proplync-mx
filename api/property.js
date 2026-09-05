@@ -9,6 +9,7 @@
 
 import { getServiceClient } from './_lib/supabase.js';
 import { redisGet, redisSet } from './_lib/redis.js';
+import { logDegraded } from './_lib/health.js';
 
 const EB_URL = 'https://api.easybroker.com/v1';
 
@@ -65,11 +66,22 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Set when Supabase can't be reached: the response still serves whatever the
+  // EasyBroker/sample chain can produce, but says so, so a health check can see
+  // the database is down instead of a healthy-looking page of sample listings.
+  let degraded = false;
+
   try {
     // 1. Try a Supabase agency listing first (cheap indexed lookup)
     try {
       const svc = getServiceClient();
-      const { data: row } = await svc.from('listings').select('*').eq('public_id', id).maybeSingle();
+      const { data: row, error: rowError } = await svc.from('listings').select('*').eq('public_id', id).maybeSingle();
+      // supabase-js reports query/transport failures on `error` rather than
+      // throwing, so an unreachable database lands here, not in the catch.
+      if (rowError) {
+        degraded = true;
+        logDegraded('supabase:listings.byPublicId', rowError);
+      }
       if (row) {
         // Join the owning agency so the mini-site can show its brand and a
         // WhatsApp click-to-chat CTA instead of generic Proplync branding.
@@ -106,13 +118,19 @@ export default async function handler(req, res) {
         });
         return;
       }
-    } catch { /* fall through to the existing EB/sample chain */ }
+    } catch (err) {
+      // Transport-level failure (DNS/TLS/timeout) — e.g. a paused Supabase
+      // project. Still fall through so buyers keep seeing a page, but never
+      // silently: this is exactly the outage that went unnoticed for days.
+      degraded = true;
+      logDegraded('supabase:listings.byPublicId', err);
+    }
 
     // 2. Redis cache
     const cacheKey = `eb:property:${id}`;
     const cached = await redisGet(cacheKey);
     if (cached) {
-      res.status(200).json({ property: cached });
+      res.status(200).json({ property: cached, degraded });
       return;
     }
 
@@ -126,7 +144,7 @@ export default async function handler(req, res) {
         const data = await r.json();
         const property = mapEBProperty(data);
         await redisSet(cacheKey, property, 600);
-        res.status(200).json({ property });
+        res.status(200).json({ property, degraded });
         return;
       }
     }
@@ -134,7 +152,14 @@ export default async function handler(req, res) {
     // 4. Fall back to sample
     const sample = SAMPLES.find(p => p.public_id === id);
     if (sample) {
-      res.status(200).json({ property: sample });
+      res.status(200).json({ property: sample, degraded });
+      return;
+    }
+
+    // A real agency listing is indistinguishable from a typo'd id while the
+    // database is unreachable, so don't claim "not found" when we can't know.
+    if (degraded) {
+      res.status(503).json({ error: 'listings_database_unavailable', degraded: true });
       return;
     }
 

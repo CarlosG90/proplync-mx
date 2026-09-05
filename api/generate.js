@@ -14,9 +14,7 @@
  */
 
 import sharp from 'sharp';
-
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'qwen/qwen3.8-27b';
+import { groqChat, messageText } from './_lib/groq.js';
 
 /* ── Photo enhancement constants ── */
 const MAX_DIMENSION = 2400;
@@ -377,26 +375,16 @@ Responde UNICAMENTE con un objeto JSON valido, sin markdown: {"description":"...
 Rules: never invent or inflate facts (size, views, finishes, amenities, "covered", "beachfront") — use only what was given; lead with the strongest feature; be specific and sensory; avoid cliches and exclamation overload; describe the property, never the ideal buyer.
 Respond ONLY with a valid JSON object, no markdown: {"description":"...","features_list":["...","...","...","...","..."]}`;
     try {
-      const r = await fetch(GROQ_URL, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            { role: 'system', content: compactSystem },
-            { role: 'user', content: user }
-          ],
-          temperature: 0.5,
-          max_tokens: 450,
-          response_format: { type: 'json_object' }
-        })
+      const data = await groqChat({
+        messages: [
+          { role: 'system', content: compactSystem },
+          { role: 'user', content: user }
+        ],
+        temperature: 0.5,
+        max_tokens: 450,
+        response_format: { type: 'json_object' }
       });
-      if (!r.ok) throw new Error(`Groq responded ${r.status}`);
-      const data = await r.json();
-      let raw = data.choices?.[0]?.message?.content?.trim();
-      if (!raw) throw new Error('empty_completion');
-      raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
-      const parsed = JSON.parse(raw);
+      const parsed = JSON.parse(messageText(data));
       res.status(200).json({
         content: {
           pdf: {
@@ -412,30 +400,16 @@ Respond ONLY with a valid JSON object, no markdown: {"description":"...","featur
   }
 
   try {
-    const r = await fetch(GROQ_URL, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000
-      })
+    const data = await groqChat({
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
     });
 
-    if (!r.ok) throw new Error(`Groq responded ${r.status}`);
-
-    const data = await r.json();
-    let raw = data.choices?.[0]?.message?.content?.trim();
-    if (!raw) throw new Error('empty_completion');
-
-    /* Strip markdown code fences if present */
-    raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
-
-    const content = JSON.parse(raw);
+    const content = JSON.parse(messageText(data));
     res.status(200).json({ content });
   } catch (err) {
     res.status(502).json({ error: 'generation_unavailable', detail: String(err.message) });

@@ -12,8 +12,7 @@
  * -----------------------------------------------------------------------------
  */
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'qwen/qwen3.8-27b';
+import { groqChat, messageText } from './_lib/groq.js';
 
 const TOWNS = ['Tulum', 'Playa del Carmen', 'Puerto Morelos', 'Cancún', 'Cancun'];
 
@@ -60,24 +59,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const r = await fetch(GROQ_URL, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: String(query).slice(0, 300) }
-        ],
-        temperature: 0,
-        max_tokens: 200,
-        response_format: { type: 'json_object' }
-      })
+    const data = await groqChat({
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: String(query).slice(0, 300) }
+      ],
+      temperature: 0,
+      max_tokens: 200,
+      response_format: { type: 'json_object' }
     });
-    if (!r.ok) throw new Error(`Groq responded ${r.status}`);
-    const data = await r.json();
-    const raw = data.choices?.[0]?.message?.content;
-    if (!raw) throw new Error('empty_completion');
+    const raw = messageText(data);
 
     let parsed;
     try {

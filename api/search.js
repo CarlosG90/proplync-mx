@@ -14,6 +14,7 @@
 
 import { getServiceClient } from './_lib/supabase.js';
 import { redisGet, redisSet } from './_lib/redis.js';
+import { logDegraded } from './_lib/health.js';
 
 const EB_URL = 'https://api.easybroker.com/v1';
 const PAGE_LIMIT = 50;
@@ -85,7 +86,13 @@ async function fetchAgencyListings() {
   try {
     const svc = getServiceClient();
     const { data, error } = await svc.from('listings').select('*').eq('status', 'published');
-    if (error || !data) return [];
+    if (error) {
+      // Returning [] here is what made a dead database look like "no agency
+      // listings yet" — buyers saw only EasyBroker/sample inventory.
+      logDegraded('supabase:listings.published', error);
+      return [];
+    }
+    if (!data) return [];
     return data.map(row => ({
       public_id: row.public_id,
       title_es: row.title_es,
@@ -109,7 +116,8 @@ async function fetchAgencyListings() {
       features: row.features,
       source: 'agency'
     }));
-  } catch {
+  } catch (err) {
+    logDegraded('supabase:listings.published', err);
     return [];
   }
 }

@@ -7,6 +7,8 @@
  * -----------------------------------------------------------------------------
  */
 
+import { logDegraded } from './health.js';
+
 export async function redisGet(key) {
   const url = process.env.KV_REST_API_URL;
   const token = process.env.KV_REST_API_TOKEN;
@@ -15,7 +17,12 @@ export async function redisGet(key) {
     const r = await fetch(`${url}/get/${key}`, { headers: { Authorization: `Bearer ${token}` } });
     const data = await r.json();
     return data.result ? JSON.parse(data.result) : null;
-  } catch { return null; }
+  } catch (err) {
+    // A cache miss is normal; an unreachable cache is not — it silently turns
+    // every request into an origin/EasyBroker call.
+    logDegraded('redis:get', err);
+    return null;
+  }
 }
 
 export async function redisSet(key, value, exSeconds) {
@@ -26,5 +33,7 @@ export async function redisSet(key, value, exSeconds) {
     await fetch(`${url}/set/${key}/${encodeURIComponent(JSON.stringify(value))}/ex/${exSeconds}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-  } catch { /* silent */ }
+  } catch (err) {
+    logDegraded('redis:set', err);
+  }
 }
