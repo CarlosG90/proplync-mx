@@ -1,28 +1,82 @@
 {
   "cleanUrls": true,
   "functions": {
-    "api/photos.js": { "maxDuration": 10 },
-    "api/geocode.js": { "maxDuration": 10 },
-    "api/amenities.js": { "maxDuration": 15 },
-    "api/describe.js": { "maxDuration": 15 },
-    "api/search.js": { "maxDuration": 30 },
-    "api/property.js": { "maxDuration": 15, "includeFiles": "property.html" },
-    "api/nlsearch.js": { "maxDuration": 15 },
-    "api/onboard.js": { "maxDuration": 15 },
-    "api/my-listings.js": { "maxDuration": 15 },
-    "api/leads.js": { "maxDuration": 15 },
-    "api/generate.js": { "maxDuration": 30 },
-    "api/instagram-publish.js": { "maxDuration": 15 }
+    "api/photos.js": {
+      "maxDuration": 10
+    },
+    "api/geocode.js": {
+      "maxDuration": 10
+    },
+    "api/amenities.js": {
+      "maxDuration": 15
+    },
+    "api/search.js": {
+      "maxDuration": 30
+    },
+    "api/property.js": {
+      "maxDuration": 15,
+      "includeFiles": "property.html"
+    },
+    "api/onboard.js": {
+      "maxDuration": 15
+    },
+    "api/my-listings.js": {
+      "maxDuration": 15
+    },
+    "api/leads.js": {
+      "maxDuration": 15
+    },
+    "api/generate.js": {
+      "maxDuration": 30
+    },
+    "api/instagram-publish.js": {
+      "maxDuration": 15
+    }
   },
   "rewrites": [
-    { "source": "/generar", "destination": "/generate" },
-    { "source": "/propiedad/:id", "destination": "/api/property?id=:id&format=page" },
-    { "source": "/property/:id", "destination": "/api/property?id=:id&format=page" },
-    { "source": "/propiedades-en-:city", "destination": "/api/search?city=:city&format=page" },
-    { "source": "/sitemap.xml", "destination": "/api/search?format=sitemap" },
-    { "source": "/agencia/:slug", "destination": "/agency?slug=:slug" },
-    { "source": "/agency/:slug", "destination": "/agency?slug=:slug" },
-    { "source": "/favoritos", "destination": "/favorites" },
-    { "source": "/dashboard/leads", "destination": "/dashboard-leads" }
+    {
+      "source": "/api/describe",
+      "destination": "/api/generate?action=describe"
+    },
+    {
+      "source": "/api/nlsearch",
+      "destination": "/api/generate?action=nlsearch"
+    },
+    {
+      "source": "/generar",
+      "destination": "/generate"
+    },
+    {
+      "source": "/propiedad/:id",
+      "destination": "/api/property?id=:id&format=page"
+    },
+    {
+      "source": "/property/:id",
+      "destination": "/api/property?id=:id&format=page"
+    },
+    {
+      "source": "/propiedades-en-:city",
+      "destination": "/api/search?city=:city&format=page"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/search?format=sitemap"
+    },
+    {
+      "source": "/agencia/:slug",
+      "destination": "/agency?slug=:slug"
+    },
+    {
+      "source": "/agency/:slug",
+      "destination": "/agency?slug=:slug"
+    },
+    {
+      "source": "/favoritos",
+      "destination": "/favorites"
+    },
+    {
+      "source": "/dashboard/leads",
+      "destination": "/dashboard-leads"
+    }
   ]
 }

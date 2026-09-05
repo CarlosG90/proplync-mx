@@ -144,10 +144,21 @@
   .share-qr-mini{width:52px;height:52px;border-radius:8px;border:1px solid var(--line);flex:none}
   .share-url-row .form-input{margin:0}
 
+  /* The actions row never wrapped, and .btn sets white-space:nowrap — so on a
+     phone its four items overflowed sideways and carried "+ Nueva propiedad",
+     the primary action of the whole page, off the right edge. */
+  .dash-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
   @media (max-width:700px){
     .form-grid{grid-template-columns:1fr}
     .dash-item{flex-wrap:wrap}
     .dash-item-actions{width:100%;justify-content:flex-end}
+    .dash-head{flex-direction:column;align-items:stretch;gap:14px}
+    .dash-actions{width:100%}
+    /* Primary action first and full width; secondary ones share the row below. */
+    #new-listing-btn{order:-1;width:100%;justify-content:center}
+    .dash-actions .btn-ghost{flex:1 1 auto;justify-content:center}
+    .plan-usage{order:-2;align-self:flex-start}
   }
   @media (max-width:520px){
     .browser-frame-body{height:220px}
@@ -177,7 +188,7 @@
 <main class="dash-main">
   <div class="dash-head">
     <h1 id="agency-name-header" data-es="Mis propiedades" data-en="My listings">Mis propiedades</h1>
-    <div style="display:flex;gap:10px">
+    <div class="dash-actions">
       <a class="btn btn-ghost" id="portfolio-link" href="#" target="_blank" rel="noopener" style="display:none" data-es="Mi portafolio" data-en="My portfolio">Mi portafolio</a>
       <button class="btn btn-ghost" onclick="openSettingsModal()" data-es="Mi agencia" data-en="My agency">Mi agencia</button>
       <span class="plan-usage" id="plan-usage"></span>
