@@ -201,7 +201,7 @@ export default async function handler(req, res) {
         // WhatsApp click-to-chat CTA instead of generic Proplync branding.
         const { data: agencyRow } = await svc
           .from('agencies')
-          .select('name, logo_url, primary_color, whatsapp_number')
+          .select('name, slug, logo_url, primary_color, whatsapp_number')
           .eq('id', row.agency_id)
           .maybeSingle();
         respond(200, {

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Portafolio · Proplync.mx</title>
+<meta name="description" content="Portafolio de propiedades en la Riviera Maya.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  /* ── Agency header: the portfolio's cover ── */
+  .ag-hero{background:var(--ink);color:var(--on-ink);padding:56px 0 48px}
+  .ag-hero-inner{display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+  .ag-logo{
+    width:96px;height:96px;border-radius:var(--radius);flex:none;
+    background:var(--white);background-size:contain;background-position:center;background-repeat:no-repeat;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--display);font-size:2rem;color:var(--ink);
+  }
+  .ag-head-text{flex:1;min-width:260px}
+  .ag-eyebrow{
+    font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--gold);display:flex;align-items:center;gap:12px;margin-bottom:10px;
+  }
+  .ag-eyebrow::before{content:"";width:28px;height:1px;background:var(--gold)}
+  .ag-name{font-family:var(--display);font-size:clamp(1.9rem,4vw,3rem);font-weight:300;line-height:1.1;color:var(--on-ink)}
+  .ag-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+
+  /* ── Portfolio overview: the numbers, before the grid ── */
+  .ag-stats{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+    background:rgba(240,237,232,.1);border:1px solid rgba(240,237,232,.1);
+    border-radius:var(--radius-lg);overflow:hidden;margin-top:36px;
+  }
+  .ag-stat{background:var(--ink-2);padding:22px 18px;text-align:center}
+  .ag-stat-val{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--on-ink)}
+  .ag-stat-lbl{font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--on-ink-dim);margin-top:6px}
+
+  .ag-body{padding:56px 0 100px}
+  .ag-toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:26px}
+  .ag-count{font-family:var(--mono);font-size:.72rem;color:var(--on-sand-dim);letter-spacing:.06em}
+  .ag-chips{display:flex;gap:8px;flex-wrap:wrap}
+  .ag-chip{
+    font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;
+    padding:8px 16px;border-radius:999px;border:1px solid var(--line);
+    background:var(--white);color:var(--on-sand-dim);cursor:pointer;
+    transition:all var(--duration) ease;
+  }
+  .ag-chip.on{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+  .ag-empty{text-align:center;padding:70px 20px;color:var(--on-sand-dim)}
+  .ag-state{text-align:center;padding:90px 20px;color:var(--on-sand-dim)}
+
+  @media (max-width:700px){
+    .ag-hero{padding:36px 0 32px}
+    .ag-logo{width:72px;height:72px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Proplync<span class="accent">.mx</span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/#como" data-es="Como funciona" data-en="How it works">Como funciona</a>
+    </div>
+    <div class="navtools">
+      <div class="lang"><button id="es" class="on" onclick="setLang('es')">ES</button><button id="en" onclick="setLang('en')">EN</button></div>
+    </div>
+    <button class="navtoggle" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<section class="ag-hero" id="ag-hero" style="display:none">
+  <div class="wrap">
+    <div class="ag-hero-inner">
+      <div class="ag-logo" id="ag-logo"></div>
+      <div class="ag-head-text">
+        <div class="ag-eyebrow" data-es="Portafolio de propiedades" data-en="Property portfolio">Portafolio de propiedades</div>
+        <h1 class="ag-name" id="ag-name"></h1>
+        <div class="ag-actions">
+          <a id="ag-whatsapp" class="btn btn-gold" target="_blank" rel="noopener" style="display:none" data-es="Escribir por WhatsApp" data-en="Message on WhatsApp">Escribir por WhatsApp</a>
+          <a class="btn btn-ghost" href="/search" data-es="Ver todo el mercado" data-en="Browse the whole market">Ver todo el mercado</a>
+        </div>
+      </div>
+    </div>
+    <div class="ag-stats" id="ag-stats"></div>
+  </div>
+</section>
+
+<main class="ag-body">
+  <div class="wrap">
+    <div id="ag-state" class="ag-state" data-es="Cargando portafolio..." data-en="Loading portfolio...">Cargando portafolio...</div>
+    <div id="ag-content" style="display:none">
+      <div class="ag-toolbar">
+        <div class="ag-count" id="ag-count"></div>
+        <div class="ag-chips" id="ag-chips"></div>
+      </div>
+      <div class="pgrid" id="ag-grid"></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span class="brand">Proplync<span class="accent">.mx</span></span>
+    <span>Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun</span>
+  </div>
+</footer>
+
+<script src="/js/i18n.js"></script>
+<script>
+  var agency = null;
+  var allListings = [];
+  var activeFilter = 'all';
+
+  function slugFromUrl() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('slug')) return params.get('slug');
+    // /agencia/<slug> when the rewrite is bypassed (e.g. opened directly)
+    var parts = window.location.pathname.split('/').filter(Boolean);
+    return parts.length > 1 ? parts[parts.length - 1] : '';
+  }
+
+  function money(p) {
+    return p.currency + ' $' + Number(p.amount || 0).toLocaleString('en-US');
+  }
+
+  function cardHTML(p) {
+    var title = lang === 'es' ? (p.title_es || p.title_en) : (p.title_en || p.title_es);
+    var opLbl = p.operation === 'sale' ? (lang === 'es' ? 'Venta' : 'For sale') : (lang === 'es' ? 'Renta' : 'For rent');
+    var perLbl = p.operation === 'rental' ? (lang === 'es' ? '/mes' : '/mo') : '';
+    var photo = (p.image || '').replace(/'/g, '%27');
+    return '<article class="pcard" onclick="window.location.href=\'/property/' + p.public_id + '\'">' +
+      '<div class="pcard-photo" style="background-color:#142237;background-image:url(\'' + photo + '\')">' +
+        '<span class="pcard-badge ' + (p.operation === 'sale' ? 'badge-sale' : 'badge-rental') + '">' + opLbl + '</span>' +
+      '</div>' +
+      '<div class="pcard-body">' +
+        '<div class="pcard-loc">' + [p.neighborhood, p.town].filter(Boolean).join(' &middot; ') + '</div>' +
+        '<div class="pcard-title">' + title + '</div>' +
+        '<div class="pcard-specs">' +
+          '<span>' + p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') + '</span>' +
+          '<span>' + p.bathrooms + ' ' + (lang === 'es' ? 'banos' : 'bath') + '</span>' +
+          '<span>' + p.size + ' m&sup2;</span>' +
+        '</div>' +
+        '<div class="pcard-foot"><span class="pcard-price">' + money(p) + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
+      '</div></article>';
+  }
+
+  /* The overview homlista shows above its grid: what this portfolio contains
+     at a glance, before anyone scrolls a single card. */
+  function renderStats() {
+    var sale = allListings.filter(function (p) { return p.operation === 'sale'; });
+    var rent = allListings.filter(function (p) { return p.operation === 'rental'; });
+    var towns = allListings.map(function (p) { return p.town; }).filter(Boolean);
+    var uniqueTowns = towns.filter(function (t, i) { return towns.indexOf(t) === i; });
+    var saleAmounts = sale.map(function (p) { return Number(p.amount || 0); }).filter(Boolean);
+    var from = saleAmounts.length ? Math.min.apply(null, saleAmounts) : 0;
+
+    var stats = [
+      { val: allListings.length, lbl: lang === 'es' ? 'Propiedades' : 'Properties' },
+      { val: sale.length, lbl: lang === 'es' ? 'En venta' : 'For sale' },
+      { val: rent.length, lbl: lang === 'es' ? 'En renta' : 'For rent' },
+      { val: uniqueTowns.length, lbl: lang === 'es' ? 'Ciudades' : 'Cities' }
+    ];
+    if (from) {
+      stats.push({
+        val: '$' + Math.round(from / 1000) + 'k',
+        lbl: lang === 'es' ? 'Desde' : 'From'
+      });
+    }
+    document.getElementById('ag-stats').innerHTML = stats.map(function (s) {
+      return '<div class="ag-stat"><div class="ag-stat-val">' + s.val + '</div><div class="ag-stat-lbl">' + s.lbl + '</div></div>';
+    }).join('');
+  }
+
+  function renderChips() {
+    var towns = allListings.map(function (p) { return p.town; }).filter(Boolean);
+    var uniqueTowns = towns.filter(function (t, i) { return towns.indexOf(t) === i; }).sort();
+    var chips = [{ key: 'all', label: lang === 'es' ? 'Todas' : 'All' }]
+      .concat(uniqueTowns.map(function (t) { return { key: 'town:' + t, label: t }; }));
+    if (allListings.some(function (p) { return p.operation === 'sale'; }) &&
+        allListings.some(function (p) { return p.operation === 'rental'; })) {
+      chips.push({ key: 'op:sale', label: lang === 'es' ? 'Venta' : 'Sale' });
+      chips.push({ key: 'op:rental', label: lang === 'es' ? 'Renta' : 'Rent' });
+    }
+    // A single chip filters nothing — don't show a control that can't do anything.
+    document.getElementById('ag-chips').innerHTML = chips.length > 2
+      ? chips.map(function (c) {
+          return '<button class="ag-chip' + (c.key === activeFilter ? ' on' : '') + '" onclick="setFilter(\'' + c.key.replace(/'/g, "\\'") + '\')">' + c.label + '</button>';
+        }).join('')
+      : '';
+  }
+
+  function setFilter(key) {
+    activeFilter = key;
+    renderChips();
+    renderGrid();
+  }
+
+  function renderGrid() {
+    var shown = allListings.filter(function (p) {
+      if (activeFilter === 'all') return true;
+      if (activeFilter.indexOf('town:') === 0) return p.town === activeFilter.slice(5);
+      if (activeFilter.indexOf('op:') === 0) return p.operation === activeFilter.slice(3);
+      return true;
+    });
+    document.getElementById('ag-count').textContent = shown.length +
+      (lang === 'es' ? (shown.length === 1 ? ' propiedad' : ' propiedades') : (shown.length === 1 ? ' property' : ' properties'));
+    document.getElementById('ag-grid').innerHTML = shown.length
+      ? shown.map(cardHTML).join('')
+      : '<p class="ag-empty">' + (lang === 'es' ? 'Sin propiedades en este filtro.' : 'No properties match this filter.') + '</p>';
+  }
+
+  function renderAll() {
+    document.getElementById('ag-name').textContent = agency.name;
+    document.title = agency.name + ' · Proplync.mx';
+
+    var logo = document.getElementById('ag-logo');
+    if (agency.logo_url) {
+      logo.style.backgroundImage = "url('" + String(agency.logo_url).replace(/'/g, '%27') + "')";
+    } else {
+      logo.textContent = (agency.name || '?').trim().charAt(0).toUpperCase();
+    }
+
+    if (agency.whatsapp_number) {
+      var wa = document.getElementById('ag-whatsapp');
+      var msg = lang === 'es'
+        ? 'Hola, vi su portafolio en Proplync y me interesa una propiedad.'
+        : 'Hi, I saw your portfolio on Proplync and I am interested in a property.';
+      wa.href = 'https://wa.me/' + String(agency.whatsapp_number).replace(/[^0-9]/g, '') +
+                '?text=' + encodeURIComponent(msg);
+      wa.style.display = '';
+    }
+
+    document.getElementById('ag-hero').style.display = '';
+    document.getElementById('ag-state').style.display = 'none';
+    document.getElementById('ag-content').style.display = '';
+    renderStats();
+    renderChips();
+    renderGrid();
+  }
+
+  document.addEventListener('langchange', function () {
+    if (agency) renderAll();
+  });
+
+  (async function init() {
+    var slug = slugFromUrl();
+    var state = document.getElementById('ag-state');
+    if (!slug) {
+      state.textContent = lang === 'es' ? 'Falta el nombre de la agencia en la direccion.' : 'No agency specified in the URL.';
+      return;
+    }
+    try {
+      var r = await fetch('/api/search?agency=' + encodeURIComponent(slug));
+      if (r.status === 404) {
+        state.textContent = lang === 'es' ? 'No encontramos esta agencia.' : 'We could not find this agency.';
+        return;
+      }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var data = await r.json();
+      agency = data.agency;
+      allListings = data.listings || [];
+      renderAll();
+    } catch (e) {
+      state.textContent = lang === 'es'
+        ? 'No pudimos cargar el portafolio. Intenta de nuevo.'
+        : 'We could not load this portfolio. Please try again.';
+    }
+  })();
+</script>
+</body>
+</html>

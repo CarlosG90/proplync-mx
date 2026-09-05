@@ -82,6 +82,33 @@ function formatAmount(amount) {
   return Number(amount || 0).toLocaleString('en-US');
 }
 
+/* One agency row -> the same object shape the rest of the site renders. */
+function mapAgencyRow(row) {
+  return {
+    public_id: row.public_id,
+    title_es: row.title_es,
+    title_en: row.title_en,
+    town: row.town,
+    neighborhood: row.neighborhood,
+    bedrooms: row.bedrooms,
+    bathrooms: row.bathrooms,
+    parking: row.parking,
+    size: row.size,
+    operation: row.operation,
+    currency: row.currency,
+    amount: row.amount,
+    formatted: formatAmount(row.amount),
+    image: row.image,
+    images: row.images,
+    description_es: row.description_es,
+    description_en: row.description_en,
+    lat: row.lat,
+    lng: row.lng,
+    features: row.features,
+    source: 'agency'
+  };
+}
+
 async function fetchAgencyListings() {
   try {
     const svc = getServiceClient();
@@ -93,29 +120,7 @@ async function fetchAgencyListings() {
       return [];
     }
     if (!data) return [];
-    return data.map(row => ({
-      public_id: row.public_id,
-      title_es: row.title_es,
-      title_en: row.title_en,
-      town: row.town,
-      neighborhood: row.neighborhood,
-      bedrooms: row.bedrooms,
-      bathrooms: row.bathrooms,
-      parking: row.parking,
-      size: row.size,
-      operation: row.operation,
-      currency: row.currency,
-      amount: row.amount,
-      formatted: formatAmount(row.amount),
-      image: row.image,
-      images: row.images,
-      description_es: row.description_es,
-      description_en: row.description_en,
-      lat: row.lat,
-      lng: row.lng,
-      features: row.features,
-      source: 'agency'
-    }));
+    return data.map(mapAgencyRow);
   } catch (err) {
     logDegraded('supabase:listings.published', err);
     return [];
@@ -148,6 +153,52 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=60');
 
   try {
+    /* ── Agency portfolio ──────────────────────────────────────────────────
+       ?agency=<slug> returns one agency plus every published listing it owns,
+       which is what /agencia/:slug and the "more from this agency" rail on a
+       property page both render. Folded in here rather than added as
+       api/agency.js because the project sits on Vercel Hobby's 12-function cap
+       (see the same note in api/my-listings.js).
+       ──────────────────────────────────────────────────────────────────── */
+    if (req.query.agency) {
+      const svc = getServiceClient();
+      const { data: agency, error: agencyErr } = await svc
+        .from('agencies')
+        .select('id, name, slug, logo_url, primary_color, whatsapp_number')
+        .eq('slug', String(req.query.agency).toLowerCase())
+        .maybeSingle();
+      if (agencyErr) {
+        logDegraded('supabase:agencies.bySlug', agencyErr);
+        res.status(503).json({ error: 'agency_lookup_unavailable' });
+        return;
+      }
+      if (!agency) {
+        res.status(404).json({ error: 'agency_not_found' });
+        return;
+      }
+      const { data: rows, error: rowsErr } = await svc
+        .from('listings')
+        .select('*')
+        .eq('agency_id', agency.id)
+        .eq('status', 'published')
+        .order('created_at', { ascending: false });
+      if (rowsErr) {
+        logDegraded('supabase:listings.byAgency', rowsErr);
+        res.status(503).json({ error: 'agency_listings_unavailable' });
+        return;
+      }
+      const owned = (rows || []).map(mapAgencyRow);
+      // exclude lets a property page show "others from this agency"
+      const exclude = req.query.exclude;
+      res.status(200).json({
+        agency: { name: agency.name, slug: agency.slug, logo_url: agency.logo_url,
+                  primary_color: agency.primary_color, whatsapp_number: agency.whatsapp_number },
+        listings: exclude ? owned.filter(p => p.public_id !== exclude) : owned,
+        total: owned.length
+      });
+      return;
+    }
+
     let listings = await getInventory();
 
     // filters

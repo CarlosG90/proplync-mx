@@ -85,6 +85,14 @@
   .prop-section h2::before{content:"";width:20px;height:1px;background:var(--gold)}
   .prop-desc{font-size:.94rem;color:var(--on-sand-dim);line-height:1.75}
 
+  /* "more from this agency" — one shared link should open a door to the whole
+     portfolio, not a dead end on a single listing */
+  .pgrid-compact{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .pgrid-compact .pcard-photo{height:150px}
+  .pgrid-compact .pcard-title{font-size:.94rem}
+  @media (max-width:900px){.pgrid-compact{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:560px){.pgrid-compact{grid-template-columns:1fr}}
+
   .prop-features{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
   .prop-feature{
     display:flex;align-items:center;gap:10px;
@@ -252,6 +260,12 @@
         <div class="prop-section" id="desc-section">
           <h2 data-es="Descripcion" data-en="Description">Descripcion</h2>
           <div class="prop-desc" id="prop-desc"></div>
+        </div>
+
+        <div class="prop-section" id="more-section" style="display:none">
+          <h2 data-es="Mas propiedades de esta agencia" data-en="More from this agency">Mas propiedades de esta agencia</h2>
+          <div class="pgrid pgrid-compact" id="more-grid"></div>
+          <a class="btn btn-outline" id="more-all" style="margin-top:18px" data-es="Ver portafolio completo" data-en="See the full portfolio">Ver portafolio completo</a>
         </div>
 
         <div class="prop-section" id="features-section" style="display:none">
@@ -484,6 +498,8 @@
       }).join('');
     }
 
+    loadAgencyPortfolio(p);
+
     if (p.lat && p.lng) {
       initMap(p.lat, p.lng, title);
       loadAmenities(p.lat, p.lng);
@@ -575,6 +591,39 @@
       maxZoom: 18
     }).addTo(map);
     L.marker([lat, lng]).addTo(map).bindPopup('<b>' + title + '</b>').openPopup();
+  }
+
+  /* ---------- more from this agency ---------- */
+  async function loadAgencyPortfolio(p) {
+    var slug = p.agency && p.agency.slug;
+    if (!slug) return;   // EasyBroker/sample listings have no owning agency
+    try {
+      var r = await fetch('/api/search?agency=' + encodeURIComponent(slug) +
+                          '&exclude=' + encodeURIComponent(p.public_id));
+      if (!r.ok) return;
+      var data = await r.json();
+      var others = (data.listings || []).slice(0, 6);
+      if (!others.length) return;   // a one-listing portfolio has nothing to add
+
+      document.getElementById('more-grid').innerHTML = others.map(function (o) {
+        var t = lang === 'es' ? (o.title_es || o.title_en) : (o.title_en || o.title_es);
+        var opLbl = o.operation === 'sale' ? (lang === 'es' ? 'Venta' : 'For sale') : (lang === 'es' ? 'Renta' : 'For rent');
+        var img = (o.image || '').replace(/'/g, '%27');
+        return '<article class="pcard" onclick="window.location.href=\'/property/' + o.public_id + '\'">' +
+          '<div class="pcard-photo" style="background-color:#142237;background-image:url(\'' + img + '\')">' +
+            '<span class="pcard-badge ' + (o.operation === 'sale' ? 'badge-sale' : 'badge-rental') + '">' + opLbl + '</span>' +
+          '</div>' +
+          '<div class="pcard-body">' +
+            '<div class="pcard-loc">' + [o.neighborhood, o.town].filter(Boolean).join(' &middot; ') + '</div>' +
+            '<div class="pcard-title">' + t + '</div>' +
+            '<div class="pcard-foot"><span class="pcard-price">' + o.currency + ' $' +
+              Number(o.amount || 0).toLocaleString('en-US') + '</span></div>' +
+          '</div></article>';
+      }).join('');
+
+      document.getElementById('more-all').href = '/agencia/' + encodeURIComponent(slug);
+      document.getElementById('more-section').style.display = '';
+    } catch (e) { /* the listing itself still renders — this block just stays hidden */ }
   }
 
   /* ---------- amenities ---------- */

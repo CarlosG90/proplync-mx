@@ -171,6 +171,7 @@
   <div class="dash-head">
     <h1 id="agency-name-header" data-es="Mis propiedades" data-en="My listings">Mis propiedades</h1>
     <div style="display:flex;gap:10px">
+      <a class="btn btn-ghost" id="portfolio-link" href="#" target="_blank" rel="noopener" style="display:none" data-es="Mi portafolio" data-en="My portfolio">Mi portafolio</a>
       <button class="btn btn-ghost" onclick="openSettingsModal()" data-es="Mi agencia" data-en="My agency">Mi agencia</button>
       <button class="btn btn-gold" onclick="openListingModal()" data-es="+ Nueva propiedad" data-en="+ New listing">+ Nueva propiedad</button>
     </div>
@@ -653,6 +654,7 @@
       document.getElementById('s-whatsapp').value = a.whatsapp_number || '';
       document.getElementById('s-logo-url').value = a.logo_url || '';
       document.getElementById('s-logo-preview').style.backgroundImage = a.logo_url ? "url('" + a.logo_url + "')" : '';
+      showPortfolioLink(a.slug);
     }
     document.getElementById('settings-modal').classList.add('open');
   }
@@ -714,6 +716,14 @@
     } finally {
       btn.disabled = false;
     }
+  }
+
+  /* The public portfolio: every published listing on one shareable page. */
+  function showPortfolioLink(slug) {
+    if (!slug) return;
+    const el = document.getElementById('portfolio-link');
+    el.href = '/agencia/' + encodeURIComponent(slug);
+    el.style.display = '';
   }
 
   /* ---------- preview the mini-site before sending it ---------- */
@@ -781,6 +791,18 @@
       document.getElementById('agency-name-header').textContent = session.user.user_metadata.agency_name;
     }
     await loadListings();
+
+    // Surface the portfolio link on load, not only after opening settings.
+    try {
+      const r = await authedFetch('/api/my-listings?resource=agency');
+      if (r.ok) {
+        const data = await r.json();
+        if (data.agency) {
+          showPortfolioLink(data.agency.slug);
+          document.getElementById('agency-name-header').textContent = data.agency.name;
+        }
+      }
+    } catch (e) { /* the dashboard still works without the portfolio shortcut */ }
   })();
 </script>
 </body>

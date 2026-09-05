@@ -18,6 +18,8 @@
     { "source": "/generar", "destination": "/generate" },
     { "source": "/propiedad/:id", "destination": "/api/property?id=:id&format=page" },
     { "source": "/property/:id", "destination": "/api/property?id=:id&format=page" },
+    { "source": "/agencia/:slug", "destination": "/agency?slug=:slug" },
+    { "source": "/agency/:slug", "destination": "/agency?slug=:slug" },
     { "source": "/favoritos", "destination": "/favorites" },
     { "source": "/dashboard/leads", "destination": "/dashboard-leads" }
   ]
