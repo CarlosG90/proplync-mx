@@ -240,8 +240,10 @@
         <textarea class="form-textarea" id="l-description-en"></textarea>
       </div>
       <div class="field field-full">
-        <label class="form-label" data-es="Caracteristicas (separadas por coma)" data-en="Features (comma-separated)">Caracteristicas (separadas por coma)</label>
-        <input class="form-input" id="l-features" placeholder="Alberca privada, Vista al mar, Cocina integral...">
+        <label class="form-label" data-es="Caracteristicas (una por linea)" data-en="Features (one per line)">Caracteristicas (una por linea)</label>
+        <!-- One per line, not comma-separated: a feature like "Precio 450,000 USD"
+             was being split in two at the comma and shown as two amenities. -->
+        <textarea class="form-textarea" id="l-features" style="min-height:104px" placeholder="Alberca privada&#10;Vista al mar&#10;Cocina integral"></textarea>
       </div>
       <div class="modal-actions">
         <button type="submit" class="btn btn-gold" id="save-listing-btn" data-es="Guardar" data-en="Save">Guardar</button>
@@ -415,7 +417,7 @@
       document.getElementById('l-status').value = listing.status || 'published';
       document.getElementById('l-description-es').value = listing.description_es || '';
       document.getElementById('l-description-en').value = listing.description_en || '';
-      document.getElementById('l-features').value = (listing.features || []).join(', ');
+      document.getElementById('l-features').value = (listing.features || []).join('\n');
       document.getElementById('l-image').value = listing.image || '';
     } else {
       document.getElementById('modal-title').textContent = lang === 'es' ? 'Nueva propiedad' : 'New listing';
@@ -562,7 +564,7 @@
       status: document.getElementById('l-status').value,
       description_es: document.getElementById('l-description-es').value,
       description_en: document.getElementById('l-description-en').value,
-      features: document.getElementById('l-features').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean),
+      features: document.getElementById('l-features').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
       // image drives the hero and the search-result card; images is the
       // carousel. Sending the full list under both keeps the order stable —
       // property.html de-duplicates when it composes [image, ...images].
@@ -626,7 +628,7 @@
       const esData = await esRes.json();
       if (!esRes.ok) throw new Error(esData.detail || esData.error);
       document.getElementById('l-description-es').value = esData.content.pdf.description;
-      document.getElementById('l-features').value = (esData.content.pdf.features_list || []).join(', ');
+      document.getElementById('l-features').value = (esData.content.pdf.features_list || []).join('\n');
       if (enRes.ok) {
         const enData = await enRes.json();
         document.getElementById('l-description-en').value = enData.content.pdf.description;
