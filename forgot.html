@@ -80,6 +80,61 @@
     el.style.display = 'block';
   }
 
+  /* Supabase throttles recovery mail two different ways, and they need
+     different advice:
+       - a short per-address cooldown, whose length it tells us in the error
+         ("...you can only request this after 47 seconds")
+       - a project-wide hourly cap on the shared SMTP service, which it does
+         not quantify at all
+     Guessing "a few minutes" for the second one sends people back to retry
+     into a wall. Count down when we know the number, say the honest thing
+     when we don't. */
+  let cooldownTimer = null;
+
+  function startCooldown(seconds) {
+    const btn = document.getElementById('forgot-btn');
+    clearInterval(cooldownTimer);
+    let left = seconds;
+    btn.disabled = true;
+    const tick = () => {
+      if (left <= 0) {
+        clearInterval(cooldownTimer);
+        cooldownTimer = null;
+        btn.disabled = false;
+        btn.textContent = lang === 'es' ? 'Enviar enlace' : 'Send link';
+        return;
+      }
+      btn.textContent = (lang === 'es' ? 'Espera ' : 'Wait ') + left + 's';
+      left--;
+    };
+    tick();
+    cooldownTimer = setInterval(tick, 1000);
+  }
+
+  function showRateLimit(error) {
+    const errEl = document.getElementById('form-error');
+    const btn = document.getElementById('forgot-btn');
+    const raw = (error && error.message) || '';
+    const match = raw.match(/after (\d+) seconds?/i);
+
+    if (match) {
+      const secs = parseInt(match[1], 10);
+      setMessage(errEl,
+        'Ya pediste un enlace hace poco. Puedes intentar de nuevo en ' + secs + ' segundos.',
+        'You just requested a link. You can try again in ' + secs + ' seconds.');
+      startCooldown(secs);
+      return;
+    }
+
+    /* No number means the project-wide send cap, which resets on the hour,
+       not in "a few minutes". Point at a human instead of a retry loop. */
+    setMessage(errEl,
+      'Alcanzamos el limite de correos de recuperacion por ahora. Puede tardar hasta una hora en liberarse. Si es urgente, escribenos a <a href="mailto:hola@proplync.mx">hola@proplync.mx</a> y te ayudamos a entrar.',
+      'We have hit the recovery email limit for now. It can take up to an hour to clear. If this is urgent, email <a href="mailto:hola@proplync.mx">hola@proplync.mx</a> and we will get you back in.');
+    btn.disabled = false;
+    btn.textContent = lang === 'es' ? 'Enviar enlace' : 'Send link';
+  }
+
   async function handleForgot(evt) {
     evt.preventDefault();
     const errEl = document.getElementById('form-error');
@@ -100,9 +155,8 @@
          swallowed on purpose: a "no such account" error would let anyone
          test which emails are registered here. */
       if (error && error.status === 429) {
-        throw new Error(lang === 'es'
-          ? 'Demasiados intentos. Espera unos minutos e intenta de nuevo.'
-          : 'Too many attempts. Wait a few minutes and try again.');
+        showRateLimit(error);
+        return;
       }
 
       document.getElementById('forgot-form').style.display = 'none';
