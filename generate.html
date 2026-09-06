@@ -346,7 +346,22 @@
   .mock-story .mock-content{position:absolute;left:9%;right:9%;bottom:17%}
   .mock-story .mock-title{font-family:var(--display);color:#fff;font-size:.96rem;line-height:1.18;margin-bottom:5px}
   .mock-story .mock-loc{font-family:var(--mono);color:var(--gold);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase}
-  .mock-story .mock-cta{position:absolute;left:0;right:0;bottom:5%;text-align:center;font-family:var(--body);font-weight:600;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.8)}
+  /* Mirrors .tpl-story: gold pill CTA, op badge under the sticker, specs row. */
+  .mock-story .mock-cta{
+    position:absolute;left:9%;right:9%;bottom:6%;text-align:center;
+    background:var(--gold);color:var(--ink);
+    font-family:var(--body);font-weight:700;font-size:.6rem;
+    padding:7px 10px;border-radius:7px;
+  }
+  .mock-story .mock-op{
+    position:absolute;top:14%;right:7%;font-family:var(--mono);font-weight:700;font-size:.5rem;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+    border:1px solid var(--gold);padding:3px 7px;border-radius:5px;background:rgba(10,22,40,.35);
+  }
+  .mock-story .mock-specs{display:flex;align-items:center;gap:9px;border-top:1px solid rgba(255,255,255,.22);padding-top:8px;margin-top:8px}
+  .mock-story .mock-spec{font-family:var(--mono);color:#fff;font-size:.6rem;font-weight:700;line-height:1.1}
+  .mock-story .mock-spec small{display:block;font-size:.42rem;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:2px}
+  .mock-story .mock-spec-div{width:1px;height:15px;background:rgba(255,255,255,.22)}
 
   .mock-carousel-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
   .mock-slide{
@@ -466,13 +481,42 @@
     padding:20px 32px;border-radius:12px;
     transform:rotate(3deg);
   }
-  .tpl-story .content{position:absolute;bottom:200px;left:60px;right:60px}
-  .tpl-story .title{font-family:'Fraunces',Georgia,serif;font-size:56px;color:#fff;font-weight:400;line-height:1.15;margin-bottom:16px}
-  .tpl-story .location{font-family:'Space Mono',monospace;font-size:20px;color:#c9a96e;letter-spacing:.12em;text-transform:uppercase}
+  /* Same badge as the post, so the set reads as one system. */
+  /* Sits under the price sticker, which owns the top-right corner. */
+  .tpl-story .op-badge{
+    position:absolute;top:206px;right:60px;
+    font-family:'Space Mono',monospace;font-weight:700;font-size:22px;
+    letter-spacing:.16em;text-transform:uppercase;color:#c9a96e;
+    border:2px solid #c9a96e;padding:11px 22px;border-radius:8px;
+    background:rgba(10,22,40,.35);
+  }
+  .tpl-story .content{position:absolute;bottom:260px;left:60px;right:60px}
+  .tpl-story .location{
+    font-family:'Space Mono',monospace;font-size:20px;color:#c9a96e;
+    letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px;
+  }
+  .tpl-story .title{
+    font-family:'Fraunces',Georgia,serif;font-size:62px;color:#fff;font-weight:400;
+    line-height:1.08;margin-bottom:28px;
+  }
+  .tpl-story .specs{
+    display:flex;align-items:center;gap:22px;
+    border-top:1px solid rgba(255,255,255,.22);padding-top:24px;
+  }
+  .tpl-story .spec{font-family:'Space Mono',monospace;font-size:27px;color:#fff;font-weight:700}
+  .tpl-story .spec small{
+    display:block;font-size:13px;font-weight:400;letter-spacing:.14em;
+    text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:5px;
+  }
+  .tpl-story .spec-div{width:1px;height:40px;background:rgba(255,255,255,.22)}
+  /* Was faint uppercase text that read as a caption. A story CTA competes with
+     a swipe, so it has to look like something you tap. */
   .tpl-story .cta{
-    position:absolute;bottom:80px;left:0;right:0;text-align:center;
-    font-family:'Hanken Grotesk',sans-serif;font-size:22px;color:rgba(255,255,255,.7);
-    letter-spacing:.1em;text-transform:uppercase;
+    position:absolute;bottom:110px;left:60px;right:60px;
+    display:flex;align-items:center;justify-content:center;
+    background:#c9a96e;color:#0a1628;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:30px;
+    letter-spacing:.02em;padding:26px 32px;border-radius:14px;text-align:center;
   }
   .tpl-story .brand-wm{position:absolute;top:80px;left:60px;font-family:'Fraunces',Georgia,serif;font-size:18px;color:rgba(255,255,255,.5)}
 
@@ -1602,10 +1646,12 @@ function renderStoryPreview(story, prop) {
   return `
     <div class="mock-story" style="${bg}">
       <div class="mock-overlay"></div>
-      <div class="mock-sticker">${prop.currency} $${prop.formatted}</div>
+      <div class="mock-sticker">${prop.currency} $${prop.formatted}${per(prop)}</div>
+      <div class="mock-op">${opLabel(prop)}</div>
       <div class="mock-content">
+        <div class="mock-loc">${[prop.neighborhood, prop.town].filter(Boolean).join(' · ')}</div>
         <div class="mock-title">${story.headline || prop.title || ''}</div>
-        <div class="mock-loc">${(prop.neighborhood ? prop.neighborhood + ' · ' : '') + prop.town}</div>
+        ${specRow(prop, 'mock-spec')}
       </div>
       <div class="mock-cta">${story.cta_text || ''}</div>
     </div>
@@ -2058,10 +2104,18 @@ function specRow(prop, cls) {
 
 async function downloadPost() {
   if (!checkLibsLoaded()) return;
-  const prop = getPropertyData();
-  const post = generatedContent.post;
-  const area = document.getElementById('render-area');
+  try {
+    const blob = await renderPostBlob();
+    triggerDownload(blob, 'proplync-post-1080x1080.png');
+  } catch (e) {
+    alert((lang === 'es' ? 'Error al renderizar: ' : 'Render error: ') + e.message);
+  }
+}
 
+/* One builder for the post, so the file an agent downloads and the image that
+   goes to Instagram cannot drift apart. */
+function buildPostNode() {
+  const prop = getPropertyData();
   const div = document.createElement('div');
   div.className = 'tpl-post';
   div.style.width = '1080px';
@@ -2083,19 +2137,28 @@ async function downloadPost() {
     </div>
     <div class="brand-wm">Proplync.mx</div>
   `;
+  return div;
+}
 
+async function withPostCanvas(fn) {
+  const area = document.getElementById('render-area');
+  const div = buildPostNode();
   area.appendChild(div);
-
   try {
-    const canvas = await renderToCanvas(div);
-    canvas.toBlob(blob => {
-      triggerDownload(blob, 'proplync-post-1080x1080.png');
-    }, 'image/png');
-  } catch(e) {
-    alert((lang === 'es' ? 'Error al renderizar: ' : 'Render error: ') + e.message);
+    return await fn(await renderToCanvas(div));
   } finally {
     area.removeChild(div);
   }
+}
+
+function renderPostBlob() {
+  return withPostCanvas(canvas => new Promise((resolve, reject) => {
+    canvas.toBlob(b => b ? resolve(b) : reject(new Error('canvas empty')), 'image/png');
+  }));
+}
+
+function renderPostCanvas() {
+  return withPostCanvas(canvas => canvas.toDataURL('image/png'));
 }
 
 /* Publishes via Meta's official Instagram Graph API (api/instagram-publish.js) —
@@ -2106,19 +2169,24 @@ async function publishInstagram() {
   const post = generatedContent.post;
   const isEs = lang === 'es';
 
-  if (!propertyImageUrl) {
-    alert(isEs ? 'Esta propiedad no tiene una foto publica para publicar.' : 'This property has no public photo to publish.');
-    return;
-  }
-  if (propertyImageUrl.startsWith('data:')) {
-    alert(isEs
-      ? 'Instagram necesita una foto con URL publica, no una subida localmente. Descarga el PNG y publicalo manualmente, o usa una propiedad con URL de foto.'
-      : 'Instagram needs a publicly reachable photo URL, not a locally uploaded one. Download the PNG and post it manually, or use a property with a photo URL.');
-    return;
-  }
+  if (!checkLibsLoaded()) return;
 
   const caption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
   if (!confirm((isEs ? 'Esto publicara de inmediato en tu cuenta real de Instagram:' : 'This will publish immediately to your real Instagram account:') + '\n\n' + caption)) {
+    return;
+  }
+
+  /* Publish the same branded 1080x1080 the agent just approved. This used to
+     send propertyImageUrl — the raw photo — so what shipped to Instagram had
+     no price, no specs and no watermark, and looked nothing like the preview.
+     A locally uploaded photo used to block publishing outright for the same
+     reason; it no longer matters, because the render is what gets posted and
+     the server hosts it. */
+  let imageBase64;
+  try {
+    imageBase64 = await renderPostCanvas();
+  } catch (e) {
+    alert((isEs ? 'No se pudo generar la imagen: ' : 'Could not build the image: ') + e.message);
     return;
   }
 
@@ -2126,7 +2194,7 @@ async function publishInstagram() {
     const r = await fetch('/api/instagram-publish', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ imageUrl: propertyImageUrl, caption })
+      body: JSON.stringify({ imageBase64, caption })
     });
     const data = await r.json();
     if (!r.ok || data.error) {
@@ -2166,7 +2234,8 @@ async function downloadCarousel() {
       html: `
         <div style="position:absolute;inset:0;${bgImg || 'background:linear-gradient(135deg,#1f6b67,#0a1628);'}"></div>
         <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,.1),rgba(10,22,40,.7))"></div>
-        <div style="position:absolute;top:50px;right:50px;background:#c9a96e;color:#0a1628;font-family:'Space Mono',monospace;font-weight:700;font-size:32px;padding:16px 28px;border-radius:10px">${prop.currency} $${prop.formatted}</div>
+        <div style="position:absolute;top:50px;left:50px;font-family:'Space Mono',monospace;font-weight:700;font-size:19px;letter-spacing:.16em;text-transform:uppercase;color:#c9a96e;border:2px solid #c9a96e;padding:9px 18px;border-radius:8px;background:rgba(10,22,40,.35)">${opLabel(prop)}</div>
+        <div style="position:absolute;top:50px;right:50px;background:#c9a96e;color:#0a1628;font-family:'Space Mono',monospace;font-weight:700;font-size:32px;padding:16px 28px;border-radius:8px">${prop.currency} $${prop.formatted}${per(prop)}</div>
         <div style="position:absolute;bottom:60px;left:60px;right:60px">
           <div style="font-family:'Fraunces',Georgia,serif;font-size:52px;color:#fff;font-weight:400;line-height:1.15;margin-bottom:14px">${carousel[0].slide_title}</div>
           <div style="font-family:'Space Mono',monospace;font-size:18px;color:#c9a96e;letter-spacing:.12em;text-transform:uppercase">${prop.neighborhood} · ${prop.town}</div>
@@ -2290,12 +2359,14 @@ async function downloadStory() {
     <div style="position:absolute;inset:0;${bgStyle}"></div>
     <div class="overlay"></div>
     <div class="brand-wm">Proplync.mx</div>
-    <div class="price-sticker">${prop.currency} $${prop.formatted}</div>
+    <div class="op-badge">${opLabel(prop)}</div>
+    <div class="price-sticker">${prop.currency} $${prop.formatted}${per(prop)}</div>
     <div class="content">
+      <div class="location">${[prop.neighborhood, prop.town].filter(Boolean).join(' · ')}</div>
       <div class="title">${story.headline || prop.title}</div>
-      <div class="location">${prop.neighborhood} · ${prop.town}</div>
+      ${specRow(prop)}
     </div>
-    <div class="cta">${story.cta_text || (lang === 'es' ? 'Desliza para ver mas' : 'Swipe up to see more')}</div>
+    <div class="cta">${story.cta_text || (lang === 'es' ? 'Escribe DM para agendar' : 'DM to book a viewing')}</div>
   `;
 
   area.appendChild(div);
