@@ -148,14 +148,16 @@ nav{display:flex;align-items:center;gap:var(--sp-8);height:72px}
 }
 .nav-login-mobile svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;flex:none}
 
-@media (max-width:900px){
-  nav{height:64px}
+/* Collapse to the hamburger at 1150px, not 900. The full link row plus the
+   language toggle and the CTA needs about 1300px to lay out; between 900 and
+   1150 it ran past the viewport, and because .wrap then sized itself against
+   the wider scroll box it dragged the whole page into horizontal scroll and
+   pushed the CTA off the right edge. */
+@media (max-width:1150px){
   .navlinks{display:none}
   .navtoggle{display:flex}
-  .nav-login-mobile{display:inline-flex}
-  .navtools .btn-gold{display:none}
   .navlinks.open{
-    display:flex;position:absolute;top:64px;left:0;right:0;
+    display:flex;position:absolute;top:100%;left:0;right:0;
     flex-direction:column;
     background:rgba(10,22,40,.97);
     backdrop-filter:blur(24px);
@@ -171,7 +173,33 @@ nav{display:flex;align-items:center;gap:var(--sp-8);height:72px}
     font-size:.92rem;
   }
   .navlinks.open a:hover{background:rgba(240,237,232,.06)}
+}
+
+@media (max-width:900px){
+  nav{height:64px}
+  .nav-login-mobile{display:inline-flex}
+  .navtools .btn-gold{display:none}
   .btn-gold{font-size:.82rem;padding:10px 18px}
+}
+
+/* Below this the header bar itself stops fitting: brand, language toggle,
+   login and hamburger together exceed the viewport. Shed the login label and
+   tighten spacing rather than let the page scroll sideways. */
+@media (max-width:430px){
+  .navtools{gap:8px}
+  .nav-login-mobile{padding:8px 10px}
+  .nav-login-mobile span{display:none}
+}
+@media (max-width:380px){
+  .brand{font-size:.95rem}
+  .brand .mark{width:24px;height:24px}
+  .navtools{gap:6px}
+  .lang button{padding:5px 8px}
+}
+@media (max-width:340px){
+  header .wrap{padding:0 12px}
+  .navtools{gap:4px}
+  .navtoggle{padding:6px}
 }
 
 @keyframes navSlide{
