@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="Nueva contrasena &middot; Proplync.mx" data-en="New password &middot; Proplync.mx">Nueva contrasena &middot; Proplync.mx</title>
+<meta name="description" content="Crea una contrasena nueva para tu cuenta de Proplync.mx.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .auth-main{padding:80px 20px;min-height:calc(100vh - 200px);display:flex;align-items:center;justify-content:center}
+  .auth-checking{font-size:.9rem;color:var(--on-sand-dim);text-align:center;padding:12px 0}
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Proplync<span class="accent">.mx</span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/#como" data-es="Como funciona" data-en="How it works">Como funciona</a>
+      <a href="/signup" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
+    </div>
+    <div class="navtools">
+      <div class="lang"><button id="es" class="on" onclick="setLang('es')">ES</button><button id="en" onclick="setLang('en')">EN</button></div>
+    </div>
+    <button class="navtoggle" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<main class="auth-main">
+  <div class="auth-card">
+    <h1 data-es="Nueva contrasena" data-en="New password">Nueva contrasena</h1>
+    <p class="sub" data-es="Elige una contrasena nueva para tu cuenta." data-en="Choose a new password for your account.">Elige una contrasena nueva para tu cuenta.</p>
+
+    <div id="form-error" style="display:none" class="form-error"></div>
+    <div id="form-success" style="display:none" class="form-success"></div>
+
+    <div id="checking" class="auth-checking" data-es="Validando el enlace..." data-en="Validating your link...">Validando el enlace...</div>
+
+    <form id="reset-form" style="display:none" onsubmit="handleReset(event)">
+      <div class="field">
+        <label class="form-label" for="password" data-es="Contrasena nueva" data-en="New password">Contrasena nueva</label>
+        <input class="form-input" id="password" type="password" autocomplete="new-password" minlength="8" required>
+        <div class="form-hint" data-es="Minimo 8 caracteres." data-en="At least 8 characters.">Minimo 8 caracteres.</div>
+      </div>
+      <div class="field">
+        <label class="form-label" for="password2" data-es="Confirma la contrasena" data-en="Confirm password">Confirma la contrasena</label>
+        <input class="form-input" id="password2" type="password" autocomplete="new-password" minlength="8" required>
+      </div>
+      <button class="btn btn-gold btn-block" type="submit" id="reset-btn" data-es="Guardar contrasena" data-en="Save password">Guardar contrasena</button>
+    </form>
+
+    <div id="switch-line" class="switch" data-es="&iquest;Problemas? <a href='/forgot'>Pide un enlace nuevo</a>" data-en="Trouble? <a href='/forgot'>Request a new link</a>">&iquest;Problemas? <a href="/forgot">Pide un enlace nuevo</a></div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Proplync<span class="accent">.mx</span>
+    </a>
+    <span data-es="Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun" data-en="Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun">Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun</span>
+    <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/supabase-client.js"></script>
+<script>
+  function setMessage(el, es, en) {
+    el.setAttribute('data-es', es);
+    el.setAttribute('data-en', en);
+    el.innerHTML = lang === 'es' ? es : en;
+    el.style.display = 'block';
+  }
+
+  function showInvalidLink() {
+    document.getElementById('checking').style.display = 'none';
+    document.getElementById('reset-form').style.display = 'none';
+    setMessage(document.getElementById('form-error'),
+      'Este enlace no es valido o ya vencio. Pide uno nuevo para continuar.',
+      'This link is invalid or has expired. Request a new one to continue.');
+  }
+
+  function showResetForm() {
+    document.getElementById('checking').style.display = 'none';
+    document.getElementById('reset-form').style.display = 'block';
+  }
+
+  /* Supabase has shipped three shapes of recovery link over the years, and
+     which one arrives depends on the project's auth settings. Handle all of
+     them rather than betting on one:
+       - implicit  -> #access_token=...&type=recovery  (parsed by the SDK itself)
+       - PKCE      -> ?code=...
+       - token/OTP -> ?token_hash=...&type=recovery                           */
+  async function boot() {
+    const search = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+
+    if (hash.get('error_description') || search.get('error_description')) {
+      showInvalidLink();
+      return;
+    }
+
+    const sbClient = initSupabase();
+    let settled = false;
+    const ready = () => { if (!settled) { settled = true; showResetForm(); } };
+
+    sbClient.auth.onAuthStateChange((event, session) => { if (session) ready(); });
+
+    const code = search.get('code');
+    if (code) {
+      try { await sbClient.auth.exchangeCodeForSession(code); } catch (e) { /* fall through to the session check */ }
+    }
+
+    const tokenHash = search.get('token_hash');
+    if (tokenHash) {
+      try { await sbClient.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' }); } catch (e) { /* same */ }
+    }
+
+    const { data: { session } } = await sbClient.auth.getSession();
+    if (session) { ready(); return; }
+
+    /* detectSessionInUrl runs asynchronously on the hash form, so give it a
+       beat before declaring the link dead. */
+    setTimeout(async () => {
+      if (settled) return;
+      const { data: { session: later } } = await sbClient.auth.getSession();
+      if (later) ready(); else showInvalidLink();
+    }, 1500);
+  }
+
+  async function handleReset(evt) {
+    evt.preventDefault();
+    const errEl = document.getElementById('form-error');
+    errEl.style.display = 'none';
+    const btn = document.getElementById('reset-btn');
+    const password = document.getElementById('password').value;
+    const password2 = document.getElementById('password2').value;
+
+    if (password !== password2) {
+      setMessage(errEl, 'Las contrasenas no coinciden.', 'The passwords do not match.');
+      return;
+    }
+    if (password.length < 8) {
+      setMessage(errEl, 'La contrasena debe tener al menos 8 caracteres.', 'Password must be at least 8 characters.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = lang === 'es' ? 'Guardando...' : 'Saving...';
+
+    try {
+      const sbClient = initSupabase();
+      const { error } = await sbClient.auth.updateUser({ password });
+      if (error) throw error;
+
+      document.getElementById('reset-form').style.display = 'none';
+      document.getElementById('switch-line').style.display = 'none';
+      setMessage(document.getElementById('form-success'),
+        'Listo. Tu contrasena quedo actualizada, entrando al panel...',
+        'Done. Your password is updated, taking you to the dashboard...');
+      /* The recovery link already signed this browser in, so go straight in. */
+      setTimeout(() => { window.location.href = '/dashboard'; }, 1400);
+    } catch (e) {
+      const expired = e && (e.status === 401 || e.status === 403);
+      if (expired) {
+        showInvalidLink();
+        return;
+      }
+      setMessage(errEl, e.message, e.message);
+      btn.disabled = false;
+      btn.textContent = lang === 'es' ? 'Guardar contrasena' : 'Save password';
+    }
+  }
+
+  document.querySelectorAll('#navlinks a').forEach(a => a.addEventListener('click', () => document.getElementById('navlinks').classList.remove('open')));
+  boot();
+</script>
+</body>
+</html>

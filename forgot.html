@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-<title data-es="Iniciar sesion &middot; Proplync.mx" data-en="Log in &middot; Proplync.mx">Iniciar sesion &middot; Proplync.mx</title>
-<meta name="description" content="Accede al panel de tu inmobiliaria en Proplync.mx.">
+<title data-es="Recuperar contrasena &middot; Proplync.mx" data-en="Reset password &middot; Proplync.mx">Recuperar contrasena &middot; Proplync.mx</title>
+<meta name="description" content="Recupera el acceso a tu cuenta de Proplync.mx.">
+<meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -37,27 +38,21 @@
 
 <main class="auth-main">
   <div class="auth-card">
-    <h1 data-es="Bienvenido de vuelta" data-en="Welcome back">Bienvenido de vuelta</h1>
-    <p class="sub" data-es="Accede al panel de tu inmobiliaria." data-en="Access your agency's dashboard.">Accede al panel de tu inmobiliaria.</p>
+    <h1 data-es="Recuperar contrasena" data-en="Reset your password">Recuperar contrasena</h1>
+    <p class="sub" data-es="Te enviaremos un enlace para crear una contrasena nueva." data-en="We'll email you a link to create a new password.">Te enviaremos un enlace para crear una contrasena nueva.</p>
 
     <div id="form-error" style="display:none" class="form-error"></div>
+    <div id="form-success" style="display:none" class="form-success"></div>
 
-    <form id="login-form" onsubmit="handleLogin(event)">
+    <form id="forgot-form" onsubmit="handleForgot(event)">
       <div class="field">
         <label class="form-label" for="email" data-es="Correo electronico" data-en="Email">Correo electronico</label>
-        <input class="form-input" id="email" type="email" required>
+        <input class="form-input" id="email" type="email" autocomplete="email" required>
       </div>
-      <div class="field">
-        <label class="form-label label-row" for="password">
-          <span data-es="Contrasena" data-en="Password">Contrasena</span>
-          <a class="label-link" href="/forgot" data-es="&iquest;La olvidaste?" data-en="Forgot it?">&iquest;La olvidaste?</a>
-        </label>
-        <input class="form-input" id="password" type="password" required>
-      </div>
-      <button class="btn btn-gold btn-block" type="submit" id="login-btn" data-es="Iniciar sesion" data-en="Log in">Iniciar sesion</button>
+      <button class="btn btn-gold btn-block" type="submit" id="forgot-btn" data-es="Enviar enlace" data-en="Send link">Enviar enlace</button>
     </form>
 
-    <div class="switch" data-es="&iquest;No tienes cuenta? <a href='/signup'>Registrate gratis</a>" data-en="Don't have an account? <a href='/signup'>Sign up free</a>">&iquest;No tienes cuenta? <a href="/signup">Registrate gratis</a></div>
+    <div class="switch" data-es="&iquest;Ya la recordaste? <a href='/login'>Iniciar sesion</a>" data-en="Remembered it? <a href='/login'>Log in</a>">&iquest;Ya la recordaste? <a href="/login">Iniciar sesion</a></div>
   </div>
 </main>
 
@@ -76,36 +71,48 @@
 <script src="/js/i18n.js"></script>
 <script src="/js/supabase-client.js"></script>
 <script>
-  async function handleLogin(evt) {
+  /* Set both translations so the ES/EN toggle keeps working on text
+     we injected from JS, the same way static [data-es] nodes do. */
+  function setMessage(el, es, en) {
+    el.setAttribute('data-es', es);
+    el.setAttribute('data-en', en);
+    el.innerHTML = lang === 'es' ? es : en;
+    el.style.display = 'block';
+  }
+
+  async function handleForgot(evt) {
     evt.preventDefault();
     const errEl = document.getElementById('form-error');
+    const okEl = document.getElementById('form-success');
     errEl.style.display = 'none';
-    const btn = document.getElementById('login-btn');
+    const btn = document.getElementById('forgot-btn');
     const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
 
     btn.disabled = true;
-    btn.textContent = lang === 'es' ? 'Entrando...' : 'Signing in...';
+    btn.textContent = lang === 'es' ? 'Enviando...' : 'Sending...';
 
     try {
       const sbClient = initSupabase();
-      const { error } = await sbClient.auth.signInWithPassword({ email, password });
-      if (error) throw new Error(lang === 'es' ? 'Correo o contrasena incorrectos.' : 'Incorrect email or password.');
-      window.location.href = '/dashboard';
+      const { error } = await sbClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset'
+      });
+      /* Rate limiting is the one failure worth surfacing. Anything else is
+         swallowed on purpose: a "no such account" error would let anyone
+         test which emails are registered here. */
+      if (error && error.status === 429) {
+        throw new Error(lang === 'es'
+          ? 'Demasiados intentos. Espera unos minutos e intenta de nuevo.'
+          : 'Too many attempts. Wait a few minutes and try again.');
+      }
+
+      document.getElementById('forgot-form').style.display = 'none';
+      setMessage(okEl,
+        'Si existe una cuenta con ese correo, te enviamos un enlace. Revisa tu bandeja y la carpeta de spam &mdash; el enlace vence en una hora.',
+        'If an account exists for that email, we sent a link. Check your inbox and spam folder &mdash; the link expires in one hour.');
     } catch (e) {
-      /* textContent, not innerHTML: the message can come straight from the
-         auth server. Replacing the children also clears the link appended by
-         any previous failed attempt. */
-      errEl.textContent = e.message + ' ';
-      const help = document.createElement('a');
-      help.href = '/forgot';
-      help.setAttribute('data-es', '&iquest;Olvidaste tu contrasena?');
-      help.setAttribute('data-en', 'Forgot your password?');
-      help.textContent = lang === 'es' ? '¿Olvidaste tu contrasena?' : 'Forgot your password?';
-      errEl.appendChild(help);
-      errEl.style.display = 'block';
+      setMessage(errEl, e.message, e.message);
       btn.disabled = false;
-      btn.textContent = lang === 'es' ? 'Iniciar sesion' : 'Log in';
+      btn.textContent = lang === 'es' ? 'Enviar enlace' : 'Send link';
     }
   }
 
