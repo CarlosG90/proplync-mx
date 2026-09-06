@@ -289,6 +289,25 @@
   }
   .mock-post .mock-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,.05) 0%,rgba(10,22,40,.18) 45%,rgba(10,22,40,.88) 100%)}
   .mock-post .mock-price{position:absolute;top:6%;right:6%;background:var(--gold);color:var(--ink);font-family:var(--mono);font-weight:700;font-size:.76rem;padding:5px 10px;border-radius:6px}
+  /* Import-from-anything box */
+  /* This form sits on the dark ground, so colours come from the on-ink tokens.
+     --on-sand is the dark text meant for light surfaces and disappears here. */
+  .import-box{
+    border:1px dashed rgba(240,237,232,.22);border-radius:var(--radius-sm);
+    padding:18px;background:rgba(94,196,190,.06);
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .import-head{display:flex;flex-direction:column;gap:4px}
+  .import-title{font-family:var(--body);font-weight:700;font-size:.92rem;color:var(--on-ink)}
+  .import-sub{font-size:.82rem;color:var(--on-ink-dim);line-height:1.45}
+  .import-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .import-files{font-size:.78rem;color:var(--aqua);word-break:break-all}
+  .import-status{font-size:.82rem;line-height:1.45;min-height:1em}
+  .import-status.err{color:#e88a72}
+  .import-status.warn{color:#dfae63}
+  .import-status.ok{color:var(--aqua)}
+  #f-import-btn{align-self:flex-start}
+
   /* Amenity chips */
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
   .chip{
@@ -646,6 +665,25 @@
         <div class="field">
           <label class="form-label" data-es="Precio" data-en="Price">Precio</label>
           <input class="form-input" id="f-amount" type="number" min="0" value="245000">
+        </div>
+        <div class="field full">
+          <div class="import-box">
+            <div class="import-head">
+              <span class="import-title" data-es="Ya tienes la informacion en otro lado?" data-en="Already have this somewhere else?">Ya tienes la informacion en otro lado?</span>
+              <span class="import-sub" data-es="Sube la ficha en PDF, una foto de la hoja impresa, o pega el mensaje de WhatsApp. Llenamos el formulario por ti." data-en="Upload the PDF sheet, a photo of the printed page, or paste the WhatsApp message. We'll fill the form for you.">Sube la ficha en PDF, una foto de la hoja impresa, o pega el mensaje de WhatsApp. Llenamos el formulario por ti.</span>
+            </div>
+            <div class="import-row">
+              <button type="button" class="btn btn-dark" onclick="document.getElementById('f-import-file').click()" data-es="Subir PDF o foto" data-en="Upload PDF or photo">Subir PDF o foto</button>
+              <input type="file" id="f-import-file" accept="application/pdf,image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handleImportFiles(event)">
+              <span class="import-files" id="f-import-files"></span>
+            </div>
+            <textarea class="form-textarea" id="f-import-text" rows="3"
+              data-es-placeholder="O pega aqui el texto: 'Depa en Aldea Zama, 2 rec, 2 banos, 95m2, alberca y roof, 4.2 mdp'"
+              data-en-placeholder="Or paste text here: '2BR condo in Aldea Zama, 2 baths, 95m2, pool and roof, 4.2M MXN'"
+              placeholder="O pega aqui el texto: 'Depa en Aldea Zama, 2 rec, 2 banos, 95m2, alberca y roof, 4.2 mdp'"></textarea>
+            <button type="button" class="btn btn-gold" id="f-import-btn" onclick="runImport()" data-es="Leer y llenar" data-en="Read and fill">Leer y llenar</button>
+            <div class="import-status" id="f-import-status"></div>
+          </div>
         </div>
         <div class="field full">
           <label class="form-label" data-es="Amenidades" data-en="Amenities">Amenidades</label>
@@ -1806,6 +1844,126 @@ async function downloadPDF() {
 }
 
 /* ---------- 2. INSTAGRAM POST (html2canvas) ---------- */
+/* ---------- import from whatever the agent already has ----------
+   Agents keep listings as a developer's ficha PDF, a phone photo of a printed
+   sheet, or a forwarded WhatsApp message. Retyping that into this form is the
+   real work, and the reason a listing never gets posted. Read it instead.
+
+   Photos get downscaled before sending for the same reason listing photos do:
+   a raw phone shot is megabytes of base64 and Vercel caps the body at 4.5 MB.
+   PDFs go as-is, because downscaling would destroy the text. */
+let importFiles = [];
+
+async function handleImportFiles(evt) {
+  const picked = Array.from(evt.target.files || []).slice(0, 6);
+  const out = [];
+  for (const file of picked) {
+    if (file.type === 'application/pdf') {
+      if (file.size > 4 * 1024 * 1024) {
+        setImportStatus((lang === 'es' ? 'PDF muy grande: ' : 'PDF too large: ') + file.name, 'err');
+        continue;
+      }
+      out.push({ name: file.name, mediaType: 'application/pdf', data: await fileToBase64(file) });
+    } else if (/^image\//.test(file.type)) {
+      out.push({ name: file.name, mediaType: 'image/jpeg', data: await downscaleToDataUrl(file, 1600) });
+    }
+  }
+  importFiles = out;
+  document.getElementById('f-import-files').textContent = out.map(f => f.name).join(', ');
+  evt.target.value = '';
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+function setImportStatus(msg, kind) {
+  const el = document.getElementById('f-import-status');
+  el.textContent = msg;
+  el.className = 'import-status' + (kind ? ' ' + kind : '');
+}
+
+async function runImport() {
+  const isEs = lang === 'es';
+  const text = document.getElementById('f-import-text').value.trim();
+  if (!importFiles.length && !text) {
+    setImportStatus(isEs ? 'Sube un archivo o pega el texto primero.' : 'Upload a file or paste the text first.', 'err');
+    return;
+  }
+
+  const btn = document.getElementById('f-import-btn');
+  btn.disabled = true;
+  setImportStatus(isEs ? 'Leyendo...' : 'Reading...', '');
+
+  try {
+    const r = await fetch('/api/extract', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ files: importFiles, text })
+    });
+    const data = await r.json();
+
+    if (data.error === 'extraction_not_configured') {
+      throw new Error(isEs ? 'La lectura automatica no esta configurada todavia.' : 'Automatic reading is not configured yet.');
+    }
+    if (!r.ok || data.error) throw new Error(data.detail || data.error || ('HTTP ' + r.status));
+
+    applyExtracted(data);
+  } catch (e) {
+    setImportStatus((isEs ? 'No se pudo leer: ' : 'Could not read: ') + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* Fill the form, then say plainly what could not be found. The agent publishes
+   this under their own name, so a silently guessed field is worse than a blank
+   one. */
+function applyExtracted(data) {
+  const isEs = lang === 'es';
+  const p = data.property || {};
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+
+  set('f-title', p.title);
+  set('f-town', p.town);
+  set('f-neighborhood', p.neighborhood);
+  set('f-bedrooms', p.bedrooms);
+  set('f-bathrooms', p.bathrooms);
+  set('f-size', p.size);
+  set('f-parking', p.parking);
+  set('f-amount', p.amount);
+  if (p.operation) document.getElementById('f-operation').value = p.operation;
+  if (p.currency) document.getElementById('f-currency').value = p.currency;
+
+  /* Match extracted amenities onto chips where we can; anything left over goes
+     into the free-text box rather than being dropped. */
+  if (p.features) {
+    const leftover = [];
+    p.features.split(/[,;]/).map(s => s.trim()).filter(Boolean).forEach(term => {
+      const hit = AMENITIES.find(a =>
+        a.es.toLowerCase() === term.toLowerCase() || a.en.toLowerCase() === term.toLowerCase());
+      if (hit) selectedAmenities.add(hit.id); else leftover.push(term);
+    });
+    if (leftover.length) {
+      const box = document.getElementById('f-features');
+      box.value = [box.value.trim(), leftover.join(', ')].filter(Boolean).join(', ').slice(0, 240);
+    }
+    renderChips();
+    updateFeatureMeter();
+  }
+
+  const missing = (data.missing || []).length;
+  const parts = [isEs ? 'Listo. Revisa los datos antes de generar.' : 'Done. Check the fields before generating.'];
+  if (missing) parts.push((isEs ? 'No encontramos: ' : 'Not found: ') + data.missing.join(', ') + '.');
+  if (data.notes) parts.push(data.notes);
+  setImportStatus(parts.join(' '), missing ? 'warn' : 'ok');
+}
+
 /* ---------- amenity chips ----------
    The generator's weakest output came from listings with nothing but numbers:
    with no material to work from the model either restated the form or invented
