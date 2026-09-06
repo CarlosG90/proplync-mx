@@ -384,10 +384,13 @@ export default async function handler(req, res) {
 
 Reglas obligatorias (aplican a los 7 formatos):
 - Nunca inventes ni infles datos (metros, anio, permisos, vistas, escuelas). Usa solo lo que se te dio.
+- No le agregues adjetivos a un dato que no los traia. Si dice "Alberca", es "alberca", no "alberca privada". Si dice "Cocina equipada", no es "cocina de lujo". Un calificativo agregado cambia el valor real del inmueble y termina publicado como si fuera cierto.
+- No describas luz, horarios, sonidos ni sensaciones que no esten en los datos ("luz de la tarde", "brisa del mar", "silencio total"). Puedes ser sensorial solo con lo que si te dieron.
 - Lidera cada pieza con la caracteristica mas fuerte del inmueble, no con un listado seco de datos.
 - Se breve: cada pieza lo mas corta posible sin perder la informacion. Se especifico y sensorial ("luz de la manana entra por la cocina"), evita cliches vacios ("no te lo puedes perder", "unico en su tipo") y el exceso de signos de exclamacion.
 - Describe la propiedad y el trato, nunca al comprador ideal (nada de "perfecto para una familia joven" ni lenguaje que discrimine o segregue por caracteristicas protegidas).
-- No inventes urgencia falsa ("se va a acabar") salvo que sea un plazo real dado en los datos.
+- No inventes urgencia falsa ("se va a acabar", "ultima oportunidad"). Pero si los datos traen una fecha real (entrega, preventa, plazo), usala: es urgencia honesta y es la razon por la que alguien actua hoy.
+- Prohibido el parrafo-inventario: enumerar las caracteristicas en una sola oracion ("Villa de 3 recamaras con alberca, roof y cocina equipada") no es copy, es la ficha con comas. Cada pieza elige UNA cosa y la hace importar; el resto son datos de apoyo.
 - El copy publicitario (formato "ad") es el mas sensible: usa vocabulario real de botones de CTA (Mas informacion, Contactar, Agendar visita), sin superlativos no verificables.
 
 Para el formato "video" (un Reel corto): elige EXACTAMENTE UNO de estos 12 tipos probados de Reel inmobiliario
@@ -414,28 +417,28 @@ Responde UNICAMENTE con un objeto JSON valido (sin markdown, sin backticks, sin 
   },
   "post": {
     "caption": "la primera linea es un gancho que funciona solo, porque Instagram corta el resto; luego 1-2 oraciones concretas; cierra con una pregunta o una accion. Maximo 2 emojis en todo el texto",
-    "hashtags": "10 hashtags en capas: 2 amplios, 4 de zona o colonia, 3 de intencion de busqueda, y #Proplync al final. Sin repetir la misma palabra entre ellos"
+    "hashtags": "10 hashtags EN ESPANOL, en capas: 2 amplios de la region, 4 de ciudad y colonia, 3 de intencion de compra real (como #CasasEnVentaTulum, #PreventaTulum, #DepartamentosEnRentaCancun: lo que teclea alguien que ya quiere comprar o rentar), y #Proplync al final. Prohibidos los genericos en ingles tipo #LuxuryLiving o #RealEstate: no los busca nadie que compre aqui"
   },
   "carousel": [
-    { "slide_title": "titulo portada", "slide_text": "texto breve portada" },
-    { "slide_title": "titulo ubicacion", "slide_text": "texto sobre la zona" },
-    { "slide_title": "titulo interior", "slide_text": "texto sobre espacios" },
-    { "slide_title": "titulo amenidades", "slide_text": "texto sobre caracteristicas" },
-    { "slide_title": "titulo contacto", "slide_text": "texto CTA" }
+    { "slide_title": "portada: el dato mas fuerte, no el nombre del inmueble", "slide_text": "una linea que haga deslizar" },
+    { "slide_title": "ubicacion: di la zona y su ventaja concreta", "slide_text": "distancias o referencias reales de los datos" },
+    { "slide_title": "interior: nombra el espacio, no la categoria", "slide_text": "que hay adentro, con numeros" },
+    { "slide_title": "amenidades: la que mas pesa en la decision", "slide_text": "por que importa esa amenidad aqui" },
+    { "slide_title": "cierre: la accion, no la palabra Contacto", "slide_text": "CTA con fecha o disponibilidad real si existe" }
   ],
   "story": {
     "headline": "texto impactante corto para story, maximo 60 caracteres",
     "cta_text": "una accion concreta que genera un lead (ej. Manda DM por el precio, Agenda tu visita), nunca un gesto como 'desliza para ver mas'"
   },
   "email": {
-    "subject": "asunto del correo",
-    "preview_text": "texto de previsualizacion (max 90 caracteres)",
-    "body_html": "un parrafo breve de texto comercial en texto plano (sin HTML)"
+    "subject": "max 45 caracteres para que no se corte en movil. Lidera con el dato mas fuerte o con una pregunta concreta, nunca con 'Nueva propiedad en'",
+    "preview_text": "max 90 caracteres. Continua el asunto, no lo repitas ni encajes el precio otra vez: es la segunda linea del gancho",
+    "body_html": "texto plano sin HTML, maximo 60 palabras, en 2 parrafos cortos. Abre con la razon por la que esta propiedad importa, nunca con 'Presentamos' ni 'Te compartimos'. Cierra con UNA accion concreta y una fecha o disponibilidad real si la hay, no con 'contactanos para mas informacion'"
   },
   "video": {
     "reel_type": "uno de los 12 tipos de Reel listados arriba",
     "hook_text": "texto del hook (0-2s), curiosidad o dato concreto",
-    "scene_texts": ["escena del cuerpo 1", "escena del cuerpo 2", "escena del cuerpo 3"],
+    "scene_texts": ["las 3 escenas deben CUMPLIR la promesa del tipo de Reel que elegiste, no ser una lista de tomas. Si elegiste 'Por que me encanta esta casa', son 3 razones personales; si elegiste 'Adivina el precio', son las pistas antes de revelar. Escribir 'Cocina equipada' como escena no cumple nada", "escena 2", "escena 3"],
     "cta_text": "accion especifica final (ej. Escribe TOUR para agendar tu visita)"
   },
   "ad": {
@@ -449,6 +452,8 @@ Responde UNICAMENTE con un objeto JSON valido (sin markdown, sin backticks, sin 
 
 Mandatory rules (apply to all 7 formats):
 - Never invent or inflate facts (size, year, permits, views, schools). Use only what was given.
+- Never add an adjective to a fact that arrived without one. "Pool" is a pool, not a "private pool"; "equipped kitchen" is not a "luxury kitchen". An added qualifier changes what the property is worth and gets published as if it were true.
+- Do not describe light, time of day, sound or feeling that is not in the data ("afternoon light", "ocean breeze"). Be sensory only about what you were actually given.
 - Lead every piece with the property's strongest feature, not a dry spec dump.
 - Be brief: keep every piece as short as it can be without losing the facts. Be specific and sensory ("morning light pours into the kitchen"), avoid empty cliches ("must see", "one of a kind") and exclamation-mark overload.
 - Describe the property and the deal, never the ideal buyer (no "perfect for a young family" or language that discriminates/steers by protected characteristics).
