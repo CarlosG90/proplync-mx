@@ -825,10 +825,23 @@
      NAV — Soluciones dropdown
      ================================================================ */
   .navdrop{position:relative}
+  /* Deliberately mirrors .navlinks a in css/nav.css. This is a <button>, so
+     that rule never applied to it: it fell back to inheriting body's --ink,
+     which is the dark text colour meant for light backgrounds and is all but
+     invisible against the dark header. */
   .navdrop-trigger{
-    font:inherit;color:inherit;background:none;border:0;cursor:pointer;
-    display:inline-flex;align-items:center;gap:5px;padding:0;
+    background:none;border:0;cursor:pointer;
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:var(--body);font-size:.82rem;font-weight:500;
+    letter-spacing:.01em;
+    color:var(--on-ink-dim);
+    padding:8px 14px;
+    border-radius:999px;
+    white-space:nowrap;
+    transition:color var(--duration) ease,background var(--duration) ease;
   }
+  .navdrop-trigger:hover,
+  .navdrop.open .navdrop-trigger{color:var(--on-ink);background:rgba(240,237,232,.06)}
   .navdrop-trigger svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;transition:transform var(--duration) ease}
   .navdrop.open .navdrop-trigger svg{transform:rotate(180deg)}
   .navdrop-menu{
@@ -880,8 +893,6 @@
       Proplync<span class="accent">.mx</span>
     </a>
     <div class="navlinks" id="navlinks">
-      <a href="/search" data-es="Buscar propiedades" data-en="Find properties">Buscar propiedades</a>
-      <a href="/generate" style="color:var(--gold)" data-es="Generador" data-en="Generator">Generador</a>
       <div class="navdrop" id="navdrop">
         <button type="button" class="navdrop-trigger" onclick="document.getElementById('navdrop').classList.toggle('open')" data-es="Soluciones" data-en="Solutions">Soluciones<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
         <div class="navdrop-menu">
@@ -907,6 +918,8 @@
           </a>
         </div>
       </div>
+      <a href="/search" data-es="Buscar propiedades" data-en="Find properties">Buscar propiedades</a>
+      <a href="/generate" style="color:var(--gold)" data-es="Generador" data-en="Generator">Generador</a>
       <a href="#roi" data-es="Calculadora" data-en="ROI">Calculadora</a>
       <a href="#precios" data-es="Precios" data-en="Pricing">Precios</a>
       <a href="#contacto" data-es="Contacto" data-en="Contact">Contacto</a>

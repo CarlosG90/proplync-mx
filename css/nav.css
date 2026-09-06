@@ -36,6 +36,10 @@ nav{display:flex;align-items:center;gap:var(--sp-8);height:72px}
   letter-spacing:.01em;
   padding:8px 14px;
   border-radius:999px;
+  /* Two-word labels ("Buscar propiedades", "Soy agente") broke onto a second
+     line as soon as the row got tight, leaving the bar ragged. Let the row
+     collapse to the hamburger instead of reflowing the labels. */
+  white-space:nowrap;
   transition:color var(--duration) ease,background var(--duration) ease;
   position:relative;
 }
