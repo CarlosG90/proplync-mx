@@ -289,6 +289,13 @@
   }
   .mock-post .mock-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,.05) 0%,rgba(10,22,40,.18) 45%,rgba(10,22,40,.88) 100%)}
   .mock-post .mock-price{position:absolute;top:6%;right:6%;background:var(--gold);color:var(--ink);font-family:var(--mono);font-weight:700;font-size:.76rem;padding:5px 10px;border-radius:6px}
+  .claim-warn{
+    font-size:.84rem;line-height:1.5;color:#dfae63;
+    background:rgba(223,174,99,.1);border-left:3px solid #dfae63;
+    border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;
+  }
+  .claim-warn code{font-family:var(--mono);font-size:.9em;color:#f0ede8}
+
   /* Import-from-anything box */
   /* This form sits on the dark ground, so colours come from the on-ink tokens.
      --on-sand is the dark text meant for light surfaces and disappears here. */
@@ -1507,6 +1514,7 @@ async function handleGenerate() {
     isDemoMode = false;
     generatedContent = result.content;
     renderResults(data, result.content, false);
+    showClaimWarnings(result.warnings);
   } catch (err) {
     showError((lang === 'es'
       ? 'No se pudo generar el contenido. '
@@ -1515,6 +1523,29 @@ async function handleGenerate() {
     document.getElementById('gen-btn').disabled = false;
     document.getElementById('gen-loading').classList.remove('active');
   }
+}
+
+/* The server flags claims the copy made that the agent never supplied. Show
+   them above the results: this goes out under the agent's name, and a wrong
+   "alberca propia" is the kind of thing a buyer finds out on the viewing. */
+function showClaimWarnings(list) {
+  const old = document.getElementById('claim-warn');
+  if (old) old.remove();
+  if (!list || !list.length) return;
+
+  const isEs = lang === 'es';
+  const el = document.createElement('div');
+  el.id = 'claim-warn';
+  el.className = 'claim-warn';
+  el.innerHTML = '<strong>' +
+    (isEs ? 'Revisa antes de publicar.' : 'Check before publishing.') + '</strong> ' +
+    (isEs
+      ? 'El texto menciona esto y no venia en tus datos: '
+      : 'The copy mentions these and they were not in your data: ') +
+    list.map(w => '<code>' + w + '</code>').join(', ') + '.';
+
+  const anchor = document.getElementById('gen-error');
+  anchor.parentNode.insertBefore(el, anchor);
 }
 
 function showError(msg) {

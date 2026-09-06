@@ -24,6 +24,43 @@ const JPEG_QUALITY_STD = 82;
 const JPEG_QUALITY_HIGH = 92;
 
 /* ── Photo enhancement handler ── */
+/* Claims the copy may not make up, because each one changes what the property
+   is worth or what a buyer thinks they are agreeing to. Every entry here was
+   observed in real production output from a listing whose data said nothing
+   about it: "alberca propia" from a bare "Alberca", "planta baja y primer
+   piso" from no floor data at all, "zona consolidada y segura" from nothing
+   but a neighborhood name.
+
+   Prompt rules alone do not stop it. Told explicitly not to add adjectives to
+   facts, the model kept the structured feature list clean and moved the same
+   inflation into the flowing prose. So check the output instead of trusting
+   the instruction. */
+const RISKY_CLAIMS = [
+  ['propia', 'propio', 'privada', 'privado'],
+  ['amueblad'], ['remodelad'], ['techad'], ['climatizad'],
+  ['atardecer', 'amanecer'], ['horizonte'], ['luz natural'],
+  ['vista al mar', 'frente al mar'],
+  ['planta baja', 'primer piso', 'segundo piso'],
+  ['consolidad'], ['segur'], ['centric', 'céntric'],
+  ['inmediata'],
+  ['furnished'], ['remodeled'], ['covered'], ['ocean view'], ['move-in ready']
+];
+
+/* Returns the terms the copy asserted that the agent never supplied. Reported,
+   not stripped: deleting a word from the middle of a sentence produces broken
+   Spanish, and the agent is the one who has to stand behind the claim — so the
+   useful move is telling them exactly what to check before they publish. */
+function unsupportedClaims(content, sourceLine) {
+  const said = JSON.stringify(content).toLowerCase();
+  const given = String(sourceLine || '').toLowerCase();
+  const found = [];
+  for (const group of RISKY_CLAIMS) {
+    const hit = group.find(t => said.includes(t));
+    if (hit && !group.some(t => given.includes(t))) found.push(hit);
+  }
+  return found;
+}
+
 async function handleEnhance(req, res) {
   const { url, base64, quality } = req.body || {};
 
@@ -567,7 +604,7 @@ Respond ONLY with a valid JSON object, no markdown: {"description":"...","featur
     });
 
     const content = JSON.parse(messageText(data));
-    res.status(200).json({ content });
+    res.status(200).json({ content, warnings: unsupportedClaims(content, propertyLine) });
   } catch (err) {
     res.status(502).json({ error: 'generation_unavailable', detail: safeDetail(err) });
   }
