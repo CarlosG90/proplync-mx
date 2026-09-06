@@ -289,9 +289,33 @@
   }
   .mock-post .mock-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,.05) 0%,rgba(10,22,40,.18) 45%,rgba(10,22,40,.88) 100%)}
   .mock-post .mock-price{position:absolute;top:6%;right:6%;background:var(--gold);color:var(--ink);font-family:var(--mono);font-weight:700;font-size:.76rem;padding:5px 10px;border-radius:6px}
+  /* Amenity chips */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .chip{
+    font-family:var(--body);font-size:.8rem;font-weight:500;
+    padding:7px 13px;border-radius:999px;cursor:pointer;
+    border:1px solid var(--line);background:var(--white);color:var(--on-sand);
+    transition:all var(--duration) ease;
+  }
+  .chip:hover{border-color:var(--sea)}
+  .chip.on{background:var(--sea);border-color:var(--sea);color:#fff}
+  .meter-low{color:#b3452f}
+  .meter-mid{color:#b07a2b}
+  .meter-ok{color:var(--sea-deep)}
+
   .mock-post .mock-bottom{position:absolute;left:6%;right:6%;bottom:6%}
-  .mock-post .mock-title{font-family:var(--display);color:#fff;font-size:1.08rem;line-height:1.18;margin-bottom:5px;font-weight:400}
-  .mock-post .mock-loc{font-family:var(--mono);color:var(--gold);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase}
+  /* Scaled-down mirror of .tpl-post so the preview shows the real design. */
+  .mock-post .mock-op{
+    position:absolute;top:6%;left:6%;font-family:var(--mono);font-weight:700;font-size:.56rem;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+    border:1px solid var(--gold);padding:3px 7px;border-radius:5px;background:rgba(10,22,40,.35);
+  }
+  .mock-post .mock-loc{font-family:var(--mono);color:var(--gold);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+  .mock-post .mock-title{font-family:var(--display);color:#fff;font-size:1.08rem;line-height:1.14;margin-bottom:9px;font-weight:400}
+  .mock-post .mock-specs{display:flex;align-items:center;gap:8px;border-top:1px solid rgba(255,255,255,.22);padding-top:8px}
+  .mock-post .mock-spec{font-family:var(--mono);color:#fff;font-size:.66rem;font-weight:700;line-height:1.1}
+  .mock-post .mock-spec small{display:block;font-size:.44rem;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:2px}
+  .mock-post .mock-spec-div{width:1px;height:16px;background:rgba(255,255,255,.22)}
 
   .mock-story{
     position:relative;width:100%;max-width:190px;margin:0 auto;aspect-ratio:9/16;
@@ -358,16 +382,47 @@
     position:absolute;inset:0;
     background:linear-gradient(180deg,rgba(10,22,40,.05) 0%,rgba(10,22,40,.15) 50%,rgba(10,22,40,.75) 100%);
   }
+  /* Operation badge, top left. Buyers filter venta/renta before anything
+     else, so it should read before the price does. */
+  .tpl-post .op-badge{
+    position:absolute;top:40px;left:40px;
+    font-family:'Space Mono',monospace;font-weight:700;font-size:19px;
+    letter-spacing:.16em;text-transform:uppercase;color:#c9a96e;
+    border:2px solid #c9a96e;padding:9px 18px;border-radius:8px;
+    background:rgba(10,22,40,.35);
+  }
   .tpl-post .price-badge{
     position:absolute;top:40px;right:40px;
     background:#c9a96e;color:#0a1628;
     font-family:'Space Mono',monospace;font-weight:700;font-size:32px;
-    padding:16px 28px;border-radius:10px;
+    padding:16px 28px;border-radius:8px;
   }
   .tpl-post .bottom{position:absolute;bottom:40px;left:40px;right:40px}
-  .tpl-post .title{font-family:'Fraunces',Georgia,serif;font-size:48px;color:#fff;font-weight:400;line-height:1.15;margin-bottom:12px}
-  .tpl-post .location{font-family:'Space Mono',monospace;font-size:18px;color:#c9a96e;letter-spacing:.12em;text-transform:uppercase}
-  .tpl-post .brand-wm{position:absolute;bottom:40px;left:40px;font-family:'Fraunces',Georgia,serif;font-size:16px;color:rgba(255,255,255,.5)}
+  .tpl-post .location{
+    font-family:'Space Mono',monospace;font-size:18px;color:#c9a96e;
+    letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;
+  }
+  .tpl-post .title{
+    font-family:'Fraunces',Georgia,serif;font-size:54px;color:#fff;font-weight:400;
+    line-height:1.1;margin-bottom:22px;
+  }
+  /* Specs were missing entirely. Beds/baths/m2 is the first thing a buyer
+     scans for, and the reason a post gets saved instead of scrolled past. */
+  .tpl-post .specs{
+    display:flex;align-items:center;gap:18px;
+    border-top:1px solid rgba(255,255,255,.22);padding-top:20px;
+  }
+  .tpl-post .spec{font-family:'Space Mono',monospace;font-size:23px;color:#fff;font-weight:700}
+  .tpl-post .spec small{
+    display:block;font-size:12px;font-weight:400;letter-spacing:.14em;
+    text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:4px;
+  }
+  .tpl-post .spec-div{width:1px;height:34px;background:rgba(255,255,255,.22)}
+  /* Previously sat on top of .location: both were bottom:40px; left:40px. */
+  .tpl-post .brand-wm{
+    position:absolute;bottom:44px;right:40px;
+    font-family:'Fraunces',Georgia,serif;font-size:17px;color:rgba(255,255,255,.55);
+  }
 
   /* Carousel slide template (1080x1080) */
   .tpl-slide{
@@ -591,6 +646,20 @@
         <div class="field">
           <label class="form-label" data-es="Precio" data-en="Price">Precio</label>
           <input class="form-input" id="f-amount" type="number" min="0" value="245000">
+        </div>
+        <div class="field full">
+          <label class="form-label" data-es="Amenidades" data-en="Amenities">Amenidades</label>
+          <div class="chips" id="f-chips"></div>
+          <p class="form-hint" data-es="Toca las que apliquen. Sin esto la IA solo puede repetir los numeros del formulario." data-en="Tap the ones that apply. Without these the AI can only restate the numbers in this form.">Toca las que apliquen. Sin esto la IA solo puede repetir los numeros del formulario.</p>
+        </div>
+        <div class="field full">
+          <label class="form-label" data-es="Lo que la hace especial" data-en="What makes it special">Lo que la hace especial</label>
+          <textarea class="form-textarea" id="f-features" maxlength="240" rows="2"
+            data-es-placeholder="Ej. terraza con vista al mar, cocina recien remodelada, a 3 cuadras de la Quinta Avenida"
+            data-en-placeholder="e.g. terrace with ocean view, newly remodeled kitchen, 3 blocks from Quinta Avenida"
+            placeholder="Ej. terraza con vista al mar, cocina recien remodelada, a 3 cuadras de la Quinta Avenida"
+            oninput="updateFeatureMeter()"></textarea>
+          <p class="form-hint" id="f-features-hint"></p>
         </div>
         <div class="field full">
           <label class="form-label" data-es="Foto de la propiedad" data-en="Property photo">Foto de la propiedad</label>
@@ -1208,6 +1277,7 @@ function getPropertyData() {
     // see stripPhotos() — because a data: URL is megabytes and unused there.
     image: manualUploadedImage || document.getElementById('f-image').value.trim(),
     images: manualPhotos.slice(),
+    features: collectFeatures(),
     lang: lang
   };
 }
@@ -1436,10 +1506,12 @@ function renderPostPreview(post, prop) {
   return `
     <div class="mock-post" style="${bg}">
       <div class="mock-overlay"></div>
-      <div class="mock-price">${prop.currency} $${prop.formatted}</div>
+      <div class="mock-op">${opLabel(prop)}</div>
+      <div class="mock-price">${prop.currency} $${prop.formatted}${per(prop)}</div>
       <div class="mock-bottom">
+        <div class="mock-loc">${[prop.neighborhood, prop.town].filter(Boolean).join(' · ')}</div>
         <div class="mock-title">${prop.title || ''}</div>
-        <div class="mock-loc">${(prop.neighborhood ? prop.neighborhood + ' · ' : '') + prop.town}</div>
+        ${specRow(prop, 'mock-spec')}
       </div>
     </div>
     <p style="margin-top:12px">${post.caption || ''}</p>
@@ -1570,9 +1642,24 @@ function loadImageAsDataURL(url) {
    whatever is painted at call time, and font-display:swap paints the
    fallback font immediately, so without this the exported image silently
    renders in Georgia/system-ui instead of the brand typefaces. */
+/* The exact faces and weights the export templates use. document.fonts.ready
+   only settles fonts the page has already asked for, and these live in an
+   off-screen div the browser may never have painted — so with font-display:
+   swap the canvas can snapshot Georgia and Arial instead, which is the single
+   most common reason a branded template exports looking generic. Request each
+   one explicitly first. */
+const EXPORT_FACES = [
+  '400 54px "Fraunces"', '600 54px "Fraunces"',
+  '700 32px "Space Mono"', '400 18px "Space Mono"',
+  '400 20px "Hanken Grotesk"', '600 20px "Hanken Grotesk"', '700 20px "Hanken Grotesk"'
+];
+
 async function renderToCanvas(el) {
-  if (document.fonts && document.fonts.ready) {
-    try { await document.fonts.ready; } catch (e) { /* proceed anyway */ }
+  if (document.fonts) {
+    try {
+      await Promise.all(EXPORT_FACES.map(f => document.fonts.load(f)));
+      await document.fonts.ready;
+    } catch (e) { /* proceed anyway — a fallback render beats no render */ }
   }
   return html2canvas(el, {
     scale: 1,
@@ -1719,6 +1806,98 @@ async function downloadPDF() {
 }
 
 /* ---------- 2. INSTAGRAM POST (html2canvas) ---------- */
+/* ---------- amenity chips ----------
+   The generator's weakest output came from listings with nothing but numbers:
+   with no material to work from the model either restated the form or invented
+   detail ("entrada segura", "ocupacion inmediata") that was never in the data.
+   These are structured facts the agent asserts, so the copy can lean on them
+   without guessing. Riviera Maya specific on purpose — a generic amenity list
+   would not include cenote or cuota de mantenimiento. */
+const AMENITIES = [
+  { id: 'alberca',      es: 'Alberca',              en: 'Pool' },
+  { id: 'vista_mar',    es: 'Vista al mar',         en: 'Ocean view' },
+  { id: 'roof',         es: 'Roof privado',         en: 'Private roof' },
+  { id: 'amueblado',    es: 'Amueblado',            en: 'Furnished' },
+  { id: 'terraza',      es: 'Terraza',              en: 'Terrace' },
+  { id: 'jardin',       es: 'Jardin',               en: 'Garden' },
+  { id: 'gimnasio',     es: 'Gimnasio',             en: 'Gym' },
+  { id: 'seguridad',    es: 'Seguridad 24/7',       en: '24/7 security' },
+  { id: 'pet',          es: 'Pet friendly',         en: 'Pet friendly' },
+  { id: 'planta_baja',  es: 'Planta baja',          en: 'Ground floor' },
+  { id: 'cenote',       es: 'Cenote cercano',       en: 'Cenote nearby' },
+  { id: 'playa',        es: 'Cerca de la playa',    en: 'Near the beach' },
+  { id: 'remodelado',   es: 'Recien remodelado',    en: 'Newly remodeled' },
+  { id: 'preventa',     es: 'Preventa',             en: 'Pre-construction' },
+  { id: 'cocina_equip', es: 'Cocina equipada',      en: 'Equipped kitchen' },
+  { id: 'aire',         es: 'Aire acondicionado',   en: 'Air conditioning' }
+];
+const selectedAmenities = new Set();
+
+function renderChips() {
+  const box = document.getElementById('f-chips');
+  if (!box) return;
+  box.innerHTML = AMENITIES.map(a =>
+    '<button type="button" class="chip' + (selectedAmenities.has(a.id) ? ' on' : '') +
+    '" data-id="' + a.id + '" onclick="toggleAmenity(\'' + a.id + '\')">' +
+    (lang === 'es' ? a.es : a.en) + '</button>'
+  ).join('');
+}
+
+function toggleAmenity(id) {
+  if (selectedAmenities.has(id)) selectedAmenities.delete(id);
+  else selectedAmenities.add(id);
+  renderChips();
+  updateFeatureMeter();
+}
+
+/* Tell the agent the copy will be thin BEFORE they generate, not after they
+   read it and blame the tool. */
+function updateFeatureMeter() {
+  const hint = document.getElementById('f-features-hint');
+  if (!hint) return;
+  const free = (document.getElementById('f-features') || {}).value || '';
+  const n = selectedAmenities.size + (free.trim() ? 2 : 0);
+  const isEs = lang === 'es';
+  let msg, cls;
+  if (n === 0) {
+    msg = isEs ? 'Sin amenidades ni detalles, el contenido saldra generico.' : 'With no amenities or detail, the content will come out generic.';
+    cls = 'meter-low';
+  } else if (n < 4) {
+    msg = isEs ? 'Agrega un par mas para que el copy tenga de donde agarrarse.' : 'Add a couple more so the copy has something to work with.';
+    cls = 'meter-mid';
+  } else {
+    msg = isEs ? 'Suficiente detalle para contenido especifico.' : 'Enough detail for specific content.';
+    cls = 'meter-ok';
+  }
+  hint.textContent = msg;
+  hint.className = 'form-hint ' + cls;
+}
+
+/* Fold chips and free text into the one string the API already accepts. */
+function collectFeatures() {
+  const picked = AMENITIES.filter(a => selectedAmenities.has(a.id))
+    .map(a => lang === 'es' ? a.es : a.en);
+  const free = ((document.getElementById('f-features') || {}).value || '').trim();
+  return [picked.join(', '), free].filter(Boolean).join('. ');
+}
+
+/* Shared by the post export and its on-screen preview so the two cannot drift.
+   Skips any spec the agent left at zero rather than printing "0 banos". */
+function specRow(prop, cls) {
+  const isEs = lang === 'es';
+  const items = [];
+  if (prop.bedrooms) items.push([prop.bedrooms, isEs ? 'Recamaras' : 'Bedrooms']);
+  if (prop.bathrooms) items.push([prop.bathrooms, isEs ? 'Banos' : 'Baths']);
+  if (prop.size) items.push([prop.size + ' m²', isEs ? 'Construccion' : 'Built']);
+  if (prop.parking) items.push([prop.parking, isEs ? 'Autos' : 'Parking']);
+  if (!items.length) return '';
+  const c = cls || 'spec';
+  return '<div class="' + c + 's">' +
+    items.map(i => '<div class="' + c + '">' + i[0] + '<small>' + i[1] + '</small></div>')
+         .join('<div class="' + c + '-div"></div>') +
+    '</div>';
+}
+
 async function downloadPost() {
   if (!checkLibsLoaded()) return;
   const prop = getPropertyData();
@@ -1737,10 +1916,12 @@ async function downloadPost() {
   div.innerHTML = `
     <div style="position:absolute;inset:0;${bgStyle}"></div>
     <div class="overlay"></div>
-    <div class="price-badge">${prop.currency} $${prop.formatted}</div>
+    <div class="op-badge">${opLabel(prop)}</div>
+    <div class="price-badge">${prop.currency} $${prop.formatted}${per(prop)}</div>
     <div class="bottom">
+      <div class="location">${[prop.neighborhood, prop.town].filter(Boolean).join(' · ')}</div>
       <div class="title">${prop.title}</div>
-      <div class="location">${prop.neighborhood} · ${prop.town}</div>
+      ${specRow(prop)}
     </div>
     <div class="brand-wm">Proplync.mx</div>
   `;
@@ -2460,7 +2641,12 @@ ${propertyImageUrl ? `<tr><td><img src="${propertyImageUrl}" alt="${prop.title}"
 }
 
 /* ---------- lang change listener ---------- */
+renderChips();
+updateFeatureMeter();
+
 document.addEventListener('langchange', function() {
+  renderChips();
+  updateFeatureMeter();
   renderExampleGallery();
   /* If we have a loaded property, refresh its display */
   if (currentProperty) {

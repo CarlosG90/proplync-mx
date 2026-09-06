@@ -394,7 +394,9 @@ Para el formato "video" (un Reel corto): elige EXACTAMENTE UNO de estos 12 tipos
 segun cual encaje mejor con los datos de esta propiedad, y estructuralo en 3 tiempos: hook (0-2s, texto en
 pantalla, curiosidad o dato concreto, nunca generico), cuerpo (3-4 escenas que cumplen lo que promete el hook),
 y CTA final (una accion especifica). El texto debe funcionar sin sonido (todo en pantalla).
-Tipos disponibles: "Revelacion de cuarto wow" (puerta cerrada, hook "Espera a ver esto..."), "Tour cinematografico
+El hook debe nombrar algo concreto de ESTA propiedad (un numero, un espacio, la zona). Nunca uses una
+frase generica de suspenso; si el hook funcionaria igual para cualquier otra propiedad, esta mal.
+Tipos disponibles: "Revelacion de cuarto wow" (puerta cerrada, se revela el mejor espacio), "Tour cinematografico
 completo" (recorrido fluido de toda la propiedad), "Adivina el precio" (exterior primero, pide adivinar, revela en
 el interior), "Guia del vecindario" (puntos clave: cafes, parques, escuelas), "Antes/despues de staging",
 "Dato del mercado" (una estadistica + un insight + una conclusion), "Que te da $X" (comparacion de precio),
@@ -411,8 +413,8 @@ Responde UNICAMENTE con un objeto JSON valido (sin markdown, sin backticks, sin 
     "features_list": ["caracteristica 1", "caracteristica 2", "caracteristica 3", "caracteristica 4", "caracteristica 5"]
   },
   "post": {
-    "caption": "texto para Instagram, 2-3 oraciones con emojis relevantes",
-    "hashtags": "#Hashtag1 #Hashtag2 #Hashtag3 #Hashtag4 #Hashtag5"
+    "caption": "la primera linea es un gancho que funciona solo, porque Instagram corta el resto; luego 1-2 oraciones concretas; cierra con una pregunta o una accion. Maximo 2 emojis en todo el texto",
+    "hashtags": "10 hashtags en capas: 2 amplios, 4 de zona o colonia, 3 de intencion de busqueda, y #Proplync al final. Sin repetir la misma palabra entre ellos"
   },
   "carousel": [
     { "slide_title": "titulo portada", "slide_text": "texto breve portada" },
@@ -422,8 +424,8 @@ Responde UNICAMENTE con un objeto JSON valido (sin markdown, sin backticks, sin 
     { "slide_title": "titulo contacto", "slide_text": "texto CTA" }
   ],
   "story": {
-    "headline": "texto impactante corto para story",
-    "cta_text": "texto del CTA"
+    "headline": "texto impactante corto para story, maximo 60 caracteres",
+    "cta_text": "una accion concreta que genera un lead (ej. Manda DM por el precio, Agenda tu visita), nunca un gesto como 'desliza para ver mas'"
   },
   "email": {
     "subject": "asunto del correo",
