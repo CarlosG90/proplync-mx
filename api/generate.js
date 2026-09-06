@@ -16,7 +16,7 @@
 import sharp from 'sharp';
 import { groqChat, messageText } from './_lib/groq.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
-import { safeDetail } from './_lib/health.js';
+import { safeDetail, logDegraded } from './_lib/health.js';
 
 /* ── Photo enhancement constants ── */
 const MAX_DIMENSION = 2400;
@@ -45,6 +45,49 @@ const RISKY_CLAIMS = [
   ['inmediata'],
   ['furnished'], ['remodeled'], ['covered'], ['ocean view'], ['move-in ready']
 ];
+
+/* Pull the complete top-level formats out of a JSON object that got cut off
+   mid-write. Walks the string tracking depth and quoting, and keeps every
+   key whose value closed cleanly — so a run that dies inside the last format
+   still returns the six that finished, instead of nothing. */
+function salvagePartialJson(raw) {
+  const s = String(raw).replace(/^```(?:json)?/, '').trim();
+  if (s[0] !== '{') return null;
+
+  const out = {};
+  let i = 1;
+  while (i < s.length) {
+    while (i < s.length && /[\s,]/.test(s[i])) i++;
+    if (s[i] !== '"') break;
+
+    const keyEnd = s.indexOf('"', i + 1);
+    if (keyEnd < 0) break;
+    const key = s.slice(i + 1, keyEnd);
+
+    let j = s.indexOf(':', keyEnd);
+    if (j < 0) break;
+    j++;
+    while (j < s.length && /\s/.test(s[j])) j++;
+
+    const start = j;
+    let depth = 0, inStr = false, esc = false, done = false;
+    for (; j < s.length; j++) {
+      const ch = s[j];
+      if (esc) { esc = false; continue; }
+      if (ch === '\\') { esc = true; continue; }
+      if (ch === '"') { inStr = !inStr; if (!inStr && depth === 0) { j++; done = true; break; } continue; }
+      if (inStr) continue;
+      if (ch === '{' || ch === '[') depth++;
+      else if (ch === '}' || ch === ']') { depth--; if (depth === 0) { j++; done = true; break; } if (depth < 0) break; }
+      else if (depth === 0 && (ch === ',' || ch === '}')) { done = true; break; }
+    }
+    if (!done) break;
+
+    try { out[key] = JSON.parse(s.slice(start, j)); } catch (e) { break; }
+    i = j;
+  }
+  return Object.keys(out).length ? out : null;
+}
 
 /* Returns the terms the copy asserted that the agent never supplied. Reported,
    not stripped: deleting a word from the middle of a sentence produces broken
@@ -457,11 +500,11 @@ Responde UNICAMENTE con un objeto JSON valido (sin markdown, sin backticks, sin 
     "hashtags": "10 hashtags EN ESPANOL, en capas: 2 amplios de la region, 4 de ciudad y colonia, 3 de intencion de compra real (como #CasasEnVentaTulum, #PreventaTulum, #DepartamentosEnRentaCancun: lo que teclea alguien que ya quiere comprar o rentar), y #Proplync al final. Prohibidos los genericos en ingles tipo #LuxuryLiving o #RealEstate: no los busca nadie que compre aqui"
   },
   "carousel": [
-    { "slide_title": "portada: el dato mas fuerte, no el nombre del inmueble", "slide_text": "una linea que haga deslizar" },
-    { "slide_title": "ubicacion: di la zona y su ventaja concreta", "slide_text": "distancias o referencias reales de los datos" },
-    { "slide_title": "interior: nombra el espacio, no la categoria", "slide_text": "que hay adentro, con numeros" },
-    { "slide_title": "amenidades: la que mas pesa en la decision", "slide_text": "por que importa esa amenidad aqui" },
-    { "slide_title": "cierre: la accion, no la palabra Contacto", "slide_text": "CTA con fecha o disponibilidad real si existe" }
+    { "slide_title": "portada: el dato mas fuerte, no el nombre. Max 5 palabras", "slide_text": "una linea que haga deslizar, max 12 palabras" },
+    { "slide_title": "zona y su ventaja concreta, max 5 palabras", "slide_text": "distancias reales, max 12 palabras" },
+    { "slide_title": "el espacio, no la categoria, max 5 palabras", "slide_text": "que hay adentro con numeros, max 12 palabras" },
+    { "slide_title": "la amenidad que mas pesa, max 5 palabras", "slide_text": "por que importa aqui, max 12 palabras" },
+    { "slide_title": "la accion, nunca la palabra Contacto, max 5 palabras", "slide_text": "CTA con fecha real si existe, max 12 palabras" }
   ],
   "story": {
     "headline": "texto impactante corto para story, maximo 60 caracteres",
@@ -470,7 +513,7 @@ Responde UNICAMENTE con un objeto JSON valido (sin markdown, sin backticks, sin 
   "email": {
     "subject": "max 45 caracteres para que no se corte en movil. Lidera con el dato mas fuerte o con una pregunta concreta, nunca con 'Nueva propiedad en'",
     "preview_text": "max 90 caracteres. Continua el asunto, no lo repitas ni encajes el precio otra vez: es la segunda linea del gancho",
-    "body_html": "texto plano sin HTML, maximo 60 palabras, en 2 parrafos cortos. Abre con la razon por la que esta propiedad importa, nunca con 'Presentamos' ni 'Te compartimos'. Cierra con UNA accion concreta y una fecha o disponibilidad real si la hay, no con 'contactanos para mas informacion'"
+    "body_html": "texto plano sin HTML, MAXIMO 45 palabras. Abre con la razon por la que esta propiedad importa, nunca con 'Presentamos'. Cierra con UNA accion concreta, no con 'contactanos para mas informacion'"
   },
   "video": {
     "reel_type": "uno de los 12 tipos de Reel listados arriba",
@@ -603,7 +646,20 @@ Respond ONLY with a valid JSON object, no markdown: {"description":"...","featur
       max_tokens: 950
     });
 
-    const content = JSON.parse(messageText(data));
+    /* Seven formats share a 950-token ceiling set by the account's 1,000
+       output-tokens-per-minute limit, so a wordy run gets cut off mid-JSON and
+       used to throw away all seven pieces over one unterminated string. Keep
+       whatever parsed. */
+    const raw = messageText(data);
+    let content;
+    try {
+      content = JSON.parse(raw);
+    } catch (e) {
+      content = salvagePartialJson(raw);
+      if (!content) throw e;
+      logDegraded('generate:truncated', 'recovered ' + Object.keys(content).join(','));
+    }
+
     res.status(200).json({ content, warnings: unsupportedClaims(content, propertyLine) });
   } catch (err) {
     res.status(502).json({ error: 'generation_unavailable', detail: safeDetail(err) });
