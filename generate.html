@@ -83,21 +83,31 @@
   .rail-btn[hidden]{display:none}
   .rail-prev{left:-6px}
   .rail-next{right:-6px}
+  /* These are the first thing on the page and the way most people start, so
+     they need to read as properties rather than as thumbnails. At 100px with
+     a 60px photo every title ellipsised to "Casa con alberc..." — the card
+     showed a picture and no information. */
   .gen-example-chip{
-    flex:none;width:100px;cursor:pointer;border-radius:8px;overflow:hidden;
+    flex:none;width:158px;cursor:pointer;border-radius:10px;overflow:hidden;
     background:rgba(240,237,232,.04);border:1.5px solid rgba(240,237,232,.08);
     transition:border-color var(--duration) ease,transform var(--duration) ease;
   }
-  .gen-example-chip:hover{border-color:var(--gold);transform:translateY(-1px)}
+  .gen-example-chip:hover{border-color:var(--gold);transform:translateY(-2px)}
   .gen-example-chip.active{border-color:var(--gold);background:rgba(201,169,110,.06)}
-  .gen-example-chip img{width:100%;height:60px;object-fit:cover;display:block}
-  .gen-example-chip .ec-title{font-size:.62rem;font-weight:600;color:var(--on-ink);padding:6px 8px 2px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .gen-example-chip .ec-loc{font-family:var(--mono);font-size:.5rem;color:var(--gold);padding:0 8px 6px;text-transform:uppercase;letter-spacing:.06em}
+  .gen-example-chip img{width:100%;height:104px;object-fit:cover;display:block}
+  .gen-example-chip .ec-title{
+    font-size:.8rem;font-weight:600;color:var(--on-ink);
+    padding:10px 11px 3px;line-height:1.25;
+    /* Two lines instead of one truncated one: a property name that stops at
+       "Departamento e..." tells the agent nothing. */
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .gen-example-chip .ec-loc{font-family:var(--mono);font-size:.58rem;color:var(--gold);padding:0 11px 10px;text-transform:uppercase;letter-spacing:.06em}
   .gen-example-own{border-style:dashed;border-color:rgba(240,237,232,.12);display:flex;flex-direction:column}
   .gen-example-own:hover{border-style:solid}
   .gen-example-own .ec-own-icon{
-    height:60px;display:flex;align-items:center;justify-content:center;
-    font-size:1.4rem;font-weight:300;color:var(--gold);background:rgba(240,237,232,.03);
+    height:104px;display:flex;align-items:center;justify-content:center;
+    font-size:2rem;font-weight:300;color:var(--gold);background:rgba(240,237,232,.03);
   }
 
   /* Property loaded (dark) */
