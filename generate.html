@@ -13,6 +13,15 @@
 <link rel="stylesheet" href="/css/components.css">
 
 <!-- CDN libraries for rendering & download (loaded before body scripts) -->
+<style>
+  .gen-voice{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+  .gen-voice-field{flex:1;min-width:170px;display:flex;flex-direction:column;gap:6px}
+  .gen-voice-field>span{
+    font-family:var(--mono);font-size:.6rem;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--on-ink-dim,#8b95a6);
+  }
+  .gen-voice-field .form-select{width:100%}
+</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -804,6 +813,31 @@
     </div>
 
   </div><!-- /sl-section -->
+
+  <!-- Voice controls. Seven formats in one fixed voice is the same listing said
+       seven ways; an agency selling preventa in Tulum and one chasing exclusives
+       in Guadalajara are not writing the same copy. The wording of each option
+       lives on the server: the client sends an id, never prompt text. -->
+  <div class="gen-voice">
+    <label class="gen-voice-field">
+      <span data-es="Tono" data-en="Tone">Tono</span>
+      <select id="f-tone" class="form-select">
+        <option value="profesional" data-es="Profesional" data-en="Professional">Profesional</option>
+        <option value="cercano" data-es="Cercano" data-en="Warm">Cercano</option>
+        <option value="lujo" data-es="Lujo" data-en="Luxury">Lujo</option>
+        <option value="accion" data-es="Directo a la accion" data-en="Action-led">Directo a la accion</option>
+      </select>
+    </label>
+    <label class="gen-voice-field">
+      <span data-es="Objetivo" data-en="Objective">Objetivo</span>
+      <select id="f-objective" class="form-select">
+        <option value="vender" data-es="Vender" data-en="Sell">Vender</option>
+        <option value="rentar" data-es="Rentar" data-en="Rent">Rentar</option>
+        <option value="visita" data-es="Agendar visitas" data-en="Book viewings">Agendar visitas</option>
+        <option value="captar" data-es="Captar propietarios" data-en="Win listings">Captar propietarios</option>
+      </select>
+    </label>
+  </div>
 
   <div class="gen-trigger">
     <button class="btn btn-gold" id="gen-btn" onclick="handleGenerate()" data-es="Generar 7 formatos" data-en="Generate 7 formats">Generar 7 formatos</button>
@@ -1668,6 +1702,10 @@ async function handleGenerate() {
       lang === 'es' ? 'Generando copy para 7 formatos con IA...' : 'Generating copy for 7 formats with AI...';
 
     const payload = stripPhotos(data);
+    const toneEl = document.getElementById('f-tone');
+    const objEl = document.getElementById('f-objective');
+    if (toneEl) payload.tone = toneEl.value;
+    if (objEl) payload.objective = objEl.value;
     // Present only when this generation came from a listing the agency owns.
     if (currentProperty && currentProperty.public_id) payload.listingPublicId = currentProperty.public_id;
 
