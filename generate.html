@@ -638,7 +638,7 @@
       <a href="/" data-es="Inicio" data-en="Home">Inicio</a>
       <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
       <a href="/generate" style="color:var(--gold)" data-es="Generador" data-en="Generator">Generador</a>
-      <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
+      <a href="/login" id="nav-auth" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
     </div>
     <div class="navtools">
       <div class="lang" role="group" aria-label="Language">
@@ -1264,6 +1264,57 @@ function tryExample(id){
   handleGenerate();
 }
 
+/* Session-aware nav, deliberately without the Supabase SDK.
+   handlePublish() below explains why this page stays SDK-free, and that still
+   holds: nothing here gates access. This only decides whether the nav offers
+   "log in" or "back to my listings", so reading the key supabase-js writes is
+   enough, and any parse failure falls through to the logged-out nav.
+
+   A stale access_token still counts as signed in: the refresh token outlives
+   it and /dashboard refreshes on load. If the session really is dead,
+   /dashboard's requireAuth sends them to /login — the right destination
+   anyway. Being wrong here costs one redirect, not access. */
+function hasStoredSession() {
+  try {
+    const raw = localStorage.getItem('sb-rznuuykmtvbgmnczbqiq-auth-token');
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    return !!(s && (s.access_token || s.refresh_token || s.currentSession));
+  } catch { return false; }
+}
+
+function applyAuthNav() {
+  const link = document.getElementById('nav-auth');
+  if (!link || !hasStoredSession()) return;
+  link.setAttribute('href', '/dashboard');
+  link.setAttribute('data-es', 'Mis propiedades');
+  link.setAttribute('data-en', 'My listings');
+  link.textContent = (typeof lang !== 'undefined' && lang === 'en') ? 'My listings' : 'Mis propiedades';
+}
+
+/* An ?id= that isn't one of the samples is a real listing someone opened from
+   their dashboard. /api/property resolves it by public_id and already returns
+   the exact shape loadPropertyFromListing wants, including `formatted` and a
+   cover image — so the agent never retypes a property they have already
+   entered once. */
+async function loadListingById(id) {
+  try {
+    const r = await fetch('/api/property?id=' + encodeURIComponent(id));
+    if (!r.ok) throw new Error('lookup failed: ' + r.status);
+    const data = await r.json();
+    if (!data || !data.property) throw new Error('no property in response');
+    isDemoMode = false;
+    const badge = document.getElementById('demo-badge');
+    if (badge) badge.remove();
+    loadPropertyFromListing(data.property);
+  } catch (e) {
+    /* A blank page would leave the agent with nothing to do. Fall back to the
+       manual form, which is still a working path to the same output. */
+    console.error('[generate] could not load listing', id, e);
+    showManualForm();
+  }
+}
+
 (function init(){
   const params = new URLSearchParams(window.location.search);
   const id = params.get('id');
@@ -1271,6 +1322,8 @@ function tryExample(id){
     const found = SAMPLE_LISTINGS.find(p => p.public_id === id);
     if (found) {
       loadPropertyFromListing(found);
+    } else {
+      loadListingById(id);
     }
   } else {
     /* No id param — load the live demo automatically */
@@ -1278,6 +1331,7 @@ function tryExample(id){
     loadDemo();
   }
   renderExampleGallery();
+  applyAuthNav();
 })();
 
 function loadDemoBadge() {
@@ -1315,12 +1369,20 @@ function loadPropertyFromListing(p) {
 
   const title = lang === 'es' ? p.title_es : p.title_en;
   document.getElementById('prop-loaded-title').textContent = title;
-  document.getElementById('prop-loaded-loc').textContent = (p.neighborhood + ' · ' + p.town).toUpperCase();
-  document.getElementById('prop-loaded-specs').textContent =
-    p.bedrooms + (lang === 'es' ? ' rec' : ' bd') + ' · ' +
-    p.bathrooms + (lang === 'es' ? ' banos' : ' bath') + ' · ' +
-    p.size + ' m²' +
-    (p.parking ? ' · ' + p.parking + (lang === 'es' ? ' est' : ' pkg') : '');
+
+  /* A listing entered in a hurry often has no neighborhood and a size of 0.
+     Joining those in blindly printed " · PUEBLA" and "0 m²" — so drop the
+     empty parts rather than showing the agent a broken-looking summary of
+     their own property. */
+  document.getElementById('prop-loaded-loc').textContent =
+    [p.neighborhood, p.town].filter(v => String(v || '').trim()).join(' · ').toUpperCase();
+
+  const specs = [];
+  if (Number(p.bedrooms) > 0) specs.push(p.bedrooms + (lang === 'es' ? ' rec' : ' bd'));
+  if (Number(p.bathrooms) > 0) specs.push(p.bathrooms + (lang === 'es' ? ' banos' : ' bath'));
+  if (Number(p.size) > 0) specs.push(p.size + ' m²');
+  if (Number(p.parking) > 0) specs.push(p.parking + (lang === 'es' ? ' est' : ' pkg'));
+  document.getElementById('prop-loaded-specs').textContent = specs.join(' · ');
   document.getElementById('prop-loaded-price').textContent =
     p.currency + ' $' + p.formatted +
     (p.operation === 'rental' ? (lang === 'es' ? ' /mes' : ' /mo') : '');

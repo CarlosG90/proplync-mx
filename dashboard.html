@@ -385,6 +385,9 @@
       '<div class="dash-item-actions">' +
         '<button onclick="openPreviewModal(\'' + l.public_id + '\',\'' + l.status + '\')" data-es="Vista previa" data-en="Preview">' + (lang === 'es' ? 'Vista previa' : 'Preview') + '</button>' +
         '<button onclick="openShareModal(\'' + l.public_id + '\')" data-es="Compartir" data-en="Share">' + (lang === 'es' ? 'Compartir' : 'Share') + '</button>' +
+        // The generator is the reason many agents signed up, and until now the
+        // only way in was retyping a listing they had already entered here.
+        '<button onclick="window.location.href=\'/generate?id=' + encodeURIComponent(l.public_id) + '\'" data-es="Marketing" data-en="Marketing">Marketing</button>' +
         '<button onclick="editListing(\'' + l.id + '\')" data-es="Editar" data-en="Edit">' + (lang === 'es' ? 'Editar' : 'Edit') + '</button>' +
         '<button class="danger" onclick="deleteListing(\'' + l.id + '\')" data-es="Eliminar" data-en="Delete">' + (lang === 'es' ? 'Eliminar' : 'Delete') + '</button>' +
       '</div>' +
