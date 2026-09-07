@@ -22,44 +22,10 @@
  * -----------------------------------------------------------------------------
  */
 
-import { readFileSync } from 'node:fs';
 import { randomInt } from 'node:crypto';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-import { createClient } from '@supabase/supabase-js';
 
 import { provisionAgency } from '../api/_lib/agency.js';
-
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-
-/* --- env ----------------------------------------------------------------- */
-
-function loadDotEnv() {
-  try {
-    for (const line of readFileSync(path.join(ROOT, '.env.local'), 'utf8').split('\n')) {
-      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
-      if (!m) continue;
-      const [, k, raw] = m;
-      if (process.env[k]) continue; // a real env var always wins
-      process.env[k] = raw.trim().replace(/^["']|["']$/g, '');
-    }
-  } catch { /* no .env.local is fine when the vars are already exported */ }
-}
-
-/* --- args ---------------------------------------------------------------- */
-
-function parseArgs(argv) {
-  const out = { flags: new Set() };
-  for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (!a.startsWith('--')) continue;
-    const key = a.slice(2);
-    if (['link-existing', 'dry-run', 'help'].includes(key)) { out.flags.add(key); continue; }
-    out[key] = argv[++i];
-  }
-  return out;
-}
+import { parseArgs, serviceClient, siteOrigin, die } from './_lib.mjs';
 
 /* Ambiguous glyphs removed: this gets read off a screen and typed once. */
 const PW_ALPHABET = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -82,12 +48,10 @@ async function findUserByEmail(svc, email) {
   return null;
 }
 
-function die(msg) { console.error(`\n  ✗ ${msg}\n`); process.exit(1); }
-
 /* --- main ---------------------------------------------------------------- */
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
+  const args = parseArgs(process.argv.slice(2), ['link-existing', 'dry-run', 'help']);
   if (args.flags.has('help') || !args.email || !args.agency) {
     console.log(`
   Onboard an agency
@@ -101,10 +65,7 @@ async function main() {
     process.exit(args.flags.has('help') ? 0 : 1);
   }
 
-  loadDotEnv();
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) die('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set (.env.local or environment).');
+  const svc = serviceClient();
 
   const email = String(args.email).trim().toLowerCase();
   const agencyName = String(args.agency).trim();
@@ -114,8 +75,7 @@ async function main() {
   const password = args.password || generatePassword();
   if (password.length < 6) die('Password must be at least 6 characters.');
 
-  const site = process.env.PUBLIC_SITE_URL || 'https://proplync-mx.vercel.app';
-  const svc = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const site = siteOrigin();
 
   const existing = await findUserByEmail(svc, email);
 
