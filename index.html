@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>Proplync.mx · Riviera Maya</title>
-<meta name="description" content="Captura una propiedad una vez, publica en siete formatos. Prop-pilot, el generador de contenido con IA de Proplync, para agencias, propietarios y desarrolladoras de Tulum, Playa del Carmen y Cancun.">
+<meta name="description" content="Plataforma inmobiliaria para agencias de la Riviera Maya: portafolio con mini-sitio, CRM de prospectos con seguimiento, y marketing con IA en siete formatos desde una sola captura.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -91,6 +91,50 @@
   .hero-path-find .hero-path-title{color:var(--gold-light)}
   @media (max-width:900px){
     .hero-paths{grid-template-columns:1fr}
+  }
+
+  /* ── Module catalogue ──
+     The product is small; saying what it already does, module by module, with
+     the unbuilt one labelled honestly, reads as a platform without pretending
+     anything ships that does not. Shipped modules are links. "Pronto" is not
+     clickable, because a card that goes nowhere teaches people not to click. */
+  .modules{
+    margin-top:34px;display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(212px,1fr));gap:12px;
+  }
+  .module{
+    position:relative;display:flex;flex-direction:column;gap:5px;
+    padding:20px 22px 22px;border-radius:var(--radius-lg);
+    background:rgba(240,237,232,.04);border:1px solid rgba(240,237,232,.1);
+    text-decoration:none;transition:all var(--duration) ease;
+  }
+  a.module:hover{
+    background:rgba(240,237,232,.07);border-color:var(--gold-light);
+    transform:translateY(-3px);
+  }
+  .module-name{
+    font-family:var(--display);font-size:1.04rem;color:var(--on-ink);
+    font-weight:400;line-height:1.25;padding-right:56px;
+  }
+  .module-desc{font-size:.78rem;color:var(--on-ink-dim);line-height:1.5}
+  .module-status{
+    position:absolute;top:20px;right:20px;
+    font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;
+    padding:3px 8px;border-radius:999px;
+  }
+  .module-status.on{color:var(--sea);background:rgba(94,196,190,.12);border:1px solid rgba(94,196,190,.3)}
+  .module-status.soon{color:var(--on-ink-dim);background:rgba(240,237,232,.05);border:1px solid rgba(240,237,232,.12)}
+  .module-soon{opacity:.6}
+  .hero-buyer{
+    margin-top:18px;font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;
+  }
+  .hero-buyer a{color:var(--gold-light);text-decoration:none;border-bottom:1px solid rgba(201,169,110,.35)}
+  .hero-buyer a:hover{color:var(--gold)}
+  @media (max-width:900px){
+    .modules{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:560px){
+    .modules{grid-template-columns:1fr}
   }
 
   /* ── Three pillars: what Proplync actually does, said plainly ── */
@@ -945,30 +989,39 @@
   <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
   <div class="wrap">
     <div class="hero-content">
-      <div class="hero-eyebrow eyebrow" data-es="Contenido inmobiliario &middot; Riviera Maya" data-en="Real estate content &middot; Riviera Maya">Contenido inmobiliario &middot; Riviera Maya</div>
-      <h1 data-es="Inteligencia artificial <em>al servicio de tu operacion inmobiliaria.</em>" data-en="Artificial intelligence <em>at the service of your real estate operation.</em>">Inteligencia artificial <em>al servicio de tu operacion inmobiliaria.</em></h1>
-      <p class="hero-sub" data-es="Prop-pilot convierte los datos de un inmueble en ficha PDF, post, carrusel, story, email, reel y anuncio &mdash; listos para revisar antes de publicar." data-en="Prop-pilot turns a listing's data into a PDF fact sheet, post, carousel, story, email, reel, and ad copy &mdash; ready to review before you publish.">Prop-pilot convierte los datos de un inmueble en ficha PDF, post, carrusel, story, email, reel y anuncio &mdash; listos para revisar antes de publicar.</p>
-      <div class="hero-paths">
-        <a href="/generate" class="hero-path">
-          <span class="hero-path-eyebrow" data-es="Propietarios y desarrolladoras" data-en="Owners & developers">Propietarios y desarrolladoras</span>
-          <span class="hero-path-title" data-es="Genera contenido para tu propiedad" data-en="Generate content for your property">Genera contenido para tu propiedad</span>
-          <span class="hero-path-sub" data-es="Sin cuenta, en minutos" data-en="No account, in minutes">Sin cuenta, en minutos</span>
-          <span class="hero-path-arrow" aria-hidden="true">&rarr;</span>
+      <div class="hero-eyebrow eyebrow" data-es="Plataforma inmobiliaria &middot; Riviera Maya" data-en="Real estate platform &middot; Riviera Maya">Plataforma inmobiliaria &middot; Riviera Maya</div>
+      <h1 data-es="Toda tu operacion inmobiliaria, <em>en un lugar.</em>" data-en="Your whole real estate operation, <em>in one place.</em>">Toda tu operacion inmobiliaria, <em>en un lugar.</em></h1>
+      <p class="hero-sub" data-es="Captura una propiedad una vez. Proplync le da su mini-sitio, guarda cada prospecto con seguimiento, y convierte sus datos en el contenido con el que la vendes." data-en="Capture a listing once. Proplync gives it a mini-site, keeps every lead with follow-up, and turns its data into the content you sell it with.">Captura una propiedad una vez. Proplync le da su mini-sitio, guarda cada prospecto con seguimiento, y convierte sus datos en el contenido con el que la vendes.</p>
+      <div class="modules">
+        <a href="/login" class="module">
+          <span class="module-status on" data-es="Activo" data-en="Live">Activo</span>
+          <span class="module-name" data-es="Portafolio y mini-sitio" data-en="Portfolio & mini-site">Portafolio y mini-sitio</span>
+          <span class="module-desc" data-es="Cada propiedad con su pagina publica y tu marca." data-en="Every listing with its own public page, under your brand.">Cada propiedad con su pagina publica y tu marca.</span>
         </a>
-        <a href="/login" class="hero-path">
-          <span class="hero-path-eyebrow" data-es="Agencias inmobiliarias" data-en="Real estate agencies">Agencias inmobiliarias</span>
-          <span class="hero-path-title" data-es="Gestiona todo tu portafolio" data-en="Manage your whole portfolio">Gestiona todo tu portafolio</span>
-          <span class="hero-path-sub" data-es="Panel, leads y contenido en un lugar" data-en="Dashboard, leads & content in one place">Panel, leads y contenido en un lugar</span>
-          <span class="hero-path-arrow" aria-hidden="true">&rarr;</span>
+        <a href="/login" class="module">
+          <span class="module-status on" data-es="Activo" data-en="Live">Activo</span>
+          <span class="module-name" data-es="CRM y prospectos" data-en="CRM & leads">CRM y prospectos</span>
+          <span class="module-desc" data-es="Notas, siguiente contacto y respuesta por WhatsApp." data-en="Notes, next follow-up, and one-tap WhatsApp reply.">Notas, siguiente contacto y respuesta por WhatsApp.</span>
         </a>
-        <a href="/search" class="hero-path hero-path-find">
-          <span class="hero-path-eyebrow" data-es="Compradores e inversionistas" data-en="Buyers & investors">Compradores e inversionistas</span>
-          <span class="hero-path-title" data-es="Encuentra tu propiedad" data-en="Find your property">Encuentra tu propiedad</span>
-          <span class="hero-path-sub" data-es="Venta y renta en la Riviera Maya" data-en="For sale and rent in the Riviera Maya">Venta y renta en la Riviera Maya</span>
-          <span class="hero-path-arrow" aria-hidden="true">&rarr;</span>
+        <a href="/generate" class="module">
+          <span class="module-status on" data-es="Activo" data-en="Live">Activo</span>
+          <span class="module-name" data-es="Marketing con IA" data-en="AI marketing">Marketing con IA</span>
+          <span class="module-desc" data-es="Ficha PDF, post, carrusel, story, email, reel y anuncio." data-en="PDF sheet, post, carousel, story, email, reel and ad.">Ficha PDF, post, carrusel, story, email, reel y anuncio.</span>
         </a>
+        <a href="/generate" class="module">
+          <span class="module-status on" data-es="Activo" data-en="Live">Activo</span>
+          <span class="module-name" data-es="Publicacion en redes" data-en="Social publishing">Publicacion en redes</span>
+          <span class="module-desc" data-es="Publica en Instagram sin salir del panel." data-en="Publish to Instagram without leaving the dashboard.">Publica en Instagram sin salir del panel.</span>
+        </a>
+        <div class="module module-soon">
+          <span class="module-status soon" data-es="Pronto" data-en="Soon">Pronto</span>
+          <span class="module-name" data-es="Valoracion y mercado" data-en="Valuation & market">Valoracion y mercado</span>
+          <span class="module-desc" data-es="Comparables y precio sugerido por zona." data-en="Comparables and a suggested price per area.">Comparables y precio sugerido por zona.</span>
+        </div>
       </div>
+      <div class="hero-buyer" data-es="&iquest;Buscas propiedad? <a href=\'/search\'>Explora la Riviera Maya &rarr;</a>" data-en="Looking to buy? <a href=\'/search\'>Browse the Riviera Maya &rarr;</a>">&iquest;Buscas propiedad? <a href="/search">Explora la Riviera Maya &rarr;</a></div>
       <div class="hero-cta">
+        <a href="/login" class="btn btn-gold" data-es="Soy una agencia" data-en="I'm an agency">Soy una agencia</a>
         <a href="#contacto" class="btn btn-ghost" data-es="Reservar diagnostico de 15 min" data-en="Book a 15-min diagnosis">Reservar diagnostico de 15 min</a>
       </div>
       <div class="hero-trust">
