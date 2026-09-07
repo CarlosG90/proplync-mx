@@ -38,11 +38,16 @@
 <main class="auth-main">
   <div class="auth-card">
     <h1 data-es="Registra tu inmobiliaria" data-en="Register your agency">Registra tu inmobiliaria</h1>
-    <p class="sub" data-es="Publica propiedades y recibe leads en minutos." data-en="Publish properties and start receiving leads in minutes.">Publica propiedades y recibe leads en minutos.</p>
+    <p class="sub" data-es="Acceso por invitacion. Si no tienes un codigo, escribenos y lo revisamos contigo." data-en="Invite only. If you don't have a code, get in touch and we'll go through it with you.">Acceso por invitacion. Si no tienes un codigo, escribenos y lo revisamos contigo.</p>
 
     <div id="form-error" style="display:none" class="form-error"></div>
 
     <form id="signup-form" onsubmit="handleSignup(event)">
+      <div class="field">
+        <label class="form-label" for="invite-code" data-es="Codigo de invitacion" data-en="Invite code">Codigo de invitacion</label>
+        <input class="form-input" id="invite-code" type="text" required autocomplete="off" spellcheck="false">
+        <div class="form-hint" data-es="Te lo damos nosotros al incorporar tu inmobiliaria." data-en="We give you this when we onboard your agency.">Te lo damos nosotros al incorporar tu inmobiliaria.</div>
+      </div>
       <div class="field">
         <label class="form-label" for="agency-name" data-es="Nombre de tu inmobiliaria" data-en="Agency name">Nombre de tu inmobiliaria</label>
         <input class="form-input" id="agency-name" type="text" required>
@@ -86,6 +91,7 @@
     const agencyName = document.getElementById('agency-name').value.trim();
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
+    const inviteCode = document.getElementById('invite-code').value.trim();
 
     btn.disabled = true;
     btn.textContent = lang === 'es' ? 'Creando cuenta...' : 'Creating account...';
@@ -94,12 +100,20 @@
       const r = await fetch('/api/onboard', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ agencyName, email, password })
+        body: JSON.stringify({ agencyName, email, password, inviteCode })
       });
       const data = await r.json();
       if (!r.ok) {
         if (data.error === 'email_already_registered') {
           throw new Error(lang === 'es' ? 'Ese correo ya tiene una cuenta. Intenta iniciar sesion.' : 'That email already has an account. Try logging in instead.');
+        }
+        // Distinguish "we are not taking signups" from "your code is wrong",
+        // so someone holding a valid code isn't left retyping it.
+        if (data.error === 'signup_closed') {
+          throw new Error(lang === 'es' ? 'El registro esta cerrado por ahora. Escribenos a hola@proplync.mx y te incorporamos.' : 'Signups are closed for now. Email hola@proplync.mx and we will onboard you.');
+        }
+        if (data.error === 'invalid_invite_code') {
+          throw new Error(lang === 'es' ? 'Ese codigo de invitacion no es valido.' : 'That invite code is not valid.');
         }
         throw new Error(data.detail || data.error || 'signup_failed');
       }

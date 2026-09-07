@@ -13,14 +13,37 @@
  * If agency/membership creation fails after the auth user was created, the
  * auth user is deleted so signup can be retried cleanly (no orphaned account
  * stuck with no agency).
+ *
+ * INVITE-ONLY. This endpoint is the only way an account gets created, and it
+ * creates users through the service-role admin API — which bypasses Supabase's
+ * own "allow new users to sign up" setting. Turning that toggle off in the
+ * dashboard does NOT close this door, so the gate has to live here.
+ *
+ * It fails CLOSED: with SIGNUP_INVITE_CODE unset, every request is refused.
+ * Opening signup is a deliberate act (set the variable, redeploy), not the
+ * default state of a missing config.
  * -----------------------------------------------------------------------------
  */
+
+import { createHash, timingSafeEqual } from 'node:crypto';
 
 import { getServiceClient } from './_lib/supabase.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { safeDetail } from './_lib/health.js';
 
 const DIACRITICS_RE = new RegExp('[̀-ͯ]', 'g');
+
+/**
+ * Constant-time comparison of two secrets of any length.
+ * Hashing first gives timingSafeEqual the equal-length buffers it requires,
+ * and stops the comparison itself from leaking the code's length.
+ */
+function secretsMatch(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || !a || !b) return false;
+  const ha = createHash('sha256').update(a).digest();
+  const hb = createHash('sha256').update(b).digest();
+  return timingSafeEqual(ha, hb);
+}
 
 function slugify(name) {
   return String(name)
@@ -53,6 +76,20 @@ export default async function handler(req, res) {
   // guarding hardest. A real person signs up once; 5/hour per IP leaves room
   // for a retry or a shared office NAT without allowing scripted signups.
   if (await enforceRateLimit(req, res, { bucket: 'onboard', limit: 5, windowSec: 3600 })) return;
+
+  // Invite gate. Checked before anything is read or written, so a caller
+  // without the code cannot probe which emails are already registered by
+  // reading the difference between a 409 and a 400. The rate limit above
+  // doubles as brute-force protection: 5 guesses per IP per hour.
+  const expectedCode = process.env.SIGNUP_INVITE_CODE;
+  if (!expectedCode) {
+    res.status(403).json({ error: 'signup_closed' });
+    return;
+  }
+  if (!secretsMatch(String((req.body || {}).inviteCode || ''), expectedCode)) {
+    res.status(403).json({ error: 'invalid_invite_code' });
+    return;
+  }
 
   const { agencyName, email, password } = req.body || {};
   if (!agencyName || !String(agencyName).trim()) {
