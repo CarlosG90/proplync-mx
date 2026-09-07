@@ -23,6 +23,21 @@ import { notifyNewLead } from './_lib/notify.js';
 
 const STATUSES = ['new', 'contacted', 'won', 'lost'];
 
+/**
+ * True when a write failed because the row is not this agency's (or does not
+ * exist). Postgres reports the two cases differently and neither is a fault:
+ *   PGRST116 - .single() matched no row, because the agency_id filter or RLS
+ *              removed it
+ *   42501    - RLS WITH CHECK rejected the row (a note whose parent lead the
+ *              trigger resolved to someone else's agency)
+ *   P0001    - the lead_notes trigger's own "lead not found" raise
+ */
+function isNotOursOrMissing(error) {
+  if (!error) return false;
+  const code = error.code || '';
+  return code === 'PGRST116' || code === '42501' || code === 'P0001';
+}
+
 /** YYYY-MM-DD, or null to clear. Anything else is a client bug, not a date. */
 function parseFollowUp(v) {
   if (v === null || v === '') return { ok: true, value: null };
@@ -138,6 +153,13 @@ export default async function handler(req, res) {
         .select('id, body, created_at, author_id')
         .single();
       if (error) {
+        // 404 rather than 403 for a lead that belongs to someone else: telling
+        // a caller "that exists but isn't yours" turns this into an oracle for
+        // enumerating other agencies' lead ids.
+        if (isNotOursOrMissing(error)) {
+          res.status(404).json({ error: 'lead_not_found' });
+          return;
+        }
         res.status(500).json({ error: 'note_create_failed', detail: safeDetail(error) });
         return;
       }
@@ -233,6 +255,12 @@ export default async function handler(req, res) {
       .select('*')
       .single();
     if (error) {
+      // Same reasoning as the note insert, and it also covers the ordinary
+      // case of patching a lead that was deleted in another tab.
+      if (isNotOursOrMissing(error)) {
+        res.status(404).json({ error: 'lead_not_found' });
+        return;
+      }
       res.status(500).json({ error: 'lead_update_failed', detail: safeDetail(error) });
       return;
     }
