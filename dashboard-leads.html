@@ -22,18 +22,57 @@
   }
   .dash-tabs a.on{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
 
+  /* Filter row: the chase list is the first thing an agent needs each morning,
+     so "Por contactar" is the default view rather than the full archive. */
+  .lead-filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+  .lead-filters button{
+    font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;
+    padding:7px 14px;border-radius:999px;border:1px solid var(--line);
+    background:var(--white);color:var(--on-sand-dim);cursor:pointer;
+  }
+  .lead-filters button.on{background:var(--sea);color:#fff;border-color:var(--sea)}
+  .lead-filters .count{opacity:.6;margin-left:5px}
+
   .lead-list{display:flex;flex-direction:column;gap:14px}
   .lead-card{
     padding:20px;background:var(--white);border:1px solid rgba(26,36,56,.06);border-radius:var(--radius);
-    display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
   }
+  .lead-card.overdue{border-left:3px solid #d97706}
+  .lead-top{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   .lead-info{flex:1;min-width:220px}
   .lead-name{font-family:var(--display);font-size:1.06rem;color:var(--ink)}
   .lead-contact{font-family:var(--mono);font-size:.72rem;color:var(--sea);margin-top:6px}
   .lead-listing{font-family:var(--mono);font-size:.66rem;color:var(--on-sand-dim);margin-top:6px;text-transform:uppercase;letter-spacing:.04em}
   .lead-message{font-size:.86rem;color:var(--on-sand-dim);margin-top:10px;line-height:1.5}
   .lead-date{font-family:var(--mono);font-size:.62rem;color:var(--on-sand-dim);margin-top:10px}
-  .lead-status-select{flex:none;align-self:flex-start}
+  .lead-side{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .lead-status-select{flex:none}
+
+  .lead-actions{
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    margin-top:16px;padding-top:14px;border-top:1px solid rgba(26,36,56,.06);
+  }
+  .lead-actions label{font-family:var(--mono);font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;color:var(--on-sand-dim)}
+  .lead-actions input[type=date]{
+    font-family:var(--mono);font-size:.72rem;padding:6px 10px;
+    border:1px solid var(--line);border-radius:8px;background:var(--white);color:var(--ink);
+  }
+  .lead-due{font-family:var(--mono);font-size:.66rem;padding:4px 9px;border-radius:999px;background:rgba(217,119,6,.1);color:#b45309}
+  .link-btn{
+    font-family:var(--mono);font-size:.66rem;letter-spacing:.04em;
+    background:none;border:none;color:var(--sea);cursor:pointer;padding:4px 0;text-decoration:underline;
+  }
+  .wa-link{font-family:var(--mono);font-size:.66rem;color:#128c3e;text-decoration:none;letter-spacing:.04em}
+
+  .notes{margin-top:14px;padding-top:14px;border-top:1px dashed rgba(26,36,56,.12)}
+  .note{padding:10px 12px;background:var(--sand);border-radius:8px;margin-bottom:8px}
+  .note-body{font-size:.85rem;color:var(--ink);line-height:1.5;white-space:pre-wrap}
+  .note-meta{font-family:var(--mono);font-size:.6rem;color:var(--on-sand-dim);margin-top:6px;display:flex;gap:10px;align-items:center}
+  .note-form{display:flex;gap:8px;margin-top:10px}
+  .note-form textarea{
+    flex:1;min-height:38px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;
+    font-family:inherit;font-size:.85rem;color:var(--ink);background:var(--white);resize:vertical;
+  }
   .dash-empty{text-align:center;padding:60px 20px;color:var(--on-sand-dim)}
 </style>
 </head>
@@ -68,6 +107,8 @@
     <a href="/dashboard/leads" class="on" data-es="Leads" data-en="Leads">Leads</a>
   </div>
 
+  <div class="lead-filters" id="lead-filters"></div>
+
   <div class="lead-list" id="lead-list">
     <p class="dash-empty" data-es="Cargando..." data-en="Loading...">Cargando...</p>
   </div>
@@ -78,39 +119,175 @@
 <script src="/js/supabase-client.js"></script>
 <script>
   let myLeads = [];
+  let activeFilter = 'todo';
+  const openNotes = {};   // leadId -> true when its history is expanded
+  const notesCache = {};  // leadId -> array of notes, fetched on first open
 
-  const STATUS_LABELS = {
-    es: { new: 'Nuevo', contacted: 'Contactado', won: 'Ganado', lost: 'Perdido' },
-    en: { new: 'New', contacted: 'Contacted', won: 'Won', lost: 'Lost' }
+  const T = {
+    es: {
+      new: 'Nuevo', contacted: 'Contactado', won: 'Ganado', lost: 'Perdido',
+      todo: 'Por contactar', all: 'Todos', won_f: 'Ganados', lost_f: 'Perdidos',
+      followUp: 'Siguiente contacto', overdue: 'Vencido', today: 'Hoy',
+      notes: 'Notas', addNote: 'Escribe una nota...', save: 'Guardar',
+      hideNotes: 'Ocultar notas', showNotes: 'Ver notas', del: 'Borrar',
+      whatsapp: 'WhatsApp', never: 'Sin contactar',
+      empty: 'Aun no tienes leads. Cuando alguien contacte una de tus propiedades, aparecera aqui.',
+      emptyFilter: 'Nada en esta vista.'
+    },
+    en: {
+      new: 'New', contacted: 'Contacted', won: 'Won', lost: 'Lost',
+      todo: 'To contact', all: 'All', won_f: 'Won', lost_f: 'Lost',
+      followUp: 'Next contact', overdue: 'Overdue', today: 'Today',
+      notes: 'Notes', addNote: 'Write a note...', save: 'Save',
+      hideNotes: 'Hide notes', showNotes: 'View notes', del: 'Delete',
+      whatsapp: 'WhatsApp', never: 'Not contacted',
+      empty: 'No leads yet. When someone contacts one of your listings, it will appear here.',
+      emptyFilter: 'Nothing in this view.'
+    }
   };
+  function t(k) { return (T[lang] || T.es)[k]; }
 
-  function leadCardHTML(l) {
-    const d = new Date(l.created_at);
-    return '<div class="lead-card">' +
-      '<div class="lead-info">' +
-        '<div class="lead-name">' + l.name + '</div>' +
-        '<div class="lead-contact">' + l.email + (l.phone ? ' &middot; ' + l.phone : '') + '</div>' +
-        '<div class="lead-listing">' + (l.listing_public_id || '') + '</div>' +
-        (l.message ? '<div class="lead-message">' + l.message + '</div>' : '') +
-        '<div class="lead-date">' + d.toLocaleDateString(lang === 'es' ? 'es-MX' : 'en-US') + '</div>' +
+  // Lead fields are typed by strangers on a public form. Everything below
+  // renders through here — a buyer must not be able to run script in the
+  // agent's dashboard by putting markup in their name or message.
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function todayISO() {
+    const d = new Date();
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
+
+  function isOverdue(l) {
+    return !!l.next_follow_up && l.next_follow_up < todayISO() && l.status !== 'won' && l.status !== 'lost';
+  }
+
+  // "To contact" is everything still in play: open status, and either already
+  // due or never given a date. It is the list the agent works from.
+  function matchesFilter(l, f) {
+    if (f === 'all') return true;
+    if (f === 'won') return l.status === 'won';
+    if (f === 'lost') return l.status === 'lost';
+    return (l.status === 'new' || l.status === 'contacted') &&
+           (!l.next_follow_up || l.next_follow_up <= todayISO());
+  }
+
+  function waHref(phone) {
+    const digits = String(phone || '').replace(/\D/g, '');
+    return digits.length >= 10 ? 'https://wa.me/' + digits : null;
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString(lang === 'es' ? 'es-MX' : 'en-US',
+      { day: 'numeric', month: 'short' });
+  }
+
+  function noteHTML(n) {
+    return '<div class="note">' +
+      '<div class="note-body">' + esc(n.body) + '</div>' +
+      '<div class="note-meta">' +
+        '<span>' + esc(new Date(n.created_at).toLocaleString(lang === 'es' ? 'es-MX' : 'en-US')) + '</span>' +
+        '<button class="link-btn" onclick="deleteNote(\'' + esc(n.id) + '\')">' + t('del') + '</button>' +
       '</div>' +
-      '<select class="form-select lead-status-select" onchange="updateLeadStatus(\'' + l.id + '\', this.value)">' +
-        Object.keys(STATUS_LABELS[lang]).map(function(s) {
-          return '<option value="' + s + '"' + (s === l.status ? ' selected' : '') + '>' + STATUS_LABELS[lang][s] + '</option>';
-        }).join('') +
-      '</select>' +
     '</div>';
   }
 
+  function notesHTML(l) {
+    if (!openNotes[l.id]) return '';
+    const list = notesCache[l.id];
+    const body = list === undefined
+      ? '<p class="note-meta">...</p>'
+      : (list.length ? list.map(noteHTML).join('') : '');
+    return '<div class="notes">' + body +
+      '<div class="note-form">' +
+        '<textarea id="note-input-' + esc(l.id) + '" placeholder="' + t('addNote') + '"></textarea>' +
+        '<button class="btn btn-ghost" onclick="addNote(\'' + esc(l.id) + '\')">' + t('save') + '</button>' +
+      '</div></div>';
+  }
+
+  function leadCardHTML(l) {
+    const wa = waHref(l.phone);
+    const over = isOverdue(l);
+    const noteCount = l.noteCount || 0;
+
+    return '<div class="lead-card' + (over ? ' overdue' : '') + '">' +
+      '<div class="lead-top">' +
+        '<div class="lead-info">' +
+          '<div class="lead-name">' + esc(l.name) + '</div>' +
+          '<div class="lead-contact">' + esc(l.email) + (l.phone ? ' &middot; ' + esc(l.phone) : '') + '</div>' +
+          '<div class="lead-listing">' + esc(l.listing_public_id || '') + '</div>' +
+          (l.message ? '<div class="lead-message">' + esc(l.message) + '</div>' : '') +
+          '<div class="lead-date">' +
+            esc(new Date(l.created_at).toLocaleDateString(lang === 'es' ? 'es-MX' : 'en-US')) +
+            ' &middot; ' + (l.last_contacted_at ? fmtDate(l.last_contacted_at) : t('never')) +
+          '</div>' +
+        '</div>' +
+        '<div class="lead-side">' +
+          '<select class="form-select lead-status-select" onchange="updateLead(\'' + esc(l.id) + '\', { status: this.value })">' +
+            ['new', 'contacted', 'won', 'lost'].map(function(s) {
+              return '<option value="' + s + '"' + (s === l.status ? ' selected' : '') + '>' + t(s) + '</option>';
+            }).join('') +
+          '</select>' +
+          (over ? '<span class="lead-due">' + t('overdue') + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="lead-actions">' +
+        '<label for="fu-' + esc(l.id) + '">' + t('followUp') + '</label>' +
+        '<input type="date" id="fu-' + esc(l.id) + '" value="' + esc(l.next_follow_up || '') + '" ' +
+          'onchange="updateLead(\'' + esc(l.id) + '\', { nextFollowUp: this.value || null })">' +
+        (wa ? '<a class="wa-link" href="' + esc(wa) + '" target="_blank" rel="noopener">' + t('whatsapp') + ' &rarr;</a>' : '') +
+        '<button class="link-btn" onclick="toggleNotes(\'' + esc(l.id) + '\')">' +
+          (openNotes[l.id] ? t('hideNotes') : t('showNotes')) +
+          (noteCount ? ' (' + noteCount + ')' : '') +
+        '</button>' +
+      '</div>' +
+      notesHTML(l) +
+    '</div>';
+  }
+
+  function renderFilters() {
+    const defs = [
+      ['todo', t('todo')],
+      ['all', t('all')],
+      ['won', t('won_f')],
+      ['lost', t('lost_f')]
+    ];
+    document.getElementById('lead-filters').innerHTML = defs.map(function(d) {
+      const n = myLeads.filter(function(l) { return matchesFilter(l, d[0]); }).length;
+      return '<button class="' + (activeFilter === d[0] ? 'on' : '') + '" onclick="setFilter(\'' + d[0] + '\')">' +
+        d[1] + '<span class="count">' + n + '</span></button>';
+    }).join('');
+  }
+
   function renderLeads() {
+    renderFilters();
     const box = document.getElementById('lead-list');
     if (!myLeads.length) {
-      box.innerHTML = '<p class="dash-empty" data-es="Aun no tienes leads. Cuando alguien contacte una de tus propiedades, aparecera aqui." data-en="No leads yet. When someone contacts one of your listings, it will appear here.">' +
-        (lang === 'es' ? 'Aun no tienes leads. Cuando alguien contacte una de tus propiedades, aparecera aqui.' : 'No leads yet. When someone contacts one of your listings, it will appear here.') + '</p>';
+      box.innerHTML = '<p class="dash-empty">' + t('empty') + '</p>';
       return;
     }
-    box.innerHTML = myLeads.map(leadCardHTML).join('');
+    const shown = myLeads.filter(function(l) { return matchesFilter(l, activeFilter); });
+    if (!shown.length) {
+      box.innerHTML = '<p class="dash-empty">' + t('emptyFilter') + '</p>';
+      return;
+    }
+    // Overdue first, then soonest due, then newest — the order an agent works in.
+    shown.sort(function(a, b) {
+      const ao = isOverdue(a), bo = isOverdue(b);
+      if (ao !== bo) return ao ? -1 : 1;
+      if (a.next_follow_up && b.next_follow_up) return a.next_follow_up < b.next_follow_up ? -1 : 1;
+      if (a.next_follow_up) return -1;
+      if (b.next_follow_up) return 1;
+      return a.created_at < b.created_at ? 1 : -1;
+    });
+    box.innerHTML = shown.map(leadCardHTML).join('');
   }
+
+  function setFilter(f) { activeFilter = f; renderLeads(); }
 
   async function loadLeads() {
     const r = await authedFetch('/api/leads');
@@ -120,18 +297,71 @@
     renderLeads();
   }
 
-  async function updateLeadStatus(id, status) {
-    await authedFetch('/api/leads?id=' + encodeURIComponent(id), {
+  async function updateLead(id, patch) {
+    const r = await authedFetch('/api/leads?id=' + encodeURIComponent(id), {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ status })
+      body: JSON.stringify(patch)
     });
-    const lead = myLeads.find(l => l.id === id);
-    if (lead) lead.status = status;
+    if (!r.ok) return;
+    const data = await r.json();
+    const i = myLeads.findIndex(function(l) { return l.id === id; });
+    // Re-render from the server's row rather than the optimistic patch: the
+    // API also stamps last_contacted_at, which the client did not send.
+    if (i > -1 && data.lead) myLeads[i] = Object.assign({}, myLeads[i], data.lead);
+    renderLeads();
+  }
+
+  async function toggleNotes(id) {
+    openNotes[id] = !openNotes[id];
+    renderLeads();
+    if (openNotes[id] && notesCache[id] === undefined) {
+      const r = await authedFetch('/api/leads?action=note&id=' + encodeURIComponent(id));
+      const data = r.ok ? await r.json() : { notes: [] };
+      notesCache[id] = data.notes || [];
+      renderLeads();
+    }
+  }
+
+  async function addNote(id) {
+    const el = document.getElementById('note-input-' + id);
+    const body = (el && el.value || '').trim();
+    if (!body) return;
+    const r = await authedFetch('/api/leads?action=note&id=' + encodeURIComponent(id), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ body })
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    notesCache[id] = [data.note].concat(notesCache[id] || []);
+    const lead = myLeads.find(function(l) { return l.id === id; });
+    if (lead) {
+      lead.noteCount = (lead.noteCount || 0) + 1;
+      lead.last_contacted_at = new Date().toISOString();
+    }
+    renderLeads();
+  }
+
+  async function deleteNote(noteId) {
+    let ownerId = null;
+    Object.keys(notesCache).forEach(function(lid) {
+      if ((notesCache[lid] || []).some(function(n) { return n.id === noteId; })) ownerId = lid;
+    });
+    const r = await authedFetch('/api/leads?action=note&id=' + encodeURIComponent(noteId), { method: 'DELETE' });
+    if (!r.ok) return;
+    if (ownerId) {
+      notesCache[ownerId] = notesCache[ownerId].filter(function(n) { return n.id !== noteId; });
+      const lead = myLeads.find(function(l) { return l.id === ownerId; });
+      if (lead) lead.noteCount = Math.max(0, (lead.noteCount || 1) - 1);
+    }
+    renderLeads();
   }
 
   document.addEventListener('langchange', renderLeads);
-  document.querySelectorAll('#navlinks a').forEach(a => a.addEventListener('click', () => document.getElementById('navlinks').classList.remove('open')));
+  document.querySelectorAll('#navlinks a').forEach(function(a) {
+    a.addEventListener('click', function() { document.getElementById('navlinks').classList.remove('open'); });
+  });
 
   (async function init() {
     const session = await requireAuth();
