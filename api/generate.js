@@ -448,8 +448,8 @@ const OBJECTIVES = {
     en: 'Objective: rent the property. You are writing to a tenant: availability, what is included and what living there is like matter more than investment return.'
   },
   captar: {
-    es: 'Objetivo: captar propietarios. NO hablas a un comprador: hablas a alguien que tiene un inmueble parecido y podria darlo en exclusiva. Usa esta propiedad como prueba de como se ve el trabajo de la agencia, y cierra invitando a una valoracion.',
-    en: 'Objective: win listings. You are NOT writing to a buyer: you are writing to someone who owns a similar property and might list it with this agency. Use this listing as proof of the agency\'s work, and close by inviting a valuation.'
+    es: 'Objetivo: CAPTAR PROPIETARIOS. El lector NO es un comprador y no va a visitar este inmueble: es alguien que ya tiene una propiedad parecida y podria darla en exclusiva. Esta propiedad aparece como prueba del trabajo de la agencia, no como algo en oferta para quien lee. Ninguna pieza invita a ver, visitar ni comprar ESTA propiedad. Todo CTA apunta a hablar de LA SUYA: "Cuanto vale la tuya", "Pide tu valoracion sin costo", "Hablemos de tu propiedad", "Asi publicamos, quieres lo mismo para la tuya". Esto reemplaza cualquier ejemplo de CTA orientado a compradores que aparezca en las instrucciones de formato ("Agendar visita", "Escribe TOUR", "Mas informacion").',
+    en: 'Objective: WIN LISTINGS. The reader is NOT a buyer and will not visit this property: they already own a similar one and might list it with this agency. This listing appears as proof of the agency\'s work, not as something on offer to the reader. No piece invites viewing or buying THIS property. Every CTA points at THEIRS: "What is yours worth", "Request a free valuation", "Let\'s talk about your property", "This is how we market — want the same for yours". This overrides any buyer-facing CTA example in the format instructions below ("Book a viewing", "Text TOUR", "Learn more").'
   },
   visita: {
     es: 'Objetivo: agendar visitas. Cada pieza cierra pidiendo una visita concreta, no informacion generica.',
@@ -463,9 +463,13 @@ function voiceDirective(tone, objective, isEs) {
   const t = TONES[String(tone || '').toLowerCase()];
   const o = OBJECTIVES[String(objective || '').toLowerCase()];
   if (!t && !o) return '';
+  // Stated as outranking the format instructions on purpose. Those name
+  // concrete buyer CTAs ("Agendar visita", "Escribe TOUR"), and a general
+  // instruction loses to a specific one unless it says otherwise — which is
+  // exactly how the first version of this shipped doing nothing.
   const head = isEs
-    ? '\n\nVOZ Y OBJETIVO (no relajan ninguna regla de arriba: sigue prohibido inventar o inflar):'
-    : '\n\nVOICE AND OBJECTIVE (these relax none of the rules above: inventing or inflating is still forbidden):';
+    ? '\n\nVOZ Y OBJETIVO — MANDAN SOBRE LAS INSTRUCCIONES DE FORMATO DE ARRIBA en todo lo que sea tono, a quien le hablas y que pide el CTA. No relajan ninguna regla de honestidad: sigue prohibido inventar o inflar.'
+    : '\n\nVOICE AND OBJECTIVE — THESE OUTRANK THE FORMAT INSTRUCTIONS ABOVE on tone, on who is being addressed, and on what the CTA asks for. They relax none of the honesty rules: inventing or inflating is still forbidden.';
   return head
     + (t ? '\n- ' + t[k] : '')
     + (o ? '\n- ' + o[k] : '');
