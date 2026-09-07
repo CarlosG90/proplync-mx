@@ -57,11 +57,18 @@
 
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}
   .form-grid .field-full{grid-column:1/-1}
-  #listing-modal,#settings-modal,#share-modal,#preview-modal{
+  /* A locked action stays visible and legible rather than greyed to the edge
+     of unreadable: the agency should know the feature exists and what it costs. */
+  .listing-actions button.locked{
+    color:var(--gold-deep);border-color:rgba(201,169,110,.45);
+    background:rgba(201,169,110,.07);
+  }
+  .listing-actions button.locked:hover{border-color:var(--gold);background:rgba(201,169,110,.13)}
+  #listing-modal,#settings-modal,#share-modal,#preview-modal,#upgrade-modal{
     display:none;position:fixed;inset:0;background:rgba(10,22,40,.5);
     z-index:100;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;
   }
-  #listing-modal.open,#settings-modal.open,#share-modal.open,#preview-modal.open{display:flex}
+  #listing-modal.open,#settings-modal.open,#share-modal.open,#preview-modal.open,#upgrade-modal.open{display:flex}
   .modal-card{
     background:var(--white);border-radius:var(--radius-lg);padding:32px;
     max-width:640px;width:100%;box-shadow:var(--shadow-xl);
@@ -330,6 +337,17 @@
   </div>
 </div>
 
+<div id="upgrade-modal">
+  <div class="modal-card" style="max-width:520px">
+    <h2 data-es="Marketing con IA es parte de Pro" data-en="AI marketing is part of Pro">Marketing con IA es parte de Pro</h2>
+    <p class="sub" id="upgrade-body" data-es="Genera ficha PDF, post, carrusel, story, email, reel y anuncio desde los datos que ya capturaste, y publica en Instagram sin salir del panel." data-en="Generate a PDF sheet, post, carousel, story, email, reel and ad from data you already entered, and publish to Instagram without leaving the dashboard.">Genera ficha PDF, post, carrusel, story, email, reel y anuncio desde los datos que ya capturaste, y publica en Instagram sin salir del panel.</p>
+    <div class="modal-actions" style="justify-content:center">
+      <a class="btn btn-gold" href="/#contacto" data-es="Hablar de Pro" data-en="Talk about Pro">Hablar de Pro</a>
+      <button type="button" class="btn btn-outline" onclick="closeUpgradeModal()" data-es="Cerrar" data-en="Close">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div id="share-modal">
   <div class="modal-card share-card" style="text-align:center">
     <h2 id="share-modal-title" data-es="Tu pagina esta lista" data-en="Your page is live">Tu pagina esta lista</h2>
@@ -385,9 +403,11 @@
       '<div class="dash-item-actions">' +
         '<button onclick="openPreviewModal(\'' + l.public_id + '\',\'' + l.status + '\')" data-es="Vista previa" data-en="Preview">' + (lang === 'es' ? 'Vista previa' : 'Preview') + '</button>' +
         '<button onclick="openShareModal(\'' + l.public_id + '\')" data-es="Compartir" data-en="Share">' + (lang === 'es' ? 'Compartir' : 'Share') + '</button>' +
-        // The generator is the reason many agents signed up, and until now the
-        // only way in was retyping a listing they had already entered here.
-        '<button onclick="window.location.href=\'/generate?id=' + encodeURIComponent(l.public_id) + '\'" data-es="Marketing" data-en="Marketing">Marketing</button>' +
+        // Marketing is a Pro module. A free agency gets one real generation on
+        // their own listing — seeing the seven formats built from their own
+        // property is a better sales conversation than a feature list — and is
+        // then locked. api/generate.js enforces the same rule; this is only UI.
+        marketingButtonHTML(l) +
         '<button onclick="editListing(\'' + l.id + '\')" data-es="Editar" data-en="Edit">' + (lang === 'es' ? 'Editar' : 'Edit') + '</button>' +
         '<button class="danger" onclick="deleteListing(\'' + l.id + '\')" data-es="Eliminar" data-en="Delete">' + (lang === 'es' ? 'Eliminar' : 'Delete') + '</button>' +
       '</div>' +
@@ -472,6 +492,36 @@
   /* Plan limits arrive with the listing list. The server enforces them; this
      just stops someone reaching the wall without warning. */
   let currentPlan = { plan: 'free', listingsUsed: 0, listingsLimit: 10, photosPerListing: 10, atListingLimit: false };
+
+  function marketingAllowed() {
+    const m = currentPlan && currentPlan.marketing;
+    // Absent means an older server that has not shipped the field yet. Treat
+    // that as allowed: the API is the real gate, and a UI that hides a paid
+    // feature it cannot verify is worse than one that shows it.
+    return !m || m.allowed !== false;
+  }
+
+  function marketingButtonHTML(l) {
+    const label = lang === 'es' ? 'Marketing' : 'Marketing';
+    if (marketingAllowed()) {
+      return '<button onclick="window.location.href=\'/generate?id=' + encodeURIComponent(l.public_id) + '\'">' + label + '</button>';
+    }
+    return '<button class="locked" onclick="openUpgradeModal()" title="Pro">' + label + ' \u00b7 Pro</button>';
+  }
+
+  function openUpgradeModal() {
+    const m = currentPlan && currentPlan.marketing;
+    const body = document.getElementById('upgrade-body');
+    if (body && m && m.trialsLeft === 0) {
+      body.textContent = lang === 'es'
+        ? 'Ya usaste tu generacion incluida. Pro te da generaciones ilimitadas desde tus propias propiedades y publicacion en Instagram.'
+        : 'You have used your included generation. Pro gives you unlimited generations from your own listings, plus Instagram publishing.';
+    }
+    document.getElementById('upgrade-modal').classList.add('open');
+  }
+  function closeUpgradeModal() {
+    document.getElementById('upgrade-modal').classList.remove('open');
+  }
 
   function applyPlan(p) {
     currentPlan = p;

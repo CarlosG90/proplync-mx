@@ -1283,6 +1283,27 @@ function hasStoredSession() {
   } catch { return false; }
 }
 
+/* The integrated flow (generating from a listing you own) is a Pro module, so
+   the server has to know who is asking. Reuse the stored session rather than
+   loading the Supabase SDK: worst case the token is stale, the server treats
+   the call as anonymous, and the agent gets the same manual path a visitor
+   gets. Never worse than today. */
+function storedAccessToken() {
+  try {
+    const raw = localStorage.getItem('sb-rznuuykmtvbgmnczbqiq-auth-token');
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    return (s && (s.access_token || (s.currentSession && s.currentSession.access_token))) || null;
+  } catch { return null; }
+}
+
+function generateHeaders() {
+  const h = { 'content-type': 'application/json' };
+  const t = storedAccessToken();
+  if (t) h.authorization = 'Bearer ' + t;
+  return h;
+}
+
 function applyAuthNav() {
   const link = document.getElementById('nav-auth');
   if (!link || !hasStoredSession()) return;
@@ -1574,11 +1595,21 @@ async function handleGenerate() {
     document.getElementById('gen-loading-text').textContent =
       lang === 'es' ? 'Generando copy para 7 formatos con IA...' : 'Generating copy for 7 formats with AI...';
 
+    const payload = stripPhotos(data);
+    // Present only when this generation came from a listing the agency owns.
+    if (currentProperty && currentProperty.public_id) payload.listingPublicId = currentProperty.public_id;
+
     const r = await fetch('/api/generate', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(stripPhotos(data))
+      headers: generateHeaders(),
+      body: JSON.stringify(payload)
     });
+    if (r.status === 402) {
+      const body = await r.json().catch(() => ({}));
+      throw new Error(lang === 'es'
+        ? 'Marketing con IA es parte de Pro. Ya usaste la generacion incluida en tu plan.'
+        : 'AI marketing is part of Pro. You have used the generation included in your plan.');
+    }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const result = await r.json();
     if (result.error) throw new Error(result.detail || result.error);

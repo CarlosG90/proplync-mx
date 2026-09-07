@@ -14,6 +14,9 @@
  */
 
 import sharp from 'sharp';
+import { requireAgencyUser } from './_lib/auth.js';
+import { getServiceClient } from './_lib/supabase.js';
+import { marketingAccess } from './_lib/plans.js';
 import { groqChat, messageText } from './_lib/groq.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { safeDetail, logDegraded } from './_lib/health.js';
@@ -396,10 +399,55 @@ async function handleNlSearch(req, res) {
   }
 }
 
+/**
+ * Marketing is a Pro module, but only the INTEGRATED flow is gated: generating
+ * from a listing the agency owns, prefilled, ready to publish. Typing a
+ * property in by hand stays free for everyone, signed in or not, because that
+ * is the demo that earns the signup in the first place.
+ *
+ * A free agency gets one real generation on their own listing before the
+ * paywall. The counter lives on the agency row, so clearing browser storage
+ * does not mint another. Returns true when it has already answered the request.
+ */
+async function marketingGateBlocks(req, res) {
+  const listingPublicId = (req.body || {}).listingPublicId;
+  if (!listingPublicId) return false;            // manual entry — always free
+
+  const authz = req.headers.authorization || '';
+  if (!authz.startsWith('Bearer ')) return false; // anonymous — public generator
+
+  const auth = await requireAgencyUser(req);
+  if (!auth) return false;                        // stale token — treat as public
+
+  const svc = getServiceClient();
+  const { data: agency } = await svc
+    .from('agencies')
+    .select('plan, marketing_trials_used')
+    .eq('id', auth.agencyId)
+    .maybeSingle();
+
+  const access = marketingAccess(agency || {});
+  if (!access.allowed) {
+    res.status(402).json({ error: 'upgrade_required', module: 'marketing' });
+    return true;
+  }
+
+  // Only a trial consumes a count; a paid plan is unlimited. Incremented
+  // before the work, not after: a generation that fails halfway still cost the
+  // model call, and the alternative is a free retry loop.
+  if (access.reason === 'trial') {
+    const used = Number((agency && agency.marketing_trials_used) || 0);
+    await svc.from('agencies')
+      .update({ marketing_trials_used: used + 1 })
+      .eq('id', auth.agencyId);
+  }
+  return false;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'content-type');
+  res.setHeader('Access-Control-Allow-Headers', 'content-type, authorization');
 
   if (req.method === 'OPTIONS') {
     res.status(204).end();
@@ -416,6 +464,10 @@ export default async function handler(req, res) {
   // drain the Groq quota. Image work is CPU-bound rather than token-bound but
   // is throttled by the same budget.
   if (await enforceRateLimit(req, res, { bucket: 'generate', limit: 16, windowSec: 60 })) return;
+
+  // Pro gate for the integrated flow. Runs after the rate limit so a caller
+  // cannot probe plan state faster than they can be throttled.
+  if (await marketingGateBlocks(req, res)) return;
 
   /* ── Route to sub-handlers by action ──
      Body for direct callers; query for the /api/describe and /api/nlsearch

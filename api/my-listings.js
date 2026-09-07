@@ -134,7 +134,7 @@ export default async function handler(req, res) {
       // Usage travels with the list so the dashboard can show "3 de 10" and
       // disable the create button without a second round trip.
       const { data: agencyRow } = await getServiceClient()
-        .from('agencies').select('plan').eq('id', auth.agencyId).maybeSingle();
+        .from('agencies').select('plan, marketing_trials_used').eq('id', auth.agencyId).maybeSingle();
       res.status(200).json({
         listings: data,
         plan: planStatus(agencyRow, (data || []).length)
@@ -154,7 +154,7 @@ export default async function handler(req, res) {
       // /generate publish handoff and any direct API call walk straight past it.
       const svc = getServiceClient();
       const [agencyRes, countRes] = await Promise.all([
-        svc.from('agencies').select('plan').eq('id', auth.agencyId).maybeSingle(),
+        svc.from('agencies').select('plan, marketing_trials_used').eq('id', auth.agencyId).maybeSingle(),
         svc.from('listings').select('id', { count: 'exact', head: true }).eq('agency_id', auth.agencyId)
       ]);
       const plan = planFor(agencyRes.data);
@@ -188,7 +188,7 @@ export default async function handler(req, res) {
       // The photo cap applies on edit too, or it would be trivially bypassed by
       // creating within the limit and then adding more.
       const { data: agencyRow } = await getServiceClient()
-        .from('agencies').select('plan').eq('id', auth.agencyId).maybeSingle();
+        .from('agencies').select('plan, marketing_trials_used').eq('id', auth.agencyId).maybeSingle();
       fields = capPhotos(fields, planFor(agencyRow));
       fields.updated_at = new Date().toISOString();
       const { data, error } = await db
