@@ -59,6 +59,7 @@ async function main() {
     node scripts/onboard-agency.mjs --email <addr> --agency "<name>"
 
     --password <pw>   use this instead of a generated one
+    --plan <p>        free | pro | vip (default pro = unlimited marketing)
     --link-existing   attach an existing account to a new agency
     --dry-run         show the plan, change nothing
 `);
@@ -71,6 +72,9 @@ async function main() {
   const agencyName = String(args.agency).trim();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) die(`"${email}" does not look like an email address.`);
   if (!agencyName) die('--agency cannot be empty.');
+
+  const plan = String(args.plan || 'pro').toLowerCase();
+  if (!['free', 'pro', 'vip'].includes(plan)) die('--plan must be free, pro or vip.');
 
   const password = args.password || generatePassword();
   if (password.length < 6) die('Password must be at least 6 characters.');
@@ -116,7 +120,7 @@ async function main() {
 
   let agency;
   try {
-    agency = await provisionAgency(svc, { userId, agencyName });
+    agency = await provisionAgency(svc, { userId, agencyName, plan });
   } catch (err) {
     // Only clean up what this run created. An account that existed before is
     // someone's real login and must survive a failed provisioning attempt.
@@ -138,7 +142,7 @@ async function main() {
   console.log(`
   ✓ ${agencyName} is onboarded
 
-    Agency        ${agencyName}
+    Agency        ${agencyName}  ·  plan ${plan}
     Mini-site     ${site}/agencia/${agency.slug}
     Log in at     ${site}/login
 

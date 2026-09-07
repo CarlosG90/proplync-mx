@@ -1304,6 +1304,78 @@ function generateHeaders() {
   return h;
 }
 
+/* Contact gate on download.
+   Generating is free and always will be — it is the demo that earns the
+   signup. Downloading is the moment someone has decided the output is worth
+   having, which is the only moment worth asking for a contact.
+
+   Signed-in agencies skip it: we already have their details, and asking again
+   would tax the customers who are already paying. Anyone else is asked once
+   per browser and the answer is remembered. */
+var CONTACT_KEY = 'proplync:contact';
+var _contactResolve = null;
+
+function hasContact() {
+  if (storedAccessToken()) return true;   // an agency we already know
+  try { return !!localStorage.getItem(CONTACT_KEY); } catch { return false; }
+}
+
+function ensureContact() {
+  if (hasContact()) return Promise.resolve(true);
+  const box = document.getElementById('contact-gate');
+  box.style.display = 'flex';
+  document.getElementById('cg-error').style.display = 'none';
+  setTimeout(() => { const el = document.getElementById('cg-email'); if (el) el.focus(); }, 60);
+  return new Promise(res => { _contactResolve = res; });
+}
+
+function closeContactGate(result) {
+  document.getElementById('contact-gate').style.display = 'none';
+  const r = _contactResolve; _contactResolve = null;
+  if (r) r(result);
+}
+function cancelContactGate() { closeContactGate(false); }
+
+async function submitContactGate() {
+  const name = document.getElementById('cg-name').value.trim();
+  const email = document.getElementById('cg-email').value.trim();
+  const phone = document.getElementById('cg-phone').value.trim();
+  const err = document.getElementById('cg-error');
+  const show = (msg) => { err.textContent = msg; err.style.display = 'block'; };
+
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    show(lang === 'es' ? 'Escribe un correo valido.' : 'Enter a valid email.'); return;
+  }
+  if (phone.replace(/\D/g, '').length < 8) {
+    show(lang === 'es' ? 'Escribe un telefono valido.' : 'Enter a valid phone number.'); return;
+  }
+
+  const btn = document.getElementById('cg-submit');
+  btn.disabled = true;
+  try {
+    const body = { name, email, phone };
+    if (currentProperty && currentProperty.public_id) body.listingPublicId = currentProperty.public_id;
+    const r = await fetch('/api/leads?action=download', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
+    });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      show(d.error === 'rate_limited'
+        ? (lang === 'es' ? 'Demasiados intentos. Intenta mas tarde.' : 'Too many attempts. Try again later.')
+        : (lang === 'es' ? 'No pudimos guardar tus datos. Intenta de nuevo.' : 'We could not save your details. Try again.'));
+      btn.disabled = false; return;
+    }
+    // Remembered so the next download in this browser is not interrupted. The
+    // record already exists server-side; this only controls the prompt.
+    try { localStorage.setItem(CONTACT_KEY, JSON.stringify({ email, at: Date.now() })); } catch {}
+    btn.disabled = false;
+    closeContactGate(true);
+  } catch (e) {
+    show(lang === 'es' ? 'Error de red. Intenta de nuevo.' : 'Network error. Try again.');
+    btn.disabled = false;
+  }
+}
+
 function applyAuthNav() {
   const link = document.getElementById('nav-auth');
   if (!link || !hasStoredSession()) return;
@@ -1922,6 +1994,7 @@ function checkLibsLoaded() {
 
 /* ---------- 1. PDF DOWNLOAD (jsPDF) ---------- */
 async function downloadPDF() {
+  if (!(await ensureContact())) return;
   if (!checkLibsLoaded()) return;
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -2237,6 +2310,7 @@ function specRow(prop, cls) {
 }
 
 async function downloadPost() {
+  if (!(await ensureContact())) return;
   if (!checkLibsLoaded()) return;
   try {
     const blob = await renderPostBlob();
@@ -2349,6 +2423,7 @@ async function publishInstagram() {
 
 /* ---------- 3. CAROUSEL (5 slides) ---------- */
 async function downloadCarousel() {
+  if (!(await ensureContact())) return;
   if (!checkLibsLoaded()) return;
   const prop = getPropertyData();
   const carousel = generatedContent.carousel;
@@ -2475,6 +2550,7 @@ async function downloadCarousel() {
 
 /* ---------- 4. STORY (1080x1920) ---------- */
 async function downloadStory() {
+  if (!(await ensureContact())) return;
   if (!checkLibsLoaded()) return;
   const prop = getPropertyData();
   const story = generatedContent.story;
@@ -2518,7 +2594,8 @@ async function downloadStory() {
 }
 
 /* ---------- 5. EMAIL (HTML download) ---------- */
-function downloadEmail() {
+async function downloadEmail() {
+  if (!(await ensureContact())) return;
   const prop = getPropertyData();
   const email = generatedContent.email;
   const isEs = lang === 'es';
@@ -2600,7 +2677,8 @@ ${propertyImageUrl ? `<tr><td style="padding:0"><img src="${propertyImageUrl}" a
   triggerDownload(blob, 'proplync-email-' + (prop.title || 'property').replace(/\s+/g, '-').toLowerCase() + '.html');
 }
 
-function downloadAd() {
+async function downloadAd() {
+  if (!(await ensureContact())) return;
   const prop = getPropertyData();
   const ad = generatedContent.ad;
   const isEs = lang === 'es';
@@ -2617,6 +2695,7 @@ function downloadAd() {
 
 /* ---------- 6. VIDEO / REEL (Canvas animation + MediaRecorder) ---------- */
 async function downloadVideo() {
+  if (!(await ensureContact())) return;
   const prop = getPropertyData();
   const video = generatedContent.video;
   if (!video || !video.scene_texts || !video.scene_texts.length) return;
@@ -2835,6 +2914,7 @@ function roundRect(ctx, x, y, w, h, r) {
 
 /* ---------- DOWNLOAD ALL ZIP ---------- */
 async function downloadAllZip() {
+  if (!(await ensureContact())) return;
   if (!checkLibsLoaded()) return;
   const prop = getPropertyData();
   const zip = new JSZip();
@@ -3030,5 +3110,23 @@ document.addEventListener('langchange', function() {
   }
 });
 </script>
+<div id="contact-gate" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(10,22,40,.62);align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--white,#fff);border-radius:18px;max-width:430px;width:100%;padding:30px 30px 26px;box-shadow:0 40px 90px -30px rgba(10,22,40,.5)">
+    <div style="font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-deep,#a8873f)" data-es="Ultimo paso" data-en="Last step">Ultimo paso</div>
+    <h3 style="font-family:var(--display);font-weight:400;font-size:1.4rem;margin:8px 0 6px;color:var(--ink,#1a2438)" data-es="&iquest;A donde te enviamos el contenido?" data-en="Where should we send the content?">&iquest;A donde te enviamos el contenido?</h3>
+    <p style="font-size:.86rem;line-height:1.55;color:var(--on-sand-dim,#5b6472);margin:0 0 18px" data-es="Dejanos tus datos y descargas los siete formatos. Te escribimos solo si quieres ver como funciona con todo tu portafolio." data-en="Leave your details and download all seven formats. We only reach out if you want to see how it works across your whole portfolio.">Dejanos tus datos y descargas los siete formatos. Te escribimos solo si quieres ver como funciona con todo tu portafolio.</p>
+    <div id="cg-error" style="display:none;background:rgba(190,60,60,.08);color:#a03535;font-size:.82rem;padding:9px 12px;border-radius:8px;margin-bottom:12px"></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input id="cg-name" class="form-input" type="text" autocomplete="name" data-ph-es="Nombre" data-ph-en="Name" placeholder="Nombre">
+      <input id="cg-email" class="form-input" type="email" autocomplete="email" data-ph-es="Correo electronico *" data-ph-en="Email *" placeholder="Correo electronico *">
+      <input id="cg-phone" class="form-input" type="tel" autocomplete="tel" data-ph-es="WhatsApp / telefono *" data-ph-en="WhatsApp / phone *" placeholder="WhatsApp / telefono *">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:18px">
+      <button type="button" class="btn btn-gold" style="flex:1" id="cg-submit" onclick="submitContactGate()" data-es="Descargar" data-en="Download">Descargar</button>
+      <button type="button" class="btn btn-ghost" onclick="cancelContactGate()" data-es="Cancelar" data-en="Cancel">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

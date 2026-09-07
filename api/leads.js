@@ -111,6 +111,54 @@ export default async function handler(req, res) {
   }
 
   // -------------------------------------------------------------------------
+  // Public: a visitor downloading generated content leaves a contact first.
+  // These are prospects for Proplync itself, not an agency's buyers, which is
+  // why they land in download_leads rather than `leads`.
+  // -------------------------------------------------------------------------
+  if (req.method === 'POST' && action === 'download') {
+    if (await enforceRateLimit(req, res, { bucket: 'download-lead', limit: 12, windowSec: 3600 })) return;
+
+    const { name, email, phone, listingPublicId } = req.body || {};
+    if (!email || !phone) {
+      res.status(400).json({ error: 'email_and_phone_required' });
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email))) {
+      res.status(400).json({ error: 'invalid_email' });
+      return;
+    }
+    // Loose on purpose: Mexican numbers get written half a dozen ways and a
+    // strict pattern here costs real leads to save a little tidiness.
+    if (String(phone).replace(/\D/g, '').length < 8) {
+      res.status(400).json({ error: 'invalid_phone' });
+      return;
+    }
+
+    // Attribute it to the agency when a signed-in one is downloading, so these
+    // can be told apart from cold traffic later.
+    let agencyId = null;
+    try {
+      const auth = await requireAgencyUser(req);
+      if (auth) agencyId = auth.agencyId;
+    } catch { /* anonymous is the normal case here */ }
+
+    const { error } = await getServiceClient().from('download_leads').insert({
+      name: name ? String(name).slice(0, 120) : null,
+      email: String(email).slice(0, 200).toLowerCase(),
+      phone: String(phone).slice(0, 40),
+      listing_public_id: listingPublicId ? String(listingPublicId).slice(0, 60) : null,
+      agency_id: agencyId,
+      source: 'generate'
+    });
+    if (error) {
+      res.status(500).json({ error: 'download_lead_failed', detail: safeDetail(error) });
+      return;
+    }
+    res.status(200).json({ ok: true });
+    return;
+  }
+
+  // -------------------------------------------------------------------------
   // Everything below requires an authenticated agency user.
   // -------------------------------------------------------------------------
   const auth = await requireAgencyUser(req);

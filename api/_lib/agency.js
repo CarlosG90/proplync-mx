@@ -43,13 +43,16 @@ export async function uniqueSlug(svc, base) {
  * created it and should roll it back; an operator linking a pre-existing
  * account must not).
  */
-export async function provisionAgency(svc, { userId, agencyName }) {
+export async function provisionAgency(svc, { userId, agencyName, plan = 'pro' }) {
   const slug = await uniqueSlug(svc, slugify(agencyName));
 
+  // Defaults to pro because every agency created today arrives through an
+  // invite or the operator's own script, and that is the paying relationship.
+  // The free tier exists for self-serve signup whenever that opens.
   const { data: agency, error: agencyErr } = await svc
     .from('agencies')
-    .insert({ name: agencyName, slug })
-    .select('id, slug')
+    .insert({ name: agencyName, slug, plan })
+    .select('id, slug, plan')
     .single();
   if (agencyErr) throw agencyErr;
 

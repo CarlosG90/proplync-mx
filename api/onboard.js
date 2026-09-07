@@ -53,7 +53,7 @@ function hashCode(code) {
 async function claimInvite(svc, code, email) {
   const { data: invite } = await svc
     .from('signup_invites')
-    .select('id, email, agency_name, expires_at, used_at')
+    .select('id, email, agency_name, expires_at, used_at, plan')
     .eq('code_hash', hashCode(code))
     .maybeSingle();
 
@@ -163,7 +163,10 @@ export default async function handler(req, res) {
   const userId = created.user.id;
 
   try {
-    const agency = await provisionAgency(svc, { userId, agencyName });
+    // The invite decides the plan. Master-code signups (no invite row) get pro
+    // too: that path is the operator letting someone in deliberately.
+    const plan = (claimedInvite && claimedInvite.plan) || 'pro';
+    const agency = await provisionAgency(svc, { userId, agencyName, plan });
     if (claimedInvite) {
       // PostgrestFilterBuilder is thenable but has no .catch, so this needs a
       // real try/catch. Recording who redeemed the invite is bookkeeping; it

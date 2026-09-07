@@ -16,6 +16,8 @@
  *   --agency <name>   Recorded on the invite so you know who it was for.
  *   --days <n>        Validity, default 14.
  *   --note <text>     Anything you want to read back later.
+ *   --plan <p>        free | pro | vip. Default pro — an agency you onboard by
+ *                     hand is the paying relationship and gets unlimited use.
  *   --list            Show outstanding invites and exit.
  *   --revoke <id>     Delete an invite by id and exit.
  *
@@ -44,7 +46,7 @@ function fmtDate(iso) {
 async function list(svc) {
   const { data, error } = await svc
     .from('signup_invites')
-    .select('id, email, agency_name, note, expires_at, used_at, created_at')
+    .select('id, email, agency_name, note, expires_at, used_at, created_at, plan')
     .order('created_at', { ascending: false })
     .limit(50);
   if (error) die(`Could not read invites: ${error.message}`);
@@ -56,7 +58,7 @@ async function list(svc) {
     const state = i.used_at ? 'used'
       : new Date(i.expires_at) <= now ? 'EXPIRED'
       : 'open';
-    console.log(`    ${state.padEnd(8)} ${fmtDate(i.expires_at)}  ${(i.agency_name || '-').padEnd(22)} ${i.email || 'any address'}`);
+    console.log(`    ${state.padEnd(8)} ${String(i.plan || 'pro').padEnd(5)} ${fmtDate(i.expires_at)}  ${(i.agency_name || '-').padEnd(22)} ${i.email || 'any address'}`);
     console.log(`             id ${i.id}${i.note ? `  · ${i.note}` : ''}`);
   }
   console.log('\n  Codes are hashed and cannot be shown. Revoke with --revoke <id>.\n');
@@ -81,6 +83,7 @@ async function main() {
     node scripts/create-invite.mjs --revoke <id>
 
     --days <n>    validity in days (default 14)
+    --plan <p>    free | pro | vip (default pro = unlimited marketing)
     --note <text> reminder for your own benefit
 `);
     return;
@@ -98,6 +101,9 @@ async function main() {
   const days = Number(args.days || 14);
   if (!Number.isFinite(days) || days < 1 || days > 365) die('--days must be between 1 and 365.');
 
+  const plan = String(args.plan || 'pro').toLowerCase();
+  if (!['free', 'pro', 'vip'].includes(plan)) die('--plan must be free, pro or vip.');
+
   const code = newCode();
   const expiresAt = new Date(Date.now() + days * 86400_000).toISOString();
 
@@ -106,7 +112,8 @@ async function main() {
     email,
     agency_name: args.agency ? String(args.agency).trim() : null,
     note: args.note ? String(args.note) : null,
-    expires_at: expiresAt
+    expires_at: expiresAt,
+    plan
   });
   if (error) die(`Could not create the invite: ${error.message}`);
 
@@ -118,6 +125,7 @@ async function main() {
     Sign up at    ${site}/signup
     Valid until   ${fmtDate(expiresAt)}  (${days} days)
     Locked to     ${email || 'any address — anyone with the code can register'}
+    Plan          ${plan}${plan === 'pro' || plan === 'vip' ? '  (marketing con IA sin limite)' : '  (marketing limitado — 1 generacion)'}
 ${args.agency ? `    For           ${args.agency}\n` : ''}
   Send them the code and the link. They pick their own password, so nothing
   secret comes back through you. The code works once and then it is spent.
