@@ -331,7 +331,7 @@ async function handleDescribe(req, res) {
   try {
     const data = await groqChat({
       messages: [
-        { role: 'system', content: system + voiceDirective(tone, objective, isEs) },
+        { role: 'system', content: system },
         { role: 'user', content: user }
       ],
       temperature: 0.7,
@@ -712,7 +712,13 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no extra text)
   }
 }`;
 
-  const user = propertyLine;
+  // The voice block rides in the user message, not the system prompt.
+  // Two rounds against the preview proved it: appended to the system prompt —
+  // even declared as outranking everything — objective=captar still produced
+  // "Escribe VISITA para agendar tu recorrido". The format schema below spells
+  // out buyer CTAs field by field, and a long instruction far above it loses.
+  // The user message is short, last, and about this specific job, so it wins.
+  const user = propertyLine + voiceDirective(tone, objective, isEs);
 
   /* ── Compact mode for the dashboard's AI Assist: only what a listing page
      needs (description + features). ~5x fewer tokens than the 7-format run,
