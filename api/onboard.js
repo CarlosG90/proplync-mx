@@ -30,8 +30,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { getServiceClient } from './_lib/supabase.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { safeDetail } from './_lib/health.js';
-
-const DIACRITICS_RE = new RegExp('[̀-ͯ]', 'g');
+import { provisionAgency } from './_lib/agency.js';
 
 /**
  * Constant-time comparison of two secrets of any length.
@@ -43,25 +42,6 @@ function secretsMatch(a, b) {
   const ha = createHash('sha256').update(a).digest();
   const hb = createHash('sha256').update(b).digest();
   return timingSafeEqual(ha, hb);
-}
-
-function slugify(name) {
-  return String(name)
-    .toLowerCase()
-    .normalize('NFD').replace(DIACRITICS_RE, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60) || 'agencia';
-}
-
-async function uniqueSlug(svc, base) {
-  let slug = base;
-  let n = 2;
-  while (true) {
-    const { data } = await svc.from('agencies').select('id').eq('slug', slug).maybeSingle();
-    if (!data) return slug;
-    slug = `${base}-${n++}`;
-  }
 }
 
 export default async function handler(req, res) {
@@ -118,31 +98,11 @@ export default async function handler(req, res) {
   const userId = created.user.id;
 
   try {
-    const base = slugify(agencyName);
-    const slug = await uniqueSlug(svc, base);
-
-    const { data: agency, error: agencyErr } = await svc
-      .from('agencies')
-      .insert({ name: agencyName, slug })
-      .select('id, slug')
-      .single();
-    if (agencyErr) throw agencyErr;
-
-    const { error: memberErr } = await svc
-      .from('agency_members')
-      .insert({ user_id: userId, agency_id: agency.id, role: 'owner' });
-    if (memberErr) throw memberErr;
-
-    // Stash agency_id in user_metadata so the client can read it straight off
-    // the session (e.g. for the Storage upload path prefix) without an extra
-    // API round-trip. Best-effort: the dashboard falls back to /api/my-listings
-    // if this is ever missing, so a failure here doesn't need to roll back signup.
-    await svc.auth.admin.updateUserById(userId, {
-      user_metadata: { agency_name: agencyName, agency_id: agency.id }
-    }).catch(() => {});
-
+    const agency = await provisionAgency(svc, { userId, agencyName });
     res.status(200).json({ agencyId: agency.id, slug: agency.slug });
   } catch (err) {
+    // This path created the auth user moments ago, so deleting it on failure
+    // is safe and lets the agency retry signup with the same email.
     await svc.auth.admin.deleteUser(userId).catch(() => {});
     res.status(500).json({ error: 'onboard_failed', detail: safeDetail(err) });
   }
