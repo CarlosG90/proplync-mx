@@ -294,12 +294,22 @@
     await loadSearch(params);
   }
 
+  /* True while the visible filters were written by an AI search rather than
+     chosen by hand. It decides whether emptying the AI box should undo them:
+     filters the buyer set themselves are theirs to keep. */
+  let filtersFromAI = false;
+
   function clearFilters() {
     document.getElementById('f-op').value = 'all';
     document.getElementById('f-town').value = '';
     document.getElementById('f-beds').value = '';
     document.getElementById('f-minprice').value = '';
     document.getElementById('f-maxprice').value = '';
+    // Limpiar used to leave the AI query sitting in the box above an unfiltered
+    // page, which reads as though the search is still applied.
+    const nl = document.getElementById('nlsearch-input');
+    if (nl) nl.value = '';
+    filtersFromAI = false;
     applyFilters();
   }
 
@@ -341,7 +351,13 @@
     const input = document.getElementById('nlsearch-input');
     const btn = document.getElementById('nlsearch-btn');
     const query = input.value.trim();
-    if (!query) return;
+    // Submitting an empty box used to return early, leaving the town the AI had
+    // written into the filter bar still applied — the buyer cleared the search
+    // and stayed stuck on one result with no visible reason why.
+    if (!query) {
+      if (filtersFromAI) clearFilters();
+      return;
+    }
 
     btn.disabled = true;
     btn.textContent = lang === 'es' ? 'Buscando...' : 'Searching...';
@@ -354,6 +370,8 @@
       document.getElementById('f-beds').value = filters.beds || '';
       document.getElementById('f-minprice').value = filters.minPrice || '';
       document.getElementById('f-maxprice').value = filters.maxPrice || '';
+
+      filtersFromAI = true;
 
       // run the real search with the full filter set, including fields
       // (minSize/maxSize/q) the visible filter bar has no control for yet
@@ -383,6 +401,27 @@
   }
 
   /* ---------- lang change ---------- */
+  /* Emptying the box restores the full list straight away. Waiting for a
+     submit is the wrong contract: deleting a search reads as undoing it, and
+     nobody presses "Buscar con IA" on an empty field to see everything.
+     Hooked on 'input' so it also catches paste-over-delete and the native
+     clear control, and gated on filtersFromAI so it never wipes filters the
+     buyer picked from the dropdowns themselves. */
+  (function wireNLClear() {
+    const nl = document.getElementById('nlsearch-input');
+    if (!nl) return;
+    nl.addEventListener('input', function () {
+      if (nl.value.trim() === '' && filtersFromAI) clearFilters();
+    });
+  })();
+
+  /* Touching any filter by hand hands control back to the buyer, so a later
+     empty AI box leaves their choices alone. */
+  ['f-op', 'f-town', 'f-beds', 'f-minprice', 'f-maxprice'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', function () { filtersFromAI = false; });
+  });
+
   document.addEventListener('langchange', function () {
     renderGrid(listings);
     updateMarkers(listings);
