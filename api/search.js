@@ -319,8 +319,23 @@ async function getInventory() {
     }
   }
 
-  // 3. Fall back to samples
-  return [...agencyListings, ...SAMPLES];
+  /* 3. No live inventory source is configured. The samples exist so a
+        brand-new deployment does not look abandoned, and that was fine while
+        there were no customers.
+
+        It stops being fine the moment real agency listings exist. Padding the
+        results with eight invented properties buries the four real ones we are
+        actually in business to advertise, and it does it under a page that
+        promises "datos verificados, sin informacion inventada". The listing
+        copy has RISKY_CLAIMS to stop the model inflating a pool into a private
+        pool; this is the same failure one level up, committed by the product
+        itself rather than the model.
+
+        So samples are now strictly a cold-start affordance: they appear only
+        when an agency's inventory would otherwise be empty, and they carry a
+        flag so the page can say what they are. */
+  if (agencyListings.length) return agencyListings;
+  return SAMPLES.map(sample => ({ ...sample, is_sample: true }));
 }
 
 export default async function handler(req, res) {

@@ -132,7 +132,12 @@
     <div class="search-head">
       <span class="eyebrow" data-es="Inventario" data-en="Inventory">Inventario</span>
       <h1 data-es="Propiedades en la Riviera Maya" data-en="Properties in the Riviera Maya">Propiedades en la Riviera Maya</h1>
-      <p data-es="Inventario real de EasyBroker. Datos verificados, sin informacion inventada." data-en="Real EasyBroker inventory. Verified data, no made-up information.">Inventario real de EasyBroker. Datos verificados, sin informacion inventada.</p>
+      <!-- This line claimed "Inventario real de EasyBroker" on a deployment with
+           no EASYBROKER_API_KEY set, above eight hardcoded sample listings with
+           stock photos. It promised verified data and no invented information
+           while showing invented properties. It now names what is actually on
+           the page: the inventory of the agencies who pay us to publish it. -->
+      <p data-es="Inventario de nuestras inmobiliarias. Datos verificados, sin informacion inventada." data-en="Inventory from our member agencies. Verified data, no made-up information.">Inventario de nuestras inmobiliarias. Datos verificados, sin informacion inventada.</p>
       <div class="search-count" id="search-count"></div>
     </div>
 
