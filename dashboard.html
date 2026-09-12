@@ -676,12 +676,33 @@
       images: listingImages
     };
 
-    // best-effort geocode from town+neighborhood, reusing the existing
-    // free OpenStreetMap proxy already built for the buyer-facing sidebar
-    try {
-      const geo = await fetchGeocode(payload.neighborhood + ', ' + payload.town + ', Quintana Roo, Mexico');
-      if (geo.lat != null && geo.lng != null) { payload.lat = geo.lat; payload.lng = geo.lng; }
-    } catch (e) { /* non-fatal, listing saves without coordinates */ }
+    /* Best-effort geocode from the listing's own town and neighborhood, reusing
+       the free OpenStreetMap proxy built for the buyer-facing sidebar.
+
+       "Quintana Roo" used to be hardcoded into this query. It was harmless while
+       every listing was in the Riviera Maya, and quietly wrong the moment one
+       was not: a Puebla listing geocoded as "Puebla, Quintana Roo, Mexico"
+       resolves to 21.12,-86.96 — Cancun, about 1,300 km from Puebla — and
+       Nominatim returns it with no error, so the listing saved with a confident
+       pin in the wrong state. Asking for "Puebla, Mexico" returns 18.83,-98.0.
+
+       Two passes: the precise query first, then town-only, because a
+       neighborhood name OSM has never heard of drags an otherwise findable town
+       down with it. */
+    const geoQueries = [
+      [payload.neighborhood, payload.town, 'Mexico'].filter(Boolean).join(', '),
+      [payload.town, 'Mexico'].filter(Boolean).join(', ')
+    ];
+    for (const geoQuery of geoQueries) {
+      try {
+        const geo = await fetchGeocode(geoQuery);
+        if (geo.lat != null && geo.lng != null) {
+          payload.lat = geo.lat;
+          payload.lng = geo.lng;
+          break;
+        }
+      } catch (e) { /* non-fatal, try the next form; listing saves without coordinates */ }
+    }
 
     try {
       const url = id ? '/api/my-listings?id=' + encodeURIComponent(id) : '/api/my-listings';
