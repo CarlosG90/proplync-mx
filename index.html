@@ -889,6 +889,12 @@
     .listing{padding:10px;gap:10px}
     .listing-photo{width:64px;height:52px}
     .hero h1{font-size:clamp(2rem,11vw,2.6rem)}
+    /* The shrink chain has to be unbroken: a single descendant still sizing to
+       min-content re-establishes the floor for every ancestor above it, which
+       is how a 64px thumbnail and a short price still added up to a 310px card
+       on a 320px screen. */
+    .demo,.demo-card,.listing,.listing-info{min-width:0}
+    .wrap{padding:0 14px}
   }
   /* ================================================================
      NAV — Soluciones dropdown
