@@ -284,6 +284,11 @@ function mapAgencyRow(row) {
   };
 }
 
+/** Strip accents and case, so "Cancún" and "Cancun" are the same town. */
+function fold(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
 async function fetchAgencyListings() {
   try {
     const svc = getServiceClient();
@@ -440,8 +445,11 @@ export default async function handler(req, res) {
       listings = listings.filter(p => p.operation === op);
     }
     if (town) {
-      const t = town.toLowerCase();
-      listings = listings.filter(p => p.town.toLowerCase().includes(t));
+      // Folded, not just lowercased: the inventory spells it "Cancun" and a
+      // buyer (or the AI filter) may spell it "Cancún". Lowercase alone made
+      // those two different towns.
+      const t = fold(town);
+      listings = listings.filter(p => fold(p.town).includes(t));
     }
     if (minPrice) {
       const min = parseFloat(minPrice);
@@ -464,9 +472,9 @@ export default async function handler(req, res) {
       if (Number.isFinite(ms)) listings = listings.filter(p => p.size <= ms);
     }
     if (q) {
-      const term = q.toLowerCase();
+      const term = fold(q);
       listings = listings.filter(p =>
-        (p.title_es + ' ' + p.title_en + ' ' + p.town + ' ' + p.neighborhood).toLowerCase().includes(term)
+        fold(p.title_es + ' ' + p.title_en + ' ' + p.town + ' ' + p.neighborhood).includes(term)
       );
     }
 

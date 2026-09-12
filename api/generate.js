@@ -20,6 +20,7 @@ import { marketingAccess } from './_lib/plans.js';
 import { startReel, reelStatus } from './_lib/reel.js';
 import { groqChat, messageText } from './_lib/groq.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
+import { redisGet, redisSet } from './_lib/redis.js';
 import { safeDetail, logDegraded } from './_lib/health.js';
 
 /* ── Photo enhancement constants ── */
@@ -278,9 +279,45 @@ async function handleDayToDusk(req, res) {
    old paths. Callers were not changed.
    ────────────────────────────────────────────────────────────────────────── */
 
-const TOWNS = ['Tulum', 'Playa del Carmen', 'Puerto Morelos', 'Cancún', 'Cancun'];
+/* The towns AI search is allowed to return.
+   This was a hardcoded Riviera Maya list — Tulum, Playa del Carmen, Puerto
+   Morelos, Cancún — written when the only inventory was the EasyBroker demo
+   set. Real agencies then listed in Holbox, Puebla and Riviera Maya, none of
+   which were in it, so the model was instructed to return a town "only if it
+   is one of exactly" four places where our customers mostly do not sell.
+   Searching "holbox" returned {} and the buyer saw the unfiltered page.
 
-const SYSTEM_PROMPT = `You extract real-estate search filters from a buyer's free-text query in Spanish or English, for listings in Mexico's Riviera Maya (Tulum, Playa del Carmen, Puerto Morelos, Cancún).
+   The list is now whatever our agencies are actually selling, read from
+   published inventory and cached briefly. It widens on its own as agencies
+   list in new places, which is the only version of this that stays correct. */
+const FALLBACK_TOWNS = ['Tulum', 'Playa del Carmen', 'Puerto Morelos', 'Cancún'];
+
+/** Strip accents and case so "Cancún", "Cancun" and "cancun" compare equal. */
+export function foldTown(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+async function inventoryTowns() {
+  const cached = await redisGet('towns:published');
+  if (Array.isArray(cached) && cached.length) return cached;
+  try {
+    const svc = getServiceClient();
+    const { data, error } = await svc.from('listings').select('town').eq('status', 'published');
+    if (error) throw error;
+    const towns = [...new Set((data || []).map(r => r.town).filter(Boolean))];
+    if (towns.length) {
+      await redisSet('towns:published', towns, 300);
+      return towns;
+    }
+  } catch (err) {
+    // A town list we cannot read is not a reason to fail the search — fall back
+    // to the old fixed set and let the filter return what it can.
+    logDegraded('supabase:listings.towns', err);
+  }
+  return FALLBACK_TOWNS;
+}
+
+const buildSearchPrompt = (towns) => `You extract real-estate search filters from a buyer's free-text query in Spanish or English, for real-estate listings in Mexico (${towns.join(', ')}).
 
 Respond with ONLY a JSON object, no prose, matching this exact shape (omit any key you can't confidently infer from the text — do not guess or invent values):
 {
@@ -298,7 +335,7 @@ Rules:
 - "op" is "rental" only if the text clearly asks for renting ("renta", "rent", "for rent", "/mes", "/mo"). Otherwise omit it (don't assume sale).
 - Prices given in "k" (e.g. "400k", "$400k") mean thousands — multiply by 1000. Assume USD unless pesos/MXN is explicit.
 - "beds" is a minimum bedroom count if the text says a number of bedrooms/recámaras.
-- "town" must be one of exactly: Tulum, Playa del Carmen, Puerto Morelos, Cancún — only if a matching city/area is clearly named in the text.
+- "town" must be one of exactly: ${towns.join(', ')} — only if a matching city/area is clearly named in the text. Match it even if the buyer writes it without accents or in lowercase, and return it spelled exactly as listed above.
 - "q" is matched as a LITERAL substring against each listing's title and location text — it is NOT a semantic or amenity search. Only put a term in "q" if it's plausibly a literal word that would appear in a listing's title (e.g. a named development like "Aldea Zamá" or "Playacar"). NEVER put generic descriptive phrases there (e.g. "near the beach", "con alberca", "pet friendly", "con vista al mar") — those don't literally appear in titles and would wrongly filter out real matches. When in doubt, omit "q" entirely.
 - If nothing can be confidently extracted, return {}.`;
 
@@ -361,10 +398,15 @@ async function handleNlSearch(req, res) {
     return;
   }
 
+  // Resolved per request (cached 5 min) so the model is told about the towns
+  // our agencies are selling in today, not the ones they were selling in when
+  // this prompt was written.
+  const towns = await inventoryTowns();
+
   try {
     const data = await groqChat({
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: buildSearchPrompt(towns) },
         { role: 'user', content: String(query).slice(0, 300) }
       ],
       temperature: 0,
@@ -384,8 +426,15 @@ async function handleNlSearch(req, res) {
     // model's output directly into query params
     const filters = {};
     if (parsed.op === 'sale' || parsed.op === 'rental') filters.op = parsed.op;
-    if (typeof parsed.town === 'string' && TOWNS.includes(parsed.town)) {
-      filters.town = parsed.town === 'Cancun' ? 'Cancún' : parsed.town;
+    /* Compare folded, then hand back the inventory's OWN spelling. The old
+       line did the opposite — it rewrote 'Cancun' to 'Cancún' before sending
+       it to /api/search, where the town filter compares raw lowercase. Every
+       listing in the database spells it 'Cancun', so the one town AI search
+       did recognise was also the one it could never match: searching
+       "casas en cancun" returned zero results against a real Cancun listing. */
+    if (typeof parsed.town === 'string') {
+      const match = towns.find(t => foldTown(t) === foldTown(parsed.town));
+      if (match) filters.town = match;
     }
     if (Number.isFinite(parsed.beds) && parsed.beds > 0) filters.beds = Math.floor(parsed.beds);
     if (Number.isFinite(parsed.minPrice) && parsed.minPrice > 0) filters.minPrice = parsed.minPrice;
