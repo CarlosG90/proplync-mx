@@ -96,10 +96,29 @@
 
 /* Reset */
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+/* Horizontal containment, applied to BOTH elements on purpose.
+   `overflow-x:hidden` sat on body alone. That is the incomplete version of this
+   fix: the clamp stops the document reporting a wider scrollWidth, so the bug
+   measures as solved, while html still forms the scrolling box — and iOS Safari
+   happily pans it. That is the sideways drift on a phone: content 24px wider
+   than the screen, invisible to devtools, draggable by thumb.
+
+   `clip` rather than `hidden` because `hidden` creates a scroll container:
+   it makes the element programmatically scrollable (and breaks
+   position:sticky inside it). `clip` just clips. Vertical scrolling is
+   untouched — only the x axis is constrained.
+
+   overscroll-behavior-x:none stops the horizontal rubber-band, so a sideways
+   swipe no longer peels the page away from the edge or triggers swipe-back
+   navigation mid-scroll. */
+html{
+  scroll-behavior:smooth;
+  overflow-x:clip;
+  overscroll-behavior-x:none;
+}
 body{
   margin:0;font-family:var(--body);background:var(--paper);color:var(--on-sand);
-  line-height:1.65;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden;
+  line-height:1.65;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:clip;overscroll-behavior-x:none;
   font-size:16px;
 }
 h1,h2,h3{font-family:var(--display);font-weight:300;line-height:1.08;margin:0;letter-spacing:-.025em}
@@ -112,6 +131,10 @@ img{display:block;max-width:100%}
 button{font-family:inherit}
 
 /* Layout container */
+/* Nothing replaced-content may define the page width. Cheap insurance against
+   one oversized asset reintroducing the drift above. */
+img,svg,video,canvas,iframe{max-width:100%}
+
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--sp-8)}
 
 /* Utility classes */

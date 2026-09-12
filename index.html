@@ -263,11 +263,18 @@
     position:relative;overflow:hidden;
     background-size:cover;background-position:center;
   }
+  /* min-width:0 lets this shrink past its content; without it a flex item
+     refuses to go below min-content and pushes the whole row wider than the
+     phone. The title and location get ellipsis rather than forcing width. */
   .listing-info{flex:1;min-width:0}
+  .listing-info .t,.listing-info .loc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .listing-info .t{font-family:var(--display);font-size:1rem;color:var(--on-ink);font-weight:400}
   .listing-info .loc{font-family:var(--mono);font-size:.64rem;color:var(--gold);letter-spacing:.06em;margin-top:4px}
-  .listing-specs{display:flex;gap:12px;margin-top:9px;font-family:var(--mono);font-size:.64rem;color:var(--on-ink-dim)}
-  .listing-price{font-family:var(--mono);font-weight:700;color:var(--gold);font-size:.96rem;text-align:right;white-space:nowrap}
+  .listing-specs{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:9px;font-family:var(--mono);font-size:.64rem;color:var(--on-ink-dim);min-width:0}
+  /* Stays nowrap — a price broken across lines is worse than a narrow row —
+     but flex:none stops it being counted twice, and the row is allowed to wrap
+     under it on very small screens instead of widening the page. */
+  .listing-price{font-family:var(--mono);font-weight:700;color:var(--gold);font-size:.96rem;text-align:right;white-space:nowrap;flex:none}
   .demo-arrow{
     text-align:center;font-family:var(--mono);font-size:.62rem;
     color:var(--on-ink-faint);letter-spacing:.18em;text-transform:uppercase;
@@ -856,6 +863,14 @@
     .demo{max-width:480px}
     .hero-orb-1{width:250px;height:250px}
     .hero-orb-2{width:200px;height:200px}
+    /* Purely decorative, and they were extending past the right edge. Now that
+       html clips rather than scrolls they cannot drag the page, but keeping
+       them inside avoids a clipped edge that reads as a rendering glitch. */
+    .hero-orb{max-width:60vw;max-height:60vw}
+    /* Belt and braces for the row that caused this: on a narrow phone the
+       price drops under the text instead of competing with it for width. */
+    .listing{flex-wrap:wrap}
+    .listing-price{margin-left:auto}
     .steps{grid-template-columns:1fr 1fr}
     .grid6{grid-template-columns:1fr 1fr}
     .audience-grid{grid-template-columns:1fr}
@@ -1778,11 +1793,19 @@
     let {lat, lng} = p;
     if(lat==null || lng==null){
       try{
-        const q = p.neighborhood+', '+p.town+', Quintana Roo, Mexico';
-        const r = await fetch(GEOCODE_ENDPOINT+'?q='+encodeURIComponent(q));
-        if(!r.ok) throw new Error('HTTP '+r.status);
-        const d = await r.json();
-        if(d.lat!=null && d.lng!=null){ lat=d.lat; lng=d.lng; p.lat=lat; p.lng=lng; }
+        /* Same two-pass query as dashboard.html. "Quintana Roo" used to be
+           hardcoded here too, which silently resolved any out-of-state
+           property to a coordinate in the Riviera Maya. */
+        const queries = [
+          [p.neighborhood, p.town, 'Mexico'].filter(Boolean).join(', '),
+          [p.town, 'Mexico'].filter(Boolean).join(', ')
+        ];
+        for(const q of queries){
+          const r = await fetch(GEOCODE_ENDPOINT+'?q='+encodeURIComponent(q));
+          if(!r.ok) throw new Error('HTTP '+r.status);
+          const d = await r.json();
+          if(d.lat!=null && d.lng!=null){ lat=d.lat; lng=d.lng; p.lat=lat; p.lng=lng; break; }
+        }
       }catch(e){
         console.warn('[Proplync] geocode unavailable:', e.message);
       }

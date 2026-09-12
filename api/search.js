@@ -121,7 +121,10 @@ function renderCityPage(town, slug, listings, canonical) {
   const title = `Propiedades en ${town} · ${count} en venta y renta | Proplync.mx`;
   const desc = count
     ? `${count} propiedades en ${town}: casas, departamentos y terrenos en venta y renta, publicados por agentes y propietarios directos.`
-    : `Propiedades en ${town} en venta y renta en la Riviera Maya.`;
+    // Was "...en ${town} ... en la Riviera Maya", which reads as nonsense the
+    // moment town is Puebla. The town is the location; naming a second region
+    // around it only makes the sentence wrong.
+    : `Propiedades en ${town} en venta y renta.`;
 
   const cards = listings.map(p => `
       <a class="ct-card" href="/property/${esc(p.public_id)}">

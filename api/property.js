@@ -73,7 +73,10 @@ function shareDescription(p) {
   const where = [p.neighborhood, p.town].filter(Boolean).join(', ');
   return bits.length
     ? `${bits.join(' · ')}${where ? ` en ${where}` : ''}.`
-    : `Propiedad${where ? ` en ${where}` : ''} en la Riviera Maya.`;
+    // Dropping the region for the same reason as api/search.js: `where` already
+    // carries the real location, and appending a region we may not be in turns
+    // a thin description into a wrong one.
+    : `Propiedad${where ? ` en ${where}` : ''}.`;
 }
 
 let cachedShell = null;
