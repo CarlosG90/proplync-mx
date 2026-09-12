@@ -521,46 +521,11 @@
   .roi-second div .l{font-size:.78rem;color:var(--on-ink-dim);margin-top:4px}
   .roi-note{font-size:.78rem;color:var(--on-ink-faint);margin-top:36px;font-style:italic;max-width:36em;line-height:1.65}
 
-  /* ================================================================
-     PRICING
-     ================================================================ */
-  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
-  .tier{
-    background:var(--white);border:1px solid rgba(26,36,56,.05);
-    border-radius:var(--radius-xl);padding:40px;
-    display:flex;flex-direction:column;
-    transition:transform var(--duration-slow) var(--ease-expo),box-shadow var(--duration-slow) var(--ease-expo);
-  }
-  .tier:hover{transform:translateY(-6px);box-shadow:var(--shadow-xl)}
-  .tier.feat{
-    background:var(--ink);color:var(--on-ink);
-    border-color:rgba(201,169,110,.18);
-    position:relative;
-    box-shadow:var(--shadow-2xl);
-  }
-  .tier.feat:hover{transform:translateY(-8px);box-shadow:0 36px 80px -24px rgba(10,22,40,.35)}
-  .tier.feat .tier-name{color:var(--gold)}
-  .tier.feat .tier-price{color:var(--on-ink)}
-  .tier.feat li{color:var(--on-ink-dim)}
-  .tier-flag{
-    position:absolute;top:-12px;left:36px;
-    background:linear-gradient(160deg,var(--gold),var(--gold-deep));
-    color:var(--ink);font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
-    padding:5px 16px;border-radius:999px;font-weight:700;
-    box-shadow:var(--shadow-gold);
-  }
-  .tier-name{font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700}
-  .tier-price{font-family:var(--display);font-size:2.4rem;color:var(--ink);margin:16px 0 8px;font-weight:300}
-  .tier-price span{font-family:var(--mono);font-size:.78rem;color:var(--on-sand-dim)}
-  .tier ul{list-style:none;padding:0;margin:24px 0 32px;flex:1}
-  .tier li{font-size:.88rem;color:var(--on-sand-dim);padding:11px 0 11px 28px;position:relative;border-top:1px solid rgba(26,36,56,.04)}
-  .tier.feat li{border-top-color:rgba(240,237,232,.07)}
-  .tier li::before{
-    content:"";position:absolute;left:0;top:17px;
-    width:12px;height:6px;border-left:2px solid var(--gold);border-bottom:2px solid var(--gold);
-    transform:rotate(-45deg);
-  }
-  .tier .btn{width:100%;justify-content:center}
+  /* The pricing block lived here — .tiers and .tier*. It was removed with the
+     section itself (see the EARLY ACCESS note further down for why), and these
+     rules had styled nothing since. Restore them from git history together
+     with the tiers, or not at all. */
+
   .price-foot{
     text-align:center;font-size:.88rem;color:var(--on-sand-dim);
     margin-top:36px;line-height:1.65;max-width:46em;margin-left:auto;margin-right:auto;
@@ -719,7 +684,7 @@
     text-align:right;
   }
 
-  /* Variant: lighter background between ROI and Pricing */
+  /* Variant: lighter background between sections */
   .micro-cta-light .micro-cta-inner{
     background:linear-gradient(135deg,var(--ink),var(--ink-2));
     border:1px solid rgba(201,169,110,.12);
@@ -875,8 +840,7 @@
     .grid6{grid-template-columns:1fr 1fr}
     .audience-grid{grid-template-columns:1fr}
     .hero-paths{grid-template-columns:1fr}
-    .guard,.roi-grid,.priv,.tiers{grid-template-columns:1fr}
-    .tier.feat{transform:none}
+    .guard,.roi-grid,.priv{grid-template-columns:1fr}
     .hero-meta{gap:24px}
     .hero-trust{gap:8px}
   }
@@ -989,7 +953,7 @@
           </a>
           <a href="/generate" class="navdrop-item navdrop-live">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="9" width="14" height="10" rx="2"/><path d="M12 9V5M9 5h6"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/></svg>
-            <span><b>Prop-pilot</b><small data-es="Generador de contenido IA &middot; ya disponible" data-en="AI content generator &middot; available now">Generador de contenido IA &middot; ya disponible</small></span>
+            <span><b data-es="Marketing con IA" data-en="AI marketing">Marketing con IA</b><small data-es="Ficha, post, carrusel, story, email, reel y anuncio" data-en="Sheet, post, carousel, story, email, reel and ad">Ficha, post, carrusel, story, email, reel y anuncio</small></span>
           </a>
         </div>
       </div>
@@ -1269,7 +1233,7 @@
       <p data-es="Desde una ficha llegas a siete piezas de marketing, fotos reales, busqueda inteligente y un panel para gestionar todo." data-en="From one record you get seven marketing pieces, real photos, smart search, and a dashboard to manage it all.">Desde una ficha llegas a siete piezas de marketing, fotos reales, busqueda inteligente y un panel para gestionar todo.</p>
     </div>
     <div class="grid6 stagger">
-      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg></div><h3>Prop-pilot</h3><p data-es="Nuestro generador de contenido con IA: ficha PDF, post, carrusel, story, email, reel y anuncio &mdash; desde una sola propiedad." data-en="Our AI content generator: PDF sheet, post, carousel, story, email, reel, and ad copy &mdash; from a single property.">Nuestro generador de contenido con IA: ficha PDF, post, carrusel, story, email, reel y anuncio &mdash; desde una sola propiedad.</p><div class="fmt" data-es="7 formatos" data-en="7 formats">7 formatos</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg></div><h3 data-es="Marketing con IA" data-en="AI marketing">Marketing con IA</h3><p data-es="Ficha PDF, post, carrusel, story, email, reel y anuncio &mdash; desde una sola propiedad." data-en="PDF sheet, post, carousel, story, email, reel and ad copy &mdash; from a single property.">Ficha PDF, post, carrusel, story, email, reel y anuncio &mdash; desde una sola propiedad.</p><div class="fmt" data-es="7 formatos" data-en="7 formats">7 formatos</div></div>
       <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.4"/></svg></div><h3 data-es="Publicacion directa a Instagram" data-en="Direct Instagram publishing">Publicacion directa a Instagram</h3><p data-es="El post generado se publica directo en tu cuenta, sin descargar y volver a subir." data-en="The generated post publishes straight to your account, no download-and-reupload.">El post generado se publica directo en tu cuenta, sin descargar y volver a subir.</p><div class="fmt" data-es="Meta Graph API" data-en="Meta Graph API">Meta Graph API</div></div>
       <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M3 12h3M18 12h3M12 3v3M12 18v3"/></svg></div><h3 data-es="Fotos reales automaticas" data-en="Automatic real photos">Fotos reales automaticas</h3><p data-es="Si no subes una foto, el sistema busca una fotografia real y con licencia para tu propiedad." data-en="If you don't upload a photo, the system finds a real, licensed one for your property.">Si no subes una foto, el sistema busca una fotografia real y con licencia para tu propiedad.</p><div class="fmt" data-es="Fotos con licencia" data-en="Licensed photos">Fotos con licencia</div></div>
       <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div><h3 data-es="Busqueda con lenguaje natural" data-en="Natural-language search">Busqueda con lenguaje natural</h3><p data-es="Escribe lo que buscas en una frase; la IA lo convierte en filtros. Cada resultado trae mapa y amenidades cercanas." data-en="Describe what you're looking for in a sentence; the AI turns it into filters. Every result shows a map and nearby amenities.">Escribe lo que buscas en una frase; la IA lo convierte en filtros. Cada resultado trae mapa y amenidades cercanas.</p><div class="fmt" data-es="Busqueda IA" data-en="AI search">Busqueda IA</div></div>
@@ -1296,7 +1260,7 @@
         <p data-es="Sin registro, sin tarjeta. Sube los datos de una propiedad y mira el resultado en menos de dos minutos." data-en="No signup, no credit card. Enter one property's data and see the result in under two minutes.">Sin registro, sin tarjeta. Sube los datos de una propiedad y mira el resultado en menos de dos minutos.</p>
       </div>
       <div class="micro-cta-actions">
-        <a href="/generate" class="btn btn-gold" data-es="Probar Prop-pilot gratis &rarr;" data-en="Try Prop-pilot free &rarr;">Probar Prop-pilot gratis &rarr;</a>
+        <a href="/generate" class="btn btn-gold" data-es="Probarlo gratis &rarr;" data-en="Try it free &rarr;">Probarlo gratis &rarr;</a>
         <span class="micro-note" data-es="Sin cuenta &middot; resultado inmediato" data-en="No account &middot; instant result">Sin cuenta &middot; resultado inmediato</span>
       </div>
     </div>
@@ -1385,14 +1349,14 @@
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════
-     MICRO-CTA 2 — Try before you buy (between ROI and Pricing)
+     MICRO-CTA 2 — Try before you buy
      ══════════════════════════════════════════════════════════════ -->
 <div class="micro-cta micro-cta-light">
   <div class="wrap">
     <div class="micro-cta-inner reveal">
       <div class="micro-cta-content">
         <span class="eyebrow" data-es="Antes de decidir" data-en="Before you decide">Antes de decidir</span>
-        <h3 data-es="Mira que genera Prop-pilot <em>con tu propiedad</em>" data-en="See what Prop-pilot generates <em>with your property</em>">Mira que genera Prop-pilot <em>con tu propiedad</em></h3>
+        <h3 data-es="Mira lo que genera <em>con tu propiedad</em>" data-en="See what it generates <em>with your property</em>">Mira lo que genera <em>con tu propiedad</em></h3>
         <p data-es="No tienes que comprometerte con un plan para probarlo. Genera una ficha, un post y un carrusel para una propiedad real &mdash; gratis." data-en="You don't have to commit to a plan to try it. Generate a fact sheet, a post, and a carousel for a real property &mdash; free.">No tienes que comprometerte con un plan para probarlo. Genera una ficha, un post y un carrusel para una propiedad real &mdash; gratis.</p>
       </div>
       <div class="micro-cta-actions">
