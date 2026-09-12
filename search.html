@@ -31,8 +31,11 @@
     align-items:center;
   }
   .nlsearch svg{width:16px;height:16px;flex:none;stroke:var(--gold);fill:none;stroke-width:1.8}
+  /* min-width:0 is the load-bearing bit: a flex item defaults to min-width:auto
+     and will not shrink below its own content, so on a 320px screen the input
+     held its intrinsic width and shoved the button 63px off the right edge. */
   .nlsearch input{
-    flex:1;background:none;border:0;color:var(--on-ink);
+    flex:1;min-width:0;background:none;border:0;color:var(--on-ink);
     font-family:var(--body);font-size:.92rem;padding:10px 0;
   }
   .nlsearch input::placeholder{color:var(--on-ink-dim)}
@@ -40,11 +43,18 @@
   .nlsearch button{
     font-family:var(--mono);font-size:.7rem;letter-spacing:.05em;font-weight:700;
     background:var(--gold);color:var(--ink);border:0;border-radius:999px;
-    padding:11px 20px;cursor:pointer;white-space:nowrap;
+    padding:11px 20px;cursor:pointer;white-space:nowrap;flex:none;
     transition:background var(--duration) ease;
   }
   .nlsearch button:hover{background:var(--gold-light)}
   .nlsearch button:disabled{opacity:.6;cursor:default}
+  @media (max-width:380px){
+    /* At 320px the pill cannot hold a comfortable field and a 136px label, so
+       the padding and label tighten rather than the row overflowing. */
+    .nlsearch{padding-left:14px;gap:6px}
+    .nlsearch button{padding:11px 13px;letter-spacing:.02em}
+    .nlsearch svg{display:none}
+  }
   .nlsearch-hint{font-family:var(--mono);font-size:.66rem;color:var(--on-sand-dim);margin-bottom:20px;letter-spacing:.02em}
 
   .filters{

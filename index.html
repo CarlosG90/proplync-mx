@@ -871,6 +871,16 @@
        price drops under the text instead of competing with it for width. */
     .listing{flex-wrap:wrap}
     .listing-price{margin-left:auto}
+  }
+  @media (max-width:380px){
+    /* iPhone SE class. The card's 20px padding, a 14px row inset and an 88px
+       thumbnail together set a 334px floor on a 320px screen — each value is
+       reasonable alone and only the sum overflows, so all three come down
+       rather than any one of them disappearing. */
+    .demo-card{padding:12px}
+    .listing{padding:10px;gap:10px}
+    .listing-photo{width:64px;height:52px}
+    .hero h1{font-size:clamp(2rem,11vw,2.6rem)}
     .steps{grid-template-columns:1fr 1fr}
     .grid6{grid-template-columns:1fr 1fr}
     .audience-grid{grid-template-columns:1fr}
