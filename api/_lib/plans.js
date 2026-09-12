@@ -21,9 +21,30 @@ export const PLANS = {
   // dashboard before the paywall. Free gets one on purpose: an agency that has
   // seen the seven formats built from their own listing is a far better
   // conversation than one reading a feature list.
-  free: { id: 'free', label: 'Gratis',  listings: 10,       photos: 10, agents: 1,  marketing: false, marketingTrials: 1,        instagram: false },
-  pro:  { id: 'pro',  label: 'Pro',     listings: Infinity, photos: 30, agents: 4,  marketing: true,  marketingTrials: Infinity, instagram: true  },
-  vip:  { id: 'vip',  label: 'VIP',     listings: Infinity, photos: 30, agents: 10, marketing: true,  marketingTrials: Infinity, instagram: true  }
+  //
+  // `reelsPerMonth` is the one cap here that is about money rather than
+  // packaging. Every other limit costs us nothing to raise — Groq's copy
+  // generation is a free tier, photos are Sharp on a function we already pay
+  // for. A Runway Reel bills real credits on every single run, so
+  // `marketing: true` deliberately does NOT mean unlimited video the way it
+  // means unlimited copy.
+  //
+  // The numbers, measured against Runway rather than estimated:
+  //   gen4.5 costs 12 credits per second of output.
+  //   A standard Reel (hook + 3 scenes + CTA) is 17s = 204 credits.
+  //   So pro at 8/mo = ~1,632 credits/mo, vip at 25/mo = ~5,100.
+  // The account's own ceiling is maxMonthlyCreditSpend (10,000 when this was
+  // written), which is roughly 49 Reels a month across EVERY agency combined.
+  // Raising these two numbers without raising that ceiling just moves where
+  // the failure lands — from a clean "quota reached" to Runway refusing
+  // mid-Reel. Check the Runway plan before raising them.
+  //
+  // Free gets none: the marketing trial exists to show an agency the seven
+  // formats, and it can do that with the still-photo Reel the canvas renderer
+  // has always produced.
+  free: { id: 'free', label: 'Gratis',  listings: 10,       photos: 10, agents: 1,  marketing: false, marketingTrials: 1,        instagram: false, reelsPerMonth: 0  },
+  pro:  { id: 'pro',  label: 'Pro',     listings: Infinity, photos: 30, agents: 4,  marketing: true,  marketingTrials: Infinity, instagram: true,  reelsPerMonth: 8  },
+  vip:  { id: 'vip',  label: 'VIP',     listings: Infinity, photos: 30, agents: 10, marketing: true,  marketingTrials: Infinity, instagram: true,  reelsPerMonth: 25 }
 };
 
 export const DEFAULT_PLAN = 'free';
@@ -51,6 +72,32 @@ export function marketingAccess(agency) {
   };
 }
 
+/**
+ * Whether this agency may generate a Runway Reel right now.
+ *
+ * Separate from marketingAccess() because it answers a different question:
+ * marketing access is "has this agency paid for the module", reel access is
+ * "has this agency spent this month's video budget". A Pro agency passes the
+ * first and can still fail the second.
+ *
+ * @param {object} agency  the agency row
+ * @param {number} usedThisMonth  reel_jobs rows for this agency since the 1st,
+ *   counted by the caller (api/reel.js) — plans.js stays free of DB access.
+ */
+export function reelAccess(agency, usedThisMonth) {
+  const plan = planFor(agency);
+  const limit = plan.reelsPerMonth || 0;
+  const used = Number(usedThisMonth || 0);
+  const left = Math.max(0, limit - used);
+  if (limit === 0) return { allowed: false, reason: 'upgrade_required', left: 0, limit };
+  return {
+    allowed: left > 0,
+    reason: left > 0 ? 'quota' : 'quota_exhausted',
+    left,
+    limit
+  };
+}
+
 /** Client-safe view of a plan plus current usage. */
 export function planStatus(agency, listingCount) {
   const plan = planFor(agency);
@@ -68,7 +115,10 @@ export function planStatus(agency, listingCount) {
       included: plan.marketing,
       allowed: marketing.allowed,
       trialsLeft: marketing.trialsLeft,
-      instagram: plan.instagram
+      instagram: plan.instagram,
+      // The dashboard shows "3 of 8 Reels left this month"; the count itself
+      // comes from api/reel.js, which is the only place that queries reel_jobs.
+      reelsPerMonth: plan.reelsPerMonth
     }
   };
 }

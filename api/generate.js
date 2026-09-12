@@ -17,6 +17,7 @@ import sharp from 'sharp';
 import { requireAgencyUser } from './_lib/auth.js';
 import { getServiceClient } from './_lib/supabase.js';
 import { marketingAccess } from './_lib/plans.js';
+import { startReel, reelStatus } from './_lib/reel.js';
 import { groqChat, messageText } from './_lib/groq.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { safeDetail, logDegraded } from './_lib/health.js';
@@ -523,6 +524,37 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'method_not_allowed' });
     return;
+  }
+
+  /* ── Runway Reel actions ──
+     Routed before the generic rate limit and the marketing gate, both of which
+     are wrong for this path. The 16/min budget below is sized for AI Assist
+     clicks, but a single Reel polls its status every 5s while Runway renders,
+     which would exhaust it in about a minute. And marketingGateBlocks() would
+     burn a free trial on every poll, since a poll is a POST like any other.
+     Reels carry their own quota instead (plans.reelsPerMonth, enforced in
+     _lib/reel.js against a live count of the month's jobs).
+
+     Auth is mandatory here, unlike the public generator: these cost Runway
+     credits per call, so there is no anonymous path to them. */
+  const reelAction = (req.body && req.body.action) || req.query.action;
+  if (reelAction === 'reel-start' || reelAction === 'reel-status') {
+    // Generous enough for several concurrent jobs polling at Runway's
+    // recommended 5s floor, tight enough to cap a runaway client.
+    if (await enforceRateLimit(req, res, { bucket: 'reel', limit: 40, windowSec: 60 })) return;
+    const auth = await requireAgencyUser(req);
+    if (!auth) {
+      res.status(401).json({ error: 'unauthorized' });
+      return;
+    }
+    try {
+      return reelAction === 'reel-start'
+        ? await startReel(req, res, auth)
+        : await reelStatus(req, res, auth);
+    } catch (err) {
+      res.status(500).json({ error: 'reel_failed', detail: safeDetail(err) });
+      return;
+    }
   }
 
   // One AI Assist click sends 2 requests (ES + EN), so 16/min is ~8 clicks a

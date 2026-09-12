@@ -27,7 +27,7 @@
       "maxDuration": 15
     },
     "api/generate.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "api/instagram-publish.js": {
       "maxDuration": 15

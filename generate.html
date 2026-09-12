@@ -1928,6 +1928,11 @@ function renderVideoPreview(video) {
     ...(video.scene_texts || []).map((s, i) => ({ label: String(i + 1), text: s, gold: false })),
     ...(video.cta_text ? [{ label: 'CTA', text: video.cta_text, gold: true }] : [])
   ];
+  /* The clip control only appears for the integrated flow: animating photos
+     requires photos we host, and a hand-typed property has none. A visitor
+     without a listing sees exactly the Reel they saw before. */
+  const canAnimate = !!(currentProperty && currentProperty.public_id) && !!storedAccessToken();
+
   return `
     ${video.reel_type ? `<div class="hashtags" style="margin-bottom:10px">${video.reel_type}</div>` : ''}
     ${beats.map(b => `
@@ -1936,7 +1941,77 @@ function renderVideoPreview(video) {
         <span>${b.text}</span>
       </div>
     `).join('')}
+    ${canAnimate ? `
+      <div id="reel-clip-box" style="margin-top:14px;padding:12px;border:1px solid var(--sand);border-radius:8px">
+        <button type="button" id="reel-clip-btn" onclick="handleGenerateClips()"
+          style="width:100%;padding:10px;border:0;border-radius:6px;background:var(--gold);color:var(--ink);font-weight:600;cursor:pointer">
+          ${lang === 'es' ? 'Animar fotos con IA' : 'Animate photos with AI'}
+        </button>
+        <div id="reel-clip-status" style="margin-top:8px;font-size:.75rem;opacity:.75">
+          ${lang === 'es'
+            ? 'Convierte tus propias fotos en tomas con movimiento de cámara. Tarda unos minutos y consume tu cuota mensual.'
+            : 'Turns your own photos into shots with real camera movement. Takes a few minutes and uses your monthly quota.'}
+        </div>
+      </div>
+    ` : ''}
   `;
+}
+
+/* Kick off clip generation and keep the agent informed while Runway renders.
+   Deliberately non-blocking for the rest of the page: the Reel stays
+   downloadable as stills the whole time, and downloading after the clips land
+   simply picks them up. */
+async function handleGenerateClips() {
+  const btn = document.getElementById('reel-clip-btn');
+  const status = document.getElementById('reel-clip-status');
+  if (!btn || !status) return;
+
+  btn.disabled = true;
+  btn.style.opacity = '.6';
+  const say = (msg) => { status.textContent = msg; };
+  say(lang === 'es' ? 'Enviando tus fotos a Runway...' : 'Sending your photos to Runway...');
+
+  try {
+    const ok = await generateReelClips((job) => {
+      const done = (job.clips || []).filter(c => c.state === 'done').length;
+      const total = (job.clips || []).length;
+      /* Runway renders these one at a time on this account, so say so — a
+         progress line that sits at "1 of 5" for two minutes reads as broken
+         unless the agent knows it is a queue. */
+      say(lang === 'es'
+        ? `Generando tomas: ${done} de ${total} listas. Se procesan una por una, tarda varios minutos.`
+        : `Rendering shots: ${done} of ${total} ready. They process one at a time, this takes several minutes.`);
+    });
+
+    if (ok) {
+      const ready = reelClips.filter(c => c.state === 'done' && c.url).length;
+      say(lang === 'es'
+        ? `Listo: ${ready} tomas. Descarga el Reel para verlas incluidas.`
+        : `Done: ${ready} shots. Download the Reel to see them included.`);
+      btn.textContent = lang === 'es' ? 'Tomas listas' : 'Shots ready';
+    } else {
+      say(lang === 'es'
+        ? 'No se completo ninguna toma. El Reel se descarga con las fotos fijas.'
+        : 'No shot completed. The Reel still downloads with the still photos.');
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  } catch (err) {
+    /* Each of these is a different thing to do next, so they do not collapse
+       into one generic failure message. */
+    const messages = {
+      401: lang === 'es' ? 'Inicia sesion para animar fotos.' : 'Sign in to animate photos.',
+      402: lang === 'es' ? 'No hay creditos de Runway suficientes para este Reel.' : 'Not enough Runway credits for this Reel.',
+      403: lang === 'es' ? 'Alcanzaste tu cuota de Reels de este mes.' : 'You have used this month\'s Reel quota.',
+      422: lang === 'es' ? 'Esta propiedad no tiene fotos que podamos animar.' : 'This property has no photos we can animate.',
+      503: lang === 'es' ? 'La generacion de video no esta configurada.' : 'Video generation is not configured.'
+    };
+    say(messages[err.status] || (lang === 'es'
+      ? 'No se pudo generar. El Reel se descarga con las fotos fijas.'
+      : 'Could not generate. The Reel still downloads with the still photos.'));
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
 }
 
 /* ============================================================================
@@ -2731,6 +2806,133 @@ async function downloadAd() {
   triggerDownload(blob, 'proplync-ad-' + (prop.title || 'property').replace(/\s+/g, '-').toLowerCase() + '.txt');
 }
 
+/* ---------- 6a. RUNWAY REEL CLIPS ----------
+   Turns the listing's own photos into short moving clips so the Reel stops
+   being text over a single still. The clips are BACKGROUND ONLY — the hook,
+   scenes and CTA text are still drawn by the canvas below, because Runway
+   renders text unreliably and because the copy has already been through the
+   honesty checks in api/generate.js. Video that bypassed those checks is
+   exactly what we do not want in front of a buyer.
+
+   Generation is asynchronous and takes minutes, so this starts a job and then
+   polls. Everything degrades to the still-photo Reel: no key, no quota, a
+   failed clip, or an impatient agent all end up rendering what this feature
+   rendered before Runway existed. */
+
+let reelClips = [];        /* [{ slot, state, url }] in playback order */
+let reelJobId = null;
+let reelPolling = false;
+
+/* Runway asks consumers not to poll a task more than once every five seconds. */
+const REEL_POLL_MS = 5000;
+/* Twelve minutes.
+   Sized against a measured run, not a guess: one 5s gen4.5 clip took 104
+   seconds, and this account allows only ONE concurrent gen4.5 generation, so
+   the clips render in sequence rather than together. A five-beat Reel is
+   therefore 5-9 minutes of real waiting. The first version of this capped at
+   seven minutes and would have abandoned perfectly good jobs just before they
+   landed — the clips still finish server-side, but the agent sees a failure.
+   Past this ceiling we stop polling and keep the stills; the job row survives,
+   so a later poll can still pick the clips up. */
+const REEL_POLL_MAX = 144;
+
+async function reelApi(action, payload) {
+  /* generateHeaders() attaches the stored session when there is one. Reels
+     require auth server-side, so an anonymous visitor gets a clean 401 here
+     rather than a half-started job. */
+  const token = storedAccessToken();
+  if (!token) throw Object.assign(new Error('not_signed_in'), { status: 401 });
+  const r = await fetch('/api/generate', {
+    method: 'POST',
+    headers: generateHeaders(),
+    body: JSON.stringify({ action, ...payload })
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(data.error || 'reel_failed'), { status: r.status, data });
+  return data;
+}
+
+/**
+ * Start clip generation for the listing currently loaded, then poll until the
+ * job settles. Returns true if at least one clip landed.
+ */
+async function generateReelClips(onProgress) {
+  /* Only the integrated flow has a listing behind it; a visitor who typed a
+     property in by hand has no photos of ours to animate. */
+  const listingId = currentProperty && currentProperty.public_id;
+  if (!listingId) throw Object.assign(new Error('no_listing'), { status: 422 });
+  if (reelPolling) return false;
+  reelPolling = true;
+
+  try {
+    const started = await reelApi('reel-start', {
+      listing_public_id: listingId,
+      scenes: (generatedContent.video && generatedContent.video.scene_texts || []).length || 3
+    });
+    reelJobId = started.job_id;
+    if (onProgress) onProgress(started);
+
+    for (let i = 0; i < REEL_POLL_MAX; i++) {
+      await new Promise(r => setTimeout(r, REEL_POLL_MS));
+      const job = await reelApi('reel-status', { job_id: reelJobId });
+      if (onProgress) onProgress(job);
+      /* Kept UNFILTERED on purpose. The renderer aligns clips to Reel beats by
+         position, so dropping the failed ones would slide every later clip
+         into the wrong beat — a failed hook would put the kitchen pan under
+         the hook text. Failures stay in place as holes. */
+      reelClips = job.clips || [];
+      if (job.status !== 'working') return reelClips.some(c => c.state === 'done' && c.url);
+    }
+    return reelClips.some(c => c.state === 'done' && c.url);
+  } finally {
+    reelPolling = false;
+  }
+}
+
+/**
+ * Load the finished clips into <video> elements, index-aligned to the scene
+ * list the renderer walks. A clip that will not load is simply left out, and
+ * that beat falls back to the still photo.
+ */
+async function loadClipVideos(scenes) {
+  const out = new Array(scenes.length).fill(null);
+
+  /* Match clips to beats by SLOT, not by raw index. The renderer drops the
+     hook beat when the script has no hook_text, while the job always plans a
+     hook clip — so position alone would put the hook clip under scene 1 on
+     exactly those scripts. Slot names survive that. */
+  const SLOT_FOR_KIND = { hook: 'hook', core: 'scene', cta: 'cta' };
+  const pool = {};
+  reelClips.forEach((c, i) => {
+    if (!c || !c.slot) return;
+    (pool[c.slot] = pool[c.slot] || []).push({ ...c, index: i });
+  });
+  const pairs = [];
+  scenes.forEach((scene, sceneIdx) => {
+    const queue = pool[SLOT_FOR_KIND[scene.kind]] || [];
+    const clip = queue.shift();
+    if (clip) pairs.push({ clip, sceneIdx });
+  });
+
+  await Promise.all(pairs.map(async ({ clip, sceneIdx: i }) => {
+    if (!clip || clip.state !== 'done' || !clip.url) return;   /* a hole stays a hole */
+    const el = document.createElement('video');
+    el.crossOrigin = 'anonymous';   /* keeps the canvas untainted so it can be recorded */
+    el.muted = true;                /* required for programmatic play() */
+    el.playsInline = true;
+    el.loop = true;                 /* a 5s clip under a longer beat repeats rather than freezing */
+    el.preload = 'auto';
+    el.src = clip.url;
+    const ready = await new Promise(resolve => {
+      el.oncanplay = () => resolve(true);
+      el.onerror = () => resolve(false);
+      setTimeout(() => resolve(el.readyState >= 2), 8000);
+    });
+    if (ready) out[i] = el;
+  }));
+  return out;
+}
+
 /* ---------- 6. VIDEO / REEL (Canvas animation + MediaRecorder) ---------- */
 async function downloadVideo() {
   if (!(await ensureContact())) return;
@@ -2768,7 +2970,11 @@ async function downloadVideo() {
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  /* Load background image */
+  /* Runway clips for the beats that have one, index-aligned to `scenes`.
+     Empty array when the feature is off, unused, or still rendering. */
+  const clipVideos = await loadClipVideos(scenes);
+
+  /* Load background image — still the fallback for every beat without a clip */
   let bgImg = null;
   if (propertyImageUrl) {
     bgImg = await new Promise(resolve => {
@@ -2818,8 +3024,16 @@ async function downloadVideo() {
     ctx.fillStyle = '#0a1628';
     ctx.fillRect(0, 0, W, H);
 
-    /* Draw background with Ken Burns */
-    if (bgImg) {
+    /* Draw background.
+       A Runway clip is real footage of this property with the camera already
+       moving, so it is drawn straight: running Ken Burns on top would fight
+       the motion that is already in the pixels. Beats without a clip keep the
+       synthetic zoom over the still, which is what this Reel was before. */
+    const clipVideo = clipVideos[sceneIdx];
+    if (clipVideo && clipVideo.readyState >= 2) {
+      if (clipVideo.paused) { clipVideo.currentTime = 0; clipVideo.play().catch(() => {}); }
+      drawCover(ctx, clipVideo, clipVideo.videoWidth, clipVideo.videoHeight, W, H);
+    } else if (bgImg) {
       ctx.save();
       ctx.translate(W / 2 + panX, H / 2 + panY);
       ctx.scale(zoom, zoom);
@@ -2924,6 +3138,7 @@ async function downloadVideo() {
     await new Promise(r => setTimeout(r, 1000 / FPS));
   }
 
+  clipVideos.forEach(v => { if (v) v.pause(); });
   recorder.stop();
   const blob = await recordingDone;
   triggerDownload(blob, 'proplync-video-9x16.webm');
@@ -2933,6 +3148,21 @@ async function downloadVideo() {
     ? 'Video descargado en formato WebM. Para convertir a MP4, usa un conversor como CloudConvert o HandBrake.'
     : 'Video downloaded in WebM format. To convert to MP4, use a converter like CloudConvert or HandBrake.';
   setTimeout(() => alert(note), 500);
+}
+
+/* Draw a source (image or video) so it covers the canvas without distorting —
+   the same object-fit: cover math the still-photo path does inline. */
+function drawCover(ctx, src, srcW, srcH, W, H) {
+  if (!srcW || !srcH) return;
+  const srcRatio = srcW / srcH;
+  const canvasRatio = W / H;
+  let drawW, drawH, drawX, drawY;
+  if (srcRatio > canvasRatio) {
+    drawH = H; drawW = H * srcRatio; drawX = (W - drawW) / 2; drawY = 0;
+  } else {
+    drawW = W; drawH = W / srcRatio; drawX = 0; drawY = (H - drawH) / 2;
+  }
+  ctx.drawImage(src, drawX, drawY, drawW, drawH);
 }
 
 /* Canvas rounded rect helper */
