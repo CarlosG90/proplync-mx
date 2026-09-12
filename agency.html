@@ -54,28 +54,76 @@
   .ag-empty{text-align:center;padding:70px 20px;color:var(--on-sand-dim)}
   .ag-state{text-align:center;padding:90px 20px;color:var(--on-sand-dim)}
 
+  /* ── White-label chrome ───────────────────────────────────────────────
+     --ag-accent is set at runtime from agencies.primary_color and falls back
+     to our gold, so an agency that has not picked a colour still looks
+     finished rather than unstyled. */
+  :root{--ag-accent:var(--gold)}
+
+  .ag-brand{display:flex;align-items:center;gap:11px;min-width:0;text-decoration:none}
+  .ag-brand-mark{
+    width:34px;height:34px;border-radius:8px;flex:none;
+    background:var(--white);background-size:contain;background-position:center;background-repeat:no-repeat;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--display);font-size:1rem;color:var(--ink);font-weight:500;
+  }
+  .ag-brand-name{
+    font-family:var(--display);font-size:1.02rem;font-weight:400;color:var(--on-ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .ag-nav-cta{font-size:.72rem;padding:9px 16px}
+
+  /* The agency's colour drives the accents that were hardcoded gold. */
+  .ag-eyebrow{color:var(--ag-accent)}
+  .ag-eyebrow::before{background:var(--ag-accent)}
+  .ag-stat-val{color:var(--ag-accent)}
+
+  .ag-foot{background:var(--ink);color:var(--on-ink-dim);padding:30px 0}
+  .ag-foot-inner{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:14px;flex-wrap:wrap;
+  }
+  .ag-foot-by{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;color:var(--on-ink-faint)}
+  .ag-powered{
+    display:inline-flex;align-items:center;gap:8px;text-decoration:none;
+    font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;
+    color:var(--on-ink-dim);
+    border:1px solid rgba(240,237,232,.14);border-radius:999px;
+    padding:8px 14px;transition:border-color var(--duration) ease,color var(--duration) ease;
+  }
+  .ag-powered:hover{border-color:var(--gold);color:var(--on-ink)}
+  .ag-powered-brand{font-family:var(--display);font-size:.86rem;color:var(--on-ink);letter-spacing:0}
+  .ag-powered-cta{
+    color:var(--ink);background:var(--gold);border-radius:999px;
+    padding:3px 9px;font-weight:700;font-size:.6rem;
+  }
+
   @media (max-width:700px){
     .ag-hero{padding:36px 0 32px}
     .ag-logo{width:72px;height:72px}
+    .ag-brand-name{max-width:42vw}
+    .ag-foot-inner{justify-content:center;text-align:center}
   }
 </style>
 </head>
 <body>
 
+<!-- White label: this page belongs to the agency, so the agency's mark sits in
+     the header where a visitor looks for "whose site is this". Proplync appears
+     once, in the footer badge. The old header put our logo here and linked to
+     /search and /#como — which took an agency's own prospect, standing on the
+     agency's own page, and sent them to a marketplace full of competitors. -->
 <header>
   <nav class="wrap">
-    <a class="brand" href="/">
-      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
-      Proplync<span class="accent">.mx</span>
+    <a class="brand ag-brand" id="ag-brand" href="#">
+      <span class="ag-brand-mark" id="ag-brand-mark"></span>
+      <span class="ag-brand-name" id="ag-brand-name"></span>
     </a>
-    <div class="navlinks" id="navlinks">
-      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
-      <a href="/#como" data-es="Como funciona" data-en="How it works">Como funciona</a>
-    </div>
     <div class="navtools">
+      <a class="btn btn-gold ag-nav-cta" id="ag-nav-wa" target="_blank" rel="noopener" style="display:none"
+         data-es="WhatsApp" data-en="WhatsApp">WhatsApp</a>
       <div class="lang"><button id="es" class="on" onclick="setLang('es')">ES</button><button id="en" onclick="setLang('en')">EN</button></div>
     </div>
-    <button class="navtoggle" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
   </nav>
 </header>
 
@@ -109,10 +157,17 @@
   </div>
 </main>
 
-<footer>
-  <div class="wrap foot">
-    <span class="brand">Proplync<span class="accent">.mx</span></span>
-    <span>Riviera Maya &middot; Tulum &middot; Playa del Carmen &middot; Cancun</span>
+<!-- The one place Proplync is named. It doubles as the growth loop: every
+     agency page is seen by other agents, and ?ref=agency tells us which
+     portfolio sent them. -->
+<footer class="ag-foot">
+  <div class="wrap ag-foot-inner">
+    <span class="ag-foot-by" id="ag-foot-by"></span>
+    <a class="ag-powered" href="/?ref=agency" target="_blank" rel="noopener">
+      <span data-es="Hecho con" data-en="Powered by">Hecho con</span>
+      <span class="ag-powered-brand">Proplync<span class="accent">.mx</span></span>
+      <span class="ag-powered-cta" data-es="Pruebalo gratis" data-en="Try it now">Pruebalo gratis</span>
+    </a>
   </div>
 </footer>
 
@@ -220,9 +275,40 @@
       : '<p class="ag-empty">' + (lang === 'es' ? 'Sin propiedades en este filtro.' : 'No properties match this filter.') + '</p>';
   }
 
+  /* A hex from the database, or nothing. Anything else is ignored rather than
+     written into a style attribute. */
+  function safeColor(value) {
+    return /^#[0-9a-f]{3,8}$/i.test(String(value || '').trim()) ? String(value).trim() : null;
+  }
+
+  function applyBranding() {
+    var initial = (agency.name || '?').trim().charAt(0).toUpperCase();
+    var logoCss = agency.logo_url
+      ? "url('" + String(agency.logo_url).replace(/'/g, '%27') + "')"
+      : '';
+
+    // Header mark: the agency's logo, or their initial on a plain tile.
+    var mark = document.getElementById('ag-brand-mark');
+    if (logoCss) { mark.style.backgroundImage = logoCss; mark.textContent = ''; }
+    else { mark.textContent = initial; }
+    document.getElementById('ag-brand-name').textContent = agency.name || '';
+    document.getElementById('ag-brand').href = '/agencia/' + encodeURIComponent(agency.slug || '');
+
+    var accent = safeColor(agency.primary_color);
+    if (accent) document.documentElement.style.setProperty('--ag-accent', accent);
+
+    document.getElementById('ag-foot-by').textContent =
+      '© ' + new Date().getFullYear() + ' ' + (agency.name || '');
+
+    // The page is the agency's, so it is their name in the tab and in search
+    // results, not ours.
+    document.title = (agency.name || 'Portafolio') +
+      (lang === 'es' ? ' · Propiedades' : ' · Properties');
+  }
+
   function renderAll() {
     document.getElementById('ag-name').textContent = agency.name;
-    document.title = agency.name + ' · Proplync.mx';
+    applyBranding();
 
     var logo = document.getElementById('ag-logo');
     if (agency.logo_url) {
@@ -232,13 +318,17 @@
     }
 
     if (agency.whatsapp_number) {
-      var wa = document.getElementById('ag-whatsapp');
+      // The prospect thinks they are messaging the agency, because they are.
+      // Naming our product in their opening line breaks that.
       var msg = lang === 'es'
-        ? 'Hola, vi su portafolio en Proplync y me interesa una propiedad.'
-        : 'Hi, I saw your portfolio on Proplync and I am interested in a property.';
-      wa.href = 'https://wa.me/' + String(agency.whatsapp_number).replace(/[^0-9]/g, '') +
-                '?text=' + encodeURIComponent(msg);
-      wa.style.display = '';
+        ? 'Hola, vi sus propiedades en linea y me interesa una.'
+        : 'Hi, I saw your properties online and I am interested in one.';
+      var href = 'https://wa.me/' + String(agency.whatsapp_number).replace(/[^0-9]/g, '') +
+                 '?text=' + encodeURIComponent(msg);
+      ['ag-whatsapp', 'ag-nav-wa'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) { el.href = href; el.style.display = ''; }
+      });
     }
 
     document.getElementById('ag-hero').style.display = '';
