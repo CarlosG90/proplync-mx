@@ -19,7 +19,7 @@ import { findStockPhoto } from './_lib/photos.js';
 import { safeDetail } from './_lib/health.js';
 import { planFor, planStatus } from './_lib/plans.js';
 
-const AGENCY_WRITABLE_FIELDS = ['name', 'logo_url', 'primary_color', 'whatsapp_number'];
+const AGENCY_WRITABLE_FIELDS = ['name', 'logo_url', 'cover_url', 'primary_color', 'whatsapp_number'];
 
 function pickAgencyWritable(body) {
   const out = {};
@@ -40,7 +40,7 @@ async function handleAgencyResource(req, res, auth) {
     const db = getUserClient(auth.token);
     const { data, error } = await db
       .from('agencies')
-      .select('id, name, slug, logo_url, primary_color, whatsapp_number')
+      .select('id, name, slug, logo_url, cover_url, primary_color, whatsapp_number')
       .eq('id', auth.agencyId)
       .single();
     if (error) throw error;
@@ -55,7 +55,7 @@ async function handleAgencyResource(req, res, auth) {
       .from('agencies')
       .update(fields)
       .eq('id', auth.agencyId)
-      .select('id, name, slug, logo_url, primary_color, whatsapp_number')
+      .select('id, name, slug, logo_url, cover_url, primary_color, whatsapp_number')
       .single();
     if (error) throw error;
     res.status(200).json({ agency: data });

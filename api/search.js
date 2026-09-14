@@ -404,7 +404,7 @@ export default async function handler(req, res) {
       const svc = getServiceClient();
       const { data: agency, error: agencyErr } = await svc
         .from('agencies')
-        .select('id, name, slug, logo_url, primary_color, whatsapp_number')
+        .select('id, name, slug, logo_url, cover_url, primary_color, whatsapp_number')
         .eq('slug', String(req.query.agency).toLowerCase())
         .maybeSingle();
       if (agencyErr) {
@@ -432,7 +432,8 @@ export default async function handler(req, res) {
       const exclude = req.query.exclude;
       res.status(200).json({
         agency: { name: agency.name, slug: agency.slug, logo_url: agency.logo_url,
-                  primary_color: agency.primary_color, whatsapp_number: agency.whatsapp_number },
+                  cover_url: agency.cover_url, primary_color: agency.primary_color,
+                  whatsapp_number: agency.whatsapp_number },
         listings: exclude ? owned.filter(p => p.public_id !== exclude) : owned,
         total: owned.length
       });

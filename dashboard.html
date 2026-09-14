@@ -91,6 +91,14 @@
   .import-status.warn{color:#9a6b1f}
   .import-status.ok{color:var(--sea)}
   #l-import-btn{align-self:flex-start}
+
+  .cover-preview{aspect-ratio:16/6;max-width:100%;background-size:cover;background-position:center}
+  .brand-color-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .brand-color-row input[type="color"]{
+    width:52px;height:36px;padding:0;border:1px solid var(--line);
+    border-radius:8px;background:none;cursor:pointer;
+  }
+  .btn-sm{padding:7px 12px;font-size:.72rem}
   .modal-actions{display:flex;gap:10px;margin-top:8px;align-items:center;flex-wrap:wrap}
   .modal-reassure{font-size:.76rem;color:var(--on-sand-dim);margin:0}
   .photo-preview{width:100%;aspect-ratio:16/9;border-radius:var(--radius-sm);background-size:cover;background-position:center;background-color:var(--sand);margin-bottom:12px}
@@ -329,6 +337,24 @@
         <input class="form-input" id="s-logo-file" type="file" accept="image/*" onchange="handleLogoUpload(event)">
         <div class="form-hint" id="s-logo-status"></div>
         <input type="hidden" id="s-logo-url">
+      </div>
+      <div class="field field-full">
+        <label class="form-label" data-es="Imagen de portada" data-en="Cover image">Imagen de portada</label>
+        <div class="photo-preview cover-preview" id="s-cover-preview"></div>
+        <input class="form-input" id="s-cover-file" type="file" accept="image/*" onchange="handleCoverUpload(event)">
+        <div class="form-hint" data-es="Se muestra detras de tu nombre en la cabecera de tu mini-sitio. Horizontal se ve mejor." data-en="Shown behind your name in your mini-site header. Landscape works best.">Se muestra detras de tu nombre en la cabecera de tu mini-sitio. Horizontal se ve mejor.</div>
+        <div class="form-hint" id="s-cover-status"></div>
+        <input type="hidden" id="s-cover-url">
+        <button type="button" class="btn btn-outline btn-sm" id="s-cover-clear" style="display:none" onclick="clearCover()" data-es="Quitar portada" data-en="Remove cover">Quitar portada</button>
+      </div>
+      <div class="field field-full">
+        <label class="form-label" data-es="Color de marca" data-en="Brand color">Color de marca</label>
+        <div class="brand-color-row">
+          <input type="color" id="s-color" value="#c9a96e">
+          <span class="form-hint" id="s-color-value">#c9a96e</span>
+          <button type="button" class="btn btn-outline btn-sm" onclick="resetBrandColor()" data-es="Usar el color por defecto" data-en="Use the default color">Usar el color por defecto</button>
+        </div>
+        <div class="form-hint" data-es="Tinta los acentos de tu mini-sitio: el titulo de seccion y las cifras de tu portafolio." data-en="Tints the accents on your mini-site: the section label and your portfolio figures.">Tinta los acentos de tu mini-sitio: el titulo de seccion y las cifras de tu portafolio.</div>
       </div>
       <div class="field field-full">
         <label class="form-label" data-es="Nombre de la agencia" data-en="Agency name">Nombre de la agencia</label>
@@ -1028,6 +1054,10 @@
       document.getElementById('s-whatsapp').value = a.whatsapp_number || '';
       document.getElementById('s-logo-url').value = a.logo_url || '';
       document.getElementById('s-logo-preview').style.backgroundImage = a.logo_url ? "url('" + a.logo_url + "')" : '';
+      setCoverPreview(a.cover_url || '');
+      /* No colour set means the mini-site falls back to gold, so show gold --
+         the picker has no empty state and a blank one would read as black. */
+      setBrandColor(a.primary_color || DEFAULT_BRAND_COLOR);
       showPortfolioLink(a.slug);
     }
     document.getElementById('settings-modal').classList.add('open');
@@ -1035,6 +1065,64 @@
 
   function closeSettingsModal() {
     document.getElementById('settings-modal').classList.remove('open');
+  }
+
+  var DEFAULT_BRAND_COLOR = '#c9a96e';
+
+  function setBrandColor(value) {
+    var ok = /^#[0-9a-f]{6}$/i.test(String(value || '').trim())
+      ? String(value).trim().toLowerCase()
+      : DEFAULT_BRAND_COLOR;
+    document.getElementById('s-color').value = ok;
+    document.getElementById('s-color-value').textContent = ok;
+  }
+
+  function resetBrandColor() {
+    setBrandColor(DEFAULT_BRAND_COLOR);
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('s-color').addEventListener('input', function (e) {
+      document.getElementById('s-color-value').textContent = e.target.value.toLowerCase();
+    });
+  });
+
+  function setCoverPreview(url) {
+    document.getElementById('s-cover-url').value = url || '';
+    document.getElementById('s-cover-preview').style.backgroundImage =
+      url ? "url('" + String(url).replace(/'/g, '%27') + "')" : '';
+    document.getElementById('s-cover-clear').style.display = url ? '' : 'none';
+  }
+
+  function clearCover() {
+    setCoverPreview('');
+    document.getElementById('s-cover-status').textContent = '';
+  }
+
+  async function handleCoverUpload(evt) {
+    const file = evt.target.files[0];
+    if (!file || !currentAgencyId) return;
+    const statusEl = document.getElementById('s-cover-status');
+    const invalid = validateImage(file);
+    if (invalid) {
+      statusEl.textContent = invalid;
+      evt.target.value = '';
+      return;
+    }
+    statusEl.textContent = lang === 'es' ? 'Subiendo...' : 'Uploading...';
+    try {
+      const sbClient = initSupabase();
+      const path = currentAgencyId + '/cover-' + Date.now() + '.' + extensionFor(file.type);
+      const { error } = await sbClient.storage.from('listing-photos').upload(path, file);
+      if (error) throw error;
+      const { data } = sbClient.storage.from('listing-photos').getPublicUrl(path);
+      setCoverPreview(data.publicUrl);
+      statusEl.textContent = lang === 'es' ? 'Listo' : 'Done';
+    } catch (e) {
+      statusEl.textContent = 'Error: ' + e.message;
+    } finally {
+      evt.target.value = '';
+    }
   }
 
   async function handleLogoUpload(evt) {
@@ -1070,10 +1158,18 @@
     const btn = document.getElementById('save-settings-btn');
     btn.disabled = true;
     try {
+      /* cover_url sends '' rather than undefined when cleared: undefined is
+         dropped by pickAgencyWritable, so "remove my cover" would silently
+         keep the old one. Colour is only sent when it differs from the
+         fallback, so an agency that never picked one stays unset rather than
+         being pinned to our gold. */
+      const color = document.getElementById('s-color').value;
       const payload = {
         name: document.getElementById('s-name').value.trim(),
         whatsapp_number: document.getElementById('s-whatsapp').value.trim(),
-        logo_url: document.getElementById('s-logo-url').value || undefined
+        logo_url: document.getElementById('s-logo-url').value || undefined,
+        cover_url: document.getElementById('s-cover-url').value,
+        primary_color: color.toLowerCase() === DEFAULT_BRAND_COLOR ? null : color
       };
       const r = await authedFetch('/api/my-listings?resource=agency', {
         method: 'PATCH',

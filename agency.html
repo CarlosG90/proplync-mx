@@ -13,7 +13,26 @@
 <link rel="stylesheet" href="/css/components.css">
 <style>
   /* ── Agency header: the portfolio's cover ── */
-  .ag-hero{background:var(--ink);color:var(--on-ink);padding:56px 0 48px}
+  .ag-hero{background:var(--ink);color:var(--on-ink);padding:56px 0 48px;position:relative;background-size:cover;background-position:center}
+  /* A banner is chosen to look good, not to be read over. Without a scrim the
+     agency's own name disappears into whatever they uploaded, so the cover
+     always sits under a dark wash rather than being rejected for contrast. */
+  .ag-hero.has-cover::before{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(10,22,40,.82),rgba(10,22,40,.92));
+  }
+  .ag-hero > .wrap{position:relative;z-index:1}
+
+  /* The WhatsApp CTA is the most prominent thing on the page, so it follows the
+     agency's colour rather than staying our gold. --ag-accent-ink is computed
+     from the colour's luminance: a dark brand would otherwise put .btn-gold's
+     dark text on a dark button. */
+  body.ag-branded .btn-gold{
+    background:var(--ag-accent);
+    color:var(--ag-accent-ink);
+    box-shadow:none;
+  }
+  body.ag-branded .btn-gold:hover{filter:brightness(1.07)}
   .ag-hero-inner{display:flex;align-items:center;gap:28px;flex-wrap:wrap}
   .ag-logo{
     width:96px;height:96px;border-radius:var(--radius);flex:none;
@@ -293,6 +312,23 @@
     return /^#[0-9a-f]{3,8}$/i.test(String(value || '').trim()) ? String(value).trim() : null;
   }
 
+  /* An agency picking navy for their brand should not get navy text on a navy
+     button. Relative luminance per WCAG, then the foreground that contrasts
+     with it. */
+  function readableInkOn(hex) {
+    var h = String(hex).replace('#', '').slice(0, 6);
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    if (h.length !== 6) return '#0a1628';
+    var channel = function (v) {
+      var c = parseInt(v, 16) / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    var L = 0.2126 * channel(h.slice(0, 2)) +
+            0.7152 * channel(h.slice(2, 4)) +
+            0.0722 * channel(h.slice(4, 6));
+    return L > 0.45 ? '#0a1628' : '#f5f1ea';
+  }
+
   function applyBranding() {
     var initial = (agency.name || '?').trim().charAt(0).toUpperCase();
     var logoCss = agency.logo_url
@@ -307,7 +343,21 @@
     document.getElementById('ag-brand').href = '/agencia/' + encodeURIComponent(agency.slug || '');
 
     var accent = safeColor(agency.primary_color);
-    if (accent) document.documentElement.style.setProperty('--ag-accent', accent);
+    if (accent) {
+      document.documentElement.style.setProperty('--ag-accent', accent);
+      document.documentElement.style.setProperty('--ag-accent-ink', readableInkOn(accent));
+      document.body.classList.add('ag-branded');
+    }
+
+    /* Same quoting rule as the logo: a ' in the URL would close the CSS string. */
+    var hero = document.getElementById('ag-hero');
+    if (agency.cover_url) {
+      hero.style.backgroundImage = "url('" + String(agency.cover_url).replace(/'/g, '%27') + "')";
+      hero.classList.add('has-cover');
+    } else {
+      hero.style.backgroundImage = '';
+      hero.classList.remove('has-cover');
+    }
 
     document.getElementById('ag-foot-by').textContent =
       '© ' + new Date().getFullYear() + ' ' + (agency.name || '');
