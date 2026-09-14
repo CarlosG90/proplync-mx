@@ -40,17 +40,6 @@ async function fetchAmenities(lat, lng) {
   return data.places || [];
 }
 
-async function fetchDescription(payload) {
-  const r = await fetch(API.describe, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  const data = await r.json();
-  return data.description;
-}
-
 async function fetchSearch(params) {
   const qs = new URLSearchParams(params).toString();
   const r = await fetch(API.search + '?' + qs, { headers: { accept: 'application/json' } });

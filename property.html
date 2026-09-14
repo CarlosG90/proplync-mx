@@ -213,8 +213,6 @@
 
   .prop-amenities{display:flex;flex-direction:column;gap:7px}
 
-  .prop-ai-block{border-top:1px solid rgba(26,36,56,.06);padding-top:18px;display:flex;flex-direction:column;gap:12px}
-  .prop-ai-text{font-size:.86rem;color:var(--on-sand-dim);line-height:1.6;margin:0}
 
   .prop-cta{
     padding:28px;background:var(--ink);border-radius:var(--radius-lg);text-align:center;
@@ -385,19 +383,6 @@
           <h3 data-es="Cerca de aqui" data-en="Nearby">Cerca de aqui</h3>
           <div class="prop-amenities" id="prop-amenities">
             <p class="ps-loading" data-es="Buscando lugares cercanos..." data-en="Finding nearby places...">Buscando lugares cercanos...</p>
-          </div>
-        </div>
-
-        <!-- AI Description -->
-        <div class="prop-sidebar-card">
-          <h3 data-es="Descripcion con IA" data-en="AI Description">Descripcion con IA</h3>
-          <div class="prop-ai-block" id="ai-block">
-            <button class="btn btn-dark ps-btn" id="ai-btn" onclick="generateAI()">
-              <span data-es="Generar con IA" data-en="Generate with AI">Generar con IA</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
-            </button>
-            <div class="prop-ai-text" id="ai-text" style="display:none"></div>
-            <span class="ps-ai-credit" id="ai-credit" style="display:none">Powered by Groq &middot; Llama 3.3</span>
           </div>
         </div>
 
@@ -878,37 +863,6 @@
   }
 
   /* ---------- AI description ---------- */
-  async function generateAI() {
-    if (!property) return;
-    var btn = document.getElementById('ai-btn');
-    var text = document.getElementById('ai-text');
-    var credit = document.getElementById('ai-credit');
-    btn.disabled = true;
-    btn.innerHTML = '<span>' + (lang === 'es' ? 'Generando...' : 'Generating...') + '</span>';
-
-    try {
-      var desc = await fetchDescription({
-        title: lang === 'es' ? property.title_es : property.title_en,
-        location: property.neighborhood + ', ' + property.town,
-        bedrooms: property.bedrooms,
-        bathrooms: property.bathrooms,
-        size: property.size,
-        price: property.currency + ' $' + property.formatted,
-        operation: property.operation,
-        lang: lang
-      });
-      text.textContent = desc;
-      text.style.display = '';
-      credit.style.display = '';
-      btn.style.display = 'none';
-    } catch (e) {
-      text.textContent = lang === 'es' ? 'Error al generar descripcion. Intenta de nuevo.' : 'Error generating description. Try again.';
-      text.style.display = '';
-      btn.disabled = false;
-      btn.innerHTML = '<span>' + (lang === 'es' ? 'Reintentar' : 'Retry') + '</span>';
-    }
-  }
-
   /* ---------- load property ---------- */
   async function loadProperty() {
     var id = getPropertyId();
