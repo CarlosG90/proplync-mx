@@ -317,10 +317,15 @@
     document.getElementById('ag-name').textContent = agency.name;
     applyBranding();
 
+    // Each branch clears what the other sets. renderAll runs again on every
+    // language change, so a one-sided branch leaves the fallback initial
+    // sitting on top of the logo the agency just uploaded.
     var logo = document.getElementById('ag-logo');
     if (agency.logo_url) {
       logo.style.backgroundImage = "url('" + String(agency.logo_url).replace(/'/g, '%27') + "')";
+      logo.textContent = '';
     } else {
+      logo.style.backgroundImage = '';
       logo.textContent = (agency.name || '?').trim().charAt(0).toUpperCase();
     }
 
