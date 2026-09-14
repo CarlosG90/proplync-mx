@@ -261,7 +261,9 @@
   function specsHTML(p) {
     return [
       p.bedrooms ? p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') : null,
-      p.bathrooms ? p.bathrooms + ' ' + (lang === 'es' ? 'banos' : 'bath') : null,
+      p.bathrooms ? p.bathrooms + ' ' + (lang === 'es'
+        ? (p.bathrooms === 1 ? 'bano' : 'banos')
+        : 'bath') : null,
       p.size ? p.size + ' m&sup2;' : null
     ].filter(Boolean).map(function (s) { return '<span>' + s + '</span>'; }).join('');
   }
