@@ -410,9 +410,24 @@
       await loadSearch(filters);
     } catch (e) {
       console.warn('[Proplync] nlsearch error:', e.message);
+      // A 502 from the parser is our outage, not a badly worded search. Sending
+      // the buyer off to rephrase a query that was fine wastes their time on
+      // something they cannot fix; the filters below still work either way.
+      const serverDown = /^HTTP /.test(e.message || '');
       document.getElementById('search-grid').innerHTML = '<div class="search-empty"><h3>' +
-        (lang === 'es' ? 'No se pudo interpretar la busqueda' : 'Could not understand the search') +
-        '</h3><p>' + (lang === 'es' ? 'Intenta describirlo de otra forma, o usa los filtros.' : 'Try rephrasing it, or use the filters below.') + '</p></div>';
+        (serverDown
+          ? (lang === 'es' ? 'La busqueda con IA no esta disponible' : 'AI search is unavailable')
+          : (lang === 'es' ? 'No se pudo interpretar la busqueda' : 'Could not understand the search')) +
+        '</h3><p>' +
+        (serverDown
+          ? (lang === 'es' ? 'Intenta de nuevo en un momento, o usa los filtros de arriba.' : 'Try again in a moment, or use the filters above.')
+          : (lang === 'es' ? 'Intenta describirlo de otra forma, o usa los filtros.' : 'Try rephrasing it, or use the filters below.')) +
+        '</p></div>';
+      // The count and the map kept describing the last successful search, so the
+      // page showed "4 propiedades encontradas" and four pins above an error
+      // card saying it had found nothing. Three surfaces, three stories.
+      document.getElementById('search-count').textContent = '';
+      updateMarkers([]);
     } finally {
       btn.disabled = false;
       btn.textContent = lang === 'es' ? 'Buscar con IA' : 'Search with AI';
