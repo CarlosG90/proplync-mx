@@ -117,6 +117,18 @@
     padding:3px 9px;font-weight:700;font-size:.6rem;
   }
 
+  /* Quiet on purpose: it is a way out, not a second brand competing with the
+     agency's mark directly below it. */
+  .ag-back{background:var(--ink-2,#11203a);border-bottom:1px solid rgba(240,237,232,.08)}
+  .ag-back .wrap{padding-top:8px;padding-bottom:8px}
+  .ag-back-link{
+    display:inline-flex;align-items:center;gap:6px;text-decoration:none;
+    font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;
+    color:var(--on-ink-dim);transition:color var(--duration) ease;
+  }
+  .ag-back-link svg{width:14px;height:14px}
+  .ag-back-link:hover{color:var(--on-ink)}
+
   @media (max-width:700px){
     .ag-hero{padding:36px 0 32px}
     .ag-logo{width:72px;height:72px}
@@ -132,6 +144,19 @@
      once, in the footer badge. The old header put our logo here and linked to
      /search and /#como — which took an agency's own prospect, standing on the
      agency's own page, and sent them to a marketplace full of competitors. -->
+<!-- Shown only to a visitor who arrived from Proplync (see wireBackLink). An
+     agency sharing this link with their own prospect gets the clean white-label
+     page; someone who walked here from /search or a property page gets the way
+     back they expect. -->
+<div class="ag-back" id="ag-back" hidden>
+  <div class="wrap">
+    <a class="ag-back-link" href="/" id="ag-back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span data-es="Volver a Proplync.mx" data-en="Back to Proplync.mx">Volver a Proplync.mx</span>
+    </a>
+  </div>
+</div>
+
 <header>
   <nav class="wrap">
     <a class="brand ag-brand" id="ag-brand" href="#">
@@ -427,7 +452,59 @@
     if (agency) renderAll();
   });
 
+  /* Who gets the way back: someone who walked here from a Proplync page, and
+     nobody else. Two signals, because neither alone is enough.
+
+     document.referrer covers the organic path (/search -> a property -> "ver
+     todo de esta agencia") but is empty on a hard reload, so the link would
+     vanish under the visitor mid-browse.
+
+     ?from=proplync is set on the links we control and survives reloads, so it
+     is remembered for the tab: the agency's own shared link carries neither
+     signal and stays clean. sessionStorage rather than localStorage, so it
+     expires with the tab instead of marking this browser forever. */
+  var BACK_FLAG = 'proplync:came-from-us';
+
+  function cameFromProplync() {
+    try {
+      var params = new URLSearchParams(location.search);
+      if (params.get('from') === 'proplync') {
+        sessionStorage.setItem(BACK_FLAG, '1');
+        return true;
+      }
+      if (sessionStorage.getItem(BACK_FLAG) === '1') return true;
+      if (document.referrer) {
+        var ref = new URL(document.referrer);
+        /* Same origin only, and not another agency page -- walking from one
+           portfolio to another is not arriving from the marketplace. */
+        if (ref.origin === location.origin && !/^\/(agencia|agency)\//.test(ref.pathname)) {
+          sessionStorage.setItem(BACK_FLAG, '1');
+          return true;
+        }
+      }
+    } catch (e) {
+      /* Private mode can throw on sessionStorage; a missing back link is the
+         safe failure here, not a broken page. */
+    }
+    return false;
+  }
+
+  function wireBackLink() {
+    if (!cameFromProplync()) return;
+    var bar = document.getElementById('ag-back');
+    /* Back to where they actually were when we know it, the home page when we
+       do not -- a reload has no referrer but may still have the flag. */
+    try {
+      var ref = document.referrer ? new URL(document.referrer) : null;
+      if (ref && ref.origin === location.origin && ref.pathname !== location.pathname) {
+        document.getElementById('ag-back-link').href = ref.pathname + ref.search;
+      }
+    } catch (e) { /* keep the "/" default */ }
+    bar.hidden = false;
+  }
+
   (async function init() {
+    wireBackLink();
     var slug = slugFromUrl();
     var state = document.getElementById('ag-state');
     if (!slug) {

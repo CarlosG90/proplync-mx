@@ -810,7 +810,9 @@
           '</div></article>';
       }).join('');
 
-      document.getElementById('more-all').href = '/agencia/' + encodeURIComponent(slug);
+      /* ?from=proplync tells the mini-site this visitor arrived from us, so it
+         shows a way back. An agency's own shared link carries no such flag. */
+      document.getElementById('more-all').href = '/agencia/' + encodeURIComponent(slug) + '?from=proplync';
       document.getElementById('more-section').style.display = '';
     } catch (e) { /* the listing itself still renders — this block just stays hidden */ }
   }
