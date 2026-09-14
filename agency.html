@@ -79,17 +79,6 @@
      finished rather than unstyled. */
   :root{--ag-accent:var(--gold)}
 
-  .ag-brand{display:flex;align-items:center;gap:11px;min-width:0;text-decoration:none}
-  .ag-brand-mark{
-    width:34px;height:34px;border-radius:8px;flex:none;
-    background:var(--white);background-size:contain;background-position:center;background-repeat:no-repeat;
-    display:flex;align-items:center;justify-content:center;
-    font-family:var(--display);font-size:1rem;color:var(--ink);font-weight:500;
-  }
-  .ag-brand-name{
-    font-family:var(--display);font-size:1.02rem;font-weight:400;color:var(--on-ink);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
   .ag-nav-cta{font-size:.72rem;padding:9px 16px}
 
   /* The agency's colour drives the accents that were hardcoded gold. */
@@ -117,22 +106,9 @@
     padding:3px 9px;font-weight:700;font-size:.6rem;
   }
 
-  /* Quiet on purpose: it is a way out, not a second brand competing with the
-     agency's mark directly below it. */
-  .ag-back{background:var(--ink-2,#11203a);border-bottom:1px solid rgba(240,237,232,.08)}
-  .ag-back .wrap{padding-top:8px;padding-bottom:8px}
-  .ag-back-link{
-    display:inline-flex;align-items:center;gap:6px;text-decoration:none;
-    font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;
-    color:var(--on-ink-dim);transition:color var(--duration) ease;
-  }
-  .ag-back-link svg{width:14px;height:14px}
-  .ag-back-link:hover{color:var(--on-ink)}
-
   @media (max-width:700px){
     .ag-hero{padding:36px 0 32px}
     .ag-logo{width:72px;height:72px}
-    .ag-brand-name{max-width:42vw}
     .ag-foot-inner{justify-content:center;text-align:center}
   }
 </style>
@@ -144,24 +120,11 @@
      once, in the footer badge. The old header put our logo here and linked to
      /search and /#como — which took an agency's own prospect, standing on the
      agency's own page, and sent them to a marketplace full of competitors. -->
-<!-- Shown only to a visitor who arrived from Proplync (see wireBackLink). An
-     agency sharing this link with their own prospect gets the clean white-label
-     page; someone who walked here from /search or a property page gets the way
-     back they expect. -->
-<div class="ag-back" id="ag-back" hidden>
-  <div class="wrap">
-    <a class="ag-back-link" href="/" id="ag-back-link">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      <span data-es="Volver a Proplync.mx" data-en="Back to Proplync.mx">Volver a Proplync.mx</span>
-    </a>
-  </div>
-</div>
-
 <header>
   <nav class="wrap">
-    <a class="brand ag-brand" id="ag-brand" href="#">
-      <span class="ag-brand-mark" id="ag-brand-mark"></span>
-      <span class="ag-brand-name" id="ag-brand-name"></span>
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="currentColor" opacity=".06"/><path d="M16 3l11 6v9c0 6.4-4.7 10.4-11 12-6.3-1.6-11-5.6-11-12V9l11-6z" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/><path d="M8 20c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#c9a96e" stroke-width="1.6" stroke-linecap="round"/><path d="M8 15.5c2.4-3 5.6-3 8 0s5.6 3 8 0" stroke="#5ec4be" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Proplync<span class="accent">.mx</span>
     </a>
     <div class="navtools">
       <a class="btn btn-gold ag-nav-cta" id="ag-nav-wa" target="_blank" rel="noopener" style="display:none"
@@ -372,18 +335,6 @@
   }
 
   function applyBranding() {
-    var initial = (agency.name || '?').trim().charAt(0).toUpperCase();
-    var logoCss = agency.logo_url
-      ? "url('" + String(agency.logo_url).replace(/'/g, '%27') + "')"
-      : '';
-
-    // Header mark: the agency's logo, or their initial on a plain tile.
-    var mark = document.getElementById('ag-brand-mark');
-    if (logoCss) { mark.style.backgroundImage = logoCss; mark.textContent = ''; }
-    else { mark.textContent = initial; }
-    document.getElementById('ag-brand-name').textContent = agency.name || '';
-    document.getElementById('ag-brand').href = '/agencia/' + encodeURIComponent(agency.slug || '');
-
     var accent = safeColor(agency.primary_color);
     if (accent) {
       document.documentElement.style.setProperty('--ag-accent', accent);
@@ -452,59 +403,7 @@
     if (agency) renderAll();
   });
 
-  /* Who gets the way back: someone who walked here from a Proplync page, and
-     nobody else. Two signals, because neither alone is enough.
-
-     document.referrer covers the organic path (/search -> a property -> "ver
-     todo de esta agencia") but is empty on a hard reload, so the link would
-     vanish under the visitor mid-browse.
-
-     ?from=proplync is set on the links we control and survives reloads, so it
-     is remembered for the tab: the agency's own shared link carries neither
-     signal and stays clean. sessionStorage rather than localStorage, so it
-     expires with the tab instead of marking this browser forever. */
-  var BACK_FLAG = 'proplync:came-from-us';
-
-  function cameFromProplync() {
-    try {
-      var params = new URLSearchParams(location.search);
-      if (params.get('from') === 'proplync') {
-        sessionStorage.setItem(BACK_FLAG, '1');
-        return true;
-      }
-      if (sessionStorage.getItem(BACK_FLAG) === '1') return true;
-      if (document.referrer) {
-        var ref = new URL(document.referrer);
-        /* Same origin only, and not another agency page -- walking from one
-           portfolio to another is not arriving from the marketplace. */
-        if (ref.origin === location.origin && !/^\/(agencia|agency)\//.test(ref.pathname)) {
-          sessionStorage.setItem(BACK_FLAG, '1');
-          return true;
-        }
-      }
-    } catch (e) {
-      /* Private mode can throw on sessionStorage; a missing back link is the
-         safe failure here, not a broken page. */
-    }
-    return false;
-  }
-
-  function wireBackLink() {
-    if (!cameFromProplync()) return;
-    var bar = document.getElementById('ag-back');
-    /* Back to where they actually were when we know it, the home page when we
-       do not -- a reload has no referrer but may still have the flag. */
-    try {
-      var ref = document.referrer ? new URL(document.referrer) : null;
-      if (ref && ref.origin === location.origin && ref.pathname !== location.pathname) {
-        document.getElementById('ag-back-link').href = ref.pathname + ref.search;
-      }
-    } catch (e) { /* keep the "/" default */ }
-    bar.hidden = false;
-  }
-
   (async function init() {
-    wireBackLink();
     var slug = slugFromUrl();
     var state = document.getElementById('ag-state');
     if (!slug) {
