@@ -93,6 +93,10 @@
   }
   .ag-powered:hover{border-color:var(--gold);color:var(--on-ink)}
   .ag-powered-brand{font-family:var(--display);font-size:.86rem;color:var(--on-ink);letter-spacing:0}
+  .ag-powered-cta{
+    color:var(--ink);background:var(--gold);border-radius:999px;
+    padding:3px 9px;font-weight:700;font-size:.6rem;
+  }
 
   @media (max-width:700px){
     .ag-hero{padding:36px 0 32px}
@@ -163,8 +167,9 @@
   <div class="wrap ag-foot-inner">
     <span class="ag-foot-by" id="ag-foot-by"></span>
     <a class="ag-powered" href="/?ref=agency" target="_blank" rel="noopener">
-      <span>Powered by</span>
+      <span data-es="Hecho con" data-en="Powered by">Hecho con</span>
       <span class="ag-powered-brand">Proplync<span class="accent">.mx</span></span>
+      <span class="ag-powered-cta" data-es="Pruebalo gratis" data-en="Try it now">Pruebalo gratis</span>
     </a>
   </div>
 </footer>
