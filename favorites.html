@@ -121,7 +121,9 @@
         '</div>';
       return;
     }
-    count.textContent = favProps.length + (lang === 'es' ? ' propiedades guardadas' : ' saved properties');
+    count.textContent = favProps.length + (lang === 'es'
+      ? (favProps.length === 1 ? ' propiedad guardada' : ' propiedades guardadas')
+      : (favProps.length === 1 ? ' saved property' : ' saved properties'));
     grid.className = 'pgrid';
     grid.innerHTML = favProps.map(favCardHTML).join('');
   }

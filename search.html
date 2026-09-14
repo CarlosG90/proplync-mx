@@ -263,6 +263,11 @@
     ].filter(Boolean).map(function (s) { return '<span>' + s + '</span>'; }).join('');
   }
 
+  function countLabel(n) {
+    if (lang === 'es') return n + (n === 1 ? ' propiedad encontrada' : ' propiedades encontradas');
+    return n + (n === 1 ? ' property found' : ' properties found');
+  }
+
   /* ---------- card rendering ---------- */
   function cardHTML(p) {
     const title = lang === 'es' ? p.title_es : p.title_en;
@@ -340,7 +345,7 @@
       listings = data.listings || [];
 
       const countEl = document.getElementById('search-count');
-      countEl.textContent = listings.length + (lang === 'es' ? ' propiedades encontradas' : ' properties found');
+      countEl.textContent = countLabel(listings.length);
 
       if (data.towns && data.towns.length) {
         const sel = document.getElementById('f-town');
@@ -446,7 +451,7 @@
     renderGrid(listings);
     updateMarkers(listings);
     const countEl = document.getElementById('search-count');
-    countEl.textContent = listings.length + (lang === 'es' ? ' propiedades encontradas' : ' properties found');
+    countEl.textContent = countLabel(listings.length);
     const nlInput = document.getElementById('nlsearch-input');
     nlInput.placeholder = nlInput.getAttribute('data-' + lang + '-placeholder');
   });
