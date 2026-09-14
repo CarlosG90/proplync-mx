@@ -252,6 +252,17 @@
     }
   }
 
+  /* A spec the agency never filled in is absent, not zero. Printing "0 banos"
+     on a plot of land states a fact nobody supplied, one line under a subtitle
+     promising verified data with nothing invented. */
+  function specsHTML(p) {
+    return [
+      p.bedrooms ? p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') : null,
+      p.bathrooms ? p.bathrooms + ' ' + (lang === 'es' ? 'banos' : 'bath') : null,
+      p.size ? p.size + ' m&sup2;' : null
+    ].filter(Boolean).map(function (s) { return '<span>' + s + '</span>'; }).join('');
+  }
+
   /* ---------- card rendering ---------- */
   function cardHTML(p) {
     const title = lang === 'es' ? p.title_es : p.title_en;
@@ -263,9 +274,9 @@
         '<span class="pcard-badge ' + (p.operation === 'sale' ? 'badge-sale' : 'badge-rental') + '">' + opLbl + '</span>' +
       '</div>' +
       '<div class="pcard-body">' +
-        '<div class="pcard-loc">' + p.neighborhood + ' &middot; ' + p.town + '</div>' +
+        '<div class="pcard-loc">' + [p.neighborhood, p.town].filter(Boolean).join(' &middot; ') + '</div>' +
         '<div class="pcard-title">' + title + '</div>' +
-        '<div class="pcard-specs"><span>' + p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') + '</span><span>' + p.bathrooms + ' ' + (lang === 'es' ? 'banos' : 'bath') + '</span><span>' + p.size + ' m&sup2;</span></div>' +
+        '<div class="pcard-specs">' + specsHTML(p) + '</div>' +
         '<div class="pcard-foot"><span class="pcard-price">' + p.currency + ' $' + p.formatted + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
       '</div></article>';
   }

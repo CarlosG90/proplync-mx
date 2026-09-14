@@ -573,7 +573,7 @@
 
     document.getElementById('hero-fav').classList.toggle('saved', isFavorite(p.public_id));
 
-    document.getElementById('prop-loc').textContent = p.neighborhood + ' · ' + p.town;
+    document.getElementById('prop-loc').textContent = [p.neighborhood, p.town].filter(Boolean).join(' · ');
     document.getElementById('prop-title').textContent = title;
     var perLbl = p.operation === 'rental' ? (lang === 'es' ? '/mes' : '/mo') : '';
     document.getElementById('prop-price').innerHTML = p.currency + ' $' + p.formatted + (perLbl ? ' <small>' + perLbl + '</small>' : '');

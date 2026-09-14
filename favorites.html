@@ -76,6 +76,16 @@
 
   /* ---------- card (same shape as search.html, but the heart removes the
      card from this page immediately instead of just toggling its state) ---------- */
+  /* A spec the agency never filled in is absent, not zero. Printing "0 banos"
+     on a plot of land states a fact nobody supplied. */
+  function specsHTML(p) {
+    return [
+      p.bedrooms ? p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') : null,
+      p.bathrooms ? p.bathrooms + ' ' + (lang === 'es' ? 'baños' : 'bath') : null,
+      p.size ? p.size + ' m²' : null
+    ].filter(Boolean).map(function (s) { return '<span>' + s + '</span>'; }).join('');
+  }
+
   function favCardHTML(p) {
     const title = lang === 'es' ? p.title_es : p.title_en;
     const opLbl = p.operation === 'sale' ? (lang === 'es' ? 'Venta' : 'For sale') : (lang === 'es' ? 'Renta' : 'For rent');
@@ -86,9 +96,9 @@
         '<button class="pcard-fav saved" onclick="event.stopPropagation();removeFavorite(\'' + p.public_id + '\')" title="' + (lang === 'es' ? 'Quitar' : 'Remove') + '">' + heartSVG() + '</button>' +
       '</div>' +
       '<div class="pcard-body">' +
-        '<div class="pcard-loc">' + p.neighborhood + ' · ' + p.town + '</div>' +
+        '<div class="pcard-loc">' + [p.neighborhood, p.town].filter(Boolean).join(' · ') + '</div>' +
         '<div class="pcard-title">' + title + '</div>' +
-        '<div class="pcard-specs"><span>' + p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') + '</span><span>' + p.bathrooms + ' ' + (lang === 'es' ? 'baños' : 'bath') + '</span><span>' + p.size + ' m²</span></div>' +
+        '<div class="pcard-specs">' + specsHTML(p) + '</div>' +
         '<div class="pcard-foot"><span class="pcard-price">' + p.currency + ' $' + p.formatted + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
       '</div></article>';
   }
