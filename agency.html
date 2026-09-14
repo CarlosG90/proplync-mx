@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>Portafolio · Proplync.mx</title>
-<meta name="description" content="Portafolio de propiedades en la Riviera Maya.">
+<meta name="description" content="Portafolio de propiedades.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -93,10 +93,6 @@
   }
   .ag-powered:hover{border-color:var(--gold);color:var(--on-ink)}
   .ag-powered-brand{font-family:var(--display);font-size:.86rem;color:var(--on-ink);letter-spacing:0}
-  .ag-powered-cta{
-    color:var(--ink);background:var(--gold);border-radius:999px;
-    padding:3px 9px;font-weight:700;font-size:.6rem;
-  }
 
   @media (max-width:700px){
     .ag-hero{padding:36px 0 32px}
@@ -167,9 +163,8 @@
   <div class="wrap ag-foot-inner">
     <span class="ag-foot-by" id="ag-foot-by"></span>
     <a class="ag-powered" href="/?ref=agency" target="_blank" rel="noopener">
-      <span data-es="Hecho con" data-en="Powered by">Hecho con</span>
+      <span>Powered by</span>
       <span class="ag-powered-brand">Proplync<span class="accent">.mx</span></span>
-      <span class="ag-powered-cta" data-es="Pruebalo gratis" data-en="Try it now">Pruebalo gratis</span>
     </a>
   </div>
 </footer>
@@ -192,6 +187,19 @@
     return p.currency + ' $' + Number(p.amount || 0).toLocaleString('en-US');
   }
 
+  /* A spec the agency never filled in is absent, not zero. Printing "0 banos"
+     on a plot of land states a fact nobody supplied -- and on this page it is
+     the agency's own listing saying it, on the agency's own site. */
+  function specsHTML(p) {
+    return [
+      p.bedrooms ? p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') : null,
+      p.bathrooms ? p.bathrooms + ' ' + (lang === 'es'
+        ? (p.bathrooms === 1 ? 'bano' : 'banos')
+        : 'bath') : null,
+      p.size ? p.size + ' m&sup2;' : null
+    ].filter(Boolean).map(function (x) { return '<span>' + x + '</span>'; }).join('');
+  }
+
   function cardHTML(p) {
     var title = lang === 'es' ? (p.title_es || p.title_en) : (p.title_en || p.title_es);
     var opLbl = p.operation === 'sale' ? (lang === 'es' ? 'Venta' : 'For sale') : (lang === 'es' ? 'Renta' : 'For rent');
@@ -204,11 +212,7 @@
       '<div class="pcard-body">' +
         '<div class="pcard-loc">' + [p.neighborhood, p.town].filter(Boolean).join(' &middot; ') + '</div>' +
         '<div class="pcard-title">' + title + '</div>' +
-        '<div class="pcard-specs">' +
-          '<span>' + p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') + '</span>' +
-          '<span>' + p.bathrooms + ' ' + (lang === 'es' ? 'banos' : 'bath') + '</span>' +
-          '<span>' + p.size + ' m&sup2;</span>' +
-        '</div>' +
+        '<div class="pcard-specs">' + specsHTML(p) + '</div>' +
         '<div class="pcard-foot"><span class="pcard-price">' + money(p) + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
       '</div></article>';
   }
