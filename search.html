@@ -221,7 +221,10 @@
 
   /* ---------- map init ---------- */
   function initMap() {
-    map = L.map('search-map', { scrollWheelZoom: true }).setView([20.5, -87.2], 9);
+    /* Only ever seen when no listing has coordinates -- fitBounds takes over
+       as soon as one does. Quintana Roo was the wrong thing to fall back to
+       once agencies started listing outside it. */
+    map = L.map('search-map', { scrollWheelZoom: true }).setView([23.6, -102.5], 5);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>',
       maxZoom: 18
