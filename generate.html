@@ -418,6 +418,10 @@
     display:flex;gap:10px;
   }
   .gen-card-foot .btn{font-size:.78rem;padding:9px 16px;flex:1;justify-content:center}
+  /* .btn has no disabled state of its own, so a gated action would otherwise
+     look exactly as clickable as a live one. */
+  .gen-card-foot .btn:disabled{opacity:.45;cursor:default;transform:none!important;box-shadow:none}
+  .gen-card-foot .btn:disabled:hover{transform:none!important;filter:none}
 
   /* Download all bar */
   .gen-download-all{
@@ -1790,7 +1794,7 @@ function renderResults(propData, content, skipScroll) {
 
   const cards = [
     { tabId: 'pdf', icon: '<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg>', name: isEs ? 'Ficha PDF' : 'PDF Fact Sheet', dim: 'PDF · A4', preview: renderPDFPreview(content.pdf, propData), downloadLabel: isEs ? 'Descargar PDF' : 'Download PDF', downloadFn: 'downloadPDF' },
-    { tabId: 'post', icon: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.4"/></svg>', name: isEs ? 'Post de Instagram' : 'Instagram Post', dim: '1080 × 1080', preview: renderPostPreview(content.post, propData), downloadLabel: isEs ? 'Descargar PNG' : 'Download PNG', downloadFn: 'downloadPost', publishLabel: isEs ? 'Publicar en Instagram' : 'Publish to Instagram', publishFn: 'publishInstagram' },
+    { tabId: 'post', icon: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.4"/></svg>', name: isEs ? 'Post de Instagram' : 'Instagram Post', dim: '1080 × 1080', preview: renderPostPreview(content.post, propData), downloadLabel: isEs ? 'Descargar PNG' : 'Download PNG', downloadFn: 'downloadPost', publishLabel: isEs ? 'Publicar en Instagram · Pronto' : 'Publish to Instagram · Soon', publishSoon: true, publishFn: 'publishInstagram', publishSoonNote: isEs ? 'Estamos conectando la publicacion directa a Instagram.' : 'We are still connecting direct publishing to Instagram.' },
     { tabId: 'carousel', icon: '<svg viewBox="0 0 24 24"><rect x="7" y="6" width="10" height="12" rx="2"/><path d="M4 9v6M20 9v6"/></svg>', name: isEs ? 'Carrusel (5 slides)' : 'Carousel (5 slides)', dim: '5 × 1080', preview: renderCarouselPreview(content.carousel, propData), downloadLabel: isEs ? 'Descargar slides' : 'Download slides', downloadFn: 'downloadCarousel' },
     { tabId: 'story', icon: '<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="3"/></svg>', name: isEs ? 'Story vertical' : 'Vertical Story', dim: '1080 × 1920', preview: renderStoryPreview(content.story, propData), downloadLabel: isEs ? 'Descargar PNG' : 'Download PNG', downloadFn: 'downloadStory' },
     { tabId: 'email', icon: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 8l9 6 9-6"/></svg>', name: isEs ? 'Email comercial' : 'Sales Email', dim: 'HTML', preview: renderEmailPreview(content.email), downloadLabel: isEs ? 'Descargar HTML' : 'Download HTML', downloadFn: 'downloadEmail' },
@@ -1819,7 +1823,9 @@ function renderResults(propData, content, skipScroll) {
         </div>
         <div class="gen-card-foot">
           <button class="btn btn-dark" onclick="${c.downloadFn}()">${c.downloadLabel}</button>
-          ${c.publishFn ? `<button class="btn btn-gold" onclick="${c.publishFn}()">${c.publishLabel}</button>` : ''}
+          ${c.publishSoon
+              ? `<button class="btn btn-gold" disabled title="${c.publishSoonNote || ''}">${c.publishLabel}</button>`
+              : c.publishFn ? `<button class="btn btn-gold" onclick="${c.publishFn}()">${c.publishLabel}</button>` : ''}
         </div>
       </div>
     `;
