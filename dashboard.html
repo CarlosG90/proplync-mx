@@ -74,6 +74,23 @@
     max-width:640px;width:100%;box-shadow:var(--shadow-xl);
   }
   .modal-card h2{font-size:1.3rem;color:var(--ink);margin-bottom:24px}
+
+  /* Same affordance as /generate, restyled for a white modal. */
+  .import-box{
+    border:1px dashed var(--line);border-radius:var(--radius-sm);
+    padding:16px;background:rgba(94,196,190,.06);
+    display:flex;flex-direction:column;gap:12px;margin-bottom:20px;
+  }
+  .import-head{display:flex;flex-direction:column;gap:4px}
+  .import-title{font-weight:700;font-size:.9rem;color:var(--ink)}
+  .import-sub{font-size:.8rem;color:var(--on-sand-dim);line-height:1.45}
+  .import-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .import-files{font-size:.76rem;color:var(--sea);word-break:break-all}
+  .import-status{font-size:.8rem;line-height:1.45;min-height:1em;color:var(--on-sand-dim)}
+  .import-status.err{color:#c0523a}
+  .import-status.warn{color:#9a6b1f}
+  .import-status.ok{color:var(--sea)}
+  #l-import-btn{align-self:flex-start}
   .modal-actions{display:flex;gap:10px;margin-top:8px;align-items:center;flex-wrap:wrap}
   .modal-reassure{font-size:.76rem;color:var(--on-sand-dim);margin:0}
   .photo-preview{width:100%;aspect-ratio:16/9;border-radius:var(--radius-sm);background-size:cover;background-position:center;background-color:var(--sand);margin-bottom:12px}
@@ -220,6 +237,25 @@
     <div id="modal-error" style="display:none" class="form-error"></div>
     <form id="listing-form" onsubmit="handleSaveListing(event)">
       <input type="hidden" id="l-id">
+      <div class="field field-full">
+        <div class="import-box">
+          <div class="import-head">
+            <span class="import-title" data-es="Ya tienes la informacion en un flyer?" data-en="Already have this on a flyer?">Ya tienes la informacion en un flyer?</span>
+            <span class="import-sub" data-es="Sube el flyer, la ficha en PDF o una foto de la hoja, o pega el mensaje de WhatsApp. Llenamos el formulario por ti y te decimos que no encontramos." data-en="Upload the flyer, the PDF sheet or a photo of the page, or paste the WhatsApp message. We fill the form for you and tell you what we could not find.">Sube el flyer, la ficha en PDF o una foto de la hoja, o pega el mensaje de WhatsApp. Llenamos el formulario por ti y te decimos que no encontramos.</span>
+          </div>
+          <div class="import-row">
+            <button type="button" class="btn btn-dark" onclick="document.getElementById('l-import-file').click()" data-es="Subir flyer o PDF" data-en="Upload flyer or PDF">Subir flyer o PDF</button>
+            <input type="file" id="l-import-file" accept="application/pdf,image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handleListingImportFiles(event)">
+            <span class="import-files" id="l-import-files"></span>
+          </div>
+          <textarea class="form-textarea" id="l-import-text" rows="3" style="min-height:0"
+            data-es-placeholder="O pega aqui el texto: 'Lotes desde 250 m2 en Puerto Escondido, $575,000 MXN, agua y luz'"
+            data-en-placeholder="Or paste text here: 'Lots from 250 sqm in Puerto Escondido, $575,000 MXN, water and power'"
+            placeholder="O pega aqui el texto: 'Lotes desde 250 m2 en Puerto Escondido, $575,000 MXN, agua y luz'"></textarea>
+          <button type="button" class="btn btn-gold" id="l-import-btn" onclick="runListingImport()" data-es="Leer y llenar" data-en="Read and fill">Leer y llenar</button>
+          <div class="import-status" id="l-import-status"></div>
+        </div>
+      </div>
       <div class="field field-full">
         <label class="form-label" for="l-photo-file" data-es="Fotos" data-en="Photos">Fotos</label>
         <div class="photo-grid" id="l-photo-grid"></div>
@@ -433,6 +469,12 @@
     document.getElementById('modal-error').style.display = 'none';
     document.getElementById('listing-form').reset();
     document.getElementById('l-photo-status').textContent = '';
+    /* form.reset() clears the textarea, but the picked files and the status
+       line are JS state — without this the next listing opens still showing
+       the last flyer's name and "no encontramos: precio". */
+    listingImportFiles = [];
+    document.getElementById('l-import-files').textContent = '';
+    setImportStatus('', '');
     // Rebuild the gallery in the same order the public page uses: main first,
     // then the rest, de-duplicated (property.html composes [image, ...images]).
     listingImages = [];
@@ -544,6 +586,206 @@
 
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
   const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+
+  /* ---------- fill the form from a flyer ----------
+     An agent almost never types a listing from nothing. They have the
+     developer's flyer, a ficha in PDF, or a WhatsApp forward, and retyping it
+     into this form is the work that stops the listing getting posted.
+     /api/extract already reads that material for /generate; this is the same
+     call wired to the fields the dashboard actually saves. */
+  var listingImportFiles = [];
+
+  var IMPORT_MAX_EDGE = 1600;
+  var IMPORT_MAX_PDF_BYTES = 4 * 1024 * 1024;
+
+  function setImportStatus(msg, kind) {
+    var el = document.getElementById('l-import-status');
+    el.textContent = msg;
+    el.className = 'import-status' + (kind ? ' ' + kind : '');
+  }
+
+  /* A raw phone shot of a flyer is megabytes of base64 and Vercel caps the
+     request body at 4.5 MB, so images go down to a long edge the model can
+     still read text from. PDFs go as-is: downscaling destroys the text. */
+  function importFileToDataUrl(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error('read_failed')); };
+      reader.onload = function () {
+        if (file.type === 'application/pdf') { resolve(String(reader.result)); return; }
+        var img = new Image();
+        img.onerror = function () { reject(new Error('decode_failed')); };
+        img.onload = function () {
+          var scale = Math.min(1, IMPORT_MAX_EDGE / Math.max(img.width, img.height));
+          var c = document.createElement('canvas');
+          c.width = Math.round(img.width * scale);
+          c.height = Math.round(img.height * scale);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          resolve(c.toDataURL('image/jpeg', 0.82));
+        };
+        img.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleListingImportFiles(evt) {
+    var picked = Array.from(evt.target.files || []).slice(0, 6);
+    var out = [];
+    var problems = [];
+    for (var i = 0; i < picked.length; i++) {
+      var file = picked[i];
+      try {
+        if (file.type === 'application/pdf') {
+          if (file.size > IMPORT_MAX_PDF_BYTES) {
+            problems.push(file.name + (lang === 'es' ? ': PDF muy grande' : ': PDF too large'));
+            continue;
+          }
+          out.push({ name: file.name, mediaType: 'application/pdf', data: await importFileToDataUrl(file) });
+        } else if (/^image\//.test(file.type)) {
+          out.push({ name: file.name, mediaType: 'image/jpeg', data: await importFileToDataUrl(file) });
+        } else {
+          problems.push(file.name + (lang === 'es' ? ': formato no soportado' : ': unsupported format'));
+        }
+      } catch (e) {
+        problems.push(file.name + ': ' + e.message);
+      }
+    }
+    listingImportFiles = out;
+    document.getElementById('l-import-files').textContent = out.map(function (f) { return f.name; }).join(', ');
+    setImportStatus(problems.join(' · '), problems.length ? 'err' : '');
+    evt.target.value = '';
+  }
+
+  async function runListingImport() {
+    var isEs = lang === 'es';
+    var text = document.getElementById('l-import-text').value.trim();
+    if (!listingImportFiles.length && !text) {
+      setImportStatus(isEs ? 'Sube un flyer o pega el texto primero.' : 'Upload a flyer or paste the text first.', 'err');
+      return;
+    }
+
+    var btn = document.getElementById('l-import-btn');
+    btn.disabled = true;
+    setImportStatus(isEs ? 'Leyendo...' : 'Reading...', '');
+
+    try {
+      var r = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ files: listingImportFiles, text: text })
+      });
+      var data = await r.json();
+
+      /* Three different failures the agent can act on differently: not set up
+         yet, our key is wrong, or we are over the hourly cap. A single "could
+         not read" sends all three to go and re-photograph a flyer that was
+         fine. */
+      if (data.error === 'extraction_not_configured' || data.error === 'extraction_unavailable') {
+        throw new Error(isEs
+          ? 'La lectura automatica no esta disponible ahora mismo. Captura los datos a mano y avisanos.'
+          : 'Automatic reading is unavailable right now. Enter the fields by hand and let us know.');
+      }
+      if (r.status === 429) {
+        throw new Error(isEs
+          ? 'Demasiadas lecturas por ahora. Intenta de nuevo en un rato.'
+          : 'Too many reads for now. Try again in a while.');
+      }
+      if (!r.ok || data.error) throw new Error(data.detail || data.error || ('HTTP ' + r.status));
+
+      applyExtractedToListing(data);
+    } catch (e) {
+      setImportStatus((isEs ? 'No se pudo leer: ' : 'Could not read: ') + e.message, 'err');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* Fill what was read, leave the rest alone, then say plainly what is missing.
+     The extractor returns 0 for a number it could not find, and every numeric
+     field here already shows 0 — so writing that through would dress "we could
+     not tell" as "the agent said zero". That is the same absent-is-not-zero
+     rule the listing cards follow, at the point the data is entered. */
+  var FIELD_LABELS = {
+    title:        { es: 'titulo',           en: 'title' },
+    town:         { es: 'ciudad',           en: 'town' },
+    neighborhood: { es: 'colonia',          en: 'neighborhood' },
+    bedrooms:     { es: 'recamaras',        en: 'bedrooms' },
+    bathrooms:    { es: 'banos',            en: 'bathrooms' },
+    parking:      { es: 'estacionamientos', en: 'parking' },
+    size:         { es: 'tamano',           en: 'size' },
+    amount:       { es: 'precio',           en: 'price' },
+    operation:    { es: 'operacion',        en: 'operation' },
+    currency:     { es: 'moneda',           en: 'currency' },
+    features:     { es: 'amenidades',       en: 'features' }
+  };
+
+  function fieldLabel(name) {
+    var hit = FIELD_LABELS[String(name).trim()];
+    return hit ? hit[lang === 'es' ? 'es' : 'en'] : String(name);
+  }
+
+  function applyExtractedToListing(data) {
+    var isEs = lang === 'es';
+    var p = data.property || {};
+
+    var filled = false;
+    var setText = function (id, v) {
+      if (v === null || v === undefined || String(v).trim() === '') return;
+      document.getElementById(id).value = String(v).trim();
+      filled = true;
+    };
+    var setNum = function (id, v) {
+      var n = Number(v);
+      if (!Number.isFinite(n) || n <= 0) return;
+      document.getElementById(id).value = String(n);
+      filled = true;
+    };
+
+    setText('l-title-es', p.title);
+    setText('l-town', p.town);
+    setText('l-neighborhood', p.neighborhood);
+    setNum('l-bedrooms', p.bedrooms);
+    setNum('l-bathrooms', p.bathrooms);
+    setNum('l-parking', p.parking);
+    setNum('l-size', p.size);
+    setNum('l-amount', p.amount);
+    if (p.operation === 'sale' || p.operation === 'rental') {
+      document.getElementById('l-operation').value = p.operation;
+    }
+    if (p.currency === 'MXN' || p.currency === 'USD') {
+      document.getElementById('l-currency').value = p.currency;
+    }
+
+    /* features is one per line here, comma-separated from the extractor.
+       Append rather than replace: the agent may have typed some already. */
+    if (p.features) {
+      var box = document.getElementById('l-features');
+      var have = box.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+      p.features.split(/[,;]/).map(function (x) { return x.trim(); }).filter(Boolean)
+        .forEach(function (f) {
+          if (!have.some(function (h) { return h.toLowerCase() === f.toLowerCase(); })) have.push(f);
+        });
+      box.value = have.join('\n');
+    }
+
+    /* The extractor names fields in its own schema. Showing "No encontramos:
+       bedrooms, bathrooms" to a Spanish-speaking agent makes them hunt for a
+       field with that name, which this form does not have. */
+    var missing = (data.missing || []).filter(Boolean).map(fieldLabel);
+
+    /* "Listo" over a form where nothing got filled reads as success. Say which
+       of the two actually happened. */
+    var parts = [filled
+      ? (isEs ? 'Listo. Revisa los datos antes de guardar.' : 'Done. Check the fields before saving.')
+      : (isEs ? 'No pudimos sacar nada de este material. Captura los datos a mano.'
+              : 'We could not read anything from this. Enter the fields by hand.')];
+    if (missing.length) {
+      parts.push((isEs ? 'No encontramos: ' : 'Not found: ') + missing.join(', ') + '.');
+    }
+    if (data.notes) parts.push(data.notes);
+    setImportStatus(parts.join(' '), (!filled || missing.length) ? 'warn' : 'ok');
+  }
 
   function validateImage(file) {
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
