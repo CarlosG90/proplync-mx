@@ -313,20 +313,37 @@
   }
 
   /* An agency picking navy for their brand should not get navy text on a navy
-     button. Relative luminance per WCAG, then the foreground that contrasts
-     with it. */
-  function readableInkOn(hex) {
+     button. Score both candidates by actual WCAG contrast and take the winner,
+     rather than splitting on a luminance threshold: our own gold sits at
+     L=0.42, so any sensible-looking cutoff hands it light text at 1.97:1 when
+     the dark ink it already ships with scores 7.4:1. */
+  var INK_DARK = '#0a1628';
+  var INK_LIGHT = '#f5f1ea';
+
+  function relativeLuminance(hex) {
     var h = String(hex).replace('#', '').slice(0, 6);
     if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
-    if (h.length !== 6) return '#0a1628';
+    if (h.length !== 6) return null;
     var channel = function (v) {
       var c = parseInt(v, 16) / 255;
       return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
     };
-    var L = 0.2126 * channel(h.slice(0, 2)) +
-            0.7152 * channel(h.slice(2, 4)) +
-            0.0722 * channel(h.slice(4, 6));
-    return L > 0.45 ? '#0a1628' : '#f5f1ea';
+    return 0.2126 * channel(h.slice(0, 2)) +
+           0.7152 * channel(h.slice(2, 4)) +
+           0.0722 * channel(h.slice(4, 6));
+  }
+
+  function contrastRatio(a, b) {
+    var hi = Math.max(a, b), lo = Math.min(a, b);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+
+  function readableInkOn(hex) {
+    var L = relativeLuminance(hex);
+    if (L === null) return INK_DARK;
+    var dark = contrastRatio(L, relativeLuminance(INK_DARK));
+    var light = contrastRatio(L, relativeLuminance(INK_LIGHT));
+    return dark >= light ? INK_DARK : INK_LIGHT;
   }
 
   function applyBranding() {
