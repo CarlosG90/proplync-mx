@@ -16,6 +16,13 @@
   .search-layout{display:grid;grid-template-columns:1fr 400px;gap:0;min-height:calc(100vh - 72px)}
   .search-main{padding:36px 32px;overflow-y:auto}
   .search-map{position:sticky;top:72px;height:calc(100vh - 72px);border-left:1px solid var(--line)}
+  .map-note{
+    position:absolute;top:12px;right:12px;z-index:450;max-width:230px;
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow-md);padding:8px 12px;
+    font-family:var(--mono);font-size:.64rem;line-height:1.5;
+    color:var(--on-sand-dim);letter-spacing:.02em
+  }
 
   .search-head{margin-bottom:28px}
   .search-head .eyebrow{color:var(--gold);display:flex;align-items:center;gap:12px;margin-bottom:14px}
@@ -181,7 +188,9 @@
     <div class="search-grid" id="search-grid"></div>
   </div>
 
-  <div class="search-map" id="search-map"></div>
+  <div class="search-map" id="search-map">
+    <div class="map-note" id="map-note" hidden></div>
+  </div>
 </div>
 
 <footer>
@@ -249,9 +258,28 @@
       bounds.push([p.lat, p.lng]);
     });
     if (bounds.length > 1) {
-      map.fitBounds(bounds, { padding: [30, 30] });
+      // Opening on every result is the point of this map, so the bounds are
+      // never trimmed. maxZoom only stops the other end: several units in one
+      // building share a coordinate, and an untrimmed fitBounds slams to
+      // rooftop level, which shows all the results and none of the context.
+      map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
     } else if (bounds.length === 1) {
       map.setView(bounds[0], 13);
+    }
+
+    // A listing whose geocode came back empty is in the grid and not on the
+    // map, so "all results" quietly became most of them. PL-2302e17f sat at
+    // null until it was backfilled, and nothing on the page said a pin was
+    // missing. Say it instead of silently showing fewer.
+    const note = document.getElementById('map-note');
+    const missing = props.length - bounds.length;
+    if (missing > 0) {
+      note.textContent = lang === 'es'
+        ? bounds.length + ' de ' + props.length + ' en el mapa · ' + missing + ' sin ubicacion'
+        : bounds.length + ' of ' + props.length + ' on the map · ' + missing + (missing === 1 ? ' has no location' : ' have no location');
+      note.hidden = false;
+    } else {
+      note.hidden = true;
     }
   }
 
