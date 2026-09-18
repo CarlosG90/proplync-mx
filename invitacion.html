@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Invitación privada · Proplync.mx</title>
+
+<!-- El código viaja en la URL, así que esta página no debe indexarse ni
+     aparecer en el sitemap. La invitación es un enlace que se manda a una
+     persona, no una página del sitio. -->
+<meta name="robots" content="noindex,nofollow">
+
+<meta name="description" content="Tu acceso por código a Proplync.mx. El registro está cerrado al público: este enlace abre una cuenta de agencia con plan Pro.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Proplync.mx">
+<meta property="og:title" content="Tu acceso por código a Proplync">
+<meta property="og:description" content="El registro está cerrado al público. Adentro: plan Pro, tu mini-sitio y marketing con IA para cada propiedad.">
+<meta property="og:image" content="https://proplync-mx.vercel.app/og/invitacion.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Invitación privada a Proplync.mx">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tu acceso por código a Proplync">
+<meta name="twitter:description" content="El registro está cerrado al público. Adentro: plan Pro, tu mini-sitio y marketing con IA para cada propiedad.">
+<meta name="twitter:image" content="https://proplync-mx.vercel.app/og/invitacion.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<style>
+/* Una invitación se compromete con un solo mundo visual: tinta y oro, claro u
+   oscuro el sistema del visitante. Por eso todo se pinta explícito aquí en vez
+   de heredar el papel del resto del sitio. */
+body{
+  background:var(--ink);
+  background-image:
+    radial-gradient(1100px 620px at 50% -12%, rgba(45,138,133,.20), transparent 62%),
+    radial-gradient(760px 420px at 50% 112%, rgba(201,169,110,.10), transparent 68%);
+  background-attachment:fixed;
+  color:var(--on-ink);
+  line-height:1.6;
+}
+.inv-wrap{max-width:660px;margin:0 auto;padding-inline:20px;padding-block:clamp(32px,6vw,72px)}
+.inv-card{
+  background:linear-gradient(180deg,rgba(26,42,66,.62),rgba(18,31,51,.62));
+  border:1px solid var(--line-dark);
+  border-radius:4px;
+  padding:clamp(24px,5vw,48px);
+  box-shadow:0 40px 90px -30px rgba(0,0,0,.65);
+  display:flex;flex-direction:column;gap:clamp(28px,4.4vw,44px);
+}
+.inv-top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px 16px;padding-bottom:18px;border-bottom:1px solid var(--line-dark)}
+.inv-mark{font-family:var(--display);font-weight:400;font-size:1.22rem;letter-spacing:-.02em;color:var(--on-ink)}
+.inv-mark span{color:var(--gold)}
+.inv-eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--on-ink-dim)}
+
+.inv-open{display:flex;flex-direction:column;gap:16px}
+.inv-open h1{font-size:clamp(2rem,6.2vw,3.05rem);line-height:1.06;color:var(--on-ink);text-wrap:balance}
+.inv-open h1 em{font-style:italic;color:var(--gold)}
+.inv-lede{color:var(--on-ink-dim);font-size:1.02rem;max-width:52ch}
+
+/* tokens.css le da a todo <section> un padding vertical de pagina completa
+   (--sp-32). Aqui las secciones son bloques de una tarjeta, no franjas del
+   sitio: el ritmo lo marca el `gap` de .inv-card. Se anula una vez, y la placa
+   recupera el suyo con un selector mas especifico. */
+.inv-card > section{padding:0}
+.inv-card > section.inv-plate{position:relative;border:1px solid rgba(201,169,110,.34);background:rgba(10,22,40,.55);
+  padding:clamp(22px,4.2vw,32px) 18px clamp(18px,3.2vw,24px);text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:14px}
+.inv-plate::before{content:"";position:absolute;inset:6px;border:1px solid rgba(201,169,110,.15);pointer-events:none}
+.inv-plate-label{font-family:var(--mono);font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
+.inv-code{font-family:var(--mono);font-weight:700;font-size:clamp(1.45rem,6.2vw,2.5rem);letter-spacing:.05em;
+  color:var(--on-ink);word-break:break-word;text-shadow:0 0 34px rgba(201,169,110,.28)}
+.inv-copy{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--on-ink-dim);background:transparent;border:1px solid var(--line-dark);
+  border-radius:2px;padding:8px 14px;cursor:pointer;transition:color var(--duration) var(--ease-out),border-color var(--duration) var(--ease-out)}
+.inv-copy:hover{color:var(--on-ink);border-color:rgba(201,169,110,.4)}
+.inv-copy:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}
+.inv-plate-meta{font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--on-ink-faint)}
+
+.inv-rule{font-family:var(--mono);font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--on-ink-dim);margin-bottom:16px;display:flex;align-items:center;gap:12px;font-weight:400}
+.inv-rule::after{content:"";flex:1;height:1px;background:var(--line-dark)}
+
+.inv-steps{display:flex;flex-direction:column}
+.inv-step{display:grid;grid-template-columns:38px 1fr;gap:16px;padding:16px 0;border-top:1px solid var(--line-dark)}
+.inv-step:first-child{border-top:0}
+.inv-step-n{font-family:var(--mono);font-size:.82rem;color:var(--aqua);padding-top:2px;font-variant-numeric:tabular-nums}
+.inv-step h3{font-family:var(--body);font-weight:600;font-size:1rem;letter-spacing:0;color:var(--on-ink);margin-bottom:4px}
+.inv-step p{color:var(--on-ink-dim);font-size:.92rem}
+.inv-step a{color:var(--gold);border-bottom:1px solid rgba(201,169,110,.34);word-break:break-all}
+.inv-step a:hover{color:var(--on-ink);border-bottom-color:var(--on-ink)}
+
+.inv-specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 34px}
+.inv-spec{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-dark)}
+.inv-spec dt{color:var(--on-ink-dim);font-size:.9rem}
+.inv-spec dd{margin:0;text-align:right;font-size:.9rem;font-weight:600;color:var(--on-ink);font-variant-numeric:tabular-nums}
+.inv-spec dd.soon{font-weight:400;color:var(--on-ink-faint);font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+
+.inv-cta{display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  background:var(--gold);color:#12100b;font-weight:600;font-size:.98rem;
+  padding:16px 26px;border-radius:2px;align-self:flex-start;
+  box-shadow:var(--shadow-gold);transition:transform var(--duration) var(--ease-out),background var(--duration) var(--ease-out)}
+.inv-cta:hover{background:var(--gold-light);transform:translateY(-1px)}
+.inv-cta:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}
+
+.inv-foot{display:flex;flex-direction:column;gap:10px;padding-top:20px;border-top:1px solid var(--line-dark)}
+.inv-foot p{font-size:.82rem;color:var(--on-ink-faint);max-width:56ch}
+.inv-foot strong{color:var(--on-ink-dim);font-weight:600}
+
+@media (max-width:560px){
+  .inv-specs{grid-template-columns:1fr}
+  .inv-step{grid-template-columns:28px 1fr;gap:12px}
+  .inv-cta{align-self:stretch}
+}
+</style>
+</head>
+<body>
+<div class="inv-wrap">
+  <main class="inv-card">
+    <div class="inv-top">
+      <div class="inv-mark">Proplync<span>.mx</span></div>
+      <div class="inv-eyebrow">Invitación privada</div>
+    </div>
+
+    <div class="inv-open">
+      <h1>Publica tus propiedades <em>como una marca</em>, no como un anuncio.</h1>
+      <p class="inv-lede">El registro en Proplync está cerrado al público. Este código abre una cuenta de agencia con plan Pro, tu propio mini-sitio y marketing con IA para cada propiedad.</p>
+    </div>
+
+    <section class="inv-plate">
+      <div class="inv-plate-label">Tu código de acceso</div>
+      <div class="inv-code" id="code">PL-••••-••••</div>
+      <button class="inv-copy" id="copy" type="button">Copiar código</button>
+      <div class="inv-plate-meta">Un solo uso</div>
+    </section>
+
+    <section>
+      <h2 class="inv-rule">Cómo entrar · 3 pasos</h2>
+      <div class="inv-steps">
+        <div class="inv-step">
+          <div class="inv-step-n">01</div>
+          <div><h3>Abre el registro</h3><p><a href="/signup">proplync-mx.vercel.app/signup</a></p></div>
+        </div>
+        <div class="inv-step">
+          <div class="inv-step-n">02</div>
+          <div><h3>Escribe el código</h3><p>Tal como aparece arriba, con los guiones. No distingue mayúsculas.</p></div>
+        </div>
+        <div class="inv-step">
+          <div class="inv-step-n">03</div>
+          <div><h3>Crea tu cuenta</h3><p>Nombre de tu inmobiliaria, tu correo y una contraseña que eliges tú. Nadie más la ve.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="inv-rule">Lo que incluye tu cuenta</h2>
+      <dl class="inv-specs">
+        <div class="inv-spec"><dt>Plan</dt><dd>Pro</dd></div>
+        <div class="inv-spec"><dt>Propiedades</dt><dd>Ilimitadas</dd></div>
+        <div class="inv-spec"><dt>Fotos por propiedad</dt><dd>30</dd></div>
+        <div class="inv-spec"><dt>Agentes en tu equipo</dt><dd>Hasta 4</dd></div>
+        <div class="inv-spec"><dt>Marketing con IA</dt><dd>7 formatos, sin límite</dd></div>
+        <div class="inv-spec"><dt>Reels de video</dt><dd>8 al mes</dd></div>
+        <div class="inv-spec"><dt>Mini-sitio propio</dt><dd>/agencia/tu-marca</dd></div>
+        <div class="inv-spec"><dt>Leads</dt><dd>CRM incluido</dd></div>
+        <div class="inv-spec"><dt>Logo y colores</dt><dd>Personalizables</dd></div>
+        <div class="inv-spec"><dt>Publicación en redes</dt><dd class="soon">Próximamente</dd></div>
+      </dl>
+    </section>
+
+    <a class="inv-cta" href="/signup" id="cta">Activar mi cuenta →</a>
+
+    <footer class="inv-foot">
+      <p><strong>El código se gasta al usarse.</strong> Se guarda cifrado, así que no se puede recuperar si se pierde: si algo falla, pide uno nuevo.</p>
+      <p>Los leads de tus propiedades llegan a tu panel en <strong>Leads</strong>. El aviso por correo todavía no está activo.</p>
+    </footer>
+  </main>
+</div>
+
+<script>
+/* El código llega en la URL (?c=… o /invitacion/CÓDIGO) y sólo se muestra: la
+   página nunca lo consulta contra la base. Validarlo aquí convertiría esta URL
+   en un oráculo que confirma qué códigos existen, que es justo lo que /signup
+   evita devolviendo un mismo 403 para todo fallo. */
+(function () {
+  var qs = new URLSearchParams(location.search);
+  var raw = qs.get('c') || qs.get('codigo') || location.pathname.split('/').filter(Boolean).pop() || '';
+  var code = String(raw).trim().toUpperCase();
+
+  var el = document.getElementById('code');
+  var copy = document.getElementById('copy');
+  var cta = document.getElementById('cta');
+
+  if (/^PL-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
+    el.textContent = code;
+    cta.href = '/signup?invite=' + encodeURIComponent(code);
+  } else {
+    /* Sin código legible la invitación sigue sirviendo como presentación: se
+       manda a registro y que lo escriba a mano. */
+    el.textContent = 'Escríbelo al registrarte';
+    el.style.fontSize = 'clamp(1rem,3.4vw,1.35rem)';
+    copy.hidden = true;
+  }
+
+  copy.addEventListener('click', function () {
+    navigator.clipboard.writeText(code).then(function () {
+      copy.textContent = 'Copiado ✓';
+      setTimeout(function () { copy.textContent = 'Copiar código'; }, 2000);
+    }).catch(function () {
+      copy.textContent = 'Selecciónalo y cópialo';
+    });
+  });
+})();
+</script>
+</body>
+</html>

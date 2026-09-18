@@ -77,6 +77,10 @@
     {
       "source": "/dashboard/leads",
       "destination": "/dashboard-leads"
+    },
+    {
+      "source": "/invitacion/:code",
+      "destination": "/invitacion?c=:code"
     }
   ]
 }

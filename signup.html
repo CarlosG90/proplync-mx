@@ -83,6 +83,19 @@
 <script src="/js/i18n.js"></script>
 <script src="/js/supabase-client.js"></script>
 <script>
+  /* Una invitacion enviada por WhatsApp llega como /signup?invite=PL-XXXX-XXXX.
+     Prellenar el campo quita el unico paso donde alguien transcribe un codigo
+     a mano en un telefono, que es donde se equivocan. El codigo se sigue
+     validando en el servidor igual que si lo hubieran escrito. */
+  (function prefillInvite() {
+    const code = new URLSearchParams(location.search).get('invite');
+    if (!code) return;
+    const clean = code.trim().toUpperCase();
+    if (!/^PL-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(clean)) return;
+    const field = document.getElementById('invite-code');
+    if (field) field.value = clean;
+  })();
+
   async function handleSignup(evt) {
     evt.preventDefault();
     const errEl = document.getElementById('form-error');

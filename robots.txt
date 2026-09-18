@@ -8,4 +8,7 @@ Disallow: /dashboard-leads
 Disallow: /login
 Disallow: /signup
 
+# Las invitaciones llevan el codigo en la URL y se mandan a una persona.
+Disallow: /invitacion
+
 Sitemap: https://proplync.mx/sitemap.xml
