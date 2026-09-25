@@ -915,8 +915,18 @@
     URL.revokeObjectURL(img.src);
 
     /* Todo se dimensiona contra el ancho de la imagen: la misma marca tiene que
-       leerse igual en una foto de 800px y en una de 4000px. */
-    var pad = Math.round(canvas.width * 0.025);
+       leerse igual en una foto de 800px y en una de 4000px.
+
+       Va abajo y al centro, no en la esquina. Dos razones, y la segunda es la
+       que importa: la galeria recorta a 4:3 con object-fit:cover, asi que una
+       marca pegada a la esquina derecha se pierde en el recorte; y quien roba
+       la foto recorta igual, de modo que una marca de esquina se quita sin
+       tocar la imagen. Al centro hay que cortar el motivo para quitarla.
+
+       El margen inferior es 6% del alto en vez del 2.5% de antes, para que un
+       recorte vertical tampoco se la lleve barata. */
+    var padX = Math.round(canvas.width * 0.025);
+    var padY = Math.round(canvas.height * 0.06);
     ctx.shadowColor = 'rgba(0,0,0,.55)';
     ctx.shadowBlur = Math.round(canvas.width * 0.012);
     ctx.globalAlpha = 0.82;
@@ -929,7 +939,7 @@
         var logo = await loadImage(agencyMark.logoUrl, true);
         var w = Math.round(canvas.width * 0.18);
         var h = Math.round(w * (logo.naturalHeight / logo.naturalWidth));
-        ctx.drawImage(logo, canvas.width - w - pad, canvas.height - h - pad, w, h);
+        ctx.drawImage(logo, Math.round((canvas.width - w) / 2), canvas.height - h - padY, w, h);
         placed = true;
       } catch (e) {
         /* Logo de otro origen o caido: cae al nombre en vez de subir sin marca. */
@@ -939,9 +949,19 @@
       var size = Math.max(14, Math.round(canvas.width / 28));
       ctx.font = '600 ' + size + 'px "Hanken Grotesk", system-ui, sans-serif';
       ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'right';
+      ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
-      ctx.fillText(agencyMark.name || 'Proplync', canvas.width - pad, canvas.height - pad);
+
+      /* Un nombre largo en una foto angosta se sale por los lados. Si no cabe
+         entre los margenes, la marca se encoge hasta que cabe: una marca mas
+         chica se lee, una cortada no dice de quien es la foto. */
+      var maxWidth = canvas.width - padX * 2;
+      var text = agencyMark.name || 'Proplync';
+      while (ctx.measureText(text).width > maxWidth && size > 10) {
+        size -= 1;
+        ctx.font = '600 ' + size + 'px "Hanken Grotesk", system-ui, sans-serif';
+      }
+      ctx.fillText(text, canvas.width / 2, canvas.height - padY);
     }
 
     return new Promise(function (resolve) {
