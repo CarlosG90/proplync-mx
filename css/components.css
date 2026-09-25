@@ -209,3 +209,53 @@
 .auth-card .switch{margin-top:20px;font-size:.86rem;color:var(--on-sand-dim);text-align:center}
 .auth-card .switch a{color:var(--sea);font-weight:600}
 .btn-block{width:100%;justify-content:center}
+
+/* Las tres preguntas opcionales bajo el formulario de contacto. La linea que
+   las introduce tiene que leerse como una nota al margen, no como otro campo
+   obligatorio: si pesa lo mismo que el resto, el interesado la lee como un
+   formulario mas largo y se va. */
+.lead-qual-intro{
+  margin:14px 0 8px;
+  font-size:var(--text-xs);
+  color:var(--on-sand-light);
+  line-height:1.5;
+}
+
+/* Chips de calificacion en la tarjeta del lead. El color codifica una sola
+   cosa: que tan lista esta esa persona para comprar. Verde es señal buena,
+   ambar es señal de que hay que preguntar antes de trasladarse. */
+.lead-qual{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.qual-chip{
+  font-size:var(--text-xs);
+  padding:3px 9px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  color:var(--on-sand-dim);
+  background:var(--white);
+  white-space:nowrap;
+}
+.qual-chip.qual-good{border-color:rgba(45,138,133,.35);color:var(--sea-deep);background:rgba(45,138,133,.06)}
+.qual-chip.qual-warn{border-color:rgba(201,169,110,.45);color:var(--gold-deep);background:rgba(201,169,110,.08)}
+
+/* Aviso en el dashboard para una funcion construida pero sin configurar. No es
+   un error, asi que no toma el rojo; es una tarea pendiente que cuesta dinero
+   mientras siga pendiente, asi que tampoco puede leerse como decoracion. */
+.dash-alert{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px 20px;
+  margin-bottom:var(--sp-6);
+  padding:var(--sp-4) var(--sp-5);
+  border:1px solid rgba(201,169,110,.4);
+  border-left:3px solid var(--gold);
+  border-radius:var(--radius-sm);
+  background:rgba(201,169,110,.07);
+}
+.dash-alert-body{display:flex;flex-direction:column;gap:3px;min-width:min(100%,260px);flex:1}
+.dash-alert strong{font-size:var(--text-sm);color:var(--on-sand)}
+.dash-alert span{font-size:var(--text-xs);color:var(--on-sand-dim);line-height:1.5}
+@media (max-width:560px){
+  .dash-alert .btn{width:100%}
+}

@@ -211,6 +211,42 @@
 
   function leadCardHTML(l) {
     const wa = waHref(l.phone);
+
+  /* Lo que el interesado contesto antes de mandar sus datos. Se pinta como
+     chips y no como texto corrido porque la pregunta que el asesor se hace al
+     mirar la lista es "a cual llamo primero", y eso se responde de un vistazo.
+     Quien no contesto no muestra nada: un hueco dice mas que un "sin dato". */
+  var QUAL_LABELS = {
+    payment_method: {
+      efectivo: { es: 'Efectivo', en: 'Cash', tone: 'good' },
+      credito:  { es: 'Credito', en: 'Loan', tone: '' },
+      no_se:    { es: 'Pago sin definir', en: 'Payment undecided', tone: 'warn' }
+    },
+    purpose: {
+      habitar:   { es: 'Para habitar', en: 'To live in', tone: '' },
+      inversion: { es: 'Inversion', en: 'Investment', tone: '' },
+      reventa:   { es: 'Reventa', en: 'Resale', tone: '' },
+      renta:     { es: 'Para rentar', en: 'To rent out', tone: '' }
+    },
+    mortgage_history: {
+      tiene: { es: 'Tiene hipoteca', en: 'Has a mortgage', tone: '' },
+      tuvo:  { es: 'Tuvo hipoteca', en: 'Had a mortgage', tone: 'good' },
+      nunca: { es: 'Sin historial', en: 'No history', tone: 'warn' }
+    }
+  };
+
+  function qualificationChips(l) {
+    var chips = ['payment_method', 'purpose', 'mortgage_history']
+      .map(function (field) {
+        var def = QUAL_LABELS[field][l[field]];
+        if (!def) return '';
+        return '<span class="qual-chip' + (def.tone ? ' qual-' + def.tone : '') + '">' +
+          esc(lang === 'es' ? def.es : def.en) + '</span>';
+      })
+      .filter(Boolean);
+    return chips.length ? '<div class="lead-qual">' + chips.join('') + '</div>' : '';
+  }
+
     const over = isOverdue(l);
     const noteCount = l.noteCount || 0;
 
@@ -221,6 +257,7 @@
           '<div class="lead-contact">' + esc(l.email) + (l.phone ? ' &middot; ' + esc(l.phone) : '') + '</div>' +
           '<div class="lead-listing">' + esc(l.listing_public_id || '') + '</div>' +
           (l.message ? '<div class="lead-message">' + esc(l.message) + '</div>' : '') +
+          qualificationChips(l) +
           '<div class="lead-date">' +
             esc(new Date(l.created_at).toLocaleDateString(lang === 'es' ? 'es-MX' : 'en-US')) +
             ' &middot; ' + (l.last_contacted_at ? fmtDate(l.last_contacted_at) : t('never')) +

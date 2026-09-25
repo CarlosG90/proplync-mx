@@ -223,10 +223,23 @@
     <h1 id="agency-name-header" data-es="Mis propiedades" data-en="My listings">Mis propiedades</h1>
     <div class="dash-actions">
       <a class="btn btn-ghost" id="portfolio-link" href="#" target="_blank" rel="noopener" style="display:none" data-es="Mi portafolio" data-en="My portfolio">Mi portafolio</a>
+      <button class="btn btn-ghost" id="portfolio-share-btn" onclick="openPortfolioShare()" style="display:none" data-es="Compartir portafolio" data-en="Share portfolio">Compartir portafolio</button>
       <button class="btn btn-ghost" onclick="openSettingsModal()" data-es="Mi agencia" data-en="My agency">Mi agencia</button>
       <span class="plan-usage" id="plan-usage"></span>
       <button class="btn btn-gold" id="new-listing-btn" onclick="openListingModal()" data-es="+ Nueva propiedad" data-en="+ New listing">+ Nueva propiedad</button>
     </div>
+  </div>
+
+  <!-- El boton de WhatsApp de la ficha publica solo existe si la agencia
+       guardo su numero, y ninguna lo habia guardado: la funcion estaba
+       construida y apagada. El aviso vive aqui, en el camino de todos los
+       dias, y desaparece solo cuando el numero queda puesto. -->
+  <div class="dash-alert" id="whatsapp-nudge" style="display:none">
+    <div class="dash-alert-body">
+      <strong data-es="Tus interesados no pueden escribirte por WhatsApp." data-en="Buyers cannot message you on WhatsApp.">Tus interesados no pueden escribirte por WhatsApp.</strong>
+      <span data-es="Sin tu numero, la ficha de tus propiedades solo muestra el formulario, y el interesado espera a que revises tus leads." data-en="Without your number, your listings only show the form, and the buyer waits until you check your leads.">Sin tu numero, la ficha de tus propiedades solo muestra el formulario, y el interesado espera a que revises tus leads.</span>
+    </div>
+    <button type="button" class="btn btn-gold" onclick="openSettingsModal()" data-es="Agregar mi WhatsApp" data-en="Add my WhatsApp">Agregar mi WhatsApp</button>
   </div>
 
   <div class="dash-tabs">
@@ -412,8 +425,8 @@
 
 <div id="share-modal">
   <div class="modal-card share-card" style="text-align:center">
-    <h2 id="share-modal-title" data-es="Tu pagina esta lista" data-en="Your page is live">Tu pagina esta lista</h2>
-    <p class="form-hint" style="margin-bottom:16px" data-es="Compartela por WhatsApp, copia el enlace o descarga el QR." data-en="Share it on WhatsApp, copy the link, or download the QR.">Compartela por WhatsApp, copia el enlace o descarga el QR.</p>
+    <h2 id="share-modal-title">Tu pagina esta lista</h2>
+    <p class="form-hint" id="share-modal-hint" style="margin-bottom:16px">Compartela por WhatsApp, copia el enlace o descarga el QR.</p>
     <div class="browser-frame">
       <div class="browser-frame-bar">
         <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
@@ -871,6 +884,73 @@
     renderPhotoGrid();
   }
 
+  /* ---------- watermark ----------
+     El asesor paga el levantamiento fotografico y despues otro se lleva las
+     fotos de donde las publico. La marca se aplica aqui, en el navegador,
+     antes de que exista ninguna copia publica: lo que llega al bucket publico
+     ya viene marcado, y la original se guarda en un bucket privado.
+
+     Se marca con el logo si la agencia tiene uno, y con su nombre si no. Un
+     nombre siempre existe; un logo no, y una funcion contra el robo que solo
+     protege a quien ya subio logo no protege a nadie el primer dia. */
+  var agencyMark = { logoUrl: '', name: '' };
+
+  function loadImage(src, crossOrigin) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      if (crossOrigin) img.crossOrigin = 'anonymous';
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error('image_load_failed')); };
+      img.src = src;
+    });
+  }
+
+  async function watermarkImage(file) {
+    var img = await loadImage(URL.createObjectURL(file), false);
+    var canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(img.src);
+
+    /* Todo se dimensiona contra el ancho de la imagen: la misma marca tiene que
+       leerse igual en una foto de 800px y en una de 4000px. */
+    var pad = Math.round(canvas.width * 0.025);
+    ctx.shadowColor = 'rgba(0,0,0,.55)';
+    ctx.shadowBlur = Math.round(canvas.width * 0.012);
+    ctx.globalAlpha = 0.82;
+
+    var placed = false;
+    if (agencyMark.logoUrl) {
+      try {
+        /* crossOrigin anonymous: sin esto el canvas queda tainted y toBlob()
+           lanza. El bucket de logos es publico y responde CORS, asi que pasa. */
+        var logo = await loadImage(agencyMark.logoUrl, true);
+        var w = Math.round(canvas.width * 0.18);
+        var h = Math.round(w * (logo.naturalHeight / logo.naturalWidth));
+        ctx.drawImage(logo, canvas.width - w - pad, canvas.height - h - pad, w, h);
+        placed = true;
+      } catch (e) {
+        /* Logo de otro origen o caido: cae al nombre en vez de subir sin marca. */
+      }
+    }
+    if (!placed) {
+      var size = Math.max(14, Math.round(canvas.width / 28));
+      ctx.font = '600 ' + size + 'px "Hanken Grotesk", system-ui, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(agencyMark.name || 'Proplync', canvas.width - pad, canvas.height - pad);
+    }
+
+    return new Promise(function (resolve) {
+      /* JPEG a 0.9: la foto ya paso por una codificacion, y un PNG de una
+         fotografia de 4000px pesa varias veces mas sin verse mejor. */
+      canvas.toBlob(function (blob) { resolve(blob); }, 'image/jpeg', 0.9);
+    });
+  }
+
   async function handlePhotoUpload(evt) {
     let files = Array.from(evt.target.files || []);
     if (!files.length || !currentAgencyId) return;
@@ -894,8 +974,26 @@
       if (invalid) { problems.push(file.name + ': ' + invalid); continue; }
       statusEl.textContent = (lang === 'es' ? 'Subiendo ' : 'Uploading ') + (i + 1) + '/' + files.length + '...';
       try {
-        const path = currentAgencyId + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + extensionFor(file.type);
-        const { error } = await sbClient.storage.from('listing-photos').upload(path, file);
+        const stem = currentAgencyId + '/' + Date.now() + '-' + Math.random().toString(36).slice(2);
+
+        /* La original primero, al bucket privado. Si esto falla la subida sigue:
+           perder el respaldo es molesto, perder la foto publicada lo es mas. */
+        try {
+          await sbClient.storage.from('listing-originals')
+            .upload(stem + '.' + extensionFor(file.type), file);
+        } catch (e) { /* sin respaldo, pero la foto se publica igual */ }
+
+        /* Y al bucket publico solo la marcada. Si el marcado falla se sube la
+           original: una foto sin marca es mejor que una propiedad sin fotos, y
+           el asesor puede volver a subirla. */
+        let body = file;
+        let path = stem + '.' + extensionFor(file.type);
+        try {
+          const marked = await watermarkImage(file);
+          if (marked) { body = marked; path = stem + '.jpg'; }
+        } catch (e) { /* se publica sin marca */ }
+
+        const { error } = await sbClient.storage.from('listing-photos').upload(path, body);
         if (error) throw error;
         const { data } = sbClient.storage.from('listing-photos').getPublicUrl(path);
         listingImages.push(data.publicUrl);
@@ -1052,12 +1150,14 @@
       const a = data.agency || {};
       document.getElementById('s-name').value = a.name || '';
       document.getElementById('s-whatsapp').value = a.whatsapp_number || '';
+      toggleWhatsappNudge(a.whatsapp_number);
       document.getElementById('s-logo-url').value = a.logo_url || '';
       document.getElementById('s-logo-preview').style.backgroundImage = a.logo_url ? "url('" + a.logo_url + "')" : '';
       setCoverPreview(a.cover_url || '');
       /* No colour set means the mini-site falls back to gold, so show gold --
          the picker has no empty state and a blank one would read as black. */
       setBrandColor(a.primary_color || DEFAULT_BRAND_COLOR);
+      agencyMark = { logoUrl: a.logo_url || '', name: a.name || '' };
       showPortfolioLink(a.slug);
     }
     document.getElementById('settings-modal').classList.add('open');
@@ -1179,6 +1279,9 @@
       const data = await r.json();
       if (!r.ok) throw new Error(data.detail || data.error);
       document.getElementById('agency-name-header').textContent = data.agency.name;
+      /* El aviso se va, y la marca de agua toma el logo nuevo, sin recargar. */
+      toggleWhatsappNudge(data.agency.whatsapp_number);
+      agencyMark = { logoUrl: data.agency.logo_url || '', name: data.agency.name || '' };
       closeSettingsModal();
     } catch (e) {
       errEl.textContent = e.message;
@@ -1226,11 +1329,18 @@
   }
 
   /* The public portfolio: every published listing on one shareable page. */
+  function toggleWhatsappNudge(number) {
+    const el = document.getElementById('whatsapp-nudge');
+    if (el) el.style.display = String(number || '').trim() ? 'none' : '';
+  }
+
   function showPortfolioLink(slug) {
     if (!slug) return;
+    agencySlug = slug;
     const el = document.getElementById('portfolio-link');
     el.href = '/agencia/' + encodeURIComponent(slug);
     el.style.display = '';
+    document.getElementById('portfolio-share-btn').style.display = '';
   }
 
   /* ---------- preview the mini-site before sending it ---------- */
@@ -1258,16 +1368,23 @@
     document.getElementById('preview-iframe').src = 'about:blank';
   }
 
-  /* ---------- share a listing's mini-site (URL + QR) ---------- */
+  /* ---------- share a link (URL + QR + WhatsApp) ---------- */
+  /* Sharing one listing and sharing the whole portfolio is the same gesture on
+     a different URL, so it is one function with two entry points. The asesor
+     asked for the portfolio link because a buyer who is not sold on this house
+     is often sold on the next one — and that conversation happens in WhatsApp,
+     not on the site. */
   let shareUrl = '';
+  let agencySlug = '';
 
-  function openShareModal(publicId) {
-    shareUrl = window.location.origin + '/property/' + publicId;
+  function openShare(url, title, hint, waText) {
+    shareUrl = url;
+    document.getElementById('share-modal-title').textContent = title;
+    document.getElementById('share-modal-hint').textContent = hint;
     document.getElementById('share-url').value = shareUrl;
     document.getElementById('share-url-pill').textContent = shareUrl.replace(/^https?:\/\//, '');
     document.getElementById('share-preview-iframe').src = shareUrl;
-    const waMsg = lang === 'es' ? 'Mira esta propiedad: ' + shareUrl : 'Check out this listing: ' + shareUrl;
-    document.getElementById('share-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(waMsg);
+    document.getElementById('share-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(waText + ' ' + shareUrl);
     const qr = qrcode(0, 'M');
     qr.addData(shareUrl);
     qr.make();
@@ -1275,6 +1392,27 @@
     document.getElementById('share-qr').src = dataUrl;
     document.getElementById('share-qr-download').href = dataUrl;
     document.getElementById('share-modal').classList.add('open');
+  }
+
+  function openShareModal(publicId) {
+    openShare(
+      window.location.origin + '/property/' + publicId,
+      lang === 'es' ? 'Tu pagina esta lista' : 'Your page is live',
+      lang === 'es' ? 'Compartela por WhatsApp, copia el enlace o descarga el QR.'
+                    : 'Share it on WhatsApp, copy the link, or download the QR.',
+      lang === 'es' ? 'Mira esta propiedad:' : 'Check out this listing:'
+    );
+  }
+
+  function openPortfolioShare() {
+    if (!agencySlug) return;
+    openShare(
+      window.location.origin + '/agencia/' + encodeURIComponent(agencySlug),
+      lang === 'es' ? 'Tu portafolio completo' : 'Your full portfolio',
+      lang === 'es' ? 'Todas tus propiedades publicadas en una sola pagina. Mandala cuando el cliente no se quede con la primera.'
+                    : 'Every published listing on one page. Send it when the first property is not the one.',
+      lang === 'es' ? 'Estas son mis propiedades disponibles:' : 'Here are my available listings:'
+    );
   }
 
   function closeShareModal() {
@@ -1300,12 +1438,16 @@
     await loadListings();
 
     // Surface the portfolio link on load, not only after opening settings.
+    // La marca de agua se arma de aqui tambien: quien sube fotos sin pasar por
+    // Ajustes tiene que marcarlas con su nombre, no con uno generico.
     try {
       const r = await authedFetch('/api/my-listings?resource=agency');
       if (r.ok) {
         const data = await r.json();
         if (data.agency) {
+          agencyMark = { logoUrl: data.agency.logo_url || '', name: data.agency.name || '' };
           showPortfolioLink(data.agency.slug);
+          toggleWhatsappNudge(data.agency.whatsapp_number);
           document.getElementById('agency-name-header').textContent = data.agency.name;
         }
       }

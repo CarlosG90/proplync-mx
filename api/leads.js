@@ -60,11 +60,24 @@ export default async function handler(req, res) {
     // An agent's CRM is worth little if anyone can flood it.
     if (await enforceRateLimit(req, res, { bucket: 'leads', limit: 8, windowSec: 3600 })) return;
 
-    const { listingPublicId, name, email, phone, message } = req.body || {};
+    const { listingPublicId, name, email, phone, message,
+            paymentMethod, purpose, mortgageHistory } = req.body || {};
     if (!listingPublicId || !name || !email) {
       res.status(400).json({ error: 'missing_required_fields' });
       return;
     }
+
+    /* Las tres respuestas de calificacion son opcionales y de catalogo cerrado.
+       Se filtran contra el catalogo en vez de rechazar la peticion: un valor
+       raro aqui significa formulario viejo en cache o alguien jugando con la
+       consola, y ninguno de los dos casos justifica tirar un lead real. El
+       check de la tabla rechazaria el insert completo. */
+    const oneOf = (value, allowed) => (allowed.includes(value) ? value : null);
+    const qualification = {
+      payment_method: oneOf(paymentMethod, ['efectivo', 'credito', 'no_se']),
+      purpose: oneOf(purpose, ['habitar', 'inversion', 'reventa', 'renta']),
+      mortgage_history: oneOf(mortgageHistory, ['tiene', 'tuvo', 'nunca'])
+    };
 
     const svc = getServiceClient();
     const { data: listing } = await svc
@@ -88,9 +101,10 @@ export default async function handler(req, res) {
         email,
         phone: phone || null,
         message: message || null,
-        source: 'web'
+        source: 'web',
+        ...qualification
       })
-      .select('id, name, email, phone, message, created_at')
+      .select('id, name, email, phone, message, created_at, payment_method, purpose, mortgage_history')
       .single();
     if (error) {
       res.status(500).json({ error: 'lead_capture_failed', detail: safeDetail(error) });

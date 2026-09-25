@@ -412,6 +412,37 @@
               <div class="field"><input class="form-input" id="lead-email" type="email" required placeholder="Correo" data-es-placeholder="Correo" data-en-placeholder="Email"></div>
               <div class="field"><input class="form-input" id="lead-phone" type="tel" placeholder="Telefono (opcional)" data-es-placeholder="Telefono (opcional)" data-en-placeholder="Phone (optional)"></div>
               <div class="field"><textarea class="form-textarea" id="lead-message" placeholder="Mensaje" data-es-placeholder="Mensaje" data-en-placeholder="Message"></textarea></div>
+
+              <!-- Tres preguntas para que el asesor sepa a quien llamar primero.
+                   Van despues del mensaje y sin `required` a proposito: el
+                   interesado ya puede enviar en cualquier momento, asi que
+                   ninguna de las tres puede costarle un lead al asesor. -->
+              <p class="lead-qual-intro" data-es="Opcional — ayuda al agente a prepararse para tu visita." data-en="Optional — helps the agent prepare for your visit.">Opcional — ayuda al agente a prepararse para tu visita.</p>
+              <div class="field">
+                <select class="form-input" id="lead-payment">
+                  <option value="" data-es="Como piensas pagar?" data-en="How would you pay?">Como piensas pagar?</option>
+                  <option value="efectivo" data-es="Efectivo" data-en="Cash">Efectivo</option>
+                  <option value="credito" data-es="Credito bancario o hipotecario" data-en="Bank or mortgage loan">Credito bancario o hipotecario</option>
+                  <option value="no_se" data-es="Aun no lo se" data-en="Not sure yet">Aun no lo se</option>
+                </select>
+              </div>
+              <div class="field">
+                <select class="form-input" id="lead-purpose">
+                  <option value="" data-es="Para que la buscas?" data-en="What is it for?">Para que la buscas?</option>
+                  <option value="habitar" data-es="Para habitarla" data-en="To live in">Para habitarla</option>
+                  <option value="inversion" data-es="Para invertir" data-en="As an investment">Para invertir</option>
+                  <option value="reventa" data-es="Para revenderla" data-en="To resell">Para revenderla</option>
+                  <option value="renta" data-es="Para rentarla" data-en="To rent out">Para rentarla</option>
+                </select>
+              </div>
+              <div class="field">
+                <select class="form-input" id="lead-mortgage">
+                  <option value="" data-es="Has tenido un credito hipotecario?" data-en="Any mortgage history?">Has tenido un credito hipotecario?</option>
+                  <option value="tiene" data-es="Tengo uno ahora" data-en="I have one now">Tengo uno ahora</option>
+                  <option value="tuvo" data-es="Tuve uno antes" data-en="I had one before">Tuve uno antes</option>
+                  <option value="nunca" data-es="Nunca he tenido" data-en="Never had one">Nunca he tenido</option>
+                </select>
+              </div>
               <button type="submit" class="btn btn-gold btn-block" style="position:relative" id="lead-submit-btn" data-es="Enviar" data-en="Send">Enviar</button>
             </form>
           </div>
@@ -659,7 +690,10 @@
           name: document.getElementById('lead-name').value.trim(),
           email: document.getElementById('lead-email').value.trim(),
           phone: document.getElementById('lead-phone').value.trim(),
-          message: document.getElementById('lead-message').value.trim()
+          message: document.getElementById('lead-message').value.trim(),
+          paymentMethod: document.getElementById('lead-payment').value,
+          purpose: document.getElementById('lead-purpose').value,
+          mortgageHistory: document.getElementById('lead-mortgage').value
         })
       });
       if (!r.ok) throw new Error(lang === 'es' ? 'No se pudo enviar. Intenta de nuevo.' : 'Could not send. Try again.');
