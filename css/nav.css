@@ -5,6 +5,10 @@
 header{
   position:sticky;top:0;z-index:50;
   background:rgba(10,22,40,.82);
+  /* La barra es oscura, asi que declara su color de texto en vez de dejar que
+     sus hijos hereden la tinta del body. Sin esto, cualquier elemento que no
+     se pinte a si mismo cae en tinta sobre tinta. */
+  color:var(--on-ink);
   backdrop-filter:blur(24px) saturate(1.5);
   -webkit-backdrop-filter:blur(24px) saturate(1.5);
   border-bottom:1px solid rgba(240,237,232,.05);
@@ -94,14 +98,23 @@ nav{display:flex;align-items:center;gap:var(--sp-8);height:72px}
   box-shadow:var(--shadow-gold-lg);
 }
 
+/* Un boton fantasma vive sobre dos fondos distintos: la barra oscura y el
+   papel del dashboard. Estaba escrito solo para el oscuro -- texto casi blanco
+   y borde casi blanco -- asi que en el dashboard quedaba invisible sobre el
+   papel. Ahora toma el color del texto que lo rodea y deriva de ahi borde y
+   hover, de modo que un solo boton funciona en los dos sitios. */
 .btn-ghost{
-  background:transparent;color:var(--on-ink);
-  border:1px solid rgba(240,237,232,.2);
+  background:transparent;
+  color:inherit;
+  border:1px solid rgba(92,101,119,.28);                       /* respaldo */
+  border-color:color-mix(in srgb, currentColor 28%, transparent);
 }
 .btn-ghost::after{display:none}
 .btn-ghost:hover{
-  border-color:rgba(240,237,232,.4);color:var(--white);
-  background:rgba(240,237,232,.06);
+  border-color:rgba(92,101,119,.55);                           /* respaldo */
+  border-color:color-mix(in srgb, currentColor 55%, transparent);
+  background:rgba(92,101,119,.08);
+  background:color-mix(in srgb, currentColor 8%, transparent);
 }
 
 .btn-dark{
