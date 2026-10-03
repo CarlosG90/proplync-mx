@@ -35,7 +35,13 @@
   </nav>
 </header>
 
-<main class="auth-main">
+<!-- Hidden until the session check at the bottom of this page resolves, so an
+     agent who still has a live session never sees the form flash before being
+     sent to the dashboard. Unhidden unconditionally if anything goes wrong — a
+     form nobody can see is worse than a form that flashes. -->
+<!-- Signing in needs JS anyway, but a blank page is a worse way to say so. -->
+<noscript><style>#auth-main[hidden]{display:block!important}</style></noscript>
+<main class="auth-main" id="auth-main" hidden>
   <div class="auth-card">
     <h1 data-es="Bienvenido de vuelta" data-en="Welcome back">Bienvenido de vuelta</h1>
     <p class="sub" data-es="Accede al panel de tu inmobiliaria." data-en="Access your agency's dashboard.">Accede al panel de tu inmobiliaria.</p>
@@ -110,6 +116,36 @@
   }
 
   document.querySelectorAll('#navlinks a').forEach(a => a.addEventListener('click', () => document.getElementById('navlinks').classList.remove('open')));
+
+  /* ---------- already signed in? ----------
+     The session lives in localStorage and survives navigation, but this page
+     used to ignore it: an agent who came back to /login got an empty form and
+     retyped a password they did not need to. That is the whole "my session
+     doesn't stay logged in" complaint — the session was never lost, the page
+     just never asked.
+
+     location.replace, not href: with href, Back lands here again, this redirect
+     fires again, and the agent can never navigate backwards out of the
+     dashboard.
+
+     /login?switch=1 skips the check, so signing in as a different agency is
+     still possible without signing out of the current one first. */
+  (async function revealOrRedirect() {
+    const main = document.getElementById('auth-main');
+    const wantsSwitch = new URLSearchParams(location.search).has('switch');
+    if (!wantsSwitch) {
+      try {
+        if (await getSession()) {
+          window.location.replace('/dashboard');
+          return;                       // leave it hidden; we are navigating away
+        }
+      } catch (e) {
+        /* Network down, CDN blocked, storage unavailable: fall through and show
+           the form. Signing in by hand still works, which is the point. */
+      }
+    }
+    main.hidden = false;
+  })();
 </script>
 </body>
 </html>
