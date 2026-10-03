@@ -969,8 +969,15 @@
         <button id="es" class="on" onclick="setLang('es')">ES</button>
         <button id="en" onclick="setLang('en')">EN</button>
       </div>
-      <a href="#contacto" class="btn btn-gold" data-es="Reservar llamada" data-en="Book a call">Reservar llamada</a>
-      <a href="/login" class="nav-login-mobile" data-es="Soy agente" data-en="I'm an agent"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span data-es="Soy agente" data-en="I'm an agent">Soy agente</span></a>
+      <!-- An agent who is already signed in lands here and needs one obvious way
+           back into their agency, not a sales CTA. js/nav-auth.js swaps the pair:
+           it shows the first and hides the second when a live session exists.
+           Hidden by default so a visitor never sees a dashboard button, and so
+           the page is correct before any JS runs. -->
+      <a href="/dashboard" class="btn btn-gold" id="agent-return" data-agent-only hidden
+         data-es="Volver a mi agencia" data-en="Back to my agency">Volver a mi agencia</a>
+      <a href="#contacto" class="btn btn-gold" data-guest-only data-es="Reservar llamada" data-en="Book a call">Reservar llamada</a>
+      <a href="/login" class="nav-login-mobile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span data-es="Soy agente" data-en="I'm an agent">Soy agente</span></a>
       <button class="navtoggle" aria-label="Menu" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
     </div>
   </nav>
@@ -1553,6 +1560,7 @@
 </footer>
 
 <script src="/js/i18n.js"></script>
+<script src="/js/nav-auth.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/favorites.js"></script>
 <script>
