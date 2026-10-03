@@ -96,6 +96,12 @@
 
 /* Reset */
 *{box-sizing:border-box}
+
+/* The browser's own [hidden] rule is a user-agent style, so ANY author rule
+   that sets display beats it -- .btn{display:inline-flex} in nav.css did, which
+   meant hidden="" on a button did nothing and showed it to everyone. Make the
+   attribute mean what it says, once, instead of per-component overrides. */
+[hidden]{display:none!important}
 /* Horizontal containment, applied to BOTH elements on purpose.
    `overflow-x:hidden` sat on body alone. That is the incomplete version of this
    fix: the clamp stops the document reporting a wider scrollWidth, so the bug
