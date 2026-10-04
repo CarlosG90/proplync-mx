@@ -36,12 +36,10 @@ nav{display:flex;align-items:center;gap:var(--sp-8);height:72px}
    and tore the wordmark in half on every page. */
 .brand .wordmark{
   display:flex;align-items:baseline;white-space:nowrap;
-  font-size:1rem;font-weight:600;
-  letter-spacing:.15em;text-transform:uppercase;
+  font-size:1.16rem;font-weight:600;
+  letter-spacing:-.015em;
 }
-/* Caps are already wide, so the accent gets less tracking: ".MX" should read
-   as the tail of the name, not a second word. */
-.brand .accent{color:var(--gold);letter-spacing:.07em}
+.brand .accent{color:var(--gold)}
 
 /* align-items:center so a child shorter than the row sits on the same axis
    instead of being stretched and top-aligning its own contents. */
@@ -220,9 +218,7 @@ nav{display:flex;align-items:center;gap:var(--sp-8);height:72px}
   .nav-login-mobile span{display:none}
 }
 @media (max-width:380px){
-  /* Spaced caps are wider than the old lowercase, so the wordmark steps down
-     harder than the mark to keep the nav from crowding the menu button. */
-  .brand .wordmark{font-size:.84rem;letter-spacing:.12em}
+  .brand .wordmark{font-size:1rem}
   .brand .mark{width:26px;height:26px}
   .navtools{gap:6px}
   .lang button{padding:5px 8px}
