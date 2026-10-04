@@ -128,25 +128,37 @@
   .module-soon{opacity:.6}
   /* Audience switch: the page is an agency pitch, and buyers who land here need
      to see in the first second that there is a door for them too. The agency door
-     is marked current because that is what this page is. */
-  .doors{display:inline-grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;margin-bottom:30px;max-width:100%;
-    border:1px solid var(--line-dark);border-radius:14px;background:rgba(240,237,232,.04)}
-  .door{display:flex;flex-direction:column;gap:3px;padding:11px 20px;border-radius:10px;border:1px solid transparent;
-    text-decoration:none;color:var(--on-ink-dim);transition:background .2s,border-color .2s}
-  .door b{font-size:.92rem;font-weight:600;color:var(--on-ink);display:flex;align-items:center;gap:6px}
-  .door small{font-family:var(--mono);font-size:.66rem;letter-spacing:.04em}
-  .door:hover{background:rgba(240,237,232,.06)}
-  .door.on{background:rgba(201,169,110,.14);border-color:rgba(201,169,110,.4);cursor:default}
+     is marked current because that is what this page is; the buyer door is the one
+     asking to be clicked, so it carries the gold. */
+  .doors{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:38px;max-width:680px}
+  .door{position:relative;display:flex;flex-direction:column;gap:6px;min-height:118px;padding:20px 22px;border-radius:18px;
+    text-decoration:none;overflow:hidden;transition:transform .25s var(--ease-out),box-shadow .25s,border-color .25s}
+  .door b{font-size:1.28rem;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+  .door small{font-family:var(--mono);font-size:.74rem;letter-spacing:.03em;line-height:1.45}
+  .door.on{background:rgba(240,237,232,.05);border:1px solid rgba(201,169,110,.45);cursor:default}
+  .door.on b{color:var(--on-ink)}
+  .door.on small{color:var(--on-ink-dim)}
+  .door.on::before{content:"";position:absolute;left:22px;top:0;width:34px;height:3px;border-radius:0 0 3px 3px;background:var(--gold)}
+  .door-buyer{background:linear-gradient(150deg,var(--gold-light),var(--gold) 55%,var(--gold-deep));border:1px solid var(--gold-light);
+    color:var(--ink);box-shadow:var(--shadow-gold-lg),0 0 0 4px rgba(201,169,110,.12)}
+  .door-buyer b{color:var(--ink);padding-right:44px}
+  .door-buyer small{color:rgba(10,22,40,.78)}
+  .door-buyer:hover{transform:translateY(-3px);box-shadow:0 22px 56px -12px rgba(201,169,110,.65),0 0 0 6px rgba(201,169,110,.18)}
+  .door-buyer:focus-visible{outline:3px solid var(--on-ink);outline-offset:3px}
+  .door-ai{align-self:flex-start;font-family:var(--mono);font-size:.64rem;font-weight:700;letter-spacing:.14em;
+    padding:3px 9px;border-radius:99px;background:var(--ink);color:var(--gold-light)}
+  .door-go{position:absolute;right:18px;top:16px;width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--gold-light);
+    display:grid;place-items:center;font-size:1.05rem;transition:transform .25s}
+  .door-buyer:hover .door-go{transform:translate(3px,-3px)}
+  @media (max-width:640px){
+    .doors{grid-template-columns:1fr;max-width:none;gap:10px}
+    .door{min-height:0;padding:16px 18px}
+    .door b{font-size:1.15rem}
+    .door-buyer{order:-1}
+  }
   /* The nav is full at desktop widths; the doors band carries the buyer link there. */
   .navlinks .nav-buyer{display:none}
   @media (max-width:900px){.navlinks .nav-buyer{display:block}}
-  .door-buyer b::after{content:"\2197";color:var(--gold-light);font-weight:400}
-  @media (max-width:520px){
-    .doors{display:grid;width:100%}
-    .door{padding:10px 12px}
-    .door b{font-size:.84rem}
-    .door small{font-size:.6rem}
-  }
   .hero-buyer{
     margin-top:18px;font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;
   }
@@ -1022,11 +1034,13 @@
       <div class="doors" role="group" aria-label="Audience">
         <a class="door on" href="#top" aria-current="true">
           <b data-es="Para agencias" data-en="For agencies">Para agencias</b>
-          <small data-es="Tu operacion en un lugar" data-en="Your operation in one place">Tu operacion en un lugar</small>
+          <small data-es="Tu operacion completa en un solo lugar" data-en="Your whole operation in one place">Tu operacion completa en un solo lugar</small>
         </a>
         <a class="door door-buyer" href="/finder">
+          <span class="door-ai" aria-hidden="true">IA &middot; AI</span>
           <b data-es="Para compradores" data-en="For buyers">Para compradores</b>
-          <small data-es="Concierge con IA, por voz o texto" data-en="AI concierge, by voice or text">Concierge con IA, por voz o texto</small>
+          <small data-es="Cuentale a Concierge, nuestro asistente de IA, que casa buscas. Por voz o texto." data-en="Tell Concierge, our AI assistant, what home you want. By voice or text.">Cuentale a Concierge, nuestro asistente de IA, que casa buscas. Por voz o texto.</small>
+          <span class="door-go" aria-hidden="true">&#8599;</span>
         </a>
       </div>
       <div class="hero-eyebrow eyebrow" data-es="Plataforma para agencias inmobiliarias" data-en="Platform for real estate agencies">Plataforma para agencias inmobiliarias</div>
