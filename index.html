@@ -126,6 +126,39 @@
   .module-status.on{color:var(--sea);background:rgba(94,196,190,.12);border:1px solid rgba(94,196,190,.3)}
   .module-status.soon{color:var(--on-ink-dim);background:rgba(240,237,232,.05);border:1px solid rgba(240,237,232,.12)}
   .module-soon{opacity:.6}
+  /* Audience switch: the page is an agency pitch, and buyers who land here need
+     to see in the first second that there is a door for them too. The agency door
+     is marked current because that is what this page is; the buyer door is the one
+     asking to be clicked, so it carries the gold. */
+  .doors{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:38px;max-width:680px}
+  .door{position:relative;display:flex;flex-direction:column;gap:6px;min-height:118px;padding:20px 22px;border-radius:18px;
+    text-decoration:none;overflow:hidden;transition:transform .25s var(--ease-out),box-shadow .25s,border-color .25s}
+  .door b{font-size:1.28rem;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+  .door small{font-family:var(--mono);font-size:.74rem;letter-spacing:.03em;line-height:1.45}
+  .door.on{background:rgba(240,237,232,.05);border:1px solid rgba(201,169,110,.45);cursor:default}
+  .door.on b{color:var(--on-ink)}
+  .door.on small{color:var(--on-ink-dim)}
+  .door.on::before{content:"";position:absolute;left:22px;top:0;width:34px;height:3px;border-radius:0 0 3px 3px;background:var(--gold)}
+  .door-buyer{background:linear-gradient(150deg,var(--gold-light),var(--gold) 55%,var(--gold-deep));border:1px solid var(--gold-light);
+    color:var(--ink);box-shadow:var(--shadow-gold-lg),0 0 0 4px rgba(201,169,110,.12)}
+  .door-buyer b{color:var(--ink);padding-right:44px}
+  .door-buyer small{color:rgba(10,22,40,.78)}
+  .door-buyer:hover{transform:translateY(-3px);box-shadow:0 22px 56px -12px rgba(201,169,110,.65),0 0 0 6px rgba(201,169,110,.18)}
+  .door-buyer:focus-visible{outline:3px solid var(--on-ink);outline-offset:3px}
+  .door-ai{align-self:flex-start;font-family:var(--mono);font-size:.64rem;font-weight:700;letter-spacing:.14em;
+    padding:3px 9px;border-radius:99px;background:var(--ink);color:var(--gold-light)}
+  .door-go{position:absolute;right:18px;top:16px;width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--gold-light);
+    display:grid;place-items:center;font-size:1.05rem;transition:transform .25s}
+  .door-buyer:hover .door-go{transform:translate(3px,-3px)}
+  @media (max-width:640px){
+    .doors{grid-template-columns:1fr;max-width:none;gap:10px}
+    .door{min-height:0;padding:16px 18px}
+    .door b{font-size:1.15rem}
+    .door-buyer{order:-1}
+  }
+  /* The nav is full at desktop widths; the doors band carries the buyer link there. */
+  .navlinks .nav-buyer{display:none}
+  @media (max-width:900px){.navlinks .nav-buyer{display:block}}
   .hero-buyer{
     margin-top:18px;font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;
   }
@@ -968,6 +1001,7 @@
       <a href="#roi" data-es="Calculadora" data-en="ROI">Calculadora</a>
       <a href="#acceso" data-es="Acceso" data-en="Early access">Acceso</a>
       <a href="#contacto" data-es="Contacto" data-en="Contact">Contacto</a>
+      <a href="/finder" class="nav-buyer" data-es="Soy comprador" data-en="I'm a buyer">Soy comprador</a>
       <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
     </div>
     <div class="navtools">
@@ -997,6 +1031,18 @@
   <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
   <div class="wrap">
     <div class="hero-content">
+      <div class="doors" role="group" aria-label="Audience">
+        <a class="door on" href="#top" aria-current="true">
+          <b data-es="Para agencias" data-en="For agencies">Para agencias</b>
+          <small data-es="Tu operacion completa en un solo lugar" data-en="Your whole operation in one place">Tu operacion completa en un solo lugar</small>
+        </a>
+        <a class="door door-buyer" href="/finder">
+          <span class="door-ai" aria-hidden="true">IA &middot; AI</span>
+          <b data-es="Para compradores" data-en="For buyers">Para compradores</b>
+          <small data-es="Cuentale a Concierge, nuestro asistente de IA, que casa buscas. Por voz o texto." data-en="Tell Concierge, our AI assistant, what home you want. By voice or text.">Cuentale a Concierge, nuestro asistente de IA, que casa buscas. Por voz o texto.</small>
+          <span class="door-go" aria-hidden="true">&#8599;</span>
+        </a>
+      </div>
       <div class="hero-eyebrow eyebrow" data-es="Plataforma para agencias inmobiliarias" data-en="Platform for real estate agencies">Plataforma para agencias inmobiliarias</div>
       <h1 data-es="Toda tu operacion inmobiliaria, <em>en un lugar.</em>" data-en="Your whole real estate operation, <em>in one place.</em>">Toda tu operacion inmobiliaria, <em>en un lugar.</em></h1>
       <p class="hero-sub" data-es="Captura una propiedad una vez. PropLync le da su mini-sitio, guarda cada prospecto con seguimiento, y convierte sus datos en el contenido con el que la vendes." data-en="Capture a listing once. PropLync gives it a mini-site, keeps every lead with follow-up, and turns its data into the content you sell it with.">Captura una propiedad una vez. PropLync le da su mini-sitio, guarda cada prospecto con seguimiento, y convierte sus datos en el contenido con el que la vendes.</p>
@@ -1027,7 +1073,7 @@
           <span class="module-desc" data-es="Comparables y precio sugerido por zona." data-en="Comparables and a suggested price per area.">Comparables y precio sugerido por zona.</span>
         </div>
       </div>
-      <div class="hero-buyer" data-es="&iquest;Buscas propiedad? <a href=\'/search\'>Explora las propiedades &rarr;</a>" data-en="Looking to buy? <a href=\'/search\'>Browse listings &rarr;</a>">&iquest;Buscas propiedad? <a href="/search">Explora las propiedades &rarr;</a></div>
+      <div class="hero-buyer" data-es="&iquest;Buscas propiedad? <a href='/brief'>Habla con Concierge, nuestro asistente de IA &rarr;</a>" data-en="Looking to buy? <a href='/brief'>Talk to Concierge, our AI assistant &rarr;</a>">&iquest;Buscas propiedad? <a href="/brief">Habla con Concierge, nuestro asistente de IA &rarr;</a></div>
       <div class="hero-cta">
         <a href="/login" class="btn btn-gold" data-es="Soy una agencia" data-en="I'm an agency">Soy una agencia</a>
         <a href="#contacto" class="btn btn-ghost" data-es="Reservar diagnostico de 15 min" data-en="Book a 15-min diagnosis">Reservar diagnostico de 15 min</a>

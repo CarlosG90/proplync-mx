@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -70,8 +70,8 @@
     </a>
     <div class="navtools">
       <div class="lang" role="group" aria-label="Language">
-        <button id="es" onclick="setLang('es')">ES</button>
-        <button id="en" class="on" onclick="setLang('en')">EN</button>
+        <button id="es" class="on" onclick="setLang('es')">ES</button>
+        <button id="en" onclick="setLang('en')">EN</button>
       </div>
     </div>
   </nav>
@@ -278,7 +278,7 @@ document.addEventListener('langchange', function () {
   renderBrief();
 });
 
-renderBrief();
+setLang(document.documentElement.lang);
 bubble('a', t('Hola, soy Concierge, el asistente de IA de PropLync. Antes de buscar nada quiero entender que estas buscando. Cuentame: que vida te imaginas ahi?',
               'Hi, I am Concierge, PropLync’s AI assistant. Before searching anything I want to understand what you are after. Tell me: what life do you picture there?'));
 messages.push({ role: 'assistant', content: 'Hi, I am Concierge. Tell me: what life do you picture there?' });

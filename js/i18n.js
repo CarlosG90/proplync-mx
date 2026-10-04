@@ -1,22 +1,35 @@
 /* Proplync.mx · Internationalization (ES/EN)
    ─────────────────────────────────────────── */
 
-/* Each page declares its own starting language in <html lang>. The site is
-   Spanish, so anything that does not say otherwise is 'es'; the buyer pages say
-   lang="en" because Finder's first market is foreign buyers. Hardcoding 'es'
-   here meant an English page flashed Spanish until someone touched the toggle. */
-let lang = document.documentElement.lang === 'en' ? 'en' : 'es';
+/* Each page declares its own starting language in <html lang>. A language the
+   visitor chose on any page (saved below) wins over that, so picking English on
+   the home page carries to /finder, /search and the rest. Pages whose markup
+   text is not in the saved language get it applied once the DOM is ready. */
+const LANG_KEY = 'proplync_lang';
+let declaredLang = document.documentElement.lang === 'en' ? 'en' : 'es';
+let lang = declaredLang;
+try {
+  const saved = localStorage.getItem(LANG_KEY);
+  if (saved === 'es' || saved === 'en') lang = saved;
+} catch (e) { /* storage blocked: keep the page's own language */ }
+document.documentElement.lang = lang;
 
 function setLang(l) {
   lang = l;
   document.documentElement.lang = l;
-  document.getElementById('es').classList.toggle('on', l === 'es');
-  document.getElementById('en').classList.toggle('on', l === 'en');
+  try { localStorage.setItem(LANG_KEY, l); } catch (e) { /* not fatal */ }
+  const es = document.getElementById('es'), en = document.getElementById('en');
+  if (es) es.classList.toggle('on', l === 'es');
+  if (en) en.classList.toggle('on', l === 'en');
   document.querySelectorAll('[data-es]').forEach(function (el) {
     el.innerHTML = el.getAttribute('data-' + l);
   });
   // fire custom event so page-specific code can react
   document.dispatchEvent(new CustomEvent('langchange', { detail: { lang: l } }));
+}
+
+if (lang !== declaredLang) {
+  document.addEventListener('DOMContentLoaded', function () { setLang(lang); });
 }
 
 /* helpers shared across pages */

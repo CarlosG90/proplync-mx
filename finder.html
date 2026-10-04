@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<!-- lang="en" on purpose. Finder's first market is foreign buyers, so this page
-     opens in English while the other 14 open in Spanish. js/i18n.js reads this
-     attribute for its starting language. -->
-<html lang="en">
+<!-- Opens in Spanish like the rest of the site; the ES/EN toggle switches it.
+     The markup text is English, so the closing script calls setLang() with this
+     attribute to apply the Spanish copy before first paint. -->
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -156,8 +156,8 @@
     </div>
     <div class="navtools">
       <div class="lang" role="group" aria-label="Language">
-        <button id="es" onclick="setLang('es')">ES</button>
-        <button id="en" class="on" onclick="setLang('en')">EN</button>
+        <button id="es" class="on" onclick="setLang('es')">ES</button>
+        <button id="en" onclick="setLang('en')">EN</button>
       </div>
       <a href="#start" class="btn btn-gold" data-es="Empezar" data-en="Start">Start</a>
       <button class="navtoggle" aria-label="Menu" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
@@ -292,6 +292,7 @@
 <script src="/js/i18n.js"></script>
 <script src="/js/nav-auth.js"></script>
 <script src="/js/hero3d.js"></script>
+<script>setLang(document.documentElement.lang);</script>
 <script>
   document.querySelectorAll('#navlinks a').forEach(function (a) {
     a.addEventListener('click', function () { document.getElementById('navlinks').classList.remove('open'); });
