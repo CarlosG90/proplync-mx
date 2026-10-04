@@ -1,10 +1,9 @@
 /* Proplync.mx · Internationalization (ES/EN)
    ─────────────────────────────────────────── */
 
-/* Each page declares its own starting language in <html lang>. The site is
-   Spanish, so anything that does not say otherwise is 'es'; the buyer pages say
-   lang="en" because Finder's first market is foreign buyers. Hardcoding 'es'
-   here meant an English page flashed Spanish until someone touched the toggle. */
+/* Each page declares its own starting language in <html lang>; anything that
+   does not say 'en' starts in Spanish. Pages whose markup text is English call
+   setLang() once at the end of the body so the declared language is applied. */
 let lang = document.documentElement.lang === 'en' ? 'en' : 'es';
 
 function setLang(l) {
