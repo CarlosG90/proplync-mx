@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<!-- lang="en" on purpose. Finder's first market is foreign buyers, so this page
+     opens in English while the other 14 open in Spanish. js/i18n.js reads this
+     attribute for its starting language. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="PropLync Finder &middot; cada propiedad, verificada" data-en="PropLync Finder &middot; every property, verified">PropLync Finder &middot; every property, verified</title>
+<meta name="description" content="We search the whole market, take every property apart, and confirm it with its listing agent before you ever see it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  /* Ink-on-ink, not the paper background the rest of the site uses. A buyer
+     landing is a showroom; the agency pages are a tool. */
+  body{background:var(--ink);color:var(--on-ink)}
+
+  .fx-wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--sp-8)}
+
+  /* ---------- hero ---------- */
+  .fx-hero{position:relative;overflow:hidden;padding:var(--sp-24) 0 var(--sp-16)}
+  /* Two soft lights behind the object. Without them it floats on flat black and
+     the whole page reads cheap. */
+  .fx-hero::before{
+    content:"";position:absolute;inset:-20% -10% auto -10%;height:120%;
+    background:
+      radial-gradient(42% 46% at 72% 38%, rgba(201,169,110,.20), transparent 70%),
+      radial-gradient(38% 42% at 24% 72%, rgba(94,196,190,.14), transparent 70%);
+    pointer-events:none;
+  }
+  .fx-hero-grid{
+    position:relative;display:grid;grid-template-columns:1.05fr .95fr;
+    gap:var(--sp-10);align-items:center;
+  }
+  .fx-eyebrow{
+    font-family:var(--mono);font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--gold);display:flex;align-items:center;gap:10px;margin-bottom:var(--sp-5);
+  }
+  .fx-eyebrow::before{content:"";width:28px;height:1px;background:var(--gold);flex:none}
+  .fx-h1{
+    font-family:var(--display);font-weight:300;line-height:1.02;letter-spacing:-.03em;
+    font-size:clamp(2.6rem,6.2vw,4.5rem);margin:0 0 var(--sp-5);text-wrap:balance;
+  }
+  .fx-h1 em{font-style:normal;color:var(--gold);font-weight:400}
+  .fx-lede{font-size:clamp(1rem,1.5vw,1.14rem);line-height:1.6;color:var(--on-ink-dim);max-width:46ch;margin:0 0 var(--sp-7)}
+  .fx-lede strong{color:var(--on-ink);font-weight:500}
+  .fx-cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .fx-hint{font-family:var(--mono);font-size:.7rem;color:var(--on-ink-dim);opacity:.75;margin-top:var(--sp-5)}
+
+  /* ---------- the object ---------- */
+  .fx-stage{position:relative;aspect-ratio:1/1;min-height:360px}
+  #hero3d{position:absolute;inset:0;border-radius:var(--radius-2xl);overflow:hidden}
+  #hero3d canvas{width:100%;height:100%;display:block;cursor:grab;touch-action:pan-y}
+  #hero3d canvas:active{cursor:grabbing}
+  /* The poster sits behind the canvas and is only seen when the canvas is
+     hidden, so there is never an empty rectangle. */
+  .fx-poster{
+    position:absolute;inset:0;display:grid;place-items:center;
+    background:radial-gradient(circle at 50% 45%, rgba(201,169,110,.16), transparent 68%);
+  }
+  .fx-poster svg{width:58%;max-width:300px;opacity:.9}
+  #hero3d[data-ready="true"] .fx-poster{opacity:0;transition:opacity .6s var(--ease)}
+  #hero3d[data-fallback] .fx-poster{opacity:1}
+
+  .fx-controls{
+    position:absolute;left:50%;transform:translateX(-50%);bottom:14px;
+    display:flex;align-items:center;gap:4px;padding:5px;
+    background:rgba(10,22,40,.72);backdrop-filter:blur(10px);
+    border:1px solid rgba(240,237,232,.12);border-radius:999px;
+  }
+  .fx-ctl{
+    background:none;border:0;cursor:pointer;color:var(--on-ink-dim);
+    font-family:var(--body);font-size:.76rem;font-weight:500;
+    padding:8px 14px;border-radius:999px;white-space:nowrap;
+    transition:color var(--duration) ease,background var(--duration) ease;
+  }
+  .fx-ctl:hover{color:var(--on-ink);background:rgba(240,237,232,.08)}
+  .fx-ctl-primary{background:var(--gold);color:var(--ink);font-weight:600}
+  .fx-ctl-primary:hover{background:var(--gold-light);color:var(--ink)}
+  .fx-ctl-icon{padding:8px 11px;font-size:.9rem;line-height:1}
+  #hero3d[data-fallback] .fx-controls{display:none}
+  .fx-status{position:absolute;left:0;right:0;top:14px;text-align:center;font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--on-ink-dim);opacity:.7}
+
+  /* ---------- chapters ---------- */
+  .fx-chapter{padding:var(--sp-20) 0;border-top:1px solid rgba(240,237,232,.10)}
+  .fx-num{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;color:var(--gold);margin-bottom:var(--sp-4)}
+  .fx-h2{font-family:var(--display);font-weight:300;font-size:clamp(1.9rem,4vw,2.9rem);line-height:1.1;letter-spacing:-.025em;margin:0 0 var(--sp-5);text-wrap:balance}
+  .fx-h2 em{font-style:normal;color:var(--gold);font-weight:400}
+  .fx-body{color:var(--on-ink-dim);line-height:1.65;max-width:58ch;margin:0}
+  .fx-split{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-10)}
+
+  .fx-checks{list-style:none;margin:var(--sp-7) 0 0;padding:0;display:grid;gap:10px}
+  .fx-checks li{
+    display:flex;gap:12px;align-items:flex-start;
+    padding:14px 16px;border:1px solid rgba(240,237,232,.10);border-radius:var(--radius-md);
+    background:rgba(240,237,232,.03);
+  }
+  .fx-checks b{font-weight:600;color:var(--on-ink);display:block;font-size:.92rem}
+  .fx-checks span{color:var(--on-ink-dim);font-size:.86rem;line-height:1.5}
+  .fx-tick{color:var(--gold);font-family:var(--mono);font-size:.78rem;flex:none;margin-top:2px}
+
+  .fx-steps{display:grid;gap:var(--sp-6);margin-top:var(--sp-7)}
+  .fx-step{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+  .fx-step-n{
+    width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;
+    border:1px solid var(--gold);color:var(--gold);font-family:var(--mono);font-size:.74rem;
+  }
+  .fx-step h3{font-family:var(--body);font-size:1rem;font-weight:600;margin:4px 0 4px}
+  .fx-step p{color:var(--on-ink-dim);font-size:.9rem;line-height:1.6;margin:0}
+
+  /* ---------- honesty block ---------- */
+  .fx-honest{
+    border:1px solid rgba(240,237,232,.12);border-radius:var(--radius-lg);
+    padding:var(--sp-8);background:rgba(240,237,232,.025);
+  }
+  .fx-honest h3{font-family:var(--display);font-weight:400;font-size:1.3rem;margin:0 0 var(--sp-4)}
+  .fx-honest ul{margin:0;padding-left:1.1rem;color:var(--on-ink-dim);line-height:1.7;font-size:.92rem}
+  .fx-honest li{margin-bottom:10px}
+
+  /* ---------- close ---------- */
+  .fx-close{text-align:center;padding:var(--sp-20) 0 var(--sp-24)}
+  .fx-close .fx-h2{margin-left:auto;margin-right:auto;max-width:18ch}
+  .fx-close .fx-body{margin:0 auto var(--sp-8)}
+  .fx-fineprint{font-family:var(--mono);font-size:.68rem;color:var(--on-ink-dim);opacity:.65;margin-top:var(--sp-6);line-height:1.7}
+
+  @media (max-width:900px){
+    .fx-hero{padding:var(--sp-14) 0 var(--sp-10)}
+    .fx-hero-grid{grid-template-columns:1fr;gap:var(--sp-8)}
+    /* Object first on a phone: it is the reason to keep scrolling. */
+    .fx-stage{order:-1;min-height:300px}
+    .fx-split{grid-template-columns:1fr;gap:var(--sp-7)}
+  }
+  @media (max-width:420px){
+    .fx-ctl{padding:7px 10px;font-size:.72rem}
+    .fx-controls{gap:2px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/" aria-label="PropLync.mx home">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 23.4h10.8" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" opacity=".45"/></svg>
+      <span class="wordmark">PropLync<span class="accent">.mx</span></span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/search" data-es="Explorar propiedades" data-en="Browse listings">Browse listings</a>
+      <a href="#how" data-es="Como funciona" data-en="How it works">How it works</a>
+      <a href="#fee" data-es="Precio" data-en="Pricing">Pricing</a>
+    </div>
+    <div class="navtools">
+      <div class="lang" role="group" aria-label="Language">
+        <button id="es" onclick="setLang('es')">ES</button>
+        <button id="en" class="on" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="#start" class="btn btn-gold" data-es="Empezar" data-en="Start">Start</a>
+      <button class="navtoggle" aria-label="Menu" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+</header>
+
+<main>
+
+  <section class="fx-hero">
+    <div class="fx-wrap fx-hero-grid">
+      <div>
+        <div class="fx-eyebrow" data-es="Buscamos. Verificamos. Presentamos." data-en="We search. We verify. We introduce.">We search. We verify. We introduce.</div>
+        <h1 class="fx-h1" data-es="Cada propiedad, <em>desarmada</em> antes de que la veas." data-en="Every property, <em>taken apart</em> before you see it.">Every property, <em>taken apart</em> before you see it.</h1>
+        <p class="fx-lede" data-es="Buscamos en todo el mercado, no solo en un portal. Luego confirmamos cada propiedad con su asesor: <strong>sigue disponible, el precio es ese, se puede visitar</strong>. Solo te mostramos lo que resiste esa revision." data-en="We search the whole market, not one portal. Then we confirm each property with its listing agent: <strong>still available, that is the price, you can visit</strong>. You only see what survives that check.">We search the whole market, not one portal. Then we confirm each property with its listing agent: <strong>still available, that is the price, you can visit</strong>. You only see what survives that check.</p>
+        <div class="fx-cta-row">
+          <a href="#start" class="btn btn-gold" data-es="Empieza tu busqueda &rarr;" data-en="Start your search &rarr;">Start your search &rarr;</a>
+          <a href="#how" class="btn btn-ghost" data-es="Como funciona" data-en="How it works">How it works</a>
+        </div>
+        <p class="fx-hint" data-es="Arrastra el objeto. Desarmalo. Eso es lo que hacemos con cada ficha." data-en="Drag the object. Take it apart. That is what we do to every listing.">Drag the object. Take it apart. That is what we do to every listing.</p>
+      </div>
+
+      <div class="fx-stage">
+        <div id="hero3d">
+          <!-- Poster sits underneath; the canvas covers it once WebGL is up. -->
+          <div class="fx-poster" aria-hidden="true">
+            <svg viewBox="0 0 200 200" fill="none">
+              <circle cx="100" cy="100" r="62" stroke="#c9a96e" stroke-width="1.2" opacity=".55"/>
+              <circle cx="100" cy="100" r="40" stroke="#5ec4be" stroke-width="1.2" opacity=".4"/>
+              <path d="M100 38l54 31v62l-54 31-54-31V69z" stroke="#c9a96e" stroke-width="1.4" opacity=".75"/>
+              <path d="M100 38v124M46 69l108 62M154 69L46 131" stroke="#c9a96e" stroke-width=".8" opacity=".3"/>
+            </svg>
+          </div>
+          <canvas aria-label="Interactive 3D model of a property that comes apart into the facts we verify"></canvas>
+          <div class="fx-status" id="hero3d-status">Closed</div>
+          <div class="fx-controls">
+            <button class="fx-ctl fx-ctl-primary" id="hero-toggle" data-es="Desarmar" data-en="Take it apart">Take it apart</button>
+            <button class="fx-ctl" id="hero-zoom" data-es="Acercar" data-en="Zoom">Zoom</button>
+            <button class="fx-ctl fx-ctl-icon" id="hero-reset" title="Reset" aria-label="Reset">&#8634;</button>
+            <button class="fx-ctl fx-ctl-icon" id="hero-pause" title="Pause" aria-label="Pause" aria-pressed="false">&#10073;&#10073;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="fx-chapter" id="how">
+    <div class="fx-wrap fx-split">
+      <div>
+        <div class="fx-num">01 / <span data-es="El problema" data-en="The problem">The problem</span></div>
+        <h2 class="fx-h2" data-es="El anuncio dice una cosa. El asesor dice otra." data-en="The listing says one thing. The agent says another.">The listing says one thing. The agent says another.</h2>
+        <p class="fx-body" data-es="En Mexico una propiedad aparece en varios portales, con varios asesores y varios precios. Muchas llevan meses vendidas. Buscar es gratis y facil; averiguar que es real cuesta llamadas, mensajes y viajes perdidos." data-en="In Mexico one property shows up on several portals, with several agents and several prices. Plenty have been sold for months. Searching is free and easy; finding out what is real costs calls, messages and wasted trips.">In Mexico one property shows up on several portals, with several agents and several prices. Plenty have been sold for months. Searching is free and easy; finding out what is real costs calls, messages and wasted trips.</p>
+      </div>
+      <div>
+        <div class="fx-num">02 / <span data-es="Lo que revisamos" data-en="What we check">What we check</span></div>
+        <h2 class="fx-h2" data-es="Cinco preguntas, a una persona." data-en="Five questions, to a human.">Five questions, to a human.</h2>
+        <ul class="fx-checks">
+          <li><span class="fx-tick">01</span><div><b data-es="Sigue disponible" data-en="Still available">Still available</b><span data-es="Confirmado por el asesor que la tiene, con fecha." data-en="Confirmed by the agent who holds it, with a date.">Confirmed by the agent who holds it, with a date.</span></div></li>
+          <li><span class="fx-tick">02</span><div><b data-es="El precio es ese" data-en="That is the price">That is the price</b><span data-es="Si cambio, te decimos cuanto y cuando." data-en="If it changed, we tell you by how much and when.">If it changed, we tell you by how much and when.</span></div></li>
+          <li><span class="fx-tick">03</span><div><b data-es="Se puede visitar" data-en="You can visit">You can visit</b><span data-es="Antes de que tomes un avion o cruces la ciudad." data-en="Before you take a flight or cross the city.">Before you take a flight or cross the city.</span></div></li>
+          <li><span class="fx-tick">04</span><div><b data-es="Tus condiciones" data-en="Your conditions">Your conditions</b><span data-es="Lo que el anuncio no dice: renta vacacional, mascotas, planta baja." data-en="What the ad leaves out: vacation rentals, pets, ground floor.">What the ad leaves out: vacation rentals, pets, ground floor.</span></div></li>
+          <li><span class="fx-tick">05</span><div><b data-es="Quien la tiene" data-en="Who holds it">Who holds it</b><span data-es="El asesor real, no alguien que la volvio a publicar." data-en="The real listing agent, not someone who reposted it.">The real listing agent, not someone who reposted it.</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="fx-chapter">
+    <div class="fx-wrap">
+      <div class="fx-num">03 / <span data-es="Como funciona" data-en="How it works">How it works</span></div>
+      <h2 class="fx-h2" data-es="Cuatro pasos. Tu solo haces el primero." data-en="Four steps. You only do the first one.">Four steps. You only do the first one.</h2>
+      <div class="fx-steps">
+        <div class="fx-step"><div class="fx-step-n">1</div><div>
+          <h3 data-es="Nos cuentas que buscas" data-en="You tell us what you want">You tell us what you want</h3>
+          <p data-es="Una conversacion de 20 minutos, por texto o nota de voz, en tu idioma. Empieza por la vida que quieres ahi, no por un formulario. Termina en un resumen de una pagina que tu apruebas." data-en="A 20-minute conversation, by text or voice note, in your language. It starts with the life you want there, not with a form. It ends in a one-page brief you approve.">A 20-minute conversation, by text or voice note, in your language. It starts with the life you want there, not with a form. It ends in a one-page brief you approve.</p></div></div>
+        <div class="fx-step"><div class="fx-step-n">2</div><div>
+          <h3 data-es="Buscamos en todo el mercado" data-en="We search the whole market">We search the whole market</h3>
+          <p data-es="Inmobiliarias de PropLync, portales y sitios de agencias. La misma propiedad publicada en varios lados se junta en una sola ficha, con todos sus precios a la vista." data-en="PropLync agencies, portals and agency sites. The same property listed in several places becomes one card, with every price it is advertised at shown side by side.">PropLync agencies, portals and agency sites. The same property listed in several places becomes one card, with every price it is advertised at shown side by side.</p></div></div>
+        <div class="fx-step"><div class="fx-step-n">3</div><div>
+          <h3 data-es="Hablamos con cada asesor" data-en="We talk to each agent">We talk to each agent</h3>
+          <p data-es="Una persona confirma las cinco preguntas con quien tiene la propiedad. Lo que no se confirma, no te llega." data-en="A person confirms the five questions with whoever holds the property. What cannot be confirmed never reaches you.">A person confirms the five questions with whoever holds the property. What cannot be confirmed never reaches you.</p></div></div>
+        <div class="fx-step"><div class="fx-step-n">4</div><div>
+          <h3 data-es="Te presentamos" data-en="We introduce you">We introduce you</h3>
+          <p data-es="Eliges cuales te interesan y te presentamos directo con su asesor. Tu nombre no se comparte hasta ese momento, y solo con quien tu elijas." data-en="You pick the ones you like and we introduce you straight to the listing agent. Your name is not shared until that moment, and only with the agents you choose.">You pick the ones you like and we introduce you straight to the listing agent. Your name is not shared until that moment, and only with the agents you choose.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="fx-chapter" id="fee">
+    <div class="fx-wrap fx-split">
+      <div>
+        <div class="fx-num">04 / <span data-es="El precio" data-en="The fee">The fee</span></div>
+        <h2 class="fx-h2" data-es="Una tarifa fija. Nunca un porcentaje." data-en="One flat fee. Never a percentage.">One flat fee. Never a percentage.</h2>
+        <p class="fx-body" data-es="Nos pagas a nosotros, no un porcentaje de la compra. Por eso nada nos empuja hacia la propiedad mas cara: no ganamos mas si gastas mas. Tampoco cobramos al dueno, ni tocamos el dinero de la operacion, que va entre tu, el vendedor y el notario." data-en="You pay us a fee, not a slice of the purchase. Nothing pushes us toward the pricier property, because we do not earn more when you spend more. We never charge the owner, and we never touch the purchase money, which goes between you, the seller and the notary.">You pay us a fee, not a slice of the purchase. Nothing pushes us toward the pricier property, because we do not earn more when you spend more. We never charge the owner, and we never touch the purchase money, which goes between you, the seller and the notary.</p>
+      </div>
+      <div>
+        <div class="fx-honest">
+          <h3 data-es="Lo que no hacemos" data-en="What we do not do">What we do not do</h3>
+          <ul>
+            <li data-es="No damos asesoria legal, fiscal ni financiera. Sobre el fideicomiso y los costos de cierre te decimos lo que sabemos y te mandamos con un profesional." data-en="We give no legal, tax or financial advice. On the fideicomiso and closing costs we tell you what we know and send you to a professional.">We give no legal, tax or financial advice. On the fideicomiso and closing costs we tell you what we know and send you to a professional.</li>
+            <li data-es="No vendemos la propiedad ni representamos al vendedor. Te presentamos con su asesor y ahi termina nuestro trabajo." data-en="We do not sell the property or represent the seller. We introduce you to its agent, and that is where our work ends.">We do not sell the property or represent the seller. We introduce you to its agent, and that is where our work ends.</li>
+            <li data-es="No inventamos datos. Si un dato no aparece en la fuente, queda vacio y se lo preguntamos al asesor." data-en="We do not invent facts. If something is not in the source, it stays blank and we ask the agent.">We do not invent facts. If something is not in the source, it stays blank and we ask the agent.</li>
+            <li data-es="No compartimos tu nombre con nadie hasta que tu lo autorices, propiedad por propiedad." data-en="We do not share your name with anyone until you say so, property by property.">We do not share your name with anyone until you say so, property by property.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="fx-close" id="start">
+    <div class="fx-wrap">
+      <h2 class="fx-h2" data-es="Empieza por contarnos la vida que quieres ahi." data-en="Start by telling us the life you want there.">Start by telling us the life you want there.</h2>
+      <p class="fx-body" data-es="Sin compromiso hasta que apruebes tu resumen y el precio." data-en="No commitment until you approve your brief and the fee.">No commitment until you approve your brief and the fee.</p>
+      <a href="/brief" class="btn btn-gold" data-es="Crear mi resumen &rarr;" data-en="Build my brief &rarr;">Build my brief &rarr;</a>
+      <p class="fx-fineprint" data-es="PropLync Finder esta en fase piloto. Plazas limitadas mientras lo probamos con compradores reales." data-en="PropLync Finder is in pilot. Places are limited while we test it with real buyers.">PropLync Finder is in pilot. Places are limited while we test it with real buyers.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 23.4h10.8" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" opacity=".45"/></svg>
+      <span class="wordmark">PropLync<span class="accent">.mx</span></span>
+    </a>
+    <span data-es="Hecho en la Riviera Maya &middot; para compradores en cualquier parte" data-en="Built in the Riviera Maya &middot; for buyers anywhere">Built in the Riviera Maya &middot; for buyers anywhere</span>
+    <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span>
+  </div>
+</footer>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/nav-auth.js"></script>
+<script src="/js/hero3d.js"></script>
+<script>
+  document.querySelectorAll('#navlinks a').forEach(function (a) {
+    a.addEventListener('click', function () { document.getElementById('navlinks').classList.remove('open'); });
+  });
+</script>
+</body>
+</html>
