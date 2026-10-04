@@ -43,7 +43,9 @@ nav{display:flex;align-items:center;gap:var(--sp-8);height:72px}
    as the tail of the name, not a second word. */
 .brand .accent{color:var(--gold);letter-spacing:.07em}
 
-.navlinks{display:flex;gap:4px;margin-left:auto}
+/* align-items:center so a child shorter than the row sits on the same axis
+   instead of being stretched and top-aligning its own contents. */
+.navlinks{display:flex;align-items:center;gap:4px;margin-left:auto}
 .navlinks a{
   color:var(--on-ink-dim);
   font-size:.82rem;font-weight:500;
