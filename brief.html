@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="Tu resumen &middot; PropLync Finder" data-en="Your brief &middot; PropLync Finder">Your brief &middot; PropLync Finder</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<style>
+  body{background:var(--ink);color:var(--on-ink)}
+  .bf-wrap{max-width:1080px;margin:0 auto;padding:var(--sp-10) var(--sp-8) var(--sp-16)}
+  .bf-head{margin-bottom:var(--sp-8)}
+  .bf-eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:var(--sp-3)}
+  .bf-h1{font-family:var(--display);font-weight:300;font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.1;letter-spacing:-.025em;margin:0 0 var(--sp-3)}
+  .bf-sub{color:var(--on-ink-dim);max-width:60ch;line-height:1.6;margin:0}
+
+  .bf-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:var(--sp-8);align-items:start}
+
+  .bf-chat{border:1px solid rgba(240,237,232,.12);border-radius:var(--radius-lg);background:rgba(240,237,232,.025);display:flex;flex-direction:column;min-height:520px}
+  /* justify-content:flex-end so the conversation grows up from the compose bar
+     the way every chat does, instead of leaving a hole above the first line. */
+  .bf-log{flex:1;padding:var(--sp-6);display:flex;flex-direction:column;justify-content:flex-end;gap:14px;overflow-y:auto;max-height:52vh}
+  .bf-msg{max-width:84%;padding:12px 15px;border-radius:var(--radius-md);line-height:1.55;font-size:.93rem}
+  .bf-msg.a{align-self:flex-start;background:rgba(240,237,232,.07);border:1px solid rgba(240,237,232,.08)}
+  .bf-msg.u{align-self:flex-end;background:var(--gold);color:var(--ink);font-weight:500}
+  .bf-msg.sys{align-self:center;text-align:center;font-family:var(--mono);font-size:.72rem;color:var(--on-ink-dim);background:none;border:0;max-width:100%}
+  .bf-msg.err{align-self:center;background:rgba(220,120,100,.12);border:1px solid rgba(220,120,100,.35);color:#f0c8bd;font-size:.85rem;max-width:100%}
+
+  .bf-compose{border-top:1px solid rgba(240,237,232,.10);padding:12px;display:flex;gap:8px;align-items:center}
+  .bf-input{flex:1;min-width:0;background:rgba(240,237,232,.06);border:1px solid rgba(240,237,232,.12);border-radius:999px;color:var(--on-ink);padding:12px 16px;font-family:var(--body);font-size:.92rem}
+  .bf-input:focus{outline:none;border-color:var(--gold)}
+  .bf-icon{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid rgba(240,237,232,.16);background:rgba(240,237,232,.06);color:var(--on-ink);cursor:pointer;font-size:1.05rem;display:grid;place-items:center;transition:all var(--duration) ease}
+  .bf-icon:hover{border-color:var(--gold);color:var(--gold)}
+  .bf-icon[data-rec="true"]{background:#c6584b;border-color:#c6584b;color:#fff;animation:pulse 1.2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  .bf-send{flex:none;background:var(--gold);color:var(--ink);border:0;border-radius:999px;padding:12px 20px;font-weight:600;cursor:pointer;font-family:var(--body);font-size:.9rem}
+  .bf-send:disabled{opacity:.45;cursor:not-allowed}
+
+  .bf-side{position:sticky;top:var(--sp-6);display:grid;gap:var(--sp-5)}
+  .bf-card{border:1px solid rgba(240,237,232,.12);border-radius:var(--radius-lg);background:rgba(240,237,232,.025);padding:var(--sp-6)}
+  .bf-card h2{font-family:var(--display);font-weight:400;font-size:1.1rem;margin:0 0 var(--sp-4)}
+  .bf-field{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:8px 0;border-bottom:1px dashed rgba(240,237,232,.10);font-size:.86rem}
+  .bf-field:last-child{border-bottom:0}
+  .bf-k{font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--on-ink-dim);padding-top:2px}
+  .bf-v{color:var(--on-ink)}
+  .bf-v.empty{color:var(--on-ink-dim);opacity:.5}
+
+  .bf-note{font-family:var(--mono);font-size:.68rem;line-height:1.7;color:var(--on-ink-dim);opacity:.8;margin:0}
+  .bf-human{display:inline-block;margin-top:var(--sp-4);font-size:.82rem;color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+
+  @media (max-width:900px){
+    .bf-grid{grid-template-columns:1fr}
+    .bf-side{position:static}
+    .bf-log{max-height:46vh}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/finder" aria-label="PropLync.mx home">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 23.4h10.8" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" opacity=".45"/></svg>
+      <span class="wordmark">PropLync<span class="accent">.mx</span></span>
+    </a>
+    <div class="navtools">
+      <div class="lang" role="group" aria-label="Language">
+        <button id="es" onclick="setLang('es')">ES</button>
+        <button id="en" class="on" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main class="bf-wrap">
+  <div class="bf-head">
+    <div class="bf-eyebrow" data-es="Paso 1 de 4" data-en="Step 1 of 4">Step 1 of 4</div>
+    <h1 class="bf-h1" data-es="Cuentanos la vida que quieres tener ahi." data-en="Tell us about the life you want there.">Tell us about the life you want there.</h1>
+    <p class="bf-sub" data-es="Habla o escribe, en espanol o en ingles, el tiempo que quieras. Puedes parar y seguir despues. Al final te damos un resumen de una pagina para que lo apruebes o lo corrijas: hasta ese momento no buscamos nada." data-en="Speak or type, in English or Spanish, for as long as you like. You can stop and pick it up later. At the end you get a one-page brief to approve or correct, and nothing is searched until you do.">Speak or type, in English or Spanish, for as long as you like. You can stop and pick it up later. At the end you get a one-page brief to approve or correct, and nothing is searched until you do.</p>
+  </div>
+
+  <div class="bf-grid">
+    <section class="bf-chat">
+      <div class="bf-log" id="log" aria-live="polite"></div>
+      <div class="bf-compose">
+        <button class="bf-icon" id="mic" title="Record a voice note" aria-label="Record a voice note" data-rec="false">&#127908;</button>
+        <input class="bf-input" id="say" autocomplete="off"
+               data-es-placeholder="Escribe o toca el microfono..." data-en-placeholder="Type, or tap the microphone..."
+               placeholder="Type, or tap the microphone...">
+        <button class="bf-send" id="send" data-es="Enviar" data-en="Send">Send</button>
+      </div>
+    </section>
+
+    <aside class="bf-side">
+      <div class="bf-card">
+        <h2 data-es="Tu resumen, en vivo" data-en="Your brief, live">Your brief, live</h2>
+        <div id="brief"></div>
+      </div>
+      <div class="bf-card">
+        <p class="bf-note" data-es="Tus notas de voz se transcriben en un servicio externo y despues se descartan. No pedimos identificacion ni datos bancarios. Concierge es un asistente de IA y no da asesoria legal, fiscal ni financiera." data-en="Your voice notes are transcribed by an outside service and then discarded. We never ask for ID or bank details. Concierge is an AI assistant and gives no legal, tax or financial advice.">Your voice notes are transcribed by an outside service and then discarded. We never ask for ID or bank details. Concierge is an AI assistant and gives no legal, tax or financial advice.</p>
+        <a class="bf-human" href="mailto:hola@proplync.mx?subject=Finder" data-es="Prefiero hablar con una persona" data-en="I would rather talk to a person">I would rather talk to a person</a>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script src="/js/i18n.js"></script>
+<script>
+/* The conversation lives in memory and is replayed to the server each turn.
+   Nothing is stored yet: persistence and its row-level security arrive with
+   migration 009, and a half-stored brief would be worse than none. */
+var messages = [];
+var busy = false;
+var brief = {};
+
+var logEl = document.getElementById('log');
+var sayEl = document.getElementById('say');
+var sendEl = document.getElementById('send');
+var micEl = document.getElementById('mic');
+
+function t(es, en) { return document.documentElement.lang === 'es' ? es : en; }
+
+function bubble(role, text) {
+  var d = document.createElement('div');
+  d.className = 'bf-msg ' + role;
+  d.textContent = text;
+  logEl.appendChild(d);
+  logEl.scrollTop = logEl.scrollHeight;
+  return d;
+}
+
+var FIELDS = [
+  ['budget',        'Presupuesto',    'Budget'],
+  ['location',      'Zona',           'Location'],
+  ['must_haves',    'Imprescindible', 'Must-haves'],
+  ['deal_breakers', 'Descartan',      'Deal-breakers'],
+  ['nice_to_haves', 'Deseable',       'Nice to have'],
+  ['purpose',       'Proposito',      'Purpose'],
+  ['timeline',      'Cuando',         'Timeline']
+];
+
+function flat(v) {
+  if (v === null || v === undefined || v === '') return '';
+  if (Array.isArray(v)) return v.filter(Boolean).join(', ');
+  if (typeof v === 'object') {
+    return Object.keys(v).map(function (k) { return v[k]; })
+      .filter(function (x) { return x !== null && x !== undefined && x !== ''; }).join(' · ');
+  }
+  return String(v);
+}
+
+function renderBrief() {
+  var host = document.getElementById('brief');
+  host.innerHTML = '';
+  FIELDS.forEach(function (f) {
+    var val = flat(brief[f[0]]);
+    var row = document.createElement('div');
+    row.className = 'bf-field';
+    var k = document.createElement('div'); k.className = 'bf-k'; k.textContent = t(f[1], f[2]);
+    var v = document.createElement('div');
+    v.className = 'bf-v' + (val ? '' : ' empty');
+    v.textContent = val || t('pendiente', 'not yet');
+    row.appendChild(k); row.appendChild(v); host.appendChild(row);
+  });
+}
+
+async function turn(text) {
+  if (busy || !text) return;
+  busy = true; sendEl.disabled = true;
+  bubble('u', text);
+  messages.push({ role: 'user', content: text });
+  sayEl.value = '';
+
+  var thinking = bubble('sys', t('Concierge esta escuchando...', 'Concierge is listening...'));
+
+  try {
+    var r = await fetch('/api/finder?action=turn', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: messages })
+    });
+    var data = await r.json();
+    thinking.remove();
+
+    if (!r.ok) {
+      /* Name the real reason. "Something went wrong" sends people away; "the key
+         is missing in this environment" tells whoever is testing what to fix. */
+      var why = data.error === 'concierge_unconfigured'
+        ? t('Concierge no esta configurado en este entorno (falta ANTHROPIC_API_KEY).',
+             'Concierge is not configured in this environment (ANTHROPIC_API_KEY is missing).')
+        : data.error === 'rate_limited'
+          ? t('Demasiados mensajes seguidos. Espera un momento.', 'Too many messages at once. Give it a moment.')
+          : t('Concierge no respondio. Intenta de nuevo.', 'Concierge did not answer. Try again.');
+      bubble('err', why);
+      return;
+    }
+
+    if (data.brief) { brief = data.brief; renderBrief(); }
+    if (data.say) {
+      bubble('a', data.say);
+      messages.push({ role: 'assistant', content: data.say });
+    }
+    if (data.done) {
+      bubble('sys', t('Revisa el resumen y aprueba cuando este bien.', 'Review the brief and approve it when it looks right.'));
+    }
+  } catch (e) {
+    thinking.remove();
+    bubble('err', t('Sin conexion con Concierge.', 'No connection to Concierge.'));
+  } finally {
+    busy = false; sendEl.disabled = false; sayEl.focus();
+  }
+}
+
+/* ---------- voice ---------- */
+var rec = null, chunks = [];
+
+async function startRec() {
+  try {
+    var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    chunks = [];
+    rec = new MediaRecorder(stream);
+    rec.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = async function () {
+      stream.getTracks().forEach(function (tr) { tr.stop(); });
+      var blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+      if (!blob.size) return;
+      var note = bubble('sys', t('Transcribiendo...', 'Transcribing...'));
+      try {
+        var b64 = await new Promise(function (resolve, reject) {
+          var fr = new FileReader();
+          fr.onload = function () { resolve(String(fr.result).split(',')[1]); };
+          fr.onerror = reject;
+          fr.readAsDataURL(blob);
+        });
+        var r = await fetch('/api/finder?action=transcribe', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ audio: b64, mime: blob.type })
+        });
+        var data = await r.json();
+        note.remove();
+        if (r.ok && data.text) { turn(data.text); }
+        else { bubble('err', t('No pude transcribir esa nota.', 'I could not transcribe that note.')); }
+      } catch (e) {
+        note.remove();
+        bubble('err', t('No pude transcribir esa nota.', 'I could not transcribe that note.'));
+      }
+    };
+    rec.start();
+    micEl.setAttribute('data-rec', 'true');
+  } catch (e) {
+    /* A denied microphone is a choice, not a failure. Typing still works. */
+    bubble('err', t('Sin acceso al microfono. Puedes escribir.', 'No microphone access. You can type instead.'));
+  }
+}
+
+micEl.addEventListener('click', function () {
+  if (!navigator.mediaDevices || typeof MediaRecorder === 'undefined') {
+    bubble('err', t('Este navegador no graba audio. Puedes escribir.', 'This browser cannot record audio. You can type instead.'));
+    return;
+  }
+  if (rec && rec.state === 'recording') { rec.stop(); micEl.setAttribute('data-rec', 'false'); }
+  else { startRec(); }
+});
+
+sendEl.addEventListener('click', function () { turn(sayEl.value.trim()); });
+sayEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') turn(sayEl.value.trim()); });
+
+document.addEventListener('langchange', function () {
+  var p = sayEl.getAttribute('data-' + document.documentElement.lang + '-placeholder');
+  if (p) sayEl.placeholder = p;
+  renderBrief();
+});
+
+renderBrief();
+bubble('a', t('Hola, soy Concierge, el asistente de IA de PropLync. Antes de buscar nada quiero entender que estas buscando. Cuentame: que vida te imaginas ahi?',
+              'Hi, I am Concierge, PropLync’s AI assistant. Before searching anything I want to understand what you are after. Tell me: what life do you picture there?'));
+messages.push({ role: 'assistant', content: 'Hi, I am Concierge. Tell me: what life do you picture there?' });
+</script>
+</body>
+</html>
