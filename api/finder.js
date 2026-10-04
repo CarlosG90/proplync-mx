@@ -130,23 +130,36 @@ async function handleTurn(req, res) {
 
   try {
     let text;
-    if (provider === 'anthropic') {
-      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-      const out = await client.messages.create({
-        model: MODEL,
-        max_tokens: 1400,
-        system: SYSTEM,
-        messages: messages
-      });
-      text = (out.content || []).filter(function (b) { return b.type === 'text'; })
-        .map(function (b) { return b.text; }).join('');
-    } else {
+    let used = provider;
+    const viaGroq = async function () {
       const data = await groqChat({
         max_tokens: GROQ_MAX_TOKENS,
         temperature: 0.4,
         messages: [{ role: 'system', content: SYSTEM }].concat(messages)
       });
-      text = messageText(data);
+      return messageText(data);
+    };
+    if (provider === 'anthropic') {
+      try {
+        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+        const out = await client.messages.create({
+          model: MODEL,
+          max_tokens: 1400,
+          system: SYSTEM,
+          messages: messages
+        });
+        text = (out.content || []).filter(function (b) { return b.type === 'text'; })
+          .map(function (b) { return b.text; }).join('');
+      } catch (err) {
+        /* A rejected or expired Anthropic key must not take the Concierge down
+           while Groq is available. Log it so the bad key still gets noticed. */
+        if (!process.env.GROQ_API_KEY) throw err;
+        logDegraded('finder:anthropic-failed-using-groq', err);
+        used = 'groq';
+        text = await viaGroq();
+      }
+    } else {
+      text = await viaGroq();
     }
     const parsed = readJson(text);
 
@@ -155,7 +168,7 @@ async function handleTurn(req, res) {
       brief: parsed.brief && typeof parsed.brief === 'object' ? parsed.brief : {},
       missing: Array.isArray(parsed.missing) ? parsed.missing.slice(0, 20) : [],
       done: parsed.done === true,
-      provider: provider
+      provider: used
     });
   } catch (err) {
     logDegraded('finder:turn', err);
