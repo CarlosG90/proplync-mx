@@ -191,8 +191,10 @@ async function turn(text) {
       /* Name the real reason. "Something went wrong" sends people away; "the key
          is missing in this environment" tells whoever is testing what to fix. */
       var why = data.error === 'concierge_unconfigured'
-        ? t('Concierge no esta configurado en este entorno (falta ANTHROPIC_API_KEY).',
-             'Concierge is not configured in this environment (ANTHROPIC_API_KEY is missing).')
+        ? t('Concierge no esta configurado en este entorno (faltan ANTHROPIC_API_KEY y GROQ_API_KEY).',
+             'Concierge is not configured in this environment (ANTHROPIC_API_KEY and GROQ_API_KEY are both missing).')
+        : data.error === 'concierge_busy'
+          ? t('Concierge esta ocupado. Intenta de nuevo en unos segundos.', 'Concierge is busy. Try again in a few seconds.')
         : data.error === 'rate_limited'
           ? t('Demasiados mensajes seguidos. Espera un momento.', 'Too many messages at once. Give it a moment.')
           : t('Concierge no respondio. Intenta de nuevo.', 'Concierge did not answer. Try again.');

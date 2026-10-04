@@ -8,12 +8,13 @@
  * buyer approves before anything is searched.
  *
  * WHY TWO PROVIDERS
- * Claude runs the conversation and the extraction: tone matters here, it is the
- * only thing the buyer ever talks to, and api/extract.js already proved this
- * pattern. Groq runs Whisper for speech to text. That split is not arbitrary --
- * Claude takes no audio input, and Groq's 1,000 output-tokens-per-minute cap
- * (documented in api/extract.js) applies to chat completions, not to the
- * transcription endpoint, so Whisper is the one job Groq is free to do here.
+ * Claude runs the conversation and the extraction when ANTHROPIC_API_KEY is set:
+ * tone matters here, it is the only thing the buyer ever talks to. Groq runs
+ * Whisper for speech to text (Claude takes no audio input), and also stands in
+ * for Claude on the conversation where that key is missing, e.g. Preview. Its
+ * 1,000 output-tokens-per-minute cap (api/extract.js) applies to chat
+ * completions, not to transcription, which is why it is the fallback and not
+ * the first choice.
  *
  * ONE FUNCTION, SEVERAL ACTIONS
  * Vercel Hobby allows 12 serverless functions and this is the twelfth. Every
@@ -31,6 +32,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { safeDetail, logDegraded } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
+import { groqChat, messageText } from './_lib/groq.js';
 
 const MODEL = 'claude-opus-5';
 const GROQ_STT = 'https://api.groq.com/openai/v1/audio/transcriptions';
@@ -93,13 +95,19 @@ function readJson(raw) {
   return JSON.parse(text.slice(start, end + 1));
 }
 
+/* Claude is the intended brain. Where its key is absent (Preview deployments)
+   Groq runs the same conversation so the Concierge still works. Groq's cap is
+   1,000 output tokens a minute on this account, so its replies are budgeted
+   tighter and a 429 is reported as "busy", not as a broken product. */
+const GROQ_MAX_TOKENS = 600;
+
 async function handleTurn(req, res) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    /* Preview deployments do not carry this key yet. Say so plainly rather than
-       failing in a way the buyer would read as a broken product. */
+  const provider = process.env.ANTHROPIC_API_KEY ? 'anthropic'
+    : process.env.GROQ_API_KEY ? 'groq' : null;
+  if (!provider) {
     res.status(503).json({
       error: 'concierge_unconfigured',
-      detail: 'ANTHROPIC_API_KEY is not set in this environment.'
+      detail: 'Neither ANTHROPIC_API_KEY nor GROQ_API_KEY is set in this environment.'
     });
     return;
   }
@@ -121,26 +129,40 @@ async function handleTurn(req, res) {
   if (messages[0].role !== 'user') messages.unshift({ role: 'user', content: 'Hola' });
 
   try {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const out = await client.messages.create({
-      model: MODEL,
-      max_tokens: 1400,
-      system: SYSTEM,
-      messages: messages
-    });
-
-    const text = (out.content || []).filter(function (b) { return b.type === 'text'; })
-      .map(function (b) { return b.text; }).join('');
+    let text;
+    if (provider === 'anthropic') {
+      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      const out = await client.messages.create({
+        model: MODEL,
+        max_tokens: 1400,
+        system: SYSTEM,
+        messages: messages
+      });
+      text = (out.content || []).filter(function (b) { return b.type === 'text'; })
+        .map(function (b) { return b.text; }).join('');
+    } else {
+      const data = await groqChat({
+        max_tokens: GROQ_MAX_TOKENS,
+        temperature: 0.4,
+        messages: [{ role: 'system', content: SYSTEM }].concat(messages)
+      });
+      text = messageText(data);
+    }
     const parsed = readJson(text);
 
     res.status(200).json({
       say: String(parsed.say || '').slice(0, 4000),
       brief: parsed.brief && typeof parsed.brief === 'object' ? parsed.brief : {},
       missing: Array.isArray(parsed.missing) ? parsed.missing.slice(0, 20) : [],
-      done: parsed.done === true
+      done: parsed.done === true,
+      provider: provider
     });
   } catch (err) {
     logDegraded('finder:turn', err);
+    if (/Groq responded 429/.test(String(err && err.message))) {
+      res.status(429).json({ error: 'concierge_busy', detail: 'The Concierge is busy. Try again in a few seconds.' });
+      return;
+    }
     res.status(502).json({ error: 'concierge_unavailable', detail: safeDetail(err) });
   }
 }
