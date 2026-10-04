@@ -864,7 +864,12 @@
   /* ================================================================
      NAV — Soluciones dropdown
      ================================================================ */
-  .navdrop{position:relative}
+  /* display:flex, not the default block. The trigger is an inline-flex
+     <button>, so as an inline child it sat on a text baseline and the line's
+     descender space padded the wrapper underneath it: a 38px wrapper with the
+     33px button pinned to its top. That is why "Soluciones" rode ~2px above
+     every link beside it. Flex removes the baseline, so wrapper == button. */
+  .navdrop{position:relative;display:flex;align-items:center}
   /* Deliberately mirrors .navlinks a in css/nav.css. This is a <button>, so
      that rule never applied to it: it fell back to inheriting body's --ink,
      which is the dark text colour meant for light backgrounds and is all but
