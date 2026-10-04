@@ -1,6 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
   <!-- Proplync seal. Solid shield so the silhouette survives at 16px, where
-       the old stroke-based mark dissolved into noise. -->
+       the old stroke-based mark dissolved. Roof inside, not an arch: the arch
+       read as a lowercase "n". -->
   <path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/>
-  <path d="M11.8 24.2v-6.9a4.2 4.2 0 0 1 8.4 0v6.9" stroke="#0a1628" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M10.6 23.4h10.8" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" opacity=".45"/>
 </svg>

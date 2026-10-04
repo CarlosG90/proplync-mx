@@ -23,15 +23,25 @@ header.scrolled{
 nav{display:flex;align-items:center;gap:var(--sp-8);height:72px}
 
 .brand{
-  display:flex;align-items:center;gap:10px;
+  display:flex;align-items:center;gap:11px;
   color:var(--on-ink);
-  font-family:var(--display);font-size:1.12rem;font-weight:400;
-  letter-spacing:-.01em;
+  font-family:var(--display);
   transition:opacity var(--duration) ease;
 }
 .brand:hover{opacity:.85}
-.brand .mark{width:28px;height:28px;flex:none}
-.brand .accent{color:var(--gold)}
+.brand .mark{width:30px;height:30px;flex:none}
+
+/* The name is ONE flex item. It used to be two -- a bare text node plus the
+   .accent span -- so the container's gap landed between "Proplync" and ".mx"
+   and tore the wordmark in half on every page. */
+.brand .wordmark{
+  display:flex;align-items:baseline;white-space:nowrap;
+  font-size:1rem;font-weight:600;
+  letter-spacing:.15em;text-transform:uppercase;
+}
+/* Caps are already wide, so the accent gets less tracking: ".MX" should read
+   as the tail of the name, not a second word. */
+.brand .accent{color:var(--gold);letter-spacing:.07em}
 
 .navlinks{display:flex;gap:4px;margin-left:auto}
 .navlinks a{
@@ -208,8 +218,10 @@ nav{display:flex;align-items:center;gap:var(--sp-8);height:72px}
   .nav-login-mobile span{display:none}
 }
 @media (max-width:380px){
-  .brand{font-size:.95rem}
-  .brand .mark{width:24px;height:24px}
+  /* Spaced caps are wider than the old lowercase, so the wordmark steps down
+     harder than the mark to keep the nav from crowding the menu button. */
+  .brand .wordmark{font-size:.84rem;letter-spacing:.12em}
+  .brand .mark{width:26px;height:26px}
   .navtools{gap:6px}
   .lang button{padding:5px 8px}
 }
