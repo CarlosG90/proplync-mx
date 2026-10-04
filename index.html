@@ -126,6 +126,27 @@
   .module-status.on{color:var(--sea);background:rgba(94,196,190,.12);border:1px solid rgba(94,196,190,.3)}
   .module-status.soon{color:var(--on-ink-dim);background:rgba(240,237,232,.05);border:1px solid rgba(240,237,232,.12)}
   .module-soon{opacity:.6}
+  /* Audience switch: the page is an agency pitch, and buyers who land here need
+     to see in the first second that there is a door for them too. The agency door
+     is marked current because that is what this page is. */
+  .doors{display:inline-grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;margin-bottom:30px;max-width:100%;
+    border:1px solid var(--line-dark);border-radius:14px;background:rgba(240,237,232,.04)}
+  .door{display:flex;flex-direction:column;gap:3px;padding:11px 20px;border-radius:10px;border:1px solid transparent;
+    text-decoration:none;color:var(--on-ink-dim);transition:background .2s,border-color .2s}
+  .door b{font-size:.92rem;font-weight:600;color:var(--on-ink);display:flex;align-items:center;gap:6px}
+  .door small{font-family:var(--mono);font-size:.66rem;letter-spacing:.04em}
+  .door:hover{background:rgba(240,237,232,.06)}
+  .door.on{background:rgba(201,169,110,.14);border-color:rgba(201,169,110,.4);cursor:default}
+  /* The nav is full at desktop widths; the doors band carries the buyer link there. */
+  .navlinks .nav-buyer{display:none}
+  @media (max-width:900px){.navlinks .nav-buyer{display:block}}
+  .door-buyer b::after{content:"\2197";color:var(--gold-light);font-weight:400}
+  @media (max-width:520px){
+    .doors{display:grid;width:100%}
+    .door{padding:10px 12px}
+    .door b{font-size:.84rem}
+    .door small{font-size:.6rem}
+  }
   .hero-buyer{
     margin-top:18px;font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;
   }
@@ -968,6 +989,7 @@
       <a href="#roi" data-es="Calculadora" data-en="ROI">Calculadora</a>
       <a href="#acceso" data-es="Acceso" data-en="Early access">Acceso</a>
       <a href="#contacto" data-es="Contacto" data-en="Contact">Contacto</a>
+      <a href="/finder" class="nav-buyer" data-es="Soy comprador" data-en="I'm a buyer">Soy comprador</a>
       <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
     </div>
     <div class="navtools">
@@ -997,6 +1019,16 @@
   <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
   <div class="wrap">
     <div class="hero-content">
+      <div class="doors" role="group" aria-label="Audience">
+        <a class="door on" href="#top" aria-current="true">
+          <b data-es="Para agencias" data-en="For agencies">Para agencias</b>
+          <small data-es="Tu operacion en un lugar" data-en="Your operation in one place">Tu operacion en un lugar</small>
+        </a>
+        <a class="door door-buyer" href="/finder">
+          <b data-es="Para compradores" data-en="For buyers">Para compradores</b>
+          <small data-es="Habla con Concierge" data-en="Talk to Concierge">Habla con Concierge</small>
+        </a>
+      </div>
       <div class="hero-eyebrow eyebrow" data-es="Plataforma para agencias inmobiliarias" data-en="Platform for real estate agencies">Plataforma para agencias inmobiliarias</div>
       <h1 data-es="Toda tu operacion inmobiliaria, <em>en un lugar.</em>" data-en="Your whole real estate operation, <em>in one place.</em>">Toda tu operacion inmobiliaria, <em>en un lugar.</em></h1>
       <p class="hero-sub" data-es="Captura una propiedad una vez. PropLync le da su mini-sitio, guarda cada prospecto con seguimiento, y convierte sus datos en el contenido con el que la vendes." data-en="Capture a listing once. PropLync gives it a mini-site, keeps every lead with follow-up, and turns its data into the content you sell it with.">Captura una propiedad una vez. PropLync le da su mini-sitio, guarda cada prospecto con seguimiento, y convierte sus datos en el contenido con el que la vendes.</p>
@@ -1027,7 +1059,7 @@
           <span class="module-desc" data-es="Comparables y precio sugerido por zona." data-en="Comparables and a suggested price per area.">Comparables y precio sugerido por zona.</span>
         </div>
       </div>
-      <div class="hero-buyer" data-es="&iquest;Buscas propiedad? <a href=\'/search\'>Explora las propiedades &rarr;</a>" data-en="Looking to buy? <a href=\'/search\'>Browse listings &rarr;</a>">&iquest;Buscas propiedad? <a href="/search">Explora las propiedades &rarr;</a></div>
+      <div class="hero-buyer" data-es="&iquest;Buscas propiedad? <a href='/brief'>Habla con Concierge &rarr;</a>" data-en="Looking to buy? <a href='/brief'>Talk to Concierge &rarr;</a>">&iquest;Buscas propiedad? <a href="/brief">Habla con Concierge &rarr;</a></div>
       <div class="hero-cta">
         <a href="/login" class="btn btn-gold" data-es="Soy una agencia" data-en="I'm an agency">Soy una agencia</a>
         <a href="#contacto" class="btn btn-ghost" data-es="Reservar diagnostico de 15 min" data-en="Book a 15-min diagnosis">Reservar diagnostico de 15 min</a>
