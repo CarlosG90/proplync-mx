@@ -6,6 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title data-es="Tu resumen &middot; PropLync Finder" data-en="Your brief &middot; PropLync Finder">Your brief &middot; PropLync Finder</title>
 <meta name="robots" content="noindex">
+<!-- The buyer's private link carries its token in the URL; never send it to the portals the results link to. -->
+<meta name="referrer" content="no-referrer">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -13,6 +15,8 @@
 <link rel="stylesheet" href="/css/nav.css">
 <style>
   body{background:var(--ink);color:var(--on-ink)}
+  /* .bf-chat and .bf-status set display, which would beat the hidden attribute. */
+  [hidden]{display:none !important}
   .bf-wrap{max-width:1080px;margin:0 auto;padding:var(--sp-10) var(--sp-8) var(--sp-16)}
   .bf-head{margin-bottom:var(--sp-8)}
   .bf-eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:var(--sp-3)}
@@ -52,6 +56,25 @@
 
   .bf-note{font-family:var(--mono);font-size:.68rem;line-height:1.7;color:var(--on-ink-dim);opacity:.8;margin:0}
   .bf-human{display:inline-block;margin-top:var(--sp-4);font-size:.82rem;color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+
+  .bf-form{display:grid;gap:10px;margin-top:var(--sp-4)}
+  .bf-form .bf-input{border-radius:var(--radius-md)}
+  .bf-consent{display:flex;gap:10px;align-items:flex-start;font-size:.8rem;line-height:1.5;color:var(--on-ink-dim)}
+  .bf-consent input{margin-top:3px;accent-color:var(--gold)}
+  .bf-msg-line{font-size:.82rem;min-height:1.2em;margin:0}
+  .bf-msg-line.err{color:#f0c8bd}
+  .bf-status{display:grid;gap:var(--sp-5)}
+  .bf-status-text{font-size:1rem;line-height:1.6;margin:0}
+  .bf-link{word-break:break-all;font-family:var(--mono);font-size:.74rem;color:var(--gold);background:rgba(240,237,232,.05);padding:10px 12px;border-radius:var(--radius-md);margin:var(--sp-3) 0 0}
+  .bf-prop{border:1px solid rgba(240,237,232,.12);border-radius:var(--radius-lg);overflow:hidden;background:rgba(240,237,232,.025)}
+  .bf-prop-photo{height:180px;background-size:cover;background-position:center;background-color:var(--ink-3)}
+  .bf-prop-body{padding:var(--sp-5)}
+  .bf-prop h3{font-family:var(--display);font-weight:400;font-size:1.08rem;margin:0 0 4px}
+  .bf-prop-loc{font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  .bf-prop-specs{font-size:.84rem;color:var(--on-ink-dim);margin-bottom:12px}
+  .bf-prop-row{display:flex;justify-content:space-between;gap:12px;font-size:.84rem;padding:6px 0;border-top:1px dashed rgba(240,237,232,.10)}
+  .bf-prop-row a{color:var(--on-ink);text-decoration:underline;text-underline-offset:3px}
+  .bf-prop-k{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--on-ink-dim);margin:14px 0 4px}
 
   @media (max-width:900px){
     .bf-grid{grid-template-columns:1fr}
@@ -96,7 +119,27 @@
       </div>
     </section>
 
+    <section class="bf-status" id="status-view" hidden>
+      <div class="bf-card">
+        <h2 data-es="Tu busqueda" data-en="Your search">Your search</h2>
+        <p class="bf-status-text" id="st-text"></p>
+        <div id="st-link"></div>
+      </div>
+      <div class="bf-status" id="st-results"></div>
+    </section>
+
     <aside class="bf-side">
+      <div class="bf-card" id="approve-card" hidden>
+        <h2 data-es="Aprueba tu resumen" data-en="Approve your brief">Approve your brief</h2>
+        <p class="bf-note" data-es="Si el resumen dice lo que buscas, dejanos tu nombre y correo. Buscamos, una persona confirma cada propiedad con su agente, y te mandamos solo lo que pase." data-en="If the brief says what you are looking for, leave your name and email. We search, a person confirms each property with its agent, and we send you only what passes.">If the brief says what you are looking for, leave your name and email. We search, a person confirms each property with its agent, and we send you only what passes.</p>
+        <div class="bf-form">
+          <input class="bf-input" id="ap-name" autocomplete="name" maxlength="120" data-es-placeholder="Tu nombre" data-en-placeholder="Your name" placeholder="Your name">
+          <input class="bf-input" id="ap-email" type="email" autocomplete="email" maxlength="200" data-es-placeholder="Tu correo" data-en-placeholder="Your email" placeholder="Your email">
+          <label class="bf-consent"><input type="checkbox" id="ap-consent"><span data-es="Acepto que PropLync guarde este resumen y mi contacto para buscar propiedades, y que mi nombre solo se comparta con los agentes que yo elija." data-en="I agree that PropLync keeps this brief and my contact details to search for properties, and that my name is shared only with the agents I choose.">I agree that PropLync keeps this brief and my contact details to search for properties, and that my name is shared only with the agents I choose.</span></label>
+          <button class="bf-send" id="ap-send" data-es="Aprobar y buscar" data-en="Approve and search">Approve and search</button>
+          <p class="bf-msg-line" id="ap-msg" aria-live="polite"></p>
+        </div>
+      </div>
       <div class="bf-card">
         <h2 data-es="Tu resumen, en vivo" data-en="Your brief, live">Your brief, live</h2>
         <div id="brief"></div>
@@ -109,11 +152,12 @@
   </div>
 </main>
 
+<script src="/js/escape.js"></script>
 <script src="/js/i18n.js"></script>
 <script>
-/* The conversation lives in memory and is replayed to the server each turn.
-   Nothing is stored yet: persistence and its row-level security arrive with
-   migration 009, and a half-stored brief would be worse than none. */
+/* The conversation lives in memory and is replayed to the server each turn,
+   and is never stored. What is stored is the brief, once the buyer approves it
+   (action=approve), and the page then becomes their private status link. */
 var messages = [];
 var busy = false;
 var brief = {};
@@ -209,6 +253,7 @@ async function turn(text) {
     }
     if (data.done) {
       bubble('sys', t('Revisa el resumen y aprueba cuando este bien.', 'Review the brief and approve it when it looks right.'));
+      document.getElementById('approve-card').hidden = false;
     }
   } catch (e) {
     thinking.remove();
@@ -272,14 +317,148 @@ micEl.addEventListener('click', function () {
 sendEl.addEventListener('click', function () { turn(sayEl.value.trim()); });
 sayEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') turn(sayEl.value.trim()); });
 
+/* ---------- approve ---------- */
+var apSend = document.getElementById('ap-send');
+var apMsg = document.getElementById('ap-msg');
+
+function apError(text) { apMsg.className = 'bf-msg-line err'; apMsg.textContent = text; }
+
+apSend.addEventListener('click', async function () {
+  var name = document.getElementById('ap-name').value.trim();
+  var email = document.getElementById('ap-email').value.trim();
+  var consent = document.getElementById('ap-consent').checked;
+  if (!name || !email) { apError(t('Escribe tu nombre y tu correo.', 'Enter your name and email.')); return; }
+  if (!consent) { apError(t('Necesitamos tu permiso para guardar el resumen.', 'We need your permission to keep the brief.')); return; }
+  apSend.disabled = true;
+  apMsg.className = 'bf-msg-line'; apMsg.textContent = t('Guardando...', 'Saving...');
+  try {
+    var r = await fetch('/api/finder?action=approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ brief: brief, name: name, email: email, consent: true, lang: document.documentElement.lang === 'en' ? 'en' : 'es' })
+    });
+    var data = await r.json();
+    if (!r.ok) {
+      apError(data.error === 'invalid_email' ? t('Revisa tu correo.', 'Check your email address.')
+        : data.error === 'brief_incomplete' ? t('Al resumen le falta la zona o el presupuesto. Sigue la conversacion un poco mas.', 'The brief is missing an area or a budget. Keep talking a little longer.')
+        : data.error === 'rate_limited' ? t('Demasiados intentos. Espera un momento.', 'Too many attempts. Give it a moment.')
+        : t('No pudimos guardar tu resumen. Intenta de nuevo.', 'We could not save your brief. Try again.'));
+      return;
+    }
+    history.replaceState(null, '', '/brief?b=' + encodeURIComponent(data.token));
+    showStatusView(data.token, true);
+  } catch (e) {
+    apError(t('Sin conexion. Intenta de nuevo.', 'No connection. Try again.'));
+  } finally {
+    apSend.disabled = false;
+  }
+});
+
+/* ---------- status (the buyer's private link) ---------- */
+var statusToken = null;
+var statusTimer = null;
+
+function statusLine(s) {
+  if (s.status === 'approved') return t('Recibimos tu resumen. Te escribimos en cuanto empecemos a buscar.', 'We have your brief. We will write as soon as the search starts.');
+  if (s.status === 'searching') return t('Estamos buscando en agencias, portales y sitios de agencias de todo el mercado.', 'We are searching PropLync agencies, portals and agency sites across the market.');
+  if (s.status === 'review') return s.pending
+    ? t('Encontramos ' + s.pending + ' propiedades posibles. Una persona las esta confirmando con cada agente antes de mostrartelas.', 'We found ' + s.pending + ' possible properties. A person is confirming each one with its agent before you see it.')
+    : t('Una persona esta confirmando los resultados con cada agente.', 'A person is confirming the results with each agent.');
+  if (s.status === 'ready') return t('Estas son las propiedades que su agente confirmo.', 'These are the properties their agents confirmed.');
+  return t('Esta busqueda esta cerrada.', 'This search is closed.');
+}
+
+function money(price, currency) {
+  return price == null ? '' : (currency ? currency + ' ' : '') + '$' + Number(price).toLocaleString('en-US');
+}
+
+function propCard(c) {
+  var specs = [
+    c.bedrooms != null ? c.bedrooms + ' ' + t('rec', 'bd') : null,
+    c.bathrooms != null ? c.bathrooms + ' ' + t('banos', 'bath') : null,
+    c.built_m2 != null ? c.built_m2 + ' m²' : null
+  ].filter(Boolean).join(' · ');
+  var photo = cssUrl((c.photos || [])[0]);
+  var a = c.answers || {};
+  var sources = (c.sources || []).map(function (s) {
+    var href = safeUrl(s.url);
+    var label = escapeHtml(s.site || t('Anuncio', 'Listing'));
+    return '<div class="bf-prop-row">' +
+      (href ? '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + label + '</a>' : '<span>' + label + '</span>') +
+      '<span>' + escapeHtml(money(s.price, s.currency)) + '</span></div>';
+  }).join('');
+  var answers = [
+    [t('Disponible', 'Available'), a.available],
+    [t('Precio confirmado', 'Confirmed price'), a.price],
+    [t('Se puede visitar', 'Can visit'), a.can_visit],
+    [t('Restricciones', 'Restrictions'), a.restrictions]
+  ].filter(function (r) { return r[1]; }).map(function (r) {
+    return '<div class="bf-prop-row"><span>' + escapeHtml(r[0]) + '</span><span>' + escapeHtml(r[1]) + '</span></div>';
+  }).join('');
+  return '<article class="bf-prop">' +
+    (photo ? '<div class="bf-prop-photo" style="background-image:url(\'' + photo + '\')"></div>' : '') +
+    '<div class="bf-prop-body">' +
+      '<div class="bf-prop-loc">' + escapeHtml([c.neighborhood, c.town].filter(Boolean).join(' · ')) + '</div>' +
+      '<h3>' + escapeHtml(c.title || t('Propiedad', 'Property')) + '</h3>' +
+      (specs ? '<div class="bf-prop-specs">' + escapeHtml(specs) + '</div>' : '') +
+      (c.summary ? '<p class="bf-note">' + escapeHtml(c.summary) + '</p>' : '') +
+      '<div class="bf-prop-k">' + escapeHtml(t('Lo que dijo el agente', 'What the agent said')) + '</div>' + answers +
+      '<div class="bf-prop-k">' + escapeHtml(t('Donde se anuncia', 'Where it is listed')) + '</div>' + sources +
+    '</div></article>';
+}
+
+async function loadStatus() {
+  try {
+    var r = await fetch('/api/finder?action=status&t=' + encodeURIComponent(statusToken));
+    var s = await r.json();
+    if (!r.ok) {
+      document.getElementById('st-text').textContent = r.status === 404
+        ? t('No encontramos esta busqueda. Revisa el enlace.', 'We could not find this search. Check the link.')
+        : t('No pudimos cargar tu busqueda. Intenta en un momento.', 'We could not load your search. Try again in a moment.');
+      return;
+    }
+    brief = s.brief || {}; renderBrief();
+    document.getElementById('st-text').textContent = statusLine(s);
+    document.getElementById('st-results').innerHTML = (s.confirmed || []).map(propCard).join('');
+    clearTimeout(statusTimer);
+    if (s.status === 'approved' || s.status === 'searching' || s.status === 'review') statusTimer = setTimeout(loadStatus, 60000);
+  } catch (e) {
+    document.getElementById('st-text').textContent = t('Sin conexion.', 'No connection.');
+  }
+}
+
+function showStatusView(token, justApproved) {
+  statusToken = token;
+  document.querySelector('.bf-chat').hidden = true;
+  document.getElementById('approve-card').hidden = true;
+  document.getElementById('status-view').hidden = false;
+  if (justApproved) {
+    var box = document.getElementById('st-link');
+    box.innerHTML = '';
+    var note = document.createElement('p');
+    note.className = 'bf-note';
+    note.textContent = t('Guarda este enlace: es la forma de volver a tu busqueda. No lo compartas.', 'Save this link: it is how you get back to your search. Do not share it.');
+    var link = document.createElement('p');
+    link.className = 'bf-link';
+    link.textContent = location.origin + '/brief?b=' + token;
+    box.appendChild(note); box.appendChild(link);
+  }
+  loadStatus();
+}
+
 document.addEventListener('langchange', function () {
-  var p = sayEl.getAttribute('data-' + document.documentElement.lang + '-placeholder');
-  if (p) sayEl.placeholder = p;
+  var l = document.documentElement.lang;
+  document.querySelectorAll('[data-' + l + '-placeholder]').forEach(function (el) {
+    el.placeholder = el.getAttribute('data-' + l + '-placeholder');
+  });
   renderBrief();
+  if (statusToken) loadStatus();
 });
 
 setLang(document.documentElement.lang);
-bubble('a', t('Hola, soy Concierge, el asistente de IA de PropLync. Antes de buscar nada quiero entender que estas buscando. Cuentame: que vida te imaginas ahi?',
+var savedToken = new URLSearchParams(location.search).get('b');
+if (savedToken) { showStatusView(savedToken, false); }
+else bubble('a', t('Hola, soy Concierge, el asistente de IA de PropLync. Antes de buscar nada quiero entender que estas buscando. Cuentame: que vida te imaginas ahi?',
               'Hi, I am Concierge, PropLync’s AI assistant. Before searching anything I want to understand what you are after. Tell me: what life do you picture there?'));
 messages.push({ role: 'assistant', content: 'Hi, I am Concierge. Tell me: what life do you picture there?' });
 </script>
