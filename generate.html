@@ -2540,12 +2540,24 @@ async function publishInstagram() {
   try {
     const r = await fetch('/api/instagram-publish', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: generateHeaders(),
       body: JSON.stringify({ imageBase64, caption })
     });
     const data = await r.json();
     if (!r.ok || data.error) {
-      if (data.error === 'missing_instagram_credentials') {
+      if (data.error === 'unauthorized') {
+        alert(isEs
+          ? 'Inicia sesion con tu cuenta de agencia para publicar en Instagram.'
+          : 'Log in with your agency account to publish to Instagram.');
+      } else if (data.error === 'upgrade_required') {
+        alert(isEs
+          ? 'Publicar en Instagram esta incluido en los planes Pro y VIP.'
+          : 'Publishing to Instagram is included in the Pro and VIP plans.');
+      } else if (data.error === 'rate_limited') {
+        alert(isEs
+          ? 'Demasiadas publicaciones seguidas. Intenta de nuevo en un rato.'
+          : 'Too many posts in a row. Try again in a while.');
+      } else if (data.error === 'missing_instagram_credentials') {
         alert(isEs
           ? 'Instagram no esta configurado todavia. Falta IG_ACCESS_TOKEN / IG_BUSINESS_ACCOUNT_ID en Vercel.'
           : 'Instagram is not configured yet. Missing IG_ACCESS_TOKEN / IG_BUSINESS_ACCOUNT_ID in Vercel.');
