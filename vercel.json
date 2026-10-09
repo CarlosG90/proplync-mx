@@ -31,6 +31,9 @@
     },
     "api/instagram-publish.js": {
       "maxDuration": 15
+    },
+    "api/finder.js": {
+      "maxDuration": 300
     }
   },
   "rewrites": [
