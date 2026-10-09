@@ -139,6 +139,9 @@ function renderCityPage(town, slug, listings, canonical) {
         </div>
       </a>`).join('');
 
+  /* Printed inside a <script> tag below. JSON.stringify leaves "<" alone, so a
+     listing title containing "</script>" would end the block early; the page
+     template writes it as <, which JSON still reads as "<". */
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -198,7 +201,7 @@ ${listings[0] && listings[0].image ? `<meta property="og:image" content="${esc(l
   @media (max-width:900px){.ct-grid{grid-template-columns:repeat(2,1fr)}.ct-links-cols{grid-template-columns:repeat(2,1fr)}}
   @media (max-width:560px){.ct-grid{grid-template-columns:1fr}}
 </style>
-<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>
 </head>
 <body>
 <header>

@@ -450,6 +450,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="/js/escape.js"></script>
 <script src="/js/i18n.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/supabase-client.js"></script>
@@ -470,10 +471,10 @@
   function itemHTML(l) {
     const title = lang === 'es' ? (l.title_es || l.title_en) : (l.title_en || l.title_es);
     return '<div class="dash-item">' +
-      '<div class="dash-item-photo" style="background-image:url(\'' + (l.image || '') + '\')"></div>' +
+      '<div class="dash-item-photo" style="background-image:url(\'' + cssUrl(l.image) + '\')"></div>' +
       '<div class="dash-item-body">' +
-        '<div class="dash-item-title">' + title + '</div>' +
-        '<div class="dash-item-meta">' + l.town + (l.neighborhood ? ' &middot; ' + l.neighborhood : '') + ' &middot; ' + l.currency + ' $' + Number(l.amount).toLocaleString() + '</div>' +
+        '<div class="dash-item-title">' + escapeHtml(title) + '</div>' +
+        '<div class="dash-item-meta">' + escapeHtml(l.town) + (l.neighborhood ? ' &middot; ' + escapeHtml(l.neighborhood) : '') + ' &middot; ' + escapeHtml(l.currency) + ' $' + Number(l.amount).toLocaleString() + '</div>' +
       '</div>' +
       '<span class="dash-item-status status-' + l.status + '">' + statusLabel(l.status) + '</span>' +
       '<div class="dash-item-actions">' +
@@ -859,8 +860,9 @@
     } else {
       grid.innerHTML = listingImages.map(function (url, i) {
         // The URL goes in a CSS url() inside an attribute, so quotes must not
-        // be able to close it. Handlers use the index, never the URL.
-        const safe = String(url).replace(/["'\\)]/g, encodeURIComponent);
+        // be able to close it. Handlers use the index, never the URL. (This was
+        // replace(…, encodeURIComponent), which leaves ' and ) as they are.)
+        const safe = cssUrl(url);
         return '<div class="photo-tile' + (i === 0 ? ' is-main' : '') + '" style="background-image:url(&quot;' + safe + '&quot;)">' +
           (i === 0 ? '<span class="photo-badge">' + (lang === 'es' ? 'Principal' : 'Main') + '</span>' : '') +
           '<div class="photo-acts">' +

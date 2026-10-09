@@ -34,6 +34,7 @@ Production: https://proplync-mx.vercel.app. The custom domain `proplync.mx` has 
 ```
 *.html                 one file per page (generate.html ~3.4k lines, index.html ~2k; scripts are inline)
 generate-backup.html   dead copy; don't edit, planned for deletion
+js/escape.js           escapeHtml / safeUrl / cssUrl; load before i18n.js on any page that builds HTML from data
 js/i18n.js             ES/EN toggle; language saved in localStorage 'proplync_lang', carried across pages
 js/nav-auth.js         reads the stored Supabase session to pick nav labels; secures nothing
 js/supabase-client.js  SDK client, used only on authenticated pages
@@ -79,7 +80,9 @@ Data model: `agencies` (plan, slug, whatsapp_number, marketing_trials_used), `ag
 - No CORS headers: every caller is same-origin.
 - **Public pages stay SDK-free.** They read the stored session token directly (`storedAccessToken()` / `generateHeaders()` in `generate.html`, `js/nav-auth.js`). Only the dashboard pages load supabase-js.
 - **Security model:** the client secures nothing. Every API verifies the bearer token, and Postgres RLS governs rows. Service-role client only in `api/` and `scripts/`, never in the browser.
-- LLM output and agency-entered text are untrusted: escape before `innerHTML` and validate model JSON before using it.
+- **Escaping:** listing fields, agency fields, OSM place names, error messages and all LLM output are untrusted. When building HTML strings, wrap text in `escapeHtml()`, `src`/`href` in `safeUrl()`, and `url('…')` in styles in `cssUrl()` (all from `js/escape.js`). Prefer `textContent` for plain text. In `generate.html`, call `htmlSafe()` on a renderer's inputs, but only for HTML: PDF, TXT, canvas text and filenames use the raw values. JSON inside a `<script>` tag needs `.replace(/</g, '\\u003c')`.
+- `api/my-listings.js` validates listing and agency fields on save (types, lengths, image URL schemes, currency, color, WhatsApp). New writable fields need a rule there.
+- Validate model JSON before using it.
 - Rate limiting fails open (allows the request when Redis is down) but logs the outage.
 - Code style: vanilla ES modules, no TypeScript, no bundler. Match the surrounding file (many front-end scripts use `function` and `var`).
 
@@ -102,7 +105,6 @@ Data model: `agencies` (plan, slug, whatsapp_number, marketing_trials_used), `ag
 ## Known gaps / next up
 
 See `RECOMMENDATIONS.md` for the full prioritized list. The headlines:
-- XSS: about 75 `innerHTML` writes; one shared `escapeHtml` is needed.
 - No security headers or CSP in `vercel.json`.
 - Use structured output instead of regex-parsed JSON from LLMs, cache the Concierge system prompt, and build an eval set for Concierge.
 - Persist buyer briefs (migration 009) with RLS and an LFPDPPP privacy notice.

@@ -219,6 +219,7 @@
   </div>
 </footer>
 
+<script src="/js/escape.js"></script>
 <script src="/js/i18n.js"></script>
 <script>
   var agency = null;
@@ -234,7 +235,7 @@
   }
 
   function money(p) {
-    return p.currency + ' $' + Number(p.amount || 0).toLocaleString('en-US');
+    return escapeHtml(p.currency) + ' $' + Number(p.amount || 0).toLocaleString('en-US');
   }
 
   /* A spec the agency never filled in is absent, not zero. Printing "0 banos"
@@ -254,14 +255,14 @@
     var title = lang === 'es' ? (p.title_es || p.title_en) : (p.title_en || p.title_es);
     var opLbl = p.operation === 'sale' ? (lang === 'es' ? 'Venta' : 'For sale') : (lang === 'es' ? 'Renta' : 'For rent');
     var perLbl = p.operation === 'rental' ? (lang === 'es' ? '/mes' : '/mo') : '';
-    var photo = (p.image || '').replace(/'/g, '%27');
+    var photo = cssUrl(p.image);
     return '<article class="pcard" onclick="window.location.href=\'/property/' + p.public_id + '\'">' +
       '<div class="pcard-photo" style="background-color:#142237;background-image:url(\'' + photo + '\')">' +
         '<span class="pcard-badge ' + (p.operation === 'sale' ? 'badge-sale' : 'badge-rental') + '">' + opLbl + '</span>' +
       '</div>' +
       '<div class="pcard-body">' +
-        '<div class="pcard-loc">' + [p.neighborhood, p.town].filter(Boolean).join(' &middot; ') + '</div>' +
-        '<div class="pcard-title">' + title + '</div>' +
+        '<div class="pcard-loc">' + [p.neighborhood, p.town].filter(Boolean).map(escapeHtml).join(' &middot; ') + '</div>' +
+        '<div class="pcard-title">' + escapeHtml(title) + '</div>' +
         '<div class="pcard-specs">' + specsHTML(p) + '</div>' +
         '<div class="pcard-foot"><span class="pcard-price">' + money(p) + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
       '</div></article>';
@@ -307,7 +308,10 @@
     // A single chip filters nothing — don't show a control that can't do anything.
     document.getElementById('ag-chips').innerHTML = chips.length > 2
       ? chips.map(function (c) {
-          return '<button class="ag-chip' + (c.key === activeFilter ? ' on' : '') + '" onclick="setFilter(\'' + c.key.replace(/'/g, "\\'") + '\')">' + c.label + '</button>';
+          /* The key rides in a data attribute, not in the onclick source: a town
+             name is agency text, and quoting it into JavaScript inside an
+             HTML attribute is two escaping contexts deep. */
+          return '<button class="ag-chip' + (c.key === activeFilter ? ' on' : '') + '" data-key="' + escapeHtml(c.key) + '" onclick="setFilter(this.dataset.key)">' + escapeHtml(c.label) + '</button>';
         }).join('')
       : '';
   }
@@ -374,8 +378,8 @@
 
   function applyBranding() {
     var initial = (agency.name || '?').trim().charAt(0).toUpperCase();
-    var logoCss = agency.logo_url
-      ? "url('" + String(agency.logo_url).replace(/'/g, '%27') + "')"
+    var logoCss = cssUrl(agency.logo_url)
+      ? "url('" + cssUrl(agency.logo_url) + "')"
       : '';
 
     // Header mark: the agency's logo, or their initial on a plain tile.
@@ -392,10 +396,10 @@
       document.body.classList.add('ag-branded');
     }
 
-    /* Same quoting rule as the logo: a ' in the URL would close the CSS string. */
+    /* Same rule as the logo: cssUrl keeps the URL inside its CSS string. */
     var hero = document.getElementById('ag-hero');
-    if (agency.cover_url) {
-      hero.style.backgroundImage = "url('" + String(agency.cover_url).replace(/'/g, '%27') + "')";
+    if (cssUrl(agency.cover_url)) {
+      hero.style.backgroundImage = "url('" + cssUrl(agency.cover_url) + "')";
       hero.classList.add('has-cover');
     } else {
       hero.style.backgroundImage = '';

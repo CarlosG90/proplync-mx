@@ -913,6 +913,7 @@
 <!-- Hidden render templates -->
 <div class="render-area" id="render-area"></div>
 
+<script src="/js/escape.js"></script>
 <script src="/js/i18n.js"></script>
 <script>
 /* ============================================================================
@@ -1044,7 +1045,7 @@ function renderManualPhotos() {
   const preview = document.getElementById('f-image-preview');
   if (!strip) return;
   strip.innerHTML = manualPhotos.map(function (src, i) {
-    return '<div class="mp-tile' + (i === 0 ? ' is-cover' : '') + '" style="background-image:url(&quot;' + src + '&quot;)">' +
+    return '<div class="mp-tile' + (i === 0 ? ' is-cover' : '') + '" style="background-image:url(&quot;' + cssUrl(src) + '&quot;)">' +
       (i === 0 ? '<span class="mp-cover">' + (lang === 'es' ? 'Portada' : 'Cover') + '</span>' : '') +
       '<div class="mp-acts">' +
         (i > 0 ? '<button type="button" title="' + (lang === 'es' ? 'Hacer portada' : 'Make cover') + '" onclick="setManualCover(' + i + ')">&#9650;</button>' : '') +
@@ -1773,7 +1774,7 @@ function showClaimWarnings(list) {
     (isEs
       ? 'El texto menciona esto y no venia en tus datos: '
       : 'The copy mentions these and they were not in your data: ') +
-    list.map(w => '<code>' + w + '</code>').join(', ') + '.';
+    list.map(w => '<code>' + escapeHtml(w) + '</code>').join(', ') + '.';
 
   const anchor = document.getElementById('gen-error');
   anchor.parentNode.insertBefore(el, anchor);
@@ -1836,10 +1837,27 @@ function renderResults(propData, content, skipScroll) {
   switchTab('pdf');
 }
 
+/* Every template below is HTML built from two things we did not write: the
+   listing (agency text, and /generate?id= opens any public listing) and the
+   generated copy (model output that has read that text). htmlSafe() escapes
+   every string in a copy of either, so a renderer calls it once on its inputs
+   and its template can splice fields in directly. Numbers pass through. Only
+   for HTML: the PDF, TXT and canvas-text paths take the raw values. */
+function htmlSafe(value) {
+  if (Array.isArray(value)) return value.map(htmlSafe);
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const k of Object.keys(value)) out[k] = htmlSafe(value[k]);
+    return out;
+  }
+  return typeof value === 'string' ? escapeHtml(value) : value;
+}
+
 /* ---------- preview renderers (for the preview cards) ---------- */
 
 function renderPDFPreview(pdf, prop) {
   if (!pdf) return '<p>No data</p>';
+  pdf = htmlSafe(pdf); prop = htmlSafe(prop);
   return `
     <h4>${pdf.headline || ''}</h4>
     <p>${pdf.description || ''}</p>
@@ -1852,8 +1870,9 @@ function renderPDFPreview(pdf, prop) {
 
 function renderPostPreview(post, prop) {
   if (!post) return '<p>No data</p>';
+  post = htmlSafe(post); prop = htmlSafe(prop);
   const bg = propertyImageUrl
-    ? `background-image:url('${propertyImageUrl}')`
+    ? `background-image:url('${cssUrl(propertyImageUrl)}')`
     : 'background:linear-gradient(135deg,#1f6b67,#0a1628)';
   return `
     <div class="mock-post" style="${bg}">
@@ -1873,7 +1892,8 @@ function renderPostPreview(post, prop) {
 
 function renderCarouselPreview(carousel, prop) {
   if (!carousel || !carousel.length) return '<p>No data</p>';
-  const bg = propertyImageUrl ? `background-image:url('${propertyImageUrl}')` : '';
+  carousel = htmlSafe(carousel); prop = htmlSafe(prop);
+  const bg = propertyImageUrl ? `background-image:url('${cssUrl(propertyImageUrl)}')` : '';
   /* Same 5-beat sequence and color logic as the real export: photo cover,
      dark location statement, light specs grid, dark feature copy, gold CTA. */
   const slideStyles = [
@@ -1910,8 +1930,9 @@ function renderCarouselPreview(carousel, prop) {
 
 function renderStoryPreview(story, prop) {
   if (!story) return '<p>No data</p>';
+  story = htmlSafe(story); prop = htmlSafe(prop);
   const bg = propertyImageUrl
-    ? `background-image:url('${propertyImageUrl}')`
+    ? `background-image:url('${cssUrl(propertyImageUrl)}')`
     : 'background:linear-gradient(180deg,#1f6b67,#0a1628)';
   return `
     <div class="mock-story" style="${bg}">
@@ -1930,6 +1951,7 @@ function renderStoryPreview(story, prop) {
 
 function renderEmailPreview(email) {
   if (!email) return '<p>No data</p>';
+  email = htmlSafe(email);
   return `
     <div class="email-subject">${lang === 'es' ? 'Asunto' : 'Subject'}: ${email.subject || ''}</div>
     <p style="font-size:.72rem;color:var(--on-sand-light);margin-bottom:8px">${email.preview_text || ''}</p>
@@ -1939,6 +1961,7 @@ function renderEmailPreview(email) {
 
 function renderAdPreview(ad) {
   if (!ad) return '<p>No data</p>';
+  ad = htmlSafe(ad);
   return `
     <p style="font-weight:600;margin-bottom:6px">${ad.headline || ''}</p>
     <p style="margin-bottom:8px">${ad.primary_text || ''}</p>
@@ -1949,6 +1972,7 @@ function renderAdPreview(ad) {
 
 function renderVideoPreview(video) {
   if (!video) return '<p>No data</p>';
+  video = htmlSafe(video);
   const beats = [
     ...(video.hook_text ? [{ label: 'HOOK', text: video.hook_text, gold: true }] : []),
     ...(video.scene_texts || []).map((s, i) => ({ label: String(i + 1), text: s, gold: false })),
@@ -2462,14 +2486,14 @@ async function downloadPost() {
 /* One builder for the post, so the file an agent downloads and the image that
    goes to Instagram cannot drift apart. */
 function buildPostNode() {
-  const prop = getPropertyData();
+  const prop = htmlSafe(getPropertyData());
   const div = document.createElement('div');
   div.className = 'tpl-post';
   div.style.width = '1080px';
   div.style.height = '1080px';
 
   const bgStyle = propertyImageUrl
-    ? `background-image:url('${propertyImageUrl}');background-size:cover;background-position:center;`
+    ? `background-image:url('${cssUrl(propertyImageUrl)}');background-size:cover;background-position:center;`
     : `background:linear-gradient(135deg,#1f6b67,#0a1628);`;
 
   div.innerHTML = `
@@ -2576,15 +2600,15 @@ async function publishInstagram() {
 async function downloadCarousel() {
   if (!(await ensureContact())) return;
   if (!checkLibsLoaded()) return;
-  const prop = getPropertyData();
-  const carousel = generatedContent.carousel;
+  const prop = htmlSafe(getPropertyData());
+  const carousel = htmlSafe(generatedContent.carousel);
   if (!carousel || carousel.length < 5) return;
 
   const area = document.getElementById('render-area');
   const zip = new JSZip();
 
   const bgImg = propertyImageUrl
-    ? `background-image:url('${propertyImageUrl}');background-size:cover;background-position:center;`
+    ? `background-image:url('${cssUrl(propertyImageUrl)}');background-size:cover;background-position:center;`
     : '';
 
   const slideConfigs = [
@@ -2703,8 +2727,8 @@ async function downloadCarousel() {
 async function downloadStory() {
   if (!(await ensureContact())) return;
   if (!checkLibsLoaded()) return;
-  const prop = getPropertyData();
-  const story = generatedContent.story;
+  const prop = htmlSafe(getPropertyData());
+  const story = htmlSafe(generatedContent.story);
   const area = document.getElementById('render-area');
 
   const div = document.createElement('div');
@@ -2713,7 +2737,7 @@ async function downloadStory() {
   div.style.height = '1920px';
 
   const bgStyle = propertyImageUrl
-    ? `background-image:url('${propertyImageUrl}');background-size:cover;background-position:center;`
+    ? `background-image:url('${cssUrl(propertyImageUrl)}');background-size:cover;background-position:center;`
     : 'background:linear-gradient(180deg,#1f6b67,#0a1628);';
 
   div.innerHTML = `
@@ -2747,8 +2771,8 @@ async function downloadStory() {
 /* ---------- 5. EMAIL (HTML download) ---------- */
 async function downloadEmail() {
   if (!(await ensureContact())) return;
-  const prop = getPropertyData();
-  const email = generatedContent.email;
+  const prop = htmlSafe(getPropertyData());
+  const email = htmlSafe(generatedContent.email);
   const isEs = lang === 'es';
 
   const opLabel = prop.operation === 'sale'
@@ -2774,7 +2798,7 @@ async function downloadEmail() {
 </td></tr>
 
 <!-- Hero image -->
-${propertyImageUrl ? `<tr><td style="padding:0"><img src="${propertyImageUrl}" alt="${prop.title}" style="width:100%;height:auto;display:block"></td></tr>` : ''}
+${propertyImageUrl ? `<tr><td style="padding:0"><img src="${safeUrl(propertyImageUrl)}" alt="${prop.title}" style="width:100%;height:auto;display:block"></td></tr>` : ''}
 
 <!-- Content -->
 <tr><td style="padding:32px">
@@ -2825,7 +2849,8 @@ ${propertyImageUrl ? `<tr><td style="padding:0"><img src="${propertyImageUrl}" a
 </html>`;
 
   const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-  triggerDownload(blob, 'proplync-email-' + (prop.title || 'property').replace(/\s+/g, '-').toLowerCase() + '.html');
+  // The raw title, not the escaped prop above: a filename is not HTML.
+  triggerDownload(blob, 'proplync-email-' + (getPropertyData().title || 'property').replace(/\s+/g, '-').toLowerCase() + '.html');
 }
 
 async function downloadAd() {
@@ -3292,14 +3317,15 @@ async function downloadAllZip() {
     div.className = 'tpl-post';
     div.style.width = '1080px';
     div.style.height = '1080px';
+    const hp = htmlSafe(prop);
     const bgStyle = propertyImageUrl
-      ? `background-image:url('${propertyImageUrl}');background-size:cover;background-position:center;`
+      ? `background-image:url('${cssUrl(propertyImageUrl)}');background-size:cover;background-position:center;`
       : 'background:linear-gradient(135deg,#1f6b67,#0a1628);';
     div.innerHTML = `
       <div style="position:absolute;inset:0;${bgStyle}"></div>
       <div class="overlay"></div>
-      <div class="price-badge">${prop.currency} $${prop.formatted}</div>
-      <div class="bottom"><div class="title">${prop.title}</div><div class="location">${prop.neighborhood} · ${prop.town}</div></div>
+      <div class="price-badge">${hp.currency} $${hp.formatted}</div>
+      <div class="bottom"><div class="title">${hp.title}</div><div class="location">${hp.neighborhood} · ${hp.town}</div></div>
       <div class="brand-wm">Proplync.mx</div>`;
     area.appendChild(div);
     const canvas = await renderToCanvas(div);
@@ -3311,20 +3337,21 @@ async function downloadAllZip() {
   /* 3. Story PNG */
   try {
     const area = document.getElementById('render-area');
-    const story = generatedContent.story;
+    const story = htmlSafe(generatedContent.story);
+    const hp = htmlSafe(prop);
     const div = document.createElement('div');
     div.className = 'tpl-story';
     div.style.width = '1080px';
     div.style.height = '1920px';
     const bgStyle = propertyImageUrl
-      ? `background-image:url('${propertyImageUrl}');background-size:cover;background-position:center;`
+      ? `background-image:url('${cssUrl(propertyImageUrl)}');background-size:cover;background-position:center;`
       : 'background:linear-gradient(180deg,#1f6b67,#0a1628);';
     div.innerHTML = `
       <div style="position:absolute;inset:0;${bgStyle}"></div>
       <div class="overlay"></div>
       <div class="brand-wm">Proplync.mx</div>
-      <div class="price-sticker">${prop.currency} $${prop.formatted}</div>
-      <div class="content"><div class="title">${story.headline || prop.title}</div><div class="location">${prop.neighborhood} · ${prop.town}</div></div>
+      <div class="price-sticker">${hp.currency} $${hp.formatted}</div>
+      <div class="content"><div class="title">${story.headline || hp.title}</div><div class="location">${hp.neighborhood} · ${hp.town}</div></div>
       <div class="cta">${story.cta_text || ''}</div>`;
     area.appendChild(div);
     const canvas = await renderToCanvas(div);
@@ -3364,6 +3391,7 @@ async function downloadAllZip() {
 
 /* Build email HTML (shared between single download and ZIP) */
 function buildEmailHTML(prop, email, isEs) {
+  prop = htmlSafe(prop); email = htmlSafe(email);
   const opLabel = prop.operation === 'sale'
     ? (isEs ? 'En venta' : 'For sale')
     : (isEs ? 'En renta' : 'For rent');
@@ -3374,7 +3402,7 @@ function buildEmailHTML(prop, email, isEs) {
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f5f0"><tr><td align="center" style="padding:32px 16px">
 <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(10,22,40,.08)">
 <tr><td style="background:linear-gradient(160deg,#c9a96e,#b08c4a);padding:20px 32px"><span style="font-size:18px;font-weight:bold;color:#0a1628">Proplync<span style="opacity:.7">.mx</span></span></td></tr>
-${propertyImageUrl ? `<tr><td><img src="${propertyImageUrl}" alt="${prop.title}" style="width:100%;display:block"></td></tr>` : ''}
+${propertyImageUrl ? `<tr><td><img src="${safeUrl(propertyImageUrl)}" alt="${prop.title}" style="width:100%;display:block"></td></tr>` : ''}
 <tr><td style="padding:32px">
 <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#c9a96e;font-weight:bold">${opLabel} · ${prop.neighborhood} · ${prop.town}</span>
 <h1 style="font-size:26px;font-weight:600;color:#0a1628;margin:12px 0 8px">${prop.title}</h1>

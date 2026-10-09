@@ -68,6 +68,7 @@
   </div>
 </footer>
 
+<script src="/js/escape.js"></script>
 <script src="/js/i18n.js"></script>
 <script src="/js/nav-auth.js"></script>
 <script src="/js/api.js"></script>
@@ -95,15 +96,15 @@
     const opLbl = p.operation === 'sale' ? (lang === 'es' ? 'Venta' : 'For sale') : (lang === 'es' ? 'Renta' : 'For rent');
     const perLbl = p.operation === 'rental' ? (lang === 'es' ? '/mes' : '/mo') : '';
     return '<article class="pcard" data-id="' + p.public_id + '" onclick="window.location.href=\'/propiedad/' + p.public_id + '\'">' +
-      '<div class="pcard-photo" style="background-color:#0a5d59;background-image:linear-gradient(180deg,rgba(6,35,42,.32),rgba(6,35,42,0) 42%,rgba(6,35,42,0) 72%,rgba(6,35,42,.14)),url(\'' + (p.image || '') + '\')">' +
+      '<div class="pcard-photo" style="background-color:#0a5d59;background-image:linear-gradient(180deg,rgba(6,35,42,.32),rgba(6,35,42,0) 42%,rgba(6,35,42,0) 72%,rgba(6,35,42,.14)),url(\'' + cssUrl(p.image) + '\')">' +
         '<span class="pcard-badge ' + (p.operation === 'sale' ? 'badge-sale' : 'badge-rental') + '">' + opLbl + '</span>' +
         '<button class="pcard-fav saved" onclick="event.stopPropagation();removeFavorite(\'' + p.public_id + '\')" title="' + (lang === 'es' ? 'Quitar' : 'Remove') + '">' + heartSVG() + '</button>' +
       '</div>' +
       '<div class="pcard-body">' +
-        '<div class="pcard-loc">' + [p.neighborhood, p.town].filter(Boolean).join(' · ') + '</div>' +
-        '<div class="pcard-title">' + title + '</div>' +
+        '<div class="pcard-loc">' + [p.neighborhood, p.town].filter(Boolean).map(escapeHtml).join(' · ') + '</div>' +
+        '<div class="pcard-title">' + escapeHtml(title) + '</div>' +
         '<div class="pcard-specs">' + specsHTML(p) + '</div>' +
-        '<div class="pcard-foot"><span class="pcard-price">' + p.currency + ' $' + p.formatted + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
+        '<div class="pcard-foot"><span class="pcard-price">' + escapeHtml(p.currency) + ' $' + escapeHtml(p.formatted) + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
       '</div></article>';
   }
 
