@@ -478,6 +478,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="/js/escape.js"></script>
 <script src="/js/i18n.js"></script>
 <script src="/js/nav-auth.js"></script>
 <script src="/js/api.js"></script>
@@ -551,7 +552,7 @@
 
     var thumbsHtml = '';
     for (var j = 0; j < images.length; j++) {
-      thumbsHtml += '<img class="prop-thumb' + (j === 0 ? ' active' : '') + '" src="' + images[j] + '" alt="" onclick="setGalleryImage(' + j + ')">';
+      thumbsHtml += '<img class="prop-thumb' + (j === 0 ? ' active' : '') + '" src="' + safeUrl(images[j]) + '" alt=""" onclick="setGalleryImage(' + j + ')">';
     }
     document.getElementById('prop-gallery').innerHTML = thumbsHtml;
   }
@@ -594,7 +595,7 @@
     document.getElementById('prop-loc').textContent = [p.neighborhood, p.town].filter(Boolean).join(' · ');
     document.getElementById('prop-title').textContent = title;
     var perLbl = p.operation === 'rental' ? (lang === 'es' ? '/mes' : '/mo') : '';
-    document.getElementById('prop-price').innerHTML = p.currency + ' $' + p.formatted + (perLbl ? ' <small>' + perLbl + '</small>' : '');
+    document.getElementById('prop-price').innerHTML = escapeHtml(p.currency) + ' $' + escapeHtml(p.formatted) + (perLbl ? ' <small>' + perLbl + '</small>' : '');
 
     renderSpecs(p);
     renderAmenities(p);
@@ -617,7 +618,7 @@
     if (p.features && p.features.length) {
       document.getElementById('features-section').style.display = '';
       document.getElementById('prop-features').innerHTML = p.features.map(function(f) {
-        return '<div class="prop-feature">' + f + '</div>';
+        return '<div class="prop-feature">' + escapeHtml(f) + '</div>';
       }).join('');
     }
 
@@ -643,8 +644,8 @@
     if (p.agency && p.agency.name) {
       listedByCard.style.display = '';
       document.getElementById('listed-by-body').innerHTML =
-        (p.agency.logo_url ? '<img src="' + p.agency.logo_url + '" alt="" style="width:40px;height:40px;object-fit:contain;border-radius:6px">' : '') +
-        '<span style="font-family:var(--display);font-size:.98rem;color:var(--ink)">' + p.agency.name + '</span>';
+        (safeUrl(p.agency.logo_url) ? '<img src="' + safeUrl(p.agency.logo_url) + '" alt=""" style="width:40px;height:40px;object-fit:contain;border-radius:6px">' : '') +
+        '<span style="font-family:var(--display);font-size:.98rem;color:var(--ink)">' + escapeHtml(p.agency.name) + '</span>';
     } else {
       listedByCard.style.display = 'none';
     }
@@ -716,7 +717,7 @@
       attribution: '&copy; <a href="https://openstreetmap.org">OSM</a>',
       maxZoom: 18
     }).addTo(map);
-    L.marker([lat, lng]).addTo(map).bindPopup('<b>' + title + '</b>').openPopup();
+    L.marker([lat, lng]).addTo(map).bindPopup('<b>' + escapeHtml(title) + '</b>').openPopup();
   }
 
   /* ---------- gallery thumbs (hero + 3, last one opens the rest) ---------- */
@@ -731,7 +732,7 @@
       var last = (i === slots.length - 1) && hidden > 0;
       return '<button class="gal-thumb" onclick="' +
         (last ? 'openFullGallery()' : 'setGalleryImage(' + idx + ')') + '">' +
-        '<img src="' + String(src).replace(/"/g, '%22') + '" alt="">' +
+        '<img src="' + safeUrl(src) + '" alt="">' +
         (last ? '<span class="gal-thumb-more"><b>+' + hidden + '</b><span>' +
                  (lang === 'es' ? 'Ver galeria' : 'View gallery') + '</span></span>' : '') +
         '</button>';
@@ -800,7 +801,7 @@
     var list = (p.features || []).filter(Boolean);
     if (!list.length) return;
     document.getElementById('amen-grid').innerHTML = list.slice(0, 12).map(function (f) {
-      return '<div class="amen">' + amenityIcon(f) + '<span>' + f + '</span></div>';
+      return '<div class="amen">' + amenityIcon(f) + '<span>' + escapeHtml(f) + '</span></div>';
     }).join('');
     document.getElementById('amen-box').style.display = '';
   }
@@ -814,7 +815,7 @@
         p.operation === 'sale' ? (lang === 'es' ? 'Venta' : 'For sale') : (lang === 'es' ? 'Renta' : 'For rent')]
     ].filter(function (r) { return r[1]; });
     document.getElementById('addr-grid').innerHTML = rows.map(function (r) {
-      return '<div class="addr-row">' + r[0] + ': <b>' + r[1] + '</b></div>';
+      return '<div class="addr-row">' + r[0] + ': <b>' + escapeHtml(r[1]) + '</b></div>';
     }).join('');
   }
 
@@ -833,15 +834,15 @@
       document.getElementById('more-grid').innerHTML = others.map(function (o) {
         var t = lang === 'es' ? (o.title_es || o.title_en) : (o.title_en || o.title_es);
         var opLbl = o.operation === 'sale' ? (lang === 'es' ? 'Venta' : 'For sale') : (lang === 'es' ? 'Renta' : 'For rent');
-        var img = (o.image || '').replace(/'/g, '%27');
+        var img = cssUrl(o.image);
         return '<article class="pcard" onclick="window.location.href=\'/property/' + o.public_id + '\'">' +
           '<div class="pcard-photo" style="background-color:#142237;background-image:url(\'' + img + '\')">' +
             '<span class="pcard-badge ' + (o.operation === 'sale' ? 'badge-sale' : 'badge-rental') + '">' + opLbl + '</span>' +
           '</div>' +
           '<div class="pcard-body">' +
-            '<div class="pcard-loc">' + [o.neighborhood, o.town].filter(Boolean).join(' &middot; ') + '</div>' +
-            '<div class="pcard-title">' + t + '</div>' +
-            '<div class="pcard-foot"><span class="pcard-price">' + o.currency + ' $' +
+            '<div class="pcard-loc">' + [o.neighborhood, o.town].filter(Boolean).map(escapeHtml).join(' &middot; ') + '</div>' +
+            '<div class="pcard-title">' + escapeHtml(t) + '</div>' +
+            '<div class="pcard-foot"><span class="pcard-price">' + escapeHtml(o.currency) + ' $' +
               Number(o.amount || 0).toLocaleString('en-US') + '</span></div>' +
           '</div></article>';
       }).join('');
@@ -889,14 +890,14 @@
           ? (meters < 1000 ? Math.round(meters) + ' m' : (meters / 1000).toFixed(1) + ' km')
           : '';
         html += '<div class="ps-poi">' +
-          '<span class="ps-poi-cat">' + amenityLabel(p.category) + '</span>' +
-          '<span class="ps-poi-name">' + p.name + '</span>' +
+          '<span class="ps-poi-cat">' + escapeHtml(amenityLabel(p.category)) + '</span>' +
+          '<span class="ps-poi-name">' + escapeHtml(p.name) + '</span>' +
           '<span class="ps-poi-dist">' + dist + '</span>' +
           '</div>';
       });
       container.innerHTML = html;
     } catch (e) {
-      container.innerHTML = '<p class="ps-error">' + e.message + '</p>';
+      container.innerHTML = '<p class="ps-error">' + escapeHtml(e.message) + '</p>';
     }
   }
 
@@ -925,7 +926,7 @@
     document.querySelector('.prop-content .wrap').innerHTML =
       '<div class="prop-loading">' +
       '<h2>' + (lang === 'es' ? 'Propiedad no encontrada' : 'Property not found') + '</h2>' +
-      '<p>' + msg + '</p>' +
+      '<p>' + escapeHtml(msg) + '</p>' +
       '<a href="/search" class="btn btn-outline" style="margin-top:24px" data-es="Volver a buscar" data-en="Back to search">' + (lang === 'es' ? 'Volver a buscar' : 'Back to search') + '</a>' +
       '</div>';
   }

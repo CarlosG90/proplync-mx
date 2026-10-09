@@ -1611,6 +1611,7 @@
   </div>
 </footer>
 
+<script src="/js/escape.js"></script>
 <script src="/js/i18n.js"></script>
 <script src="/js/nav-auth.js"></script>
 <script src="/js/api.js"></script>
@@ -1740,7 +1741,9 @@
     const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><defs><linearGradient id='sk' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${skyA}'/><stop offset='1' stop-color='${skyB}'/></linearGradient></defs><rect width='400' height='300' fill='url(#sk)'/>${inner}</svg>`;
     return "data:image/svg+xml,"+encodeURIComponent(svg);
   }
-  const photoFor = p => p.image || sceneSVG(p.scene||'villa');
+  /* A listing photo is agency data and goes through cssUrl; the SVG fallback is
+     drawn by sceneSVG above and is ours. */
+  const photoFor = p => p.image ? cssUrl(p.image) : sceneSVG(p.scene||'villa');
 
   function cardHTML(p){
     return '<article class="pcard" onclick="selectProperty(\''+p.public_id+'\')">'+
@@ -1749,10 +1752,10 @@
         '<span class="pcard-id">'+p.public_id+'</span>'+
       '</div>'+
       '<div class="pcard-body">'+
-        '<div class="pcard-loc">'+p.neighborhood+' &middot; '+p.town+'</div>'+
-        '<div class="pcard-title">'+(lang==='es'?p.title_es:p.title_en)+'</div>'+
+        '<div class="pcard-loc">'+escapeHtml(p.neighborhood)+' &middot; '+escapeHtml(p.town)+'</div>'+
+        '<div class="pcard-title">'+escapeHtml(lang==='es'?p.title_es:p.title_en)+'</div>'+
         '<div class="pcard-specs"><span>'+bd(p)+'</span><span>'+ba(p)+'</span><span>'+p.size+' m&sup2;</span></div>'+
-        '<div class="pcard-foot"><span class="pcard-price">'+p.currency+' $'+p.formatted+(per(p)?' <small>'+per(p)+'</small>':'')+'</span></div>'+
+        '<div class="pcard-foot"><span class="pcard-price">'+escapeHtml(p.currency)+' $'+escapeHtml(p.formatted)+(per(p)?' <small>'+per(p)+'</small>':'')+'</span></div>'+
         '<button class="pcard-gen" onclick="event.stopPropagation();loadProperty(\''+p.public_id+'\')">'+(lang==='es'?'Generar 7 piezas':'Generate 7 pieces')+' &rarr;</button>'+
       '</div></article>';
   }
@@ -1873,7 +1876,7 @@
       const {places} = await r.json();
       if(!places || !places.length){ box.innerHTML=''; return; }
       box.innerHTML = places.slice(0,6).map(pl=>
-        '<div class="ps-poi"><span class="ps-poi-cat">'+pl.category+'</span><span class="ps-poi-name">'+pl.name+'</span><span class="ps-poi-dist">'+pl.distance_m+' m</span></div>'
+        '<div class="ps-poi"><span class="ps-poi-cat">'+escapeHtml(pl.category)+'</span><span class="ps-poi-name">'+escapeHtml(pl.name)+'</span><span class="ps-poi-dist">'+escapeHtml(pl.distance_m)+' m</span></div>'
       ).join('');
     }catch(e){
       box.innerHTML = '';
@@ -1901,7 +1904,7 @@
       });
       if(!r.ok) throw new Error('HTTP '+r.status);
       const {description} = await r.json();
-      out.innerHTML = '<p class="ps-ai-text">'+description+'</p><span class="ps-ai-credit">Powered by Groq &middot; Llama 3.3</span>';
+      out.innerHTML = '<p class="ps-ai-text">'+escapeHtml(description)+'</p><span class="ps-ai-credit">Powered by Groq &middot; Llama 3.3</span>';
     }catch(e){
       out.innerHTML = '<p class="ps-error">'+(lang==='es'?'No se pudo generar la descripcion. Intenta de nuevo.':'Could not generate the description. Try again.')+'</p>';
       console.warn('[Proplync] describe unavailable:', e.message);
@@ -1914,7 +1917,7 @@
     document.getElementById('d-title').textContent = lang==='es'?p.title_es:p.title_en;
     document.getElementById('d-loc').textContent = (p.town+' · '+p.neighborhood).toUpperCase();
     document.getElementById('d-specs').innerHTML = '<span>'+bd(p)+'</span><span>'+ba(p)+'</span><span>'+p.size+' m²</span>';
-    document.getElementById('d-price').innerHTML = p.currency+'<br>$'+p.formatted+(per(p)?'<br><small style="font-size:.58rem;opacity:.8">'+per(p)+'</small>':'');
+    document.getElementById('d-price').innerHTML = escapeHtml(p.currency)+'<br>$'+escapeHtml(p.formatted)+(per(p)?'<br><small style="font-size:.58rem;opacity:.8">'+per(p)+'</small>':'');
     document.getElementById('d-photo').style.cssText += ';background-image:linear-gradient(150deg,rgba(10,22,40,.12),rgba(10,22,40,.22)),url(\''+photoFor(p)+'\');background-size:cover;background-position:center';
   }
 
@@ -1946,8 +1949,9 @@
   }
   function renderPreview(){
     const p=activeProp;
-    const L=p.neighborhood+', '+p.town;
-    const T=(lang==='es'?p.title_es:p.title_en)+' · '+p.neighborhood;
+    /* Escaped once here: every template below splices these into markup. */
+    const L=escapeHtml(p.neighborhood+', '+p.town);
+    const T=escapeHtml((lang==='es'?p.title_es:p.title_en)+' · '+p.neighborhood);
     const d=previews[lang][currentFmt];
     const title=d.title.replace('{T}',T).replace('{L}',L);
     const body=d.body.replace('{T}',T).replace('{L}',L);
@@ -1955,13 +1959,14 @@
     if(currentFmt==='pdf'){pills=[bd(p),ba(p),p.size+' m²',priceStr(p)];}
     if(currentFmt==='post'){pills=['#'+p.town.replace(/\s+/g,''),'#RivieraMaya',p.operation==='sale'?(lang==='es'?'#Venta':'#ForSale'):(lang==='es'?'#Renta':'#ForRent')];}
     const photo=photoFor(p);
-    const shortTitle=lang==='es'?p.title_es:p.title_en;
+    const shortTitle=escapeHtml(lang==='es'?p.title_es:p.title_en);
+    const price=escapeHtml(priceStr(p));
 
     let thumb='';
     if(currentFmt==='post'){
-      thumb='<div class="pv-thumb square" style="background-image:url(\''+photo+'\')"><div class="pv-thumb-overlay"></div><span class="pv-thumb-price">'+priceStr(p)+'</span><div class="pv-thumb-cap">'+shortTitle+'</div></div>';
+      thumb='<div class="pv-thumb square" style="background-image:url(\''+photo+'\')"><div class="pv-thumb-overlay"></div><span class="pv-thumb-price">'+price+'</span><div class="pv-thumb-cap">'+shortTitle+'</div></div>';
     }else if(currentFmt==='story'){
-      thumb='<div class="pv-thumb tall" style="background-image:url(\''+photo+'\')"><div class="pv-thumb-overlay"></div><span class="pv-thumb-price">'+priceStr(p)+'</span><div class="pv-thumb-cap">'+shortTitle+'</div></div>';
+      thumb='<div class="pv-thumb tall" style="background-image:url(\''+photo+'\')"><div class="pv-thumb-overlay"></div><span class="pv-thumb-price">'+price+'</span><div class="pv-thumb-cap">'+shortTitle+'</div></div>';
     }else if(currentFmt==='video'){
       thumb='<div class="pv-thumb" style="background-image:url(\''+photo+'\')"><div class="pv-thumb-overlay"></div><div class="pv-thumb-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>';
     }else if(currentFmt==='pdf'){
@@ -1981,7 +1986,7 @@
        photo thumb, since the thumbs already carry their own top-right badge
        (price) or communicate the format visually (mini-strip, play button). */
     let html=thumb+(thumb?'':'<span class="pv-tag">'+d.tag+'</span>')+'<div class="pv-title">'+title+'</div><div class="pv-body">'+body+'</div>';
-    if(pills){html+='<div class="pv-row">'+pills.map(x=>'<span class="pv-pill">'+x+'</span>').join('')+'</div>';}
+    if(pills){html+='<div class="pv-row">'+pills.map(x=>'<span class="pv-pill">'+escapeHtml(x)+'</span>').join('')+'</div>';}
     if(d.dots){html+='<div class="pv-dots"><i class="a"></i><i></i><i></i><i></i><i></i></div>';}
     document.getElementById('preview').innerHTML=html;
   }

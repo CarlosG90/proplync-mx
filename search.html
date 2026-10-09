@@ -206,6 +206,7 @@
 </footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/escape.js"></script>
 <script src="/js/i18n.js"></script>
 <script src="/js/nav-auth.js"></script>
 <script src="/js/api.js"></script>
@@ -251,8 +252,8 @@
       const title = lang === 'es' ? p.title_es : p.title_en;
       const marker = L.marker([p.lat, p.lng])
         .bindPopup(
-          '<b>' + title + '</b>' +
-          '<span class="pop-price">' + p.currency + ' $' + p.formatted + '</span>' +
+          '<b>' + escapeHtml(title) + '</b>' +
+          '<span class="pop-price">' + escapeHtml(p.currency) + ' $' + escapeHtml(p.formatted) + '</span>' +
           '<a class="pop-link" href="/propiedad/' + p.public_id + '">' + (lang === 'es' ? 'Ver detalle &rarr;' : 'View details &rarr;') + '</a>'
         )
         .addTo(map);
@@ -310,14 +311,14 @@
     const perLbl = p.operation === 'rental' ? (lang === 'es' ? '/mes' : '/mo') : '';
     const favClass = isFavorite(p.public_id) ? ' saved' : '';
     return '<article class="pcard" data-id="' + p.public_id + '" onclick="window.location.href=\'/propiedad/' + p.public_id + '\'">' +
-      '<div class="pcard-photo" style="background-color:#142237;background-image:linear-gradient(180deg,rgba(10,22,40,.18),rgba(10,22,40,0) 42%,rgba(10,22,40,0) 72%,rgba(10,22,40,.12)),url(\'' + (p.image || '') + '\')">' +
+      '<div class="pcard-photo" style="background-color:#142237;background-image:linear-gradient(180deg,rgba(10,22,40,.18),rgba(10,22,40,0) 42%,rgba(10,22,40,0) 72%,rgba(10,22,40,.12)),url(\'' + cssUrl(p.image) + '\')">' +
         '<span class="pcard-badge ' + (p.operation === 'sale' ? 'badge-sale' : 'badge-rental') + '">' + opLbl + '</span>' +
       '</div>' +
       '<div class="pcard-body">' +
-        '<div class="pcard-loc">' + [p.neighborhood, p.town].filter(Boolean).join(' &middot; ') + '</div>' +
-        '<div class="pcard-title">' + title + '</div>' +
+        '<div class="pcard-loc">' + [p.neighborhood, p.town].filter(Boolean).map(escapeHtml).join(' &middot; ') + '</div>' +
+        '<div class="pcard-title">' + escapeHtml(title) + '</div>' +
         '<div class="pcard-specs">' + specsHTML(p) + '</div>' +
-        '<div class="pcard-foot"><span class="pcard-price">' + p.currency + ' $' + p.formatted + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
+        '<div class="pcard-foot"><span class="pcard-price">' + escapeHtml(p.currency) + ' $' + escapeHtml(p.formatted) + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
       '</div></article>';
   }
 
@@ -401,7 +402,7 @@
       updateMarkers(listings);
     } catch (e) {
       console.warn('[Proplync] search error:', e.message);
-      document.getElementById('search-grid').innerHTML = '<div class="search-empty"><h3>Error</h3><p>' + e.message + '</p></div>';
+      document.getElementById('search-grid').innerHTML = '<div class="search-empty"><h3>Error</h3><p>' + escapeHtml(e.message) + '</p></div>';
     }
   }
 

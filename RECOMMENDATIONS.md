@@ -65,7 +65,9 @@ Do a five-minute pass: for each file in `api/`, write down (a) who can call it, 
 ```
 A real Content-Security-Policy is blocked by the large inline `<script>` blocks (see 4.2). Start with `Content-Security-Policy-Report-Only` so you can see what would break.
 
-### 2.4 Audit `innerHTML`
+### 2.4 Audit `innerHTML` ✅ Fixed 2026-10-09
+_`js/escape.js` (`escapeHtml`, `safeUrl`, `cssUrl`) is used on every page that renders listings, OSM places or AI text; `generate.html` escapes its inputs with `htmlSafe()`. `api/my-listings.js` validates listing and agency fields on save, and the city pages' JSON-LD escapes `<`. A jsdom test with booby-trapped data found 5–57 injected elements per page before the fix and 0 after._
+
 There are about 75 `innerHTML` writes across the pages (16 in `property.html`, 14 in `index.html`, 13 in `generate.html`). Some render agency-entered or LLM-generated text, such as listing descriptions and lead messages. `dashboard-leads.html` has an `esc()` helper, but most pages don't. Put one `escapeHtml` in `js/` and use it everywhere, or switch to `textContent` for plain text. **LLM output is user input**: a prompt-injected listing description can carry markup.
 
 ### 2.5 Repo hygiene

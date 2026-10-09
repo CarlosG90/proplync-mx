@@ -29,6 +29,87 @@ function pickAgencyWritable(body) {
   return out;
 }
 
+/* ── Field validation ──
+   Everything an agency saves here is rendered later on buyer-facing pages:
+   /search, /propiedad/:id, /agencia/:slug, the home page. The pages escape what
+   they print (js/escape.js), and this is the other half: only well-typed
+   values, and only URLs a page can safely load, get stored at all. Text is not
+   stripped of characters; "Casa & Mar <vista>" is a fine title once escaped.
+   Each check throws a BadField whose message is the 400 error code. */
+class BadField extends Error {}
+
+const IMAGE_URL = /^(https?:\/\/|data:image\/(png|jpe?g|webp|gif|avif);base64,)/i;
+const TEXT_LIMITS = {
+  title_es: 300, title_en: 300, town: 120, neighborhood: 120,
+  description_es: 10000, description_en: 10000, property_type: 60,
+  name: 120
+};
+const NUMERIC = ['bedrooms', 'bathrooms', 'parking', 'size', 'amount', 'lat', 'lng'];
+
+function checkText(key, value) {
+  if (value === null || value === undefined) return value;
+  if (typeof value !== 'string') throw new BadField('invalid_' + key);
+  if (value.length > TEXT_LIMITS[key]) throw new BadField(key + '_too_long');
+  return value;
+}
+
+function checkImageUrl(key, value) {
+  if (value === null || value === undefined || value === '') return value;
+  if (typeof value !== 'string' || !IMAGE_URL.test(value.trim())) throw new BadField('invalid_' + key);
+  return value.trim();
+}
+
+function validateListingFields(fields) {
+  const out = { ...fields };
+  for (const key of Object.keys(TEXT_LIMITS)) {
+    if (key in out) out[key] = checkText(key, out[key]);
+  }
+  for (const key of NUMERIC) {
+    const v = out[key];
+    // '' and null are left for the column default/constraint to decide, as before.
+    if (v === undefined || v === null || v === '') continue;
+    if (typeof v === 'number' ? !Number.isFinite(v) : !(typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v)))) {
+      throw new BadField('invalid_' + key);
+    }
+  }
+  if ('currency' in out && out.currency != null) {
+    if (typeof out.currency !== 'string' || !/^[A-Za-z]{3}$/.test(out.currency.trim())) throw new BadField('invalid_currency');
+    out.currency = out.currency.trim().toUpperCase();
+  }
+  if ('image' in out) out.image = checkImageUrl('image', out.image);
+  if ('images' in out && out.images != null) {
+    if (!Array.isArray(out.images)) throw new BadField('invalid_images');
+    out.images = out.images.map((u) => checkImageUrl('images', u)).filter(Boolean);
+  }
+  if ('features' in out && out.features != null) {
+    if (!Array.isArray(out.features) || out.features.length > 60) throw new BadField('invalid_features');
+    out.features = out.features.map((f) => {
+      if (typeof f !== 'string' || f.length > 120) throw new BadField('invalid_features');
+      return f.trim();
+    }).filter(Boolean);
+  }
+  return out;
+}
+
+function validateAgencyFields(fields) {
+  const out = { ...fields };
+  if ('name' in out) out.name = checkText('name', out.name);
+  if ('logo_url' in out) out.logo_url = checkImageUrl('logo_url', out.logo_url);
+  if ('cover_url' in out) out.cover_url = checkImageUrl('cover_url', out.cover_url);
+  if ('primary_color' in out && out.primary_color != null && out.primary_color !== '') {
+    if (typeof out.primary_color !== 'string' || !/^#[0-9a-f]{3,8}$/i.test(out.primary_color.trim())) {
+      throw new BadField('invalid_primary_color');
+    }
+    out.primary_color = out.primary_color.trim();
+  }
+  if ('whatsapp_number' in out && out.whatsapp_number != null && out.whatsapp_number !== '') {
+    if (typeof out.whatsapp_number !== 'string' || !/^[0-9+()\-\s]{6,25}$/.test(out.whatsapp_number)) {
+      throw new BadField('invalid_whatsapp_number');
+    }
+  }
+  return out;
+}
+
 // Agency profile (branding + WhatsApp for the public mini-site). Folded into
 // this file rather than a standalone api/agency-settings.js to stay under
 // Vercel Hobby's 12-serverless-function cap. PATCH uses the service client:
@@ -49,7 +130,7 @@ async function handleAgencyResource(req, res, auth) {
   }
 
   if (req.method === 'PATCH') {
-    const fields = pickAgencyWritable(req.body || {});
+    const fields = validateAgencyFields(pickAgencyWritable(req.body || {}));
     const svc = getServiceClient();
     const { data, error } = await svc
       .from('agencies')
@@ -143,7 +224,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      let fields = pickWritable(req.body || {});
+      let fields = validateListingFields(pickWritable(req.body || {}));
       if (!fields.operation) {
         res.status(400).json({ error: 'missing_operation' });
         return;
@@ -184,7 +265,7 @@ export default async function handler(req, res) {
         res.status(400).json({ error: 'missing_id' });
         return;
       }
-      let fields = pickWritable(req.body || {});
+      let fields = validateListingFields(pickWritable(req.body || {}));
       // The photo cap applies on edit too, or it would be trivially bypassed by
       // creating within the limit and then adding more.
       const { data: agencyRow } = await getServiceClient()
@@ -221,6 +302,10 @@ export default async function handler(req, res) {
 
     res.status(405).json({ error: 'method_not_allowed' });
   } catch (err) {
+    if (err instanceof BadField) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
     res.status(500).json({ error: 'listings_operation_failed', detail: safeDetail(err) });
   }
 }
