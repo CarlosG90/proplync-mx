@@ -263,7 +263,11 @@
      parsed    : how the server read the query (chips are drawn from it)
      overrides : what the buyer changed since (a removed chip, a flipped
                  currency, a relaxation they accepted); sent with every call */
-  var state = { q: '', parsed: null, overrides: { hard: {}, prefs: {} }, sort: 'relevance', offset: 0, bbox: null, total: 0, results: [], busy: false };
+  var state = { q: '', parsed: null, overrides: { hard: {}, prefs: {} }, sort: 'relevance', offset: 0, bbox: null, total: 0, results: [] };
+  /* Every action sends its own request; only the newest answer is drawn. A
+     busy flag that dropped clicks made quick taps (flip a chip, then remove
+     another) leave the results describing a search the chips no longer show. */
+  var seq = 0;
   var map, markers = [], fitting = false;
 
   function t(es, en) { return lang === 'en' ? en : es; }
@@ -433,9 +437,8 @@
 
   /* ---------- the call ---------- */
   async function run(reset) {
-    if (state.busy) return;
-    state.busy = true;
-    if (reset) { state.offset = 0; state.results = []; }
+    var mine = ++seq;
+    if (reset) { state.offset = 0; }
     var grid = document.getElementById('search-grid');
     var count = document.getElementById('search-count');
     if (reset) count.textContent = t('Buscando…', 'Searching…');
@@ -446,10 +449,11 @@
         body: JSON.stringify({ q: state.q, overrides: state.overrides, sort: state.sort, offset: state.offset, bbox: state.bbox, lang: lang, via: state.bbox ? 'map' : (state.q ? 'nl' : 'filters') })
       });
       var data = await r.json();
+      if (mine !== seq) return;            // a newer search has started; this answer is stale
       if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
       if (reset || !state.parsed) state.parsed = data.parsed;
       state.total = data.total;
-      state.results = state.results.concat(data.results || []);
+      state.results = reset ? (data.results || []) : state.results.concat(data.results || []);
       grid.innerHTML = state.results.map(cardHTML).join('');
       count.textContent = data.total === 1 ? t('1 propiedad', '1 property') : (data.total + ' ' + t('propiedades', 'properties'));
       document.getElementById('more-btn').hidden = state.results.length >= data.total;
@@ -460,10 +464,9 @@
       if (state.q) url.searchParams.set('q', state.q); else url.searchParams.delete('q');
       history.replaceState(null, '', url.pathname + url.search);
     } catch (e) {
+      if (mine !== seq) return;
       count.textContent = '';
       grid.innerHTML = '<div class="search-empty"><h3>' + escapeHtml(t('La búsqueda no está disponible', 'Search is unavailable')) + '</h3><p>' + escapeHtml(t('Intenta de nuevo en un momento.', 'Try again in a moment.')) + '</p></div>';
-    } finally {
-      state.busy = false;
     }
   }
 
