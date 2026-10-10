@@ -34,10 +34,12 @@ function isModelGone(status, text) {
  * has been retired.
  *
  * @param {object} body  chat-completions body WITHOUT `model` (added here)
+ * @param {object} [opts]
+ * @param {string} [opts.model]  pin a model; defaults to PRIMARY_MODEL
  * @returns {Promise<object>} parsed Groq response
  * @throws {Error} if both models fail, or the key is missing
  */
-export async function groqChat(body) {
+export async function groqChat(body, { model = PRIMARY_MODEL } = {}) {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error('missing_groq_api_key');
 
@@ -51,10 +53,12 @@ export async function groqChat(body) {
     return { ok: r.ok, status: r.status, text };
   };
 
-  let res = await attempt(PRIMARY_MODEL);
+  /* Each agent can pin its own model: Groq's free limits are per model, so
+     spreading agents across models multiplies the free capacity. */
+  let res = await attempt(model);
 
-  if (!res.ok && isModelGone(res.status, res.text)) {
-    logDegraded('groq:model-retired', `${PRIMARY_MODEL} -> ${res.status}; retrying ${FALLBACK_MODEL}`);
+  if (!res.ok && isModelGone(res.status, res.text) && model !== FALLBACK_MODEL) {
+    logDegraded('groq:model-retired', `${model} -> ${res.status}; retrying ${FALLBACK_MODEL}`);
     res = await attempt(FALLBACK_MODEL);
   }
 

@@ -11,7 +11,7 @@ PropLync.mx is a bilingual (ES/EN) real-estate platform for the **Riviera Maya, 
    - `/agencia/:slug`: the agency's public portfolio page.
    - Accounts are invite-only (`/invitacion/:code`, `/signup`). Onboarding happens through the `onboard-agency` skill or `scripts/onboard-agency.mjs`.
 2. **Buyers (free, the demand side).**
-   - `/` home with agency/buyer "doors", `/search` and `/propiedades-en-:city`, `/propiedad/:id` (server-rendered for SEO), `/favoritos`.
+   - `/` home with agency/buyer "doors", **`/search` (search v2: one index of PropLync listings + crawled portal listings, natural-language queries, ranked, semantic)** and `/propiedades-en-:city`, `/propiedad/:id` (server-rendered for SEO), `/favoritos`.
    - **PropLync Finder** (`/finder`, `/brief`): **Concierge**, a voice- or text-based AI agent, interviews the buyer about the life they want, turns that into a structured *brief* (must-haves, deal-breakers, budget, areas, purpose, timeline), and the buyer approves it (with name, email and consent), getting a private link `/brief?b=<token>`. **Scout** then searches PropLync inventory, the portals and agency sites, merges the same property across sites into one card with every price, and a person confirms five questions with each listing agent before anything is shown to the buyer (see *Scout* below).
 
 Business model: plans `free` / `pro` / `vip` in `api/_lib/plans.js` (listing caps, marketing module, Instagram, monthly Reel quota). `agencies.plan` is set by hand today; there's no billing yet.
@@ -50,17 +50,21 @@ api/
   property.js, search.js   JSON + server-rendered pages + sitemap.xml
   amenities.js, geocode.js, photos.js   thin external proxies
   _lib/                auth, plans, ratelimit, redis, groq, runway, reel, notify, photos, agency, supabase, health
+  _lib/search/         search v2: amenities.js (ES/EN tag dictionary), normalize.js (one listing shape), index-writer.js
+                       (dedupe/upsert, PropLync mirror, embeddings), query.js (rules first, Groq only for leftovers), api.js (?action=query)
   _lib/scout.js        Scout engine: one resumable Claude segment per call (web_search/web_fetch + submit_candidates)
   _lib/scout-merge.js  pure dedupe/merge + hard brief limits (budget, must-haves, deal-breakers)
 supabase/              schema.sql + numbered migrations 002–009 (applied by hand or Supabase MCP)
 scripts/               operator scripts: onboard-agency, create-invite, scout, health-check, set-supabase-project
+ingest/                crawler: run.mjs + adapters/ (Apify: Inmuebles24, Lamudi); runs daily via .github/workflows/ingest.yml
+supabase/functions/embed  edge function: gte-small embeddings (free, in Supabase); accepts only service_role JWTs
 test/                  node:test unit tests (`npm test`)
 .claude/skills/scout/  skill wrapping scripts/scout.mjs (run, review, confirm, release)
 vercel.json            function durations + pretty-URL rewrites (Spanish and English paths)
 RECOMMENDATIONS.md     prioritized engineering/AI backlog; check it before larger changes
 ```
 
-Data model: `agencies` (plan, slug, whatsapp_number, marketing_trials_used), `agency_members` (user ↔ agency, role), `listings`, `leads` (+ qualification fields, follow-ups), `lead_notes`, `download_leads`, `signup_invites`, `reel_jobs`, and for Finder `buyer_briefs` (token hash, brief jsonb, contact, status), `scout_runs` (resumable transcript, lease, usage/cost) and `scout_candidates` (facts, sources with per-site prices, match, verification + the agent's answers). The three Finder tables have RLS on and **no policies**: service role only.
+Data model: `agencies` (plan, slug, whatsapp_number, marketing_trials_used), `agency_members` (user ↔ agency, role), `listings`, `leads` (+ qualification fields, follow-ups), `lead_notes`, `download_leads`, `signup_invites`, `reel_jobs`, and for Finder `buyer_briefs` (token hash, brief jsonb, contact, status), `scout_runs` (resumable transcript, lease, usage/cost) and `scout_candidates` (facts, sources with per-site prices, match, verification + the agent's answers). The three Finder tables have RLS on and **no policies**: service role only. **Search index (010/011):** `search_markets` and `search_sources` (the switches: enable a market, switch a source off or to a safer `display_mode` with one UPDATE, monthly budgets), `search_properties` (one row per real property: facts, MXN price range, amenities[], tsv, geog, halfvec(384) embedding; origin `proplync` or `web`), `search_offers` (one row per ad with its own price, URL, internal `contact`), `search_queries` (anonymized demand log), `geocode_cache`, `places`. Ranking is the RPC `search_properties_v1(jsonb)` (weights live there); upkeep is `search_refresh_prices` / `search_mark_stale`.
 
 ## Hard constraints (read before adding things)
 
@@ -96,6 +100,7 @@ Data model: `agencies` (plan, slug, whatsapp_number, marketing_trials_used), `ag
 - **Content generation** (`api/generate.js`): Groq, with honesty rules (no invented features) restated inside the brand-voice block.
 - **Extraction** (`api/extract.js`): Claude reads PDFs and images and returns listing fields.
 - **Scout** (`api/_lib/scout.js`): `claude-opus-5-5` with `web_search_20260209` + `web_fetch_20260209` and a strict `submit_candidates` tool (forced `tool_choice` is a 400 on Opus 5.5, so it is `auto` + prompt, with one nudge). A run is a series of segments: `pause_turn` saves the transcript to `scout_runs.messages` and the next segment resumes it; a lease stops two runners doing the same segment. Runners: `SCOUT_AUTO=on` chains `finder.js?action=scout-step` on Vercel (each hop answers 202 and works in `waitUntil`); otherwise `node scripts/scout.mjs run <briefId>`. Nothing the model says is stored on trust: source URLs must have appeared in this run's search/fetch results, numbers are range-checked, and `scout-merge.js` drops over-budget / must-have-missing / deal-breaker cards. Buyers see only `confirmed` candidates, and only after `scout.mjs ready`.
+- **Search v2** (`/search` → `api/search.js?action=query` → `api/_lib/search/api.js`): `query.js` parses buyer text with deterministic rules first (beds, prices + currency, rent/sale, towns, amenity phrases); **Groq `gpt-oss-20b` is called only when descriptive words are left over**, and parses are cached 24 h. A guessed currency is flagged `currency_assumed` and shown as a flippable chip. Query text → `embed` edge function → vector; the RPC combines full-text (words boost, never gate), semantic similarity, amenity preferences, distance, freshness and a verified boost, and returns reasons per card. Fewer than 3 results → relaxation suggestions with counts + the Scout/Finder offer. Cards obey each source's `display_mode`; agent contacts never leave the DB. Our agencies' listings are mirrored into the index on every save (`my-listings.js` → `syncProplync`) and nightly; they are indexed even outside crawl markets. The old GET `/api/search` filter path still serves city pages and old links.
 - Model IDs live at the top of each file (`MODEL` in finder/extract, `SCOUT_MODEL` in `_lib/scout.js`, `PRIMARY_MODEL`/`FALLBACK_MODEL` in `_lib/groq.js`).
 
 ## Workflow
@@ -103,7 +108,7 @@ Data model: `agencies` (plan, slug, whatsapp_number, marketing_trials_used), `ag
 - Run locally with `vercel dev` (needs `.env.local`; pull it with `vercel env pull`). Static pages also open directly.
 - Env vars: see `.env.example` (names only; never print values). Key ones: `SUPABASE_*`, `GROQ_API_KEY`, `ANTHROPIC_API_KEY`, `RUNWAYML_API_SECRET`, `KV_REST_API_URL/TOKEN`, `IG_ACCESS_TOKEN`, `IG_BUSINESS_ACCOUNT_ID`, `RESEND_API_KEY`, `SIGNUP_INVITE_CODE`, `PUBLIC_SITE_URL`.
 - **Shipping:** branch → PR → Vercel preview → squash-merge to `main` (title ends with `(#N)`) → production auto-deploys. Don't push straight to `main`.
-- **DB changes:** add `supabase/0NN_description.sql` (idempotent: `if not exists`), apply in Supabase Studio or MCP, and include RLS policies in the same file. The next number is **010**.
+- **DB changes:** add `supabase/0NN_description.sql` (idempotent: `if not exists`), apply in Supabase Studio or MCP, and include RLS policies in the same file. The next number is **012**.
 - **Tests:** `npm test` runs the Scout merge/validation unit tests; there is no CI yet. Otherwise verify by running handlers with mocked `req`/`res` and probing the preview or production URLs. Say plainly what wasn't tested. A real Scout run costs money: ask first.
 - Useful skills: `onboard-agency`, `audio-a-prompt` (voice note → site change prompt), `real-estate-content`, `digital-marketing-strategy`, `instagram-publish`, `/review`, `/ship`, `/qa`. For web browsing use gstack `/browse`, not the Chrome MCP.
 

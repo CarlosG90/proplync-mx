@@ -18,6 +18,20 @@ import { getUserClient, getServiceClient } from './_lib/supabase.js';
 import { findStockPhoto } from './_lib/photos.js';
 import { safeDetail } from './_lib/health.js';
 import { planFor, planStatus } from './_lib/plans.js';
+import { waitUntil } from '@vercel/functions';
+import { syncProplync, embedPending } from './_lib/search/index-writer.js';
+import { logDegraded } from './_lib/health.js';
+
+/* Search reads the index (api/_lib/search), not this table, so every saved
+   change is mirrored there right away, in the background: the agent's save
+   never waits on it, and the nightly crawl reconciles anything missed. */
+function reindex(publicId) {
+  if (!publicId) return;
+  const svc = getServiceClient();
+  waitUntil(syncProplync(svc, { publicIds: [publicId] })
+    .then(() => embedPending(svc, { limit: 5 }))
+    .catch((err) => logDegraded('search:reindex', err)));
+}
 
 const AGENCY_WRITABLE_FIELDS = ['name', 'logo_url', 'cover_url', 'primary_color', 'whatsapp_number'];
 
@@ -255,6 +269,7 @@ export default async function handler(req, res) {
         .select('*')
         .single();
       if (error) throw error;
+      reindex(data && data.public_id);
       res.status(200).json({ listing: data });
       return;
     }
@@ -280,6 +295,7 @@ export default async function handler(req, res) {
         .select('*')
         .single();
       if (error) throw error;
+      reindex(data && data.public_id);
       res.status(200).json({ listing: data });
       return;
     }
@@ -290,12 +306,15 @@ export default async function handler(req, res) {
         res.status(400).json({ error: 'missing_id' });
         return;
       }
+      // Remember which listing it was, so search can retire it once it is gone.
+      const { data: gone } = await db.from('listings').select('public_id').eq('id', id).eq('agency_id', auth.agencyId).maybeSingle();
       const { error } = await db
         .from('listings')
         .delete()
         .eq('id', id)
         .eq('agency_id', auth.agencyId);
       if (error) throw error;
+      reindex(gone && gone.public_id);
       res.status(200).json({ ok: true });
       return;
     }
