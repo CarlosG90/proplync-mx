@@ -153,3 +153,31 @@ export async function notifyNewLead({ lead, listing, agencyId }) {
     return { sent: false, reason: 'network_error' };
   }
 }
+
+/**
+ * Best-effort plain-text alert to whoever runs Finder (OPERATOR_EMAIL): a buyer
+ * approved a brief, or a Scout run finished and has candidates to confirm.
+ * Same rules as the lead alert: unconfigured is a skip, failures are logged,
+ * nothing here throws into the request that triggered it.
+ */
+export async function notifyOperator({ subject, text }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.LEAD_NOTIFY_FROM;
+  const to = process.env.OPERATOR_EMAIL;
+  if (!apiKey || !from || !to) return { sent: false, reason: 'not_configured' };
+  try {
+    const r = await fetch(RESEND_ENDPOINT, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ from, to: [to], subject: String(subject).slice(0, 200), text: String(text).slice(0, 5000) })
+    });
+    if (!r.ok) {
+      logDegraded('notify:operator', new Error(`${r.status} ${await r.text().catch(() => '')}`.slice(0, 300)));
+      return { sent: false, reason: 'provider_error' };
+    }
+    return { sent: true };
+  } catch (err) {
+    logDegraded('notify:operator', err);
+    return { sent: false, reason: 'network_error' };
+  }
+}
