@@ -343,20 +343,22 @@ sayEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') turn(say
 
 /* ---------- sign in (Supabase Auth: Google or a one-time email code) ----------
    Credits belong to a signed-in buyer, so a new tab cannot reset a wallet.
-   The brief survives the Google round trip in sessionStorage. */
+   The brief waits in localStorage while the buyer signs in: the email link
+   usually opens in a new tab, which sessionStorage would not reach. */
 var PENDING_KEY = 'pl_pending_brief';
+var PENDING_TTL = 24 * 3600 * 1000;
 var siMsg = document.getElementById('si-msg');
 var apMsg = document.getElementById('ap-msg');
 var wallet = null;
 
 function msg(el, text, isErr) { el.className = 'bf-msg-line' + (isErr ? ' err' : ''); el.textContent = text; }
-function savePending() { try { sessionStorage.setItem(PENDING_KEY, JSON.stringify({ brief: brief })); } catch (e) {} }
-function clearPending() { try { sessionStorage.removeItem(PENDING_KEY); } catch (e) {} }
+function savePending() { try { localStorage.setItem(PENDING_KEY, JSON.stringify({ brief: brief, at: Date.now() })); } catch (e) {} }
+function clearPending() { try { localStorage.removeItem(PENDING_KEY); } catch (e) {} }
 
 function restorePending() {
   var saved = null;
-  try { saved = JSON.parse(sessionStorage.getItem(PENDING_KEY) || 'null'); } catch (e) {}
-  if (!saved || !saved.brief) return false;
+  try { saved = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null'); } catch (e) {}
+  if (!saved || !saved.brief || Date.now() - (saved.at || 0) > PENDING_TTL) { clearPending(); return false; }
   brief = saved.brief; renderBrief();
   bubble('sys', t('Tu resumen sigue aquí. Apruébalo y Scout empieza a buscar.', 'Your brief is still here. Approve it and Scout starts searching.'));
   document.getElementById('approve-card').hidden = false;
@@ -628,6 +630,17 @@ document.addEventListener('langchange', function () {
 });
 
 setLang(document.documentElement.lang);
+initSupabase();
+/* Offer Google only when the project has it switched on: a button that fails
+   at the last step of the brief is worse than no button. */
+fetch(SUPABASE_URL + '/auth/v1/settings', { headers: { apikey: SUPABASE_ANON_KEY } })
+  .then(function (r) { return r.json(); })
+  .then(function (st) {
+    var on = !!(st && st.external && st.external.google);
+    document.getElementById('google-btn').hidden = !on;
+    document.querySelector('#signin-box .bf-or').hidden = !on;
+  })
+  .catch(function () { document.getElementById('google-btn').hidden = true; document.querySelector('#signin-box .bf-or').hidden = true; });
 var savedToken = new URLSearchParams(location.search).get('b');
 if (savedToken) { showStatusView(savedToken, false); }
 else if (restorePending()) { /* back from Google: brief restored, approve card open */ }

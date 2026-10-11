@@ -23,17 +23,18 @@
  * api/generate.js -- see the rewrite in vercel.json.
  *
  * AFTER THE CONVERSATION
- * `approve` stores the brief the buyer signed off (migration 009) and hands
- * back a private link token. With SCOUT_AUTO=on it also starts Scout
- * (api/_lib/scout.js), which then advances through `scout-step`, one Claude
- * segment per invocation, each one kicking the next. With it off, the brief
- * waits for an operator to run scripts/scout.mjs. `status` is what the buyer's
- * link reads: the brief, where it stands, and only the candidates a person
- * has confirmed with the listing agent.
+ * `approve` needs a signed-in buyer (Supabase Auth). It stores the brief
+ * (migration 009), spends the buyer's free first search or one credit
+ * (migration 012) and starts Scout (api/_lib/scout.js) right away; Scout then
+ * advances through `scout-step`, one Claude segment per invocation, each one
+ * kicking the next, and a failed run is refunded. `status` is what the buyer's
+ * link reads: the brief, Scout's progress and its matches, each labelled
+ * unverified, verification requested, or confirmed. `verify` (1 credit) asks
+ * a person to confirm one with its agent; `wallet` and `rerun` round it out.
  *
  * WHAT THIS DOES NOT DO
- * It never promises a property exists, never shows an unverified one, and
- * gives no legal, tax or financial advice.
+ * It never presents an unverified property as confirmed, never shows the
+ * listing agent's contact, and gives no legal, tax or financial advice.
  * -----------------------------------------------------------------------------
  */
 
@@ -252,10 +253,6 @@ function stepOrigin() {
   return process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : null;
 }
 
-function autoEnabled() {
-  return process.env.SCOUT_AUTO === 'on' && scoutConfigured() && Boolean(process.env.SCOUT_STEP_SECRET) && Boolean(stepOrigin());
-}
-
 /* Starts the next segment in a fresh invocation. That invocation answers 202
    before doing any work, so this resolves in a second, not a segment's length:
    the chain never nests. */
@@ -309,7 +306,7 @@ function scoutCanRun() {
    never creates a run; a run that then fails to start is refunded at once. */
 async function startPaidRun(svc, user, briefId, spendRef = briefId) {
   if (!scoutCanRun()) return { started: false, reason: 'scout_unavailable' };
-  const cap = Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 25;
+  const cap = Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 5;
   if (await runsStartedToday(svc) >= cap) {
     logDegraded('finder:scout-daily-cap', new Error(`cap ${cap} reached; brief ${briefId} waits`));
     return { started: false, reason: 'daily_capacity' };
