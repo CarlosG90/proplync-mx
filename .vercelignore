@@ -1,0 +1,14 @@
+# Only the site (HTML, css/, js/, og/, static files) and api/ belong on Vercel.
+# Everything below is repo-only: it was being served as public files.
+.claude
+.agents
+.github
+.gstack
+supabase
+scripts
+ingest
+test
+*.md
+*.log
+skills-lock.json
+api/_lib/_deprecated
