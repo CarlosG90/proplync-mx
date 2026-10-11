@@ -106,6 +106,36 @@
   .search-empty h3{color:var(--ink);font-size:1.3rem;font-weight:300}
   .search-empty p{color:var(--on-sand-dim);margin-top:10px}
 
+  /* search v2 */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 16px;min-height:4px}
+  .chip{font-family:var(--mono);font-size:.66rem;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;
+    background:var(--white);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 12px}
+  .chip.assumed{border-style:dashed}
+  .chip button{background:none;border:0;cursor:pointer;color:var(--on-sand-dim);font-size:.8rem;line-height:1;padding:0 2px}
+  .chip button:hover{color:var(--ink)}
+  .chip .flip{font-family:var(--mono);font-size:.62rem;color:var(--sea);text-decoration:underline;text-underline-offset:2px}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:22px}
+  .area-btn{font-family:var(--mono);font-size:.66rem;letter-spacing:.04em;background:var(--ink);color:var(--on-ink);border:0;border-radius:999px;padding:9px 14px;cursor:pointer}
+  .src-badge{position:absolute;bottom:12px;left:12px;z-index:2;font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;
+    padding:5px 9px;border-radius:999px;background:rgba(10,22,40,.82);color:#fff}
+  .src-badge.verified{background:var(--sea);color:#fff}
+  .offers{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+  .offer{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:.68rem;color:var(--on-sand-dim);padding:2px 0}
+  .offer b{color:var(--ink)}
+  .offer a{color:var(--on-sand-dim);text-decoration:underline;text-underline-offset:2px}
+  .reasons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .reason{font-family:var(--mono);font-size:.6rem;letter-spacing:.03em;padding:4px 8px;border-radius:999px;background:rgba(45,138,133,.1);color:var(--sea-deep)}
+  .reason.miss{background:rgba(26,36,56,.05);color:var(--on-sand-dim)}
+  .pcard-cta{display:block;text-align:center;margin-top:12px;font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;font-weight:700;
+    padding:10px;border-radius:999px;background:var(--gold);color:var(--ink);text-decoration:none}
+  .pcard-cta.verify{background:var(--ink);color:var(--on-ink)}
+  .more{display:block;margin:24px auto 0;font-family:var(--mono);font-size:.7rem;letter-spacing:.05em;background:none;border:1px solid var(--line);border-radius:999px;padding:11px 22px;cursor:pointer;color:var(--ink)}
+  .thin{margin-top:22px;padding:22px;border:1px solid var(--line);border-radius:var(--radius);background:var(--white)}
+  .thin h3{margin:0 0 8px;font-weight:300;color:var(--ink);font-size:1.1rem}
+  .thin p{margin:0 0 14px;color:var(--on-sand-dim);font-size:.88rem;line-height:1.55}
+  .thin .sugg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .thin .sugg button{font-family:var(--mono);font-size:.66rem;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;color:var(--ink)}
+  .thin a.scout{display:inline-block;font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.04em;background:var(--ink);color:var(--on-ink);padding:11px 18px;border-radius:999px;text-decoration:none}
   /* leaflet overrides */
   .leaflet-popup-content-wrapper{border-radius:var(--radius);font-family:var(--body);box-shadow:var(--shadow-lg)}
   .leaflet-popup-content{margin:12px 16px;font-size:.84rem;line-height:1.5}
@@ -154,39 +184,40 @@
            stock photos. It promised verified data and no invented information
            while showing invented properties. It now names what is actually on
            the page: the inventory of the agencies who pay us to publish it. -->
-      <p data-es="Inventario de nuestras inmobiliarias. Datos verificados, sin informacion inventada." data-en="Inventory from our member agencies. Verified data, no made-up information.">Inventario de nuestras inmobiliarias. Datos verificados, sin informacion inventada.</p>
+      <!-- Says what the page actually holds: our agencies' listings, verified,
+           plus listings found across the market, each labelled with its source. -->
+      <p data-es="Agencias PropLync y portales de todo el mercado, en un solo lugar. Cada resultado dice de d&oacute;nde viene y si ya lo verificamos." data-en="PropLync agencies and listings from across the market, in one place. Every result says where it comes from and whether we have verified it.">Agencias PropLync y portales de todo el mercado, en un solo lugar. Cada resultado dice de d&oacute;nde viene y si ya lo verificamos.</p>
       <div class="search-count" id="search-count"></div>
     </div>
 
-    <form class="nlsearch" id="nlsearch-form" onsubmit="handleNLSearch(event)">
-      <svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
-      <input type="text" id="nlsearch-input" data-es-placeholder="Ej. depa de 2 recamaras cerca de la playa bajo 400k" data-en-placeholder="E.g. 2 bedroom condo near the beach under $400k" placeholder="Ej. depa de 2 recamaras cerca de la playa bajo 400k">
-      <button type="submit" id="nlsearch-btn" data-es="Buscar con IA" data-en="Search with AI">Buscar con IA</button>
+    <form class="nlsearch" id="q-form">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="text" id="q" maxlength="300" autocomplete="off"
+             data-es-placeholder="Ej. depa de 2 rec&aacute;maras cerca de la playa bajo 400k" data-en-placeholder="E.g. 2 bedroom condo near the beach under $400k"
+             placeholder="Ej. depa de 2 recámaras cerca de la playa bajo 400k">
+      <button type="submit" id="q-btn" data-es="Buscar" data-en="Search">Buscar</button>
     </form>
-    <div class="nlsearch-hint" id="nlsearch-hint" data-es="Escribe en lenguaje natural &mdash; la IA lo convierte en filtros." data-en="Type in plain language &mdash; AI turns it into filters.">Escribe en lenguaje natural &mdash; la IA lo convierte en filtros.</div>
+    <div class="chips" id="chips" aria-live="polite"></div>
 
-    <div class="filters" id="filters">
-      <select class="filter-select" id="f-op" onchange="applyFilters()">
-        <option value="all" data-es="Todas" data-en="All">Todas</option>
+    <div class="toolbar">
+      <select class="filter-select" id="f-op">
+        <option value="" data-es="Venta y renta" data-en="Sale and rent">Venta y renta</option>
         <option value="sale" data-es="Venta" data-en="For sale">Venta</option>
         <option value="rental" data-es="Renta" data-en="For rent">Renta</option>
       </select>
-      <select class="filter-select" id="f-town" onchange="applyFilters()">
-        <option value="" data-es="Todas las zonas" data-en="All zones">Todas las zonas</option>
+      <select class="filter-select" id="f-sort">
+        <option value="relevance" data-es="M&aacute;s relevantes" data-en="Most relevant">Más relevantes</option>
+        <option value="price_asc" data-es="Precio: menor a mayor" data-en="Price: low to high">Precio: menor a mayor</option>
+        <option value="price_desc" data-es="Precio: mayor a menor" data-en="Price: high to low">Precio: mayor a menor</option>
+        <option value="newest" data-es="M&aacute;s nuevas" data-en="Newest">Más nuevas</option>
       </select>
-      <select class="filter-select" id="f-beds" onchange="applyFilters()">
-        <option value="" data-es="Recamaras" data-en="Bedrooms">Recamaras</option>
-        <option value="1">1+</option>
-        <option value="2">2+</option>
-        <option value="3">3+</option>
-        <option value="4">4+</option>
-      </select>
-      <input class="filter-input" id="f-minprice" type="number" placeholder="Min $" onchange="applyFilters()">
-      <input class="filter-input" id="f-maxprice" type="number" placeholder="Max $" onchange="applyFilters()">
-      <button class="filter-clear" onclick="clearFilters()" data-es="Limpiar" data-en="Clear">Limpiar</button>
+      <button class="area-btn" id="area-btn" hidden data-es="Buscar en esta zona del mapa" data-en="Search this map area">Buscar en esta zona del mapa</button>
+      <button class="filter-clear" id="clear-btn" data-es="Limpiar" data-en="Clear">Limpiar</button>
     </div>
 
     <div class="search-grid" id="search-grid"></div>
+    <button class="more" id="more-btn" hidden data-es="Ver m&aacute;s" data-en="Show more">Ver más</button>
+    <div class="thin" id="thin" hidden></div>
   </div>
 
   <div class="search-map" id="search-map">
@@ -212,315 +243,292 @@
 <script src="/js/api.js"></script>
 <script src="/js/favorites.js"></script>
 <script>
+  /* Search v2 · talks to /api/search?action=query (api/_lib/search/api.js).
+     Everything rendered from a result goes through js/escape.js: crawled
+     listings come from third-party pages and are hostile input. */
+
   /* ---------- header scroll ---------- */
-  (function(){
-    const header = document.querySelector('header');
-    let ticking = false;
-    window.addEventListener('scroll', function(){
-      if(!ticking){
-        requestAnimationFrame(function(){
-          header.classList.toggle('scrolled', window.scrollY > 40);
-          ticking = false;
-        });
+  (function () {
+    var header = document.querySelector('header');
+    var ticking = false;
+    window.addEventListener('scroll', function () {
+      if (!ticking) {
+        requestAnimationFrame(function () { header.classList.toggle('scrolled', window.scrollY > 40); ticking = false; });
         ticking = true;
       }
     });
   })();
 
-  /* ---------- state ---------- */
-  let listings = [];
-  let map, markers = [];
+  /* ---------- state ----------
+     parsed    : how the server read the query (chips are drawn from it)
+     overrides : what the buyer changed since (a removed chip, a flipped
+                 currency, a relaxation they accepted); sent with every call */
+  var state = { q: '', parsed: null, overrides: { hard: {}, prefs: {} }, sort: 'relevance', offset: 0, bbox: null, total: 0, results: [] };
+  /* Every action sends its own request; only the newest answer is drawn. A
+     busy flag that dropped clicks made quick taps (flip a chip, then remove
+     another) leave the results describing a search the chips no longer show. */
+  var seq = 0;
+  var map, markers = [], fitting = false;
 
-  /* ---------- map init ---------- */
+  function t(es, en) { return lang === 'en' ? en : es; }
+
+  function money(amount, currency) {
+    if (amount == null) return '';
+    var n = Number(amount);
+    var short = n >= 1e6 ? (Math.round(n / 1e5) / 10) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(n);
+    return (currency === 'USD' ? 'US$' : '$') + short + (currency && currency !== 'USD' ? ' ' + currency : '');
+  }
+
+  /* ---------- map ---------- */
   function initMap() {
-    /* Only ever seen when no listing has coordinates -- fitBounds takes over
-       as soon as one does. Quintana Roo was the wrong thing to fall back to
-       once agencies started listing outside it. */
     map = L.map('search-map', { scrollWheelZoom: true }).setView([23.6, -102.5], 5);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>',
       maxZoom: 18
     }).addTo(map);
+    /* Moving the map by hand offers "search this area"; moving it ourselves
+       (fitting results) does not. */
+    map.on('moveend', function () { if (!fitting) document.getElementById('area-btn').hidden = false; });
   }
 
-  function updateMarkers(props) {
-    markers.forEach(m => map.removeLayer(m));
+  function updateMarkers(results, fit) {
+    markers.forEach(function (m) { map.removeLayer(m); });
     markers = [];
-    const bounds = [];
-    props.forEach(p => {
-      if (p.lat == null || p.lng == null) return;
-      const title = lang === 'es' ? p.title_es : p.title_en;
-      const marker = L.marker([p.lat, p.lng])
-        .bindPopup(
-          '<b>' + escapeHtml(title) + '</b>' +
-          '<span class="pop-price">' + escapeHtml(p.currency) + ' $' + escapeHtml(p.formatted) + '</span>' +
-          '<a class="pop-link" href="/propiedad/' + p.public_id + '">' + (lang === 'es' ? 'Ver detalle &rarr;' : 'View details &rarr;') + '</a>'
-        )
-        .addTo(map);
+    var bounds = [];
+    results.forEach(function (c) {
+      if (c.lat == null || c.lng == null) return;
+      var price = c.offers && c.offers[0] ? money(c.offers[0].price, c.offers[0].currency) : '';
+      var href = c.origin === 'proplync' && c.listing_public_id ? '/propiedad/' + encodeURIComponent(c.listing_public_id) : '/brief?ref=' + encodeURIComponent(c.id);
+      var marker = L.marker([c.lat, c.lng]).bindPopup(
+        '<b>' + escapeHtml(c.title || '') + '</b>' +
+        '<span class="pop-price">' + escapeHtml(price) + '</span>' +
+        '<a class="pop-link" href="' + safeUrl(href) + '">' + escapeHtml(t('Ver detalle →', 'View details →')) + '</a>'
+      ).addTo(map);
       markers.push(marker);
-      bounds.push([p.lat, p.lng]);
+      bounds.push([c.lat, c.lng]);
     });
-    if (bounds.length > 1) {
-      // Opening on every result is the point of this map, so the bounds are
-      // never trimmed. maxZoom only stops the other end: several units in one
-      // building share a coordinate, and an untrimmed fitBounds slams to
-      // rooftop level, which shows all the results and none of the context.
-      map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
-    } else if (bounds.length === 1) {
-      map.setView(bounds[0], 13);
-    }
-
-    // A listing whose geocode came back empty is in the grid and not on the
-    // map, so "all results" quietly became most of them. PL-2302e17f sat at
-    // null until it was backfilled, and nothing on the page said a pin was
-    // missing. Say it instead of silently showing fewer.
-    const note = document.getElementById('map-note');
-    const missing = props.length - bounds.length;
-    if (missing > 0) {
-      note.textContent = lang === 'es'
-        ? bounds.length + ' de ' + props.length + ' en el mapa · ' + missing + ' sin ubicacion'
-        : bounds.length + ' of ' + props.length + ' on the map · ' + missing + (missing === 1 ? ' has no location' : ' have no location');
-      note.hidden = false;
-    } else {
-      note.hidden = true;
+    if (fit && bounds.length) {
+      fitting = true;
+      map.once('moveend', function () { fitting = false; });
+      if (bounds.length === 1) map.setView(bounds[0], 13); else map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
     }
   }
 
-  /* A spec the agency never filled in is absent, not zero. Printing "0 banos"
-     on a plot of land states a fact nobody supplied, one line under a subtitle
-     promising verified data with nothing invented. */
-  function specsHTML(p) {
-    return [
-      p.bedrooms ? p.bedrooms + ' ' + (lang === 'es' ? 'rec' : 'bd') : null,
-      p.bathrooms ? p.bathrooms + ' ' + (lang === 'es'
-        ? (p.bathrooms === 1 ? 'bano' : 'banos')
-        : 'bath') : null,
-      p.size ? p.size + ' m&sup2;' : null
-    ].filter(Boolean).map(function (s) { return '<span>' + s + '</span>'; }).join('');
+  /* ---------- chips: what the search understood, each removable ---------- */
+  function effectiveHard() {
+    return Object.assign({}, state.parsed ? state.parsed.hard : {}, state.overrides.hard);
+  }
+  function effectiveAmenities() {
+    if (Array.isArray(state.overrides.prefs.amenities)) return state.overrides.prefs.amenities;
+    return state.parsed && state.parsed.prefs && state.parsed.prefs.amenities ? state.parsed.prefs.amenities : [];
+  }
+  var AMENITY_ES = { pool: 'Alberca', private_pool: 'Alberca privada', ocean_view: 'Vista al mar', beachfront: 'Frente al mar', beach_access: 'Cerca de la playa', furnished: 'Amueblado', pet_friendly: 'Pet friendly', roof_garden: 'Roof garden', gym: 'Gimnasio', security: 'Seguridad 24h', gated: 'Privada', garden: 'Jardín', terrace: 'Terraza', parking: 'Estacionamiento', elevator: 'Elevador', air_conditioning: 'A/C', jungle_view: 'Vista a la selva', cenote: 'Cenote', coworking: 'Coworking', new_build: 'Preventa / nuevo', golf: 'Golf', marina: 'Marina' };
+  var AMENITY_EN = { pool: 'Pool', private_pool: 'Private pool', ocean_view: 'Ocean view', beachfront: 'Beachfront', beach_access: 'Near the beach', furnished: 'Furnished', pet_friendly: 'Pet friendly', roof_garden: 'Roof garden', gym: 'Gym', security: '24h security', gated: 'Gated', garden: 'Garden', terrace: 'Terrace', parking: 'Parking', elevator: 'Elevator', air_conditioning: 'A/C', jungle_view: 'Jungle view', cenote: 'Cenote', coworking: 'Coworking', new_build: 'Pre-sale / new', golf: 'Golf', marina: 'Marina' };
+  function amenityLabel(tag) { return (lang === 'en' ? AMENITY_EN : AMENITY_ES)[tag] || tag; }
+
+  function renderChips() {
+    var h = effectiveHard();
+    var chips = [];
+    if (h.operation) chips.push({ key: 'operation', text: h.operation === 'rental' ? t('Renta', 'For rent') : t('Venta', 'For sale') });
+    if (h.property_type) chips.push({ key: 'property_type', text: h.property_type });
+    (h.towns || []).forEach(function (town) { chips.push({ key: 'town:' + town, text: town }); });
+    if (h.beds_min) chips.push({ key: 'beds_min', text: h.beds_min + '+ ' + t('rec', 'bd') });
+    if (h.price_min || h.price_max) {
+      var range = h.price_min && h.price_max ? money(h.price_min, h.currency) + '–' + money(h.price_max, h.currency)
+        : h.price_max ? '≤ ' + money(h.price_max, h.currency) : '≥ ' + money(h.price_min, h.currency);
+      chips.push({ key: 'price', text: range, assumed: h.currency_assumed, flipTo: h.currency === 'USD' ? 'MXN' : 'USD' });
+    }
+    if (h.size_min) chips.push({ key: 'size_min', text: '≥ ' + h.size_min + ' m²' });
+    effectiveAmenities().forEach(function (tag) { chips.push({ key: 'amenity:' + tag, text: amenityLabel(tag) }); });
+
+    var box = document.getElementById('chips');
+    box.innerHTML = chips.map(function (c) {
+      return '<span class="chip' + (c.assumed ? ' assumed' : '') + '">' + escapeHtml(c.text) +
+        (c.assumed ? ' <button type="button" class="flip" data-flip="' + escapeHtml(c.flipTo) + '" title="' + escapeHtml(t('Moneda supuesta', 'Assumed currency')) + '">' +
+          escapeHtml(t('¿en ' + c.flipTo + '?', 'in ' + c.flipTo + '?')) + '</button>' : '') +
+        '<button type="button" data-remove="' + escapeHtml(c.key) + '" aria-label="' + escapeHtml(t('Quitar', 'Remove')) + '">×</button></span>';
+    }).join('');
   }
 
-  function countLabel(n) {
-    if (lang === 'es') return n + (n === 1 ? ' propiedad encontrada' : ' propiedades encontradas');
-    return n + (n === 1 ? ' property found' : ' properties found');
-  }
+  document.getElementById('chips').addEventListener('click', function (e) {
+    var el = e.target.closest('button');
+    if (!el) return;
+    var o = state.overrides;
+    if (el.dataset.flip) {
+      o.hard.currency = el.dataset.flip;
+      o.hard.currency_assumed = false;
+    } else if (el.dataset.remove) {
+      var key = el.dataset.remove;
+      var h = effectiveHard();
+      if (key === 'price') { o.hard.price_min = null; o.hard.price_max = null; }
+      else if (key.indexOf('town:') === 0) o.hard.towns = (h.towns || []).filter(function (x) { return x !== key.slice(5); });
+      else if (key.indexOf('amenity:') === 0) o.prefs.amenities = effectiveAmenities().filter(function (x) { return x !== key.slice(8); });
+      else { o.hard[key] = null; if (key === 'operation') document.getElementById('f-op').value = ''; }
+    }
+    run(true);
+  });
 
-  /* ---------- card rendering ---------- */
-  function cardHTML(p) {
-    const title = lang === 'es' ? p.title_es : p.title_en;
-    const opLbl = p.operation === 'sale' ? (lang === 'es' ? 'Venta' : 'For sale') : (lang === 'es' ? 'Renta' : 'For rent');
-    const perLbl = p.operation === 'rental' ? (lang === 'es' ? '/mes' : '/mo') : '';
-    const favClass = isFavorite(p.public_id) ? ' saved' : '';
-    return '<article class="pcard" data-id="' + p.public_id + '" onclick="window.location.href=\'/propiedad/' + p.public_id + '\'">' +
-      '<div class="pcard-photo" style="background-color:#142237;background-image:linear-gradient(180deg,rgba(10,22,40,.18),rgba(10,22,40,0) 42%,rgba(10,22,40,0) 72%,rgba(10,22,40,.12)),url(\'' + cssUrl(p.image) + '\')">' +
-        '<span class="pcard-badge ' + (p.operation === 'sale' ? 'badge-sale' : 'badge-rental') + '">' + opLbl + '</span>' +
-      '</div>' +
+  /* ---------- cards ---------- */
+  function cardHTML(c) {
+    var verified = c.origin === 'proplync';
+    var first = c.offers && c.offers[0];
+    var photo = cssUrl((c.photos || [])[0]);
+    var badge = verified
+      ? '<span class="src-badge verified">' + escapeHtml(t('PropLync · verificado', 'PropLync · verified')) + '</span>'
+      : '<span class="src-badge">' + escapeHtml(t('En ', 'On ') + (first ? first.source_name : 'web') + t(' · sin verificar', ' · not verified')) + '</span>';
+    var specs = [
+      c.bedrooms ? c.bedrooms + ' ' + t('rec', 'bd') : null,
+      c.bathrooms ? c.bathrooms + ' ' + t('baños', 'bath') : null,
+      c.built_m2 ? c.built_m2 + ' m²' : null
+    ].filter(Boolean).map(function (x) { return '<span>' + escapeHtml(x) + '</span>'; }).join('');
+    var offers = (c.offers || []).slice(0, 3).map(function (o) {
+      var href = o.url ? safeUrl(o.url) : '';
+      var name = escapeHtml(o.source_name || '');
+      return '<div class="offer">' + (href ? '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + name + '</a>' : '<span>' + name + '</span>') +
+        '<b>' + escapeHtml(money(o.price, o.currency)) + '</b></div>';
+    }).join('') + ((c.offers || []).length > 3 ? '<div class="offer"><span>+' + ((c.offers || []).length - 3) + ' ' + escapeHtml(t('anuncios más', 'more listings')) + '</span></div>' : '');
+    var r = c.reasons || {};
+    var reasons = (r.amenities_met || []).map(function (a) { return '<span class="reason">✓ ' + escapeHtml(a.label) + '</span>'; }).join('') +
+      (r.under_budget_pct > 0 ? '<span class="reason">' + escapeHtml(r.under_budget_pct + t('% bajo tu presupuesto', '% under budget')) + '</span>' : '') +
+      (r.distance_km != null ? '<span class="reason">' + escapeHtml(t('a ', '') + r.distance_km + ' km') + '</span>' : '') +
+      (r.amenities_missing || []).slice(0, 2).map(function (a) { return '<span class="reason miss">? ' + escapeHtml(a.label) + '</span>'; }).join('');
+    var href = verified && c.listing_public_id ? '/propiedad/' + encodeURIComponent(c.listing_public_id) : '/brief?ref=' + encodeURIComponent(c.id);
+    var cta = verified
+      ? '<a class="pcard-cta" href="' + safeUrl(href) + '">' + escapeHtml(t('Ver propiedad', 'View property')) + '</a>'
+      : '<a class="pcard-cta verify" href="' + safeUrl(href) + '">' + escapeHtml(t('Verificar y agendar visita', 'Verify & arrange a visit')) + '</a>';
+    return '<article class="pcard">' +
+      '<div class="pcard-photo" style="background-color:#142237;' + (photo ? 'background-image:url(\'' + photo + '\')' : '') + '">' + badge + '</div>' +
       '<div class="pcard-body">' +
-        '<div class="pcard-loc">' + [p.neighborhood, p.town].filter(Boolean).map(escapeHtml).join(' &middot; ') + '</div>' +
-        '<div class="pcard-title">' + escapeHtml(title) + '</div>' +
-        '<div class="pcard-specs">' + specsHTML(p) + '</div>' +
-        '<div class="pcard-foot"><span class="pcard-price">' + escapeHtml(p.currency) + ' $' + escapeHtml(p.formatted) + (perLbl ? ' <small>' + perLbl + '</small>' : '') + '</span></div>' +
+        '<div class="pcard-loc">' + escapeHtml([c.neighborhood, c.town].filter(Boolean).join(' · ')) + '</div>' +
+        '<div class="pcard-title">' + escapeHtml(c.title || t('Propiedad', 'Property')) + '</div>' +
+        '<div class="pcard-specs">' + specs + '</div>' +
+        (reasons ? '<div class="reasons">' + reasons + '</div>' : '') +
+        '<div class="offers">' + offers + '</div>' +
+        cta +
       '</div></article>';
   }
 
-  function renderGrid(props) {
-    const grid = document.getElementById('search-grid');
-    if (!props.length) {
-      grid.innerHTML = '<div class="search-empty"><h3>' + (lang === 'es' ? 'No se encontraron propiedades' : 'No properties found') + '</h3><p>' + (lang === 'es' ? 'Intenta con otros filtros.' : 'Try different filters.') + '</p></div>';
-      return;
-    }
-    grid.innerHTML = props.map(cardHTML).join('');
-    injectFavButtons();
+  function renderThin(data) {
+    var box = document.getElementById('thin');
+    if (data.total >= 3 || state.offset > 0) { box.hidden = true; box.innerHTML = ''; return; }
+    var sugg = (data.suggestions || []).map(function (s) {
+      return '<button type="button" data-drop="' + escapeHtml(s.drop) + '">' + escapeHtml((lang === 'en' ? s.label.en : s.label.es) + ' → ' + s.total) + '</button>';
+    }).join('');
+    box.innerHTML =
+      '<h3>' + escapeHtml(data.total ? t('Pocos resultados', 'Only a few results') : t('Nada con todo eso, todavía', 'Nothing with all of that, yet')) + '</h3>' +
+      (sugg ? '<p>' + escapeHtml(t('Un solo cambio abre más opciones:', 'One change opens up more:')) + '</p><div class="sugg">' + sugg + '</div>' : '') +
+      '<p>' + escapeHtml(t('O deja que Scout busque en todo el mercado por ti y una persona confirme cada propiedad con su agente.', 'Or let Scout search the whole market for you, with a person confirming each property with its agent.')) + '</p>' +
+      '<a class="scout" href="/brief">' + escapeHtml(t('Que Scout busque por mí →', 'Have Scout search for me →')) + '</a>';
+    box.hidden = false;
   }
 
-  /* ---------- filters ---------- */
-  function getFilterParams() {
-    const params = {};
-    const op = document.getElementById('f-op').value;
-    const town = document.getElementById('f-town').value;
-    const beds = document.getElementById('f-beds').value;
-    const minP = document.getElementById('f-minprice').value;
-    const maxP = document.getElementById('f-maxprice').value;
-    if (op && op !== 'all') params.op = op;
-    if (town) params.town = town;
-    if (beds) params.beds = beds;
-    if (minP) params.minPrice = minP;
-    if (maxP) params.maxPrice = maxP;
-    return params;
-  }
+  document.getElementById('thin').addEventListener('click', function (e) {
+    var el = e.target.closest('button[data-drop]');
+    if (!el) return;
+    var h = effectiveHard();
+    var o = state.overrides.hard;
+    if (el.dataset.drop === 'towns') o.towns = [];
+    if (el.dataset.drop === 'price_max' && h.price_max) o.price_max = Math.round(h.price_max * 1.25);
+    if (el.dataset.drop === 'beds_min' && h.beds_min) o.beds_min = Math.max(0, h.beds_min - 1) || null;
+    if (el.dataset.drop === 'operation') { o.operation = null; document.getElementById('f-op').value = ''; }
+    if (el.dataset.drop === 'amenities_required') o.amenities_required = null;
+    run(true);
+  });
 
-  async function applyFilters() {
-    const params = getFilterParams();
-    const qs = new URLSearchParams(params).toString();
-    history.replaceState(null, '', qs ? '/search?' + qs : '/search');
-    await loadSearch(params);
-  }
-
-  /* True while the visible filters were written by an AI search rather than
-     chosen by hand. It decides whether emptying the AI box should undo them:
-     filters the buyer set themselves are theirs to keep. */
-  let filtersFromAI = false;
-
-  function clearFilters() {
-    document.getElementById('f-op').value = 'all';
-    document.getElementById('f-town').value = '';
-    document.getElementById('f-beds').value = '';
-    document.getElementById('f-minprice').value = '';
-    document.getElementById('f-maxprice').value = '';
-    // Limpiar used to leave the AI query sitting in the box above an unfiltered
-    // page, which reads as though the search is still applied.
-    const nl = document.getElementById('nlsearch-input');
-    if (nl) nl.value = '';
-    filtersFromAI = false;
-    applyFilters();
-  }
-
-  /* ---------- load data ---------- */
-  async function loadSearch(params) {
+  /* ---------- the call ---------- */
+  async function run(reset) {
+    var mine = ++seq;
+    if (reset) { state.offset = 0; }
+    var grid = document.getElementById('search-grid');
+    var count = document.getElementById('search-count');
+    if (reset) count.textContent = t('Buscando…', 'Searching…');
     try {
-      const data = await fetchSearch(params || {});
-      listings = data.listings || [];
-
-      const countEl = document.getElementById('search-count');
-      countEl.textContent = countLabel(listings.length);
-
-      if (data.towns && data.towns.length) {
-        const sel = document.getElementById('f-town');
-        const current = sel.value;
-        const opts = sel.querySelectorAll('option:not(:first-child)');
-        if (!opts.length) {
-          data.towns.forEach(t => {
-            const opt = document.createElement('option');
-            opt.value = t;
-            opt.textContent = t;
-            sel.appendChild(opt);
-          });
-        }
-        if (current) sel.value = current;
-      }
-
-      renderGrid(listings);
-      updateMarkers(listings);
+      var r = await fetch('/api/search?action=query', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ q: state.q, overrides: state.overrides, sort: state.sort, offset: state.offset, bbox: state.bbox, lang: lang, via: state.bbox ? 'map' : (state.q ? 'nl' : 'filters') })
+      });
+      var data = await r.json();
+      if (mine !== seq) return;            // a newer search has started; this answer is stale
+      if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+      if (reset || !state.parsed) state.parsed = data.parsed;
+      state.total = data.total;
+      state.results = reset ? (data.results || []) : state.results.concat(data.results || []);
+      grid.innerHTML = state.results.map(cardHTML).join('');
+      count.textContent = data.total === 1 ? t('1 propiedad', '1 property') : (data.total + ' ' + t('propiedades', 'properties'));
+      document.getElementById('more-btn').hidden = state.results.length >= data.total;
+      renderChips();
+      renderThin(data);
+      updateMarkers(state.results, reset && !state.bbox);
+      var url = new URL(location.href);
+      if (state.q) url.searchParams.set('q', state.q); else url.searchParams.delete('q');
+      history.replaceState(null, '', url.pathname + url.search);
     } catch (e) {
-      console.warn('[Proplync] search error:', e.message);
-      document.getElementById('search-grid').innerHTML = '<div class="search-empty"><h3>Error</h3><p>' + escapeHtml(e.message) + '</p></div>';
+      if (mine !== seq) return;
+      count.textContent = '';
+      grid.innerHTML = '<div class="search-empty"><h3>' + escapeHtml(t('La búsqueda no está disponible', 'Search is unavailable')) + '</h3><p>' + escapeHtml(t('Intenta de nuevo en un momento.', 'Try again in a moment.')) + '</p></div>';
     }
   }
 
-  /* ---------- natural-language search ---------- */
-  async function handleNLSearch(evt) {
-    evt.preventDefault();
-    const input = document.getElementById('nlsearch-input');
-    const btn = document.getElementById('nlsearch-btn');
-    const query = input.value.trim();
-    // Submitting an empty box used to return early, leaving the town the AI had
-    // written into the filter bar still applied — the buyer cleared the search
-    // and stayed stuck on one result with no visible reason why.
-    if (!query) {
-      if (filtersFromAI) clearFilters();
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = lang === 'es' ? 'Buscando...' : 'Searching...';
-    try {
-      const filters = await fetchNLSearch(query);
-
-      // reflect recognized fields back into the visible filter controls
-      document.getElementById('f-op').value = filters.op || 'all';
-      document.getElementById('f-town').value = filters.town || '';
-      document.getElementById('f-beds').value = filters.beds || '';
-      document.getElementById('f-minprice').value = filters.minPrice || '';
-      document.getElementById('f-maxprice').value = filters.maxPrice || '';
-
-      filtersFromAI = true;
-
-      // run the real search with the full filter set, including fields
-      // (minSize/maxSize/q) the visible filter bar has no control for yet
-      const qs = new URLSearchParams(filters).toString();
-      history.replaceState(null, '', qs ? '/search?' + qs : '/search');
-      await loadSearch(filters);
-    } catch (e) {
-      console.warn('[Proplync] nlsearch error:', e.message);
-      // A 502 from the parser is our outage, not a badly worded search. Sending
-      // the buyer off to rephrase a query that was fine wastes their time on
-      // something they cannot fix; the filters below still work either way.
-      const serverDown = /^HTTP /.test(e.message || '');
-      document.getElementById('search-grid').innerHTML = '<div class="search-empty"><h3>' +
-        (serverDown
-          ? (lang === 'es' ? 'La busqueda con IA no esta disponible' : 'AI search is unavailable')
-          : (lang === 'es' ? 'No se pudo interpretar la busqueda' : 'Could not understand the search')) +
-        '</h3><p>' +
-        (serverDown
-          ? (lang === 'es' ? 'Intenta de nuevo en un momento, o usa los filtros de arriba.' : 'Try again in a moment, or use the filters above.')
-          : (lang === 'es' ? 'Intenta describirlo de otra forma, o usa los filtros.' : 'Try rephrasing it, or use the filters below.')) +
-        '</p></div>';
-      // The count and the map kept describing the last successful search, so the
-      // page showed "4 propiedades encontradas" and four pins above an error
-      // card saying it had found nothing. Three surfaces, three stories.
-      document.getElementById('search-count').textContent = '';
-      updateMarkers([]);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = lang === 'es' ? 'Buscar con IA' : 'Search with AI';
-    }
-  }
-
-  /* ---------- restore filters from URL ---------- */
-  function restoreFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('op')) document.getElementById('f-op').value = params.get('op');
-    if (params.get('town')) document.getElementById('f-town').value = params.get('town');
-    if (params.get('beds')) document.getElementById('f-beds').value = params.get('beds');
-    if (params.get('minPrice')) document.getElementById('f-minprice').value = params.get('minPrice');
-    if (params.get('maxPrice')) document.getElementById('f-maxprice').value = params.get('maxPrice');
-    return Object.fromEntries(params);
-  }
-
-  /* ---------- lang change ---------- */
-  /* Emptying the box restores the full list straight away. Waiting for a
-     submit is the wrong contract: deleting a search reads as undoing it, and
-     nobody presses "Buscar con IA" on an empty field to see everything.
-     Hooked on 'input' so it also catches paste-over-delete and the native
-     clear control, and gated on filtersFromAI so it never wipes filters the
-     buyer picked from the dropdowns themselves. */
-  (function wireNLClear() {
-    const nl = document.getElementById('nlsearch-input');
-    if (!nl) return;
-    nl.addEventListener('input', function () {
-      if (nl.value.trim() === '' && filtersFromAI) clearFilters();
-    });
-  })();
-
-  /* Touching any filter by hand hands control back to the buyer, so a later
-     empty AI box leaves their choices alone. */
-  ['f-op', 'f-town', 'f-beds', 'f-minprice', 'f-maxprice'].forEach(function (id) {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('change', function () { filtersFromAI = false; });
+  /* ---------- controls ---------- */
+  document.getElementById('q-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    state.q = document.getElementById('q').value.trim();
+    state.overrides = { hard: {}, prefs: {} };   // a new question starts clean
+    state.bbox = null;
+    document.getElementById('area-btn').hidden = true;
+    var op = document.getElementById('f-op').value;
+    if (op) state.overrides.hard.operation = op;
+    run(true);
+  });
+  document.getElementById('f-op').addEventListener('change', function (e) {
+    state.overrides.hard.operation = e.target.value || null;
+    run(true);
+  });
+  document.getElementById('f-sort').addEventListener('change', function (e) { state.sort = e.target.value; run(true); });
+  document.getElementById('more-btn').addEventListener('click', function () { state.offset = state.results.length; run(false); });
+  document.getElementById('area-btn').addEventListener('click', function () {
+    var b = map.getBounds();
+    state.bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    document.getElementById('area-btn').hidden = true;
+    run(true);
+  });
+  document.getElementById('clear-btn').addEventListener('click', function () {
+    state.q = ''; state.overrides = { hard: {}, prefs: {} }; state.bbox = null; state.sort = 'relevance';
+    document.getElementById('q').value = '';
+    document.getElementById('f-op').value = '';
+    document.getElementById('f-sort').value = 'relevance';
+    document.getElementById('area-btn').hidden = true;
+    run(true);
   });
 
   document.addEventListener('langchange', function () {
-    renderGrid(listings);
-    updateMarkers(listings);
-    const countEl = document.getElementById('search-count');
-    countEl.textContent = countLabel(listings.length);
-    const nlInput = document.getElementById('nlsearch-input');
-    nlInput.placeholder = nlInput.getAttribute('data-' + lang + '-placeholder');
+    var input = document.getElementById('q');
+    input.placeholder = input.getAttribute('data-' + lang + '-placeholder');
+    run(true);   // labels on cards and chips come back in the new language
   });
 
   /* ---------- mobile nav ---------- */
-  document.querySelectorAll('#navlinks a').forEach(a => a.addEventListener('click', () => document.getElementById('navlinks').classList.remove('open')));
-
-  /* ---------- scroll reveal ---------- */
-  const io = new IntersectionObserver(es => {
-    es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-  }, { threshold: .12 });
-  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  document.querySelectorAll('#navlinks a').forEach(function (a) {
+    a.addEventListener('click', function () { document.getElementById('navlinks').classList.remove('open'); });
+  });
 
   /* ---------- init ---------- */
   initMap();
-  const initialParams = restoreFromURL();
-  loadSearch(initialParams);
-  updateFavBadge();
+  (function () {
+    var params = new URLSearchParams(location.search);
+    state.q = (params.get('q') || '').slice(0, 300);
+    document.getElementById('q').value = state.q;
+    // Links from the old page and the city pages still carry ?town= / ?op=.
+    if (params.get('town')) state.overrides.hard.towns = [params.get('town')];
+    if (params.get('op') === 'sale' || params.get('op') === 'rental') {
+      state.overrides.hard.operation = params.get('op');
+      document.getElementById('f-op').value = params.get('op');
+    }
+  })();
+  run(true);
+  if (typeof updateFavBadge === 'function') updateFavBadge();
+</script>
 </script>
 </body>
 </html>

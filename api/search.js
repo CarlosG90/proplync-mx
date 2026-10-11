@@ -15,6 +15,8 @@
 import { getServiceClient } from './_lib/supabase.js';
 import { redisGet, redisSet } from './_lib/redis.js';
 import { logDegraded, safeDetail } from './_lib/health.js';
+import { enforceRateLimit } from './_lib/ratelimit.js';
+import { handleSearchQuery } from './_lib/search/api.js';
 
 const EB_URL = 'https://api.easybroker.com/v1';
 const PAGE_LIMIT = 50;
@@ -350,6 +352,22 @@ async function getInventory() {
 }
 
 export default async function handler(req, res) {
+  /* ── Search v2: the index (api/_lib/search) ──
+     Ranked, typo- and accent-tolerant, semantic, every source. The GET path
+     below is the original in-memory filter, kept for the city pages and the
+     old page until they move over. */
+  if (req.query.action === 'query') {
+    if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }
+    if (await enforceRateLimit(req, res, { bucket: 'search', limit: 60, windowSec: 60 })) return;
+    try {
+      await handleSearchQuery(req, res);
+    } catch (err) {
+      logDegraded('search:query', err);
+      res.status(502).json({ error: 'search_unavailable', detail: safeDetail(err) });
+    }
+    return;
+  }
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=60');
 

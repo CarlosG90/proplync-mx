@@ -1,0 +1,70 @@
+# Proplync.mx · Daily crawl into the search index (ingest/run.mjs)
+#
+# Runs outside Vercel on purpose: a crawl takes minutes, and Vercel Hobby
+# functions stop at 300 s. Secrets live in the repository's Actions secrets:
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   (required)
+#   APIFY_TOKEN                              (required for portal sources)
+#   SCOUT_FX_USD_MXN, PUBLIC_SITE_URL        (optional)
+# Which sources and markets run is decided in the database (search_sources,
+# search_markets), not here.
+
+name: ingest
+
+on:
+  schedule:
+    - cron: '0 9 * * *'          # 03:00 in Mexico City / 04:00 in Cancún
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Only this source id (e.g. lamudi). Empty = all enabled'
+        required: false
+      market:
+        description: 'Only this market id (e.g. riviera-maya). Empty = all enabled'
+        required: false
+      max:
+        description: 'Max listings per source × market (a partial run never marks stale)'
+        required: false
+      dry_run:
+        description: 'Fetch and normalize, write nothing'
+        type: boolean
+        default: false
+
+# One crawl at a time: two would race on the same offers.
+concurrency:
+  group: ingest
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --omit=dev
+      - name: Crawl
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          SCOUT_FX_USD_MXN: ${{ secrets.SCOUT_FX_USD_MXN }}
+          PUBLIC_SITE_URL: ${{ secrets.PUBLIC_SITE_URL }}
+          IN_SOURCE: ${{ inputs.source }}
+          IN_MARKET: ${{ inputs.market }}
+          IN_MAX: ${{ inputs.max }}
+          IN_DRY: ${{ inputs.dry_run }}
+        # Inputs reach the script through env, never interpolated into the
+        # shell line, so a crafted input cannot inject a command.
+        run: |
+          set -- node ingest/run.mjs
+          [ -n "$IN_SOURCE" ] && set -- "$@" --source "$IN_SOURCE"
+          [ -n "$IN_MARKET" ] && set -- "$@" --market "$IN_MARKET"
+          [ -n "$IN_MAX" ] && set -- "$@" --max "$IN_MAX"
+          [ "$IN_DRY" = "true" ] && set -- "$@" --dry-run
+          "$@"
