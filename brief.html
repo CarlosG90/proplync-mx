@@ -509,7 +509,7 @@ function propCard(c) {
       (specs ? '<div class="bf-prop-specs">' + escapeHtml(specs) + '</div>' : '') +
       (c.summary ? '<p class="bf-note">' + escapeHtml(c.summary) + '</p>' : '') +
       (answers ? '<div class="bf-prop-k">' + escapeHtml(t('Lo que dijo el agente', 'What the agent said')) + '</div>' + answers : '') +
-      '<div class="bf-prop-k">' + escapeHtml(t('Dónde se anuncia', 'Where it is listed')) + '</div>' + sources +
+      (sources ? '<div class="bf-prop-k">' + escapeHtml(t('Dónde se anuncia', 'Where it is listed')) + '</div>' + sources : '') +
       verifyBtn +
     '</div></article>';
 }
