@@ -6,3 +6,4 @@ node_modules/
 .env*
 .gstack/
 even-terminal-*.log
+supabase/.temp/

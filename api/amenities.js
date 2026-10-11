@@ -6,13 +6,24 @@
  * nearby — no invented "5 min from the beach" copy.
  *
  * Free, no key required: https://wiki.openstreetmap.org/wiki/Overpass_API
+ *
+ * Public Overpass servers are often overloaded (504s after ~7s were turning
+ * every property page's "nearby" panel into an error). So: two servers in
+ * turn, each with a short timeout; answers cached for 30 days per ~100 m
+ * cell, because what is around a building barely changes; and if no server
+ * answers, an empty list (briefly cached) instead of a 502.
  * -----------------------------------------------------------------------------
  */
 
+import { logDegraded, safeDetail } from './_lib/health.js';
+import { redisGet, redisSet } from './_lib/redis.js';
 
-import { safeDetail } from './_lib/health.js';
-const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_URLS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+];
 const RADIUS_M = 1200;
+const TRY_MS = 6000;
 
 const CATEGORIES = {
   restaurant: ['amenity', 'restaurant'],
@@ -52,32 +63,51 @@ export default async function handler(req, res) {
     return;
   }
 
-  const filters = Object.values(CATEGORIES)
-    .map(([tag, val]) => `node[${tag}=${val}](around:${RADIUS_M},${lat},${lng});`)
-    .join('');
-  const query = `[out:json][timeout:15];(${filters});out center 30;`;
+  const cacheKey = `amenities:v2:${lat.toFixed(3)}:${lng.toFixed(3)}`;
+  const cached = await redisGet(cacheKey);
+  if (cached && Array.isArray(cached.places)) { res.status(200).json(cached); return; }
 
-  try {
-    const r = await fetch(OVERPASS_URL, {
-      method: 'POST',
-      // Overpass's Apache front-end 406s any request with no User-Agent
-      // (content-negotiation fallback) — Node's fetch sends none by default.
-      headers: { 'content-type': 'text/plain', 'user-agent': 'Proplync.mx/1.0 (hola@proplync.mx)' },
-      body: query
-    });
-    if (!r.ok) throw new Error(`Overpass responded ${r.status}`);
-    const data = await r.json();
-    const places = (data.elements || [])
-      .filter(el => el.tags && el.tags.name)
-      .map(el => ({
-        name: el.tags.name,
-        category: categoryFor(el.tags),
-        distance_m: haversineMeters(lat, lng, el.lat, el.lon)
-      }))
-      .sort((a, b) => a.distance_m - b.distance_m)
-      .slice(0, 12);
-    res.status(200).json({ places });
-  } catch (err) {
-    res.status(502).json({ error: 'amenities_unavailable', detail: safeDetail(err) });
+  // Beaches are mapped as areas, so they need ways too; `out center` gives them a point.
+  const filters = Object.values(CATEGORIES)
+    .map(([tag, val]) => `${val === 'beach' ? 'nwr' : 'node'}[${tag}=${val}](around:${RADIUS_M},${lat},${lng});`)
+    .join('');
+  const query = `[out:json][timeout:10];(${filters});out center 40;`;
+
+  let lastErr = null;
+  for (const url of OVERPASS_URLS) {
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        // Overpass's Apache front-end 406s any request with no User-Agent
+        // (content-negotiation fallback) — Node's fetch sends none by default.
+        headers: { 'content-type': 'text/plain', 'user-agent': 'Proplync.mx/1.0 (hola@proplync.mx)' },
+        body: query,
+        signal: AbortSignal.timeout(TRY_MS)
+      });
+      if (!r.ok) throw new Error(`Overpass ${new URL(url).host} responded ${r.status}`);
+      const data = await r.json();
+      const places = (data.elements || [])
+        .filter(el => el.tags && el.tags.name && (el.lat != null || el.center))
+        .map(el => ({
+          name: el.tags.name,
+          category: categoryFor(el.tags),
+          distance_m: haversineMeters(lat, lng, el.lat ?? el.center.lat, el.lon ?? el.center.lon)
+        }))
+        .sort((a, b) => a.distance_m - b.distance_m)
+        .slice(0, 12);
+      const body = { places };
+      await redisSet(cacheKey, body, 30 * 86400);
+      res.status(200).json(body);
+      return;
+    } catch (err) {
+      lastErr = err;
+    }
   }
+  // Nothing answered. The panel shows "nothing nearby found" instead of an
+  // error, and we ask again in an hour rather than hammering a busy server.
+  logDegraded('amenities:overpass', safeDetail(lastErr));
+  const empty = { places: [], degraded: true };
+  await redisSet(cacheKey, empty, 3600);
+  res.setHeader('Cache-Control', 's-maxage=600');
+  res.status(200).json(empty);
 }

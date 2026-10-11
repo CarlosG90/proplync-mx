@@ -26,6 +26,7 @@
  * -----------------------------------------------------------------------------
  */
 
+import { parseAmount, parseCount, parseCurrency } from './_lib/extract-fields.js';
 import Anthropic from '@anthropic-ai/sdk';
 import { safeDetail, logDegraded } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
@@ -181,30 +182,34 @@ export default async function handler(req, res) {
       return;
     }
 
-    const num = v => {
-      const n = parseInt(String(v == null ? '' : v).replace(/[^0-9]/g, ''), 10);
-      return Number.isFinite(n) ? n : 0;
-    };
+    const count = (v) => parseCount(v).value || 0;
+    const baths = parseCount(parsed.bathrooms);
+    const currency = parseCurrency(parsed.currency);
+    const missing = Array.isArray(parsed.missing) ? parsed.missing.map(String) : [];
+    if (!currency && !missing.includes('currency')) missing.push('currency');
+    let notes = String(parsed.notes || '');
+    // listings.bathrooms is a whole number: keep the half bath visible to the agent
+    if (baths.half) notes = (notes ? notes + ' ' : '') + `(${baths.value}.5 baños / baths: ${baths.value} completos + medio baño.)`;
 
     res.status(200).json({
       property: {
         title: String(parsed.title || ''),
         town: String(parsed.town || ''),
         neighborhood: String(parsed.neighborhood || ''),
-        bedrooms: num(parsed.bedrooms),
-        bathrooms: num(parsed.bathrooms),
-        size: num(parsed.size),
-        parking: num(parsed.parking),
+        bedrooms: count(parsed.bedrooms),
+        bathrooms: baths.value || 0,
+        size: Math.round(parseAmount(parsed.size) || 0),
+        parking: count(parsed.parking),
         operation: parsed.operation === 'rental' ? 'rental' : 'sale',
-        currency: parsed.currency === 'MXN' ? 'MXN' : 'USD',
-        amount: num(parsed.amount),
+        currency,
+        amount: Math.round(parseAmount(parsed.amount) || 0),
         features: String(parsed.features || '')
       },
       /* The agent confirms before this becomes a listing, so name the fields
          worth checking instead of presenting all of it as fact. */
-      missing: Array.isArray(parsed.missing) ? parsed.missing.map(String) : [],
+      missing,
       confidence: parsed.confidence && typeof parsed.confidence === 'object' ? parsed.confidence : {},
-      notes: String(parsed.notes || '')
+      notes
     });
   } catch (err) {
     logDegraded('extract:handler', safeDetail(err));
