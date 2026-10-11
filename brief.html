@@ -480,6 +480,8 @@ function propCard(c) {
   var photo = cssUrl((c.photos || [])[0]);
   var pill = c.verification === 'confirmed'
     ? '<span class="bf-pill confirmed">' + escapeHtml(t('Confirmado con el agente', 'Confirmed with the agent')) + '</span>'
+    : c.verification === 'unreachable'
+      ? '<span class="bf-pill unverified">' + escapeHtml(t('El agente no respondió', 'The agent did not answer')) + '</span>'
     : c.verify_requested
       ? '<span class="bf-pill requested">' + escapeHtml(t('Verificación pedida', 'Verification requested')) + '</span>'
       : '<span class="bf-pill unverified">' + escapeHtml(t('Sin verificar', 'Not verified')) + '</span>';
