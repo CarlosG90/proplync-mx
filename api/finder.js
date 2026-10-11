@@ -23,17 +23,18 @@
  * api/generate.js -- see the rewrite in vercel.json.
  *
  * AFTER THE CONVERSATION
- * `approve` stores the brief the buyer signed off (migration 009) and hands
- * back a private link token. With SCOUT_AUTO=on it also starts Scout
- * (api/_lib/scout.js), which then advances through `scout-step`, one Claude
- * segment per invocation, each one kicking the next. With it off, the brief
- * waits for an operator to run scripts/scout.mjs. `status` is what the buyer's
- * link reads: the brief, where it stands, and only the candidates a person
- * has confirmed with the listing agent.
+ * `approve` needs a signed-in buyer (Supabase Auth). It stores the brief
+ * (migration 009), spends the buyer's free first search or one credit
+ * (migration 012) and starts Scout (api/_lib/scout.js) right away; Scout then
+ * advances through `scout-step`, one Claude segment per invocation, each one
+ * kicking the next, and a failed run is refunded. `status` is what the buyer's
+ * link reads: the brief, Scout's progress and its matches, each labelled
+ * unverified, verification requested, or confirmed. `verify` (1 credit) asks
+ * a person to confirm one with its agent; `wallet` and `rerun` round it out.
  *
  * WHAT THIS DOES NOT DO
- * It never promises a property exists, never shows an unverified one, and
- * gives no legal, tax or financial advice.
+ * It never presents an unverified property as confirmed, never shows the
+ * listing agent's contact, and gives no legal, tax or financial advice.
  * -----------------------------------------------------------------------------
  */
 
@@ -80,6 +81,8 @@ LIMITES
 
 CUANDO TERMINA
 Cuando tengas presupuesto, zona, al menos un imprescindible y el proposito, marca done=true y en "say" haz un resumen de una pagina para que la persona lo apruebe o lo corrija.
+Despues del resumen explica lo que sigue, en pocas palabras: al aprobarlo, Scout, el agente de busqueda de PropLync, empieza a buscar en ese momento, aqui mismo, en las agencias de PropLync, los portales y los sitios de agencias. La primera busqueda es gratis. Los resultados aparecen en esta pagina marcados como "sin verificar", y si una propiedad le interesa puede pedir que una persona la confirme con el agente que la tiene, usando un credito.
+No digas que alguien la va a contactar para mostrarle opciones ni que tu no buscas: la busqueda la hace Scout en cuanto apruebe.
 
 FORMATO
 Responde UNICAMENTE con un objeto JSON valido, sin markdown ni backticks:
@@ -250,10 +253,6 @@ function stepOrigin() {
   return process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : null;
 }
 
-function autoEnabled() {
-  return process.env.SCOUT_AUTO === 'on' && scoutConfigured() && Boolean(process.env.SCOUT_STEP_SECRET) && Boolean(stepOrigin());
-}
-
 /* Starts the next segment in a fresh invocation. That invocation answers 202
    before doing any work, so this resolves in a second, not a segment's length:
    the chain never nests. */
@@ -277,91 +276,210 @@ function sameSecret(given, expected) {
   return a.length === b.length && a.length > 0 && timingSafeEqual(a, b);
 }
 
-async function handleApprove(req, res) {
-  const body = req.body || {};
-  const brief = body.brief;
-  const name = String(body.name || '').trim();
-  const email = String(body.email || '').trim();
-  const lang = body.lang === 'en' ? 'en' : 'es';
+/* ── Buyers, credits and the hand-off to Scout ──
+   A buyer signs in (email code or Google, Supabase Auth) when the brief is
+   done. Approving it spends the free first search or one credit
+   (spend_credit, migration 012) and starts Scout right there; a failed run
+   gives the credit back. Verifying a property with its agent costs one more.
+   Credits are bought in packs (Stripe) or granted by an operator. */
 
-  if (!brief || typeof brief !== 'object' || Array.isArray(brief) || JSON.stringify(brief).length > 20000) {
-    res.status(400).json({ error: 'invalid_brief' }); return;
+async function requireBuyer(req) {
+  const authz = req.headers.authorization || '';
+  const token = authz.startsWith('Bearer ') ? authz.slice(7) : null;
+  if (!token) return null;
+  try {
+    const { data, error } = await getServiceClient().auth.getUser(token);
+    if (error || !data || !data.user) return null;
+    return data.user;
+  } catch (err) {
+    logDegraded('finder:buyer-auth', err);
+    return null;
   }
+}
+
+function scoutCanRun() {
+  return process.env.SCOUT_PAID_RUNS !== 'off' && scoutConfigured() &&
+    Boolean(process.env.SCOUT_STEP_SECRET) && Boolean(stepOrigin());
+}
+
+/* Charge, then start. Charging first (ref = the brief) means an empty wallet
+   never creates a run; a run that then fails to start is refunded at once. */
+async function startPaidRun(svc, user, briefId, spendRef = briefId) {
+  if (!scoutCanRun()) return { started: false, reason: 'scout_unavailable' };
+  const cap = Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 5;
+  if (await runsStartedToday(svc) >= cap) {
+    logDegraded('finder:scout-daily-cap', new Error(`cap ${cap} reached; brief ${briefId} waits`));
+    return { started: false, reason: 'daily_capacity' };
+  }
+  const { data: spend, error: spendErr } = await svc.rpc('spend_credit', { p_user: user.id, p_reason: 'search', p_ref: spendRef });
+  if (spendErr) throw spendErr;
+  if (!spend.ok) return { started: false, reason: 'insufficient_credits', credits: spend.credits };
+
+  let run;
+  try {
+    ({ run } = await createRun(svc, briefId, 'auto'));
+    await svc.from('scout_runs').update({ user_id: user.id, charged: spend.free ? 'free' : 'credit' }).eq('id', run.id);
+  } catch (err) {
+    await refundRun(svc, { id: 'start-' + briefId, user_id: user.id, charged: spend.free ? 'free' : 'credit' });
+    throw err;
+  }
+  waitUntil(kickStep(run.id));
+  return { started: true, free: spend.free, credits: spend.credits, run_id: run.id };
+}
+
+/* Give back what a failed run cost: a credit, or the free first search. */
+async function refundRun(svc, run) {
+  if (!run || !run.user_id || !run.charged || run.charged === 'operator') return;
+  const { error } = await svc.rpc('add_credits', {
+    p_user: run.user_id, p_delta: run.charged === 'credit' ? 1 : 0, p_reason: 'refund', p_ref: String(run.id),
+    p_restore_free: run.charged === 'free'
+  });
+  if (error) logDegraded('finder:refund', error);
+}
+
+function validBrief(brief) {
+  if (!brief || typeof brief !== 'object' || Array.isArray(brief) || JSON.stringify(brief).length > 20000) return 'invalid_brief';
   // The same bar Concierge sets before it says done: a place to search, a budget.
   const loc = brief.location || {};
   const budget = brief.budget || {};
   const hasPlace = [].concat(loc.areas || [], loc.anchors || []).some((a) => String(a || '').trim());
-  if (!hasPlace || !(budget.max || budget.comfortable)) { res.status(400).json({ error: 'brief_incomplete' }); return; }
-  if (!name || name.length > 120) { res.status(400).json({ error: 'invalid_name' }); return; }
-  if (!EMAIL.test(email) || email.length > 200) { res.status(400).json({ error: 'invalid_email' }); return; }
-  if (body.consent !== true) { res.status(400).json({ error: 'consent_required' }); return; }
+  return hasPlace && (budget.max || budget.comfortable) ? null : 'brief_incomplete';
+}
 
-  // The buyer's link is the only key to their brief: random, shown once,
-  // stored only as a hash.
+async function handleApprove(req, res) {
+  const user = await requireBuyer(req);
+  if (!user) { res.status(401).json({ error: 'sign_in_required' }); return; }
+  const body = req.body || {};
+  const brief = body.brief;
+  const lang = body.lang === 'en' ? 'en' : 'es';
+  const invalid = validBrief(brief);
+  if (invalid) { res.status(400).json({ error: invalid }); return; }
+  if (body.consent !== true) { res.status(400).json({ error: 'consent_required' }); return; }
+  const meta = user.user_metadata || {};
+  const name = String(body.name || meta.full_name || meta.name || '').trim().slice(0, 120) || String(user.email || '').split('@')[0];
+
+  // The buyer's link to this brief: random, shown once, stored only as a hash.
   const token = randomBytes(32).toString('base64url');
   const svc = getServiceClient();
   const { data: row, error } = await svc.from('buyer_briefs').insert({
-    access_token_hash: sha256(token), lang, brief,
-    contact_name: name, contact_email: email, consent_at: new Date().toISOString()
+    access_token_hash: sha256(token), lang, brief, user_id: user.id,
+    contact_name: name, contact_email: user.email || '', consent_at: new Date().toISOString()
   }).select('id').single();
   if (error) {
     logDegraded('finder:approve', error);
     res.status(503).json({ error: 'approve_failed' }); return;
   }
 
-  let status = 'approved';
-  if (autoEnabled()) {
-    const cap = Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 10;
-    try {
-      if (await runsStartedToday(svc) < cap) {
-        const { run } = await createRun(svc, row.id, 'auto');
-        status = 'searching';
-        waitUntil(kickStep(run.id));
-      } else {
-        logDegraded('finder:scout-daily-cap', new Error(`cap ${cap} reached; brief ${row.id} waits for an operator`));
-      }
-    } catch (err) {
-      // The brief is saved either way; an operator can start the search.
-      logDegraded('finder:scout-start', err);
-    }
+  let scout = { started: false, reason: 'scout_unavailable' };
+  try {
+    scout = await startPaidRun(svc, user, row.id);
+  } catch (err) {
+    // The brief is saved either way; the buyer can start the search again.
+    logDegraded('finder:scout-start', err);
   }
-
+  const status = scout.started ? 'searching' : 'approved';
   waitUntil(notifyOperator({
-    subject: `Finder: brief aprobado (${status})`,
-    text: `Brief ${row.id}\n${name} <${email}>\nEstado: ${status}\n\nRevisar: node scripts/scout.mjs review ${row.id}`
+    subject: `Finder: brief aprobado (${status}${scout.free ? ', búsqueda gratis' : ''})`,
+    text: `Brief ${row.id}\n${name} <${user.email}>\nEstado: ${status} ${scout.reason || ''}\n\nRevisar: node scripts/scout.mjs review ${row.id}`
   }));
-  res.status(200).json({ token, status });
+  res.status(200).json({ token, status, scout });
+}
+
+async function briefByToken(svc, token) {
+  if (token.length < 20 || token.length > 100) return null;
+  const { data, error } = await svc.from('buyer_briefs')
+    .select('id, lang, brief, status, created_at, user_id').eq('access_token_hash', sha256(token)).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/* Search this brief again (e.g. after buying credits). Owner only. */
+async function handleRerun(req, res) {
+  const user = await requireBuyer(req);
+  if (!user) { res.status(401).json({ error: 'sign_in_required' }); return; }
+  const svc = getServiceClient();
+  const brief = await briefByToken(svc, String((req.body && req.body.t) || ''));
+  if (!brief || brief.user_id !== user.id) { res.status(404).json({ error: 'not_found' }); return; }
+  const { data: active } = await svc.from('scout_runs').select('id').eq('brief_id', brief.id).in('status', ['queued', 'running']).limit(1);
+  if (active && active.length) { res.status(200).json({ status: 'searching', scout: { started: false, reason: 'already_running' } }); return; }
+  const scout = await startPaidRun(svc, user, brief.id, brief.id + ':' + Date.now());
+  res.status(200).json({ status: scout.started ? 'searching' : brief.status, scout });
 }
 
 async function handleStatus(req, res) {
-  const token = String(req.query.t || '');
-  if (token.length < 20 || token.length > 100) { res.status(404).json({ error: 'not_found' }); return; }
   const svc = getServiceClient();
-  const { data: brief, error } = await svc.from('buyer_briefs')
-    .select('id, lang, brief, status, created_at').eq('access_token_hash', sha256(token)).maybeSingle();
-  if (error) { logDegraded('finder:status', error); res.status(503).json({ error: 'status_unavailable' }); return; }
+  let brief;
+  try {
+    brief = await briefByToken(svc, String(req.query.t || ''));
+  } catch (err) {
+    logDegraded('finder:status', err);
+    res.status(503).json({ error: 'status_unavailable' }); return;
+  }
   if (!brief) { res.status(404).json({ error: 'not_found' }); return; }
 
-  const { count: pending } = await svc.from('scout_candidates')
-    .select('id', { count: 'exact', head: true }).eq('brief_id', brief.id).eq('verification', 'pending');
+  const { data: runs } = await svc.from('scout_runs')
+    .select('status, steps, web_searches, web_fetches, created_at, finished_at')
+    .eq('brief_id', brief.id).order('created_at', { ascending: false }).limit(1);
+  const run = runs && runs[0];
 
-  // Only what a person confirmed, and only once the operator releases the set.
-  let confirmed = [];
-  if (brief.status === 'ready') {
-    const { data } = await svc.from('scout_candidates')
-      .select('id, title, operation, property_type, town, neighborhood, bedrooms, bathrooms, built_m2, land_m2, sources, photos, match, answers, verified_at')
-      .eq('brief_id', brief.id).eq('verification', 'confirmed')
-      .order('fit_score', { ascending: false, nullsFirst: false });
-    confirmed = (data || []).map(({ match, ...c }) => ({
-      ...c,
-      summary: match && match.summary,
-      must_haves: (match && match.must_haves) || []
-    }));
-  }
+  /* Scout's matches show as soon as it finishes, each labelled with where it
+     stands: not yet verified, verification requested, confirmed by the agent,
+     or ruled out. Internal notes and the agent's contact never leave. */
+  const { data: rows } = await svc.from('scout_candidates')
+    .select('id, origin, listing_public_id, title, operation, property_type, town, neighborhood, bedrooms, bathrooms, built_m2, land_m2, sources, photos, match, fit_score, verification, verify_requested_at, answers, verified_at')
+    .eq('brief_id', brief.id).neq('verification', 'rejected')
+    .order('fit_score', { ascending: false, nullsFirst: false });
+  const candidates = (rows || []).map(({ match, answers, ...c }) => ({
+    ...c,
+    summary: match && match.summary,
+    must_haves: (match && match.must_haves) || [],
+    answers: c.verification === 'confirmed' ? answers : null,
+    verify_requested: Boolean(c.verify_requested_at)
+  }));
 
   res.status(200).json({
     status: brief.status, lang: brief.lang, brief: brief.brief, created_at: brief.created_at,
-    pending: pending || 0, confirmed
+    run: run ? { status: run.status, steps: run.steps, searches: run.web_searches, pages: run.web_fetches } : null,
+    candidates
+  });
+}
+
+/* Ask a person to confirm one property with its agent: 1 credit. */
+async function handleVerify(req, res) {
+  const user = await requireBuyer(req);
+  if (!user) { res.status(401).json({ error: 'sign_in_required' }); return; }
+  const id = String((req.body && req.body.candidate_id) || '');
+  if (!/^[0-9a-f-]{36}$/i.test(id)) { res.status(400).json({ error: 'invalid_candidate' }); return; }
+  const svc = getServiceClient();
+  const { data: cand } = await svc.from('scout_candidates')
+    .select('id, brief_id, title, verification, verify_requested_at, buyer_briefs(user_id)').eq('id', id).maybeSingle();
+  if (!cand || !cand.buyer_briefs || cand.buyer_briefs.user_id !== user.id) { res.status(404).json({ error: 'not_found' }); return; }
+  if (cand.verification !== 'pending' || cand.verify_requested_at) {
+    res.status(200).json({ ok: true, already: true }); return;
+  }
+  const { data: spend, error } = await svc.rpc('spend_credit', { p_user: user.id, p_reason: 'verify', p_ref: id });
+  if (error) { logDegraded('finder:verify', error); res.status(503).json({ error: 'verify_unavailable' }); return; }
+  if (!spend.ok) { res.status(402).json({ error: 'insufficient_credits', credits: spend.credits }); return; }
+  await svc.from('scout_candidates').update({ verify_requested_at: new Date().toISOString(), verify_requested_by: user.id }).eq('id', id);
+  waitUntil(notifyOperator({
+    subject: 'Finder: verificación pedida',
+    text: `Candidato ${id}: ${cand.title || ''}\nBrief ${cand.brief_id} · ${user.email}\n\nnode scripts/scout.mjs review ${cand.brief_id}`
+  }));
+  res.status(200).json({ ok: true, credits: spend.credits });
+}
+
+async function handleWallet(req, res) {
+  const user = await requireBuyer(req);
+  if (!user) { res.status(401).json({ error: 'sign_in_required' }); return; }
+  const svc = getServiceClient();
+  const { data: wallet } = await svc.from('buyer_wallets').select('credits, free_search_used').eq('user_id', user.id).maybeSingle();
+  const { data: ledger } = await svc.from('credit_ledger').select('delta, reason, created_at, balance_after')
+    .eq('user_id', user.id).order('created_at', { ascending: false }).limit(10);
+  res.status(200).json({
+    email: user.email,
+    credits: wallet ? wallet.credits : 0,
+    free_search_available: !(wallet && wallet.free_search_used),
+    ledger: ledger || []
   });
 }
 
@@ -388,6 +506,10 @@ async function handleScoutStep(req, res) {
         await new Promise((r) => setTimeout(r, 15000));
         await kickStep(runId);
       } else if (out.state === 'done' || out.state === 'failed') {
+        if (out.state === 'failed') {
+          const { data: run } = await svc.from('scout_runs').select('id, user_id, charged').eq('id', runId).maybeSingle();
+          await refundRun(svc, run);
+        }
         await notifyOperator({
           subject: `Scout ${out.state}: ${out.candidates || 0} candidatos`,
           text: `Run ${runId}\nEstado: ${out.state} ${out.detail || ''}\nCosto aprox: US$${out.cost_usd || 0}\n\nRevisar con: node scripts/scout.mjs list`
@@ -413,11 +535,25 @@ export default async function handler(req, res) {
     if (await enforceRateLimit(req, res, { bucket: 'finder-status', limit: 60, windowSec: 60 })) return;
     return handleStatus(req, res);
   }
+  if (action === 'wallet') {
+    if (req.method !== 'GET') { res.status(405).json({ error: 'method_not_allowed' }); return; }
+    if (await enforceRateLimit(req, res, { bucket: 'finder-wallet', limit: 60, windowSec: 60 })) return;
+    return handleWallet(req, res);
+  }
 
   if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }
 
   // Called only by this function itself; the shared secret is the throttle.
   if (action === 'scout-step') return handleScoutStep(req, res);
+
+  if (action === 'verify') {
+    if (await enforceRateLimit(req, res, { bucket: 'finder-verify', limit: 30, windowSec: 3600 })) return;
+    return handleVerify(req, res);
+  }
+  if (action === 'rerun') {
+    if (await enforceRateLimit(req, res, { bucket: 'finder-rerun', limit: 10, windowSec: 3600 })) return;
+    return handleRerun(req, res);
+  }
 
   if (action === 'approve') {
     if (await enforceRateLimit(req, res, { bucket: 'finder-approve', limit: 5, windowSec: 3600 })) return;

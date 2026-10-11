@@ -76,6 +76,18 @@
   .bf-prop-row a{color:var(--on-ink);text-decoration:underline;text-underline-offset:3px}
   .bf-prop-k{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--on-ink-dim);margin:14px 0 4px}
 
+  .bf-google{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f1f1f;border:0;border-radius:999px;padding:12px 18px;font-weight:600;cursor:pointer;font-family:var(--body);font-size:.9rem}
+  .bf-or{text-align:center;font-family:var(--mono);font-size:.64rem;color:var(--on-ink-dim);letter-spacing:.1em}
+  .bf-who{font-size:.84rem;color:var(--on-ink-dim);margin:0}
+  .bf-who b{color:var(--on-ink)}
+  .bf-credits{display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;padding:5px 10px;border-radius:999px;background:rgba(201,169,110,.15);color:var(--gold)}
+  .bf-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;margin-bottom:8px}
+  .bf-pill.unverified{background:rgba(240,237,232,.08);color:var(--on-ink-dim)}
+  .bf-pill.requested{background:rgba(201,169,110,.18);color:var(--gold)}
+  .bf-pill.confirmed{background:rgba(94,196,190,.18);color:var(--aqua)}
+  .bf-verify{width:100%;margin-top:12px;background:var(--gold);color:var(--ink);border:0;border-radius:999px;padding:11px;font-weight:600;cursor:pointer;font-family:var(--body);font-size:.86rem}
+  .bf-verify:disabled{opacity:.5;cursor:default}
+  .bf-progress{font-family:var(--mono);font-size:.7rem;color:var(--on-ink-dim);margin-top:var(--sp-3)}
   @media (max-width:900px){
     .bf-grid{grid-template-columns:1fr}
     .bf-side{position:static}
@@ -130,13 +142,23 @@
 
     <aside class="bf-side">
       <div class="bf-card" id="approve-card" hidden>
-        <h2 data-es="Aprueba tu resumen" data-en="Approve your brief">Approve your brief</h2>
-        <p class="bf-note" data-es="Si el resumen dice lo que buscas, dejanos tu nombre y correo. Buscamos, una persona confirma cada propiedad con su agente, y te mandamos solo lo que pase." data-en="If the brief says what you are looking for, leave your name and email. We search, a person confirms each property with its agent, and we send you only what passes.">If the brief says what you are looking for, leave your name and email. We search, a person confirms each property with its agent, and we send you only what passes.</p>
-        <div class="bf-form">
-          <input class="bf-input" id="ap-name" autocomplete="name" maxlength="120" data-es-placeholder="Tu nombre" data-en-placeholder="Your name" placeholder="Your name">
-          <input class="bf-input" id="ap-email" type="email" autocomplete="email" maxlength="200" data-es-placeholder="Tu correo" data-en-placeholder="Your email" placeholder="Your email">
+        <h2 data-es="Aprueba y Scout busca" data-en="Approve and Scout searches">Approve and Scout searches</h2>
+        <p class="bf-note" data-es="Al aprobar, Scout busca en este momento en agencias PropLync, portales y sitios de agencias. Tu primera b&uacute;squeda es gratis. Pedir que una persona confirme una propiedad con su agente cuesta 1 cr&eacute;dito." data-en="When you approve, Scout searches right away across PropLync agencies, portals and agency sites. Your first search is free. Asking a person to confirm a property with its agent costs 1 credit.">When you approve, Scout searches right away across PropLync agencies, portals and agency sites. Your first search is free. Asking a person to confirm a property with its agent costs 1 credit.</p>
+
+        <div class="bf-form" id="signin-box">
+          <button class="bf-google" id="google-btn" type="button"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg><span data-es="Continuar con Google" data-en="Continue with Google">Continue with Google</span></button>
+          <div class="bf-or" data-es="o con tu correo" data-en="or with your email">or with your email</div>
+          <input class="bf-input" id="si-email" type="email" autocomplete="email" maxlength="200" data-es-placeholder="Tu correo" data-en-placeholder="Your email" placeholder="Your email">
+          <button class="bf-send" id="si-send" type="button" data-es="Enviarme un c&oacute;digo" data-en="Send me a code">Send me a code</button>
+          <input class="bf-input" id="si-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" hidden data-es-placeholder="C&oacute;digo de 6 d&iacute;gitos" data-en-placeholder="6-digit code" placeholder="6-digit code">
+          <button class="bf-send" id="si-verify" type="button" hidden data-es="Entrar" data-en="Sign in">Sign in</button>
+          <p class="bf-msg-line" id="si-msg" aria-live="polite"></p>
+        </div>
+
+        <div class="bf-form" id="approve-box" hidden>
+          <p class="bf-who"><span data-es="Conectado como" data-en="Signed in as">Signed in as</span> <b id="who-email"></b> &middot; <span class="bf-credits" id="who-credits"></span></p>
           <label class="bf-consent"><input type="checkbox" id="ap-consent"><span data-es="Acepto que PropLync guarde este resumen y mi contacto para buscar propiedades, y que mi nombre solo se comparta con los agentes que yo elija." data-en="I agree that PropLync keeps this brief and my contact details to search for properties, and that my name is shared only with the agents I choose.">I agree that PropLync keeps this brief and my contact details to search for properties, and that my name is shared only with the agents I choose.</span></label>
-          <button class="bf-send" id="ap-send" data-es="Aprobar y buscar" data-en="Approve and search">Approve and search</button>
+          <button class="bf-send" id="ap-send" data-es="Aprobar y que Scout busque" data-en="Approve and let Scout search">Approve and let Scout search</button>
           <p class="bf-msg-line" id="ap-msg" aria-live="polite"></p>
         </div>
       </div>
@@ -152,6 +174,8 @@
   </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/js/supabase-client.js"></script>
 <script src="/js/escape.js"></script>
 <script src="/js/i18n.js"></script>
 <script>
@@ -317,55 +341,130 @@ micEl.addEventListener('click', function () {
 sendEl.addEventListener('click', function () { turn(sayEl.value.trim()); });
 sayEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') turn(sayEl.value.trim()); });
 
-/* ---------- approve ---------- */
-var apSend = document.getElementById('ap-send');
+/* ---------- sign in (Supabase Auth: Google or a one-time email code) ----------
+   Credits belong to a signed-in buyer, so a new tab cannot reset a wallet.
+   The brief waits in localStorage while the buyer signs in: the email link
+   usually opens in a new tab, which sessionStorage would not reach. */
+var PENDING_KEY = 'pl_pending_brief';
+var PENDING_TTL = 24 * 3600 * 1000;
+var siMsg = document.getElementById('si-msg');
 var apMsg = document.getElementById('ap-msg');
+var wallet = null;
 
-function apError(text) { apMsg.className = 'bf-msg-line err'; apMsg.textContent = text; }
+function msg(el, text, isErr) { el.className = 'bf-msg-line' + (isErr ? ' err' : ''); el.textContent = text; }
+function savePending() { try { localStorage.setItem(PENDING_KEY, JSON.stringify({ brief: brief, at: Date.now() })); } catch (e) {} }
+function clearPending() { try { localStorage.removeItem(PENDING_KEY); } catch (e) {} }
 
-apSend.addEventListener('click', async function () {
-  var name = document.getElementById('ap-name').value.trim();
-  var email = document.getElementById('ap-email').value.trim();
-  var consent = document.getElementById('ap-consent').checked;
-  if (!name || !email) { apError(t('Escribe tu nombre y tu correo.', 'Enter your name and email.')); return; }
-  if (!consent) { apError(t('Necesitamos tu permiso para guardar el resumen.', 'We need your permission to keep the brief.')); return; }
-  apSend.disabled = true;
-  apMsg.className = 'bf-msg-line'; apMsg.textContent = t('Guardando...', 'Saving...');
+function restorePending() {
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null'); } catch (e) {}
+  if (!saved || !saved.brief || Date.now() - (saved.at || 0) > PENDING_TTL) { clearPending(); return false; }
+  brief = saved.brief; renderBrief();
+  bubble('sys', t('Tu resumen sigue aquí. Apruébalo y Scout empieza a buscar.', 'Your brief is still here. Approve it and Scout starts searching.'));
+  document.getElementById('approve-card').hidden = false;
+  refreshWho();
+  return true;
+}
+
+function creditsLabel(w) {
+  if (!w) return '';
+  var c = w.credits === 1 ? t('1 crédito', '1 credit') : (w.credits + ' ' + t('créditos', 'credits'));
+  return w.free_search_available ? c + ' · ' + t('1 búsqueda gratis', '1 free search') : c;
+}
+
+async function loadWallet() {
   try {
-    var r = await fetch('/api/finder?action=approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ brief: brief, name: name, email: email, consent: true, lang: document.documentElement.lang === 'en' ? 'en' : 'es' })
+    var r = await authedFetch('/api/finder?action=wallet');
+    wallet = r.ok ? await r.json() : null;
+  } catch (e) { wallet = null; }
+  return wallet;
+}
+
+async function refreshWho() {
+  var session = await getSession();
+  document.getElementById('signin-box').hidden = !!session;
+  document.getElementById('approve-box').hidden = !session;
+  if (!session) return null;
+  document.getElementById('who-email').textContent = session.user.email || '';
+  await loadWallet();
+  document.getElementById('who-credits').textContent = creditsLabel(wallet);
+  return session;
+}
+
+document.getElementById('google-btn').addEventListener('click', async function () {
+  savePending();
+  var r = await initSupabase().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/brief' } });
+  if (r.error) msg(siMsg, t('No pudimos abrir Google. Usa tu correo.', 'Could not open Google. Use your email.'), true);
+});
+
+var siEmail = '';
+document.getElementById('si-send').addEventListener('click', async function () {
+  siEmail = document.getElementById('si-email').value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(siEmail)) { msg(siMsg, t('Revisa tu correo.', 'Check your email address.'), true); return; }
+  savePending();
+  this.disabled = true;
+  var r = await initSupabase().auth.signInWithOtp({ email: siEmail, options: { emailRedirectTo: location.origin + '/brief' } });
+  this.disabled = false;
+  if (r.error) {
+    msg(siMsg, /rate|seconds/i.test(r.error.message) ? t('Espera un momento antes de pedir otro código.', 'Wait a moment before asking for another code.') : t('No pudimos enviar el código. Intenta de nuevo.', 'Could not send the code. Try again.'), true);
+    return;
+  }
+  document.getElementById('si-code').hidden = false;
+  document.getElementById('si-verify').hidden = false;
+  msg(siMsg, t('Te enviamos un correo: escribe el código o abre el enlace.', 'We sent you an email: type the code or open the link.'), false);
+});
+
+document.getElementById('si-verify').addEventListener('click', async function () {
+  var code = document.getElementById('si-code').value.replace(/\s/g, '');
+  if (!code) return;
+  var r = await initSupabase().auth.verifyOtp({ email: siEmail, token: code, type: 'email' });
+  if (r.error) { msg(siMsg, t('Ese código no es válido o ya venció.', 'That code is not valid or has expired.'), true); return; }
+  msg(siMsg, '', false);
+  refreshWho();
+});
+
+/* ---------- approve: the hand-off to Scout ---------- */
+document.getElementById('ap-send').addEventListener('click', async function () {
+  if (!document.getElementById('ap-consent').checked) { msg(apMsg, t('Necesitamos tu permiso para guardar el resumen.', 'We need your permission to keep the brief.'), true); return; }
+  this.disabled = true;
+  msg(apMsg, t('Guardando…', 'Saving…'), false);
+  try {
+    var r = await authedFetch('/api/finder?action=approve', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ brief: brief, consent: true, lang: document.documentElement.lang === 'en' ? 'en' : 'es' })
     });
     var data = await r.json();
+    if (r.status === 401) { refreshWho(); msg(apMsg, t('Vuelve a entrar para continuar.', 'Sign in again to continue.'), true); return; }
     if (!r.ok) {
-      apError(data.error === 'invalid_email' ? t('Revisa tu correo.', 'Check your email address.')
-        : data.error === 'brief_incomplete' ? t('Al resumen le falta la zona o el presupuesto. Sigue la conversacion un poco mas.', 'The brief is missing an area or a budget. Keep talking a little longer.')
+      msg(apMsg, data.error === 'brief_incomplete' ? t('Al resumen le falta la zona o el presupuesto. Sigue la conversación un poco más.', 'The brief is missing an area or a budget. Keep talking a little longer.')
         : data.error === 'rate_limited' ? t('Demasiados intentos. Espera un momento.', 'Too many attempts. Give it a moment.')
-        : t('No pudimos guardar tu resumen. Intenta de nuevo.', 'We could not save your brief. Try again.'));
+        : t('No pudimos guardar tu resumen. Intenta de nuevo.', 'We could not save your brief. Try again.'), true);
       return;
     }
+    clearPending();
     history.replaceState(null, '', '/brief?b=' + encodeURIComponent(data.token));
-    showStatusView(data.token, true);
+    showStatusView(data.token, true, data.scout);
   } catch (e) {
-    apError(t('Sin conexion. Intenta de nuevo.', 'No connection. Try again.'));
+    msg(apMsg, t('Sin conexión. Intenta de nuevo.', 'No connection. Try again.'), true);
   } finally {
-    apSend.disabled = false;
+    this.disabled = false;
   }
 });
 
-/* ---------- status (the buyer's private link) ---------- */
+/* ---------- status: Scout's progress and results, on this page ---------- */
 var statusToken = null;
 var statusTimer = null;
+var lastScout = null;
 
 function statusLine(s) {
-  if (s.status === 'approved') return t('Recibimos tu resumen. Te escribimos en cuanto empecemos a buscar.', 'We have your brief. We will write as soon as the search starts.');
-  if (s.status === 'searching') return t('Estamos buscando en agencias, portales y sitios de agencias de todo el mercado.', 'We are searching PropLync agencies, portals and agency sites across the market.');
-  if (s.status === 'review') return s.pending
-    ? t('Encontramos ' + s.pending + ' propiedades posibles. Una persona las esta confirmando con cada agente antes de mostrartelas.', 'We found ' + s.pending + ' possible properties. A person is confirming each one with its agent before you see it.')
-    : t('Una persona esta confirmando los resultados con cada agente.', 'A person is confirming the results with each agent.');
-  if (s.status === 'ready') return t('Estas son las propiedades que su agente confirmo.', 'These are the properties their agents confirmed.');
-  return t('Esta busqueda esta cerrada.', 'This search is closed.');
+  var run = s.run;
+  if (run && (run.status === 'queued' || run.status === 'running')) return t('Scout está buscando en agencias PropLync, portales y sitios de agencias. Esto toma unos minutos; puedes dejar esta página abierta.', 'Scout is searching PropLync agencies, portals and agency sites. This takes a few minutes; you can keep this page open.');
+  if (lastScout && lastScout.reason === 'insufficient_credits') return t('Tu búsqueda gratis ya se usó. Con 1 crédito Scout busca de nuevo.', 'Your free search has been used. With 1 credit Scout searches again.');
+  if (lastScout && lastScout.reason === 'daily_capacity') return t('Scout tiene mucha demanda hoy. Tu resumen está guardado; intenta buscar más tarde.', 'Scout is very busy today. Your brief is saved; try searching again later.');
+  if (run && run.status === 'failed') return t('Esta búsqueda no terminó. Te devolvimos el crédito; puedes buscar de nuevo.', 'This search did not finish. We gave the credit back; you can search again.');
+  if (!s.candidates.length && run && run.status === 'done') return t('Scout no encontró propiedades que cumplan todo. Ajusta el resumen o busca de nuevo más tarde.', 'Scout found nothing that meets everything. Adjust the brief or search again later.');
+  if (s.candidates.length) return t('Esto encontró Scout. Lo marcado "sin verificar" viene de los anuncios; pide que una persona lo confirme con su agente.', 'This is what Scout found. Anything "not verified" comes from the listings; ask a person to confirm it with its agent.');
+  return t('Tu resumen está guardado.', 'Your brief is saved.');
 }
 
 function money(price, currency) {
@@ -375,11 +474,17 @@ function money(price, currency) {
 function propCard(c) {
   var specs = [
     c.bedrooms != null ? c.bedrooms + ' ' + t('rec', 'bd') : null,
-    c.bathrooms != null ? c.bathrooms + ' ' + t('banos', 'bath') : null,
+    c.bathrooms != null ? c.bathrooms + ' ' + t('baños', 'bath') : null,
     c.built_m2 != null ? c.built_m2 + ' m²' : null
   ].filter(Boolean).join(' · ');
   var photo = cssUrl((c.photos || [])[0]);
-  var a = c.answers || {};
+  var pill = c.verification === 'confirmed'
+    ? '<span class="bf-pill confirmed">' + escapeHtml(t('Confirmado con el agente', 'Confirmed with the agent')) + '</span>'
+    : c.verification === 'unreachable'
+      ? '<span class="bf-pill unverified">' + escapeHtml(t('El agente no respondió', 'The agent did not answer')) + '</span>'
+    : c.verify_requested
+      ? '<span class="bf-pill requested">' + escapeHtml(t('Verificación pedida', 'Verification requested')) + '</span>'
+      : '<span class="bf-pill unverified">' + escapeHtml(t('Sin verificar', 'Not verified')) + '</span>';
   var sources = (c.sources || []).map(function (s) {
     var href = safeUrl(s.url);
     var label = escapeHtml(s.site || t('Anuncio', 'Listing'));
@@ -387,24 +492,72 @@ function propCard(c) {
       (href ? '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + label + '</a>' : '<span>' + label + '</span>') +
       '<span>' + escapeHtml(money(s.price, s.currency)) + '</span></div>';
   }).join('');
+  var a = c.answers || {};
   var answers = [
-    [t('Disponible', 'Available'), a.available],
-    [t('Precio confirmado', 'Confirmed price'), a.price],
-    [t('Se puede visitar', 'Can visit'), a.can_visit],
-    [t('Restricciones', 'Restrictions'), a.restrictions]
+    [t('Disponible', 'Available'), a.available], [t('Precio confirmado', 'Confirmed price'), a.price],
+    [t('Se puede visitar', 'Can visit'), a.can_visit], [t('Restricciones', 'Restrictions'), a.restrictions]
   ].filter(function (r) { return r[1]; }).map(function (r) {
     return '<div class="bf-prop-row"><span>' + escapeHtml(r[0]) + '</span><span>' + escapeHtml(r[1]) + '</span></div>';
   }).join('');
+  var verifyBtn = c.verification === 'pending' && !c.verify_requested
+    ? '<button class="bf-verify" data-verify="' + escapeHtml(c.id) + '">' + escapeHtml(t('Verificar con el agente · 1 crédito', 'Verify with the agent · 1 credit')) + '</button>' : '';
   return '<article class="bf-prop">' +
     (photo ? '<div class="bf-prop-photo" style="background-image:url(\'' + photo + '\')"></div>' : '') +
-    '<div class="bf-prop-body">' +
+    '<div class="bf-prop-body">' + pill +
       '<div class="bf-prop-loc">' + escapeHtml([c.neighborhood, c.town].filter(Boolean).join(' · ')) + '</div>' +
       '<h3>' + escapeHtml(c.title || t('Propiedad', 'Property')) + '</h3>' +
       (specs ? '<div class="bf-prop-specs">' + escapeHtml(specs) + '</div>' : '') +
       (c.summary ? '<p class="bf-note">' + escapeHtml(c.summary) + '</p>' : '') +
-      '<div class="bf-prop-k">' + escapeHtml(t('Lo que dijo el agente', 'What the agent said')) + '</div>' + answers +
-      '<div class="bf-prop-k">' + escapeHtml(t('Donde se anuncia', 'Where it is listed')) + '</div>' + sources +
+      (answers ? '<div class="bf-prop-k">' + escapeHtml(t('Lo que dijo el agente', 'What the agent said')) + '</div>' + answers : '') +
+      (sources ? '<div class="bf-prop-k">' + escapeHtml(t('Dónde se anuncia', 'Where it is listed')) + '</div>' + sources : '') +
+      verifyBtn +
     '</div></article>';
+}
+
+function walletLine() {
+  var box = document.getElementById('st-wallet');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'st-wallet';
+    box.className = 'bf-progress';
+    document.getElementById('st-text').after(box);
+  }
+  return box;
+}
+
+async function renderWallet(s) {
+  var session = await getSession();
+  var box = walletLine();
+  box.innerHTML = '';
+  if (!session) return;
+  await loadWallet();
+  var line = document.createElement('span');
+  line.className = 'bf-credits';
+  line.textContent = creditsLabel(wallet);
+  box.appendChild(line);
+  var running = s.run && (s.run.status === 'queued' || s.run.status === 'running');
+  if (!running) {
+    var again = document.createElement('button');
+    again.className = 'bf-verify';
+    again.style.marginTop = '10px';
+    again.textContent = t('Que Scout busque de nuevo · 1 crédito', 'Have Scout search again · 1 credit');
+    again.disabled = !wallet || (wallet.credits < 1 && !wallet.free_search_available);
+    again.addEventListener('click', rerun);
+    box.appendChild(again);
+    if (wallet && wallet.credits < 1 && !wallet.free_search_available) {
+      var buy = document.createElement('p');
+      buy.className = 'bf-note';
+      buy.textContent = t('Sin créditos. Paquetes: 3 por MXN 299, 10 por MXN 799, 25 por MXN 1,699. Escríbenos a hola@proplync.mx para comprar mientras abrimos el pago en línea.', 'Out of credits. Packs: 3 for MXN 299, 10 for MXN 799, 25 for MXN 1,699. Write to hola@proplync.mx to buy while online checkout opens.');
+      box.appendChild(buy);
+    }
+  }
+}
+
+async function rerun() {
+  var r = await authedFetch('/api/finder?action=rerun', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: statusToken }) });
+  var data = await r.json().catch(function () { return {}; });
+  lastScout = data.scout || null;
+  loadStatus();
 }
 
 async function loadStatus() {
@@ -413,22 +566,45 @@ async function loadStatus() {
     var s = await r.json();
     if (!r.ok) {
       document.getElementById('st-text').textContent = r.status === 404
-        ? t('No encontramos esta busqueda. Revisa el enlace.', 'We could not find this search. Check the link.')
-        : t('No pudimos cargar tu busqueda. Intenta en un momento.', 'We could not load your search. Try again in a moment.');
+        ? t('No encontramos esta búsqueda. Revisa el enlace.', 'We could not find this search. Check the link.')
+        : t('No pudimos cargar tu búsqueda. Intenta en un momento.', 'We could not load your search. Try again in a moment.');
       return;
     }
     brief = s.brief || {}; renderBrief();
     document.getElementById('st-text').textContent = statusLine(s);
-    document.getElementById('st-results').innerHTML = (s.confirmed || []).map(propCard).join('');
+    var prog = s.run && (s.run.status === 'queued' || s.run.status === 'running')
+      ? t('Búsquedas: ', 'Searches: ') + (s.run.searches || 0) + ' · ' + t('páginas leídas: ', 'pages read: ') + (s.run.pages || 0) : '';
+    if (prog) document.getElementById('st-text').textContent += ' (' + prog + ')';
+    document.getElementById('st-results').innerHTML = (s.candidates || []).map(propCard).join('');
+    renderWallet(s);
     clearTimeout(statusTimer);
-    if (s.status === 'approved' || s.status === 'searching' || s.status === 'review') statusTimer = setTimeout(loadStatus, 60000);
+    var running = s.run && (s.run.status === 'queued' || s.run.status === 'running');
+    var waiting = (s.candidates || []).some(function (c) { return c.verify_requested && c.verification === 'pending'; });
+    if (running) statusTimer = setTimeout(loadStatus, 8000);
+    else if (waiting) statusTimer = setTimeout(loadStatus, 60000);
   } catch (e) {
-    document.getElementById('st-text').textContent = t('Sin conexion.', 'No connection.');
+    document.getElementById('st-text').textContent = t('Sin conexión.', 'No connection.');
   }
 }
 
-function showStatusView(token, justApproved) {
+document.getElementById('st-results').addEventListener('click', async function (e) {
+  var btn = e.target.closest('button[data-verify]');
+  if (!btn) return;
+  if (!(await getSession())) {
+    btn.textContent = t('Entra para verificar (arriba)', 'Sign in to verify (above)');
+    document.getElementById('approve-card').hidden = false;
+    refreshWho();
+    return;
+  }
+  btn.disabled = true;
+  var r = await authedFetch('/api/finder?action=verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ candidate_id: btn.dataset.verify }) });
+  if (r.status === 402) { btn.textContent = t('Sin créditos', 'Out of credits'); renderWallet({}); return; }
+  loadStatus();
+});
+
+function showStatusView(token, justApproved, scout) {
   statusToken = token;
+  lastScout = scout || null;
   document.querySelector('.bf-chat').hidden = true;
   document.getElementById('approve-card').hidden = true;
   document.getElementById('status-view').hidden = false;
@@ -437,7 +613,7 @@ function showStatusView(token, justApproved) {
     box.innerHTML = '';
     var note = document.createElement('p');
     note.className = 'bf-note';
-    note.textContent = t('Guarda este enlace: es la forma de volver a tu busqueda. No lo compartas.', 'Save this link: it is how you get back to your search. Do not share it.');
+    note.textContent = t('Guarda este enlace: es la forma de volver a tu búsqueda. No lo compartas.', 'Save this link: it is how you get back to your search. Do not share it.');
     var link = document.createElement('p');
     link.className = 'bf-link';
     link.textContent = location.origin + '/brief?b=' + token;
@@ -456,8 +632,20 @@ document.addEventListener('langchange', function () {
 });
 
 setLang(document.documentElement.lang);
+initSupabase();
+/* Offer Google only when the project has it switched on: a button that fails
+   at the last step of the brief is worse than no button. */
+fetch(SUPABASE_URL + '/auth/v1/settings', { headers: { apikey: SUPABASE_ANON_KEY } })
+  .then(function (r) { return r.json(); })
+  .then(function (st) {
+    var on = !!(st && st.external && st.external.google);
+    document.getElementById('google-btn').hidden = !on;
+    document.querySelector('#signin-box .bf-or').hidden = !on;
+  })
+  .catch(function () { document.getElementById('google-btn').hidden = true; document.querySelector('#signin-box .bf-or').hidden = true; });
 var savedToken = new URLSearchParams(location.search).get('b');
 if (savedToken) { showStatusView(savedToken, false); }
+else if (restorePending()) { /* back from Google: brief restored, approve card open */ }
 else bubble('a', t('Hola, soy Concierge, el asistente de IA de PropLync. Antes de buscar nada quiero entender que estas buscando. Cuentame: que vida te imaginas ahi?',
               'Hi, I am Concierge, PropLync’s AI assistant. Before searching anything I want to understand what you are after. Tell me: what life do you picture there?'));
 messages.push({ role: 'assistant', content: 'Hi, I am Concierge. Tell me: what life do you picture there?' });
