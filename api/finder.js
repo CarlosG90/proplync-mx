@@ -8,10 +8,10 @@
  * buyer approves before anything is searched.
  *
  * WHY TWO PROVIDERS
- * Claude runs the conversation and the extraction when ANTHROPIC_API_KEY is set:
- * tone matters here, it is the only thing the buyer ever talks to. Groq runs
- * Whisper for speech to text (Claude takes no audio input), and also stands in
- * for Claude on the conversation where that key is missing, e.g. Preview. Its
+ * NVIDIA NIM (free hosted catalog, api/_lib/nvidia.js) runs the conversation
+ * when NVIDIA_API_KEY is set. Groq runs Whisper for speech to text, and also
+ * stands in for NVIDIA on the conversation when that key is missing or NVIDIA
+ * fails. Its
  * 1,000 output-tokens-per-minute cap (api/extract.js) applies to chat
  * completions, not to transcription, which is why it is the fallback and not
  * the first choice.
@@ -39,16 +39,15 @@
  */
 
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
-import Anthropic from '@anthropic-ai/sdk';
 import { waitUntil } from '@vercel/functions';
 import { safeDetail, logDegraded } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { groqChat, messageText } from './_lib/groq.js';
+import { nvidiaChat, CONCIERGE_MODEL } from './_lib/nvidia.js';
 import { getServiceClient } from './_lib/supabase.js';
 import { createRun, runScoutStep, runsStartedToday, scoutConfigured } from './_lib/scout.js';
 import { notifyOperator } from './_lib/notify.js';
 
-const MODEL = 'claude-opus-5';
 const GROQ_STT = 'https://api.groq.com/openai/v1/audio/transcriptions';
 
 /* A voice note long enough to say something useful is still small. This cap is
@@ -118,12 +117,12 @@ function readJson(raw) {
 const GROQ_MAX_TOKENS = 600;
 
 async function handleTurn(req, res) {
-  const provider = process.env.ANTHROPIC_API_KEY ? 'anthropic'
+  const provider = process.env.NVIDIA_API_KEY ? 'nvidia'
     : process.env.GROQ_API_KEY ? 'groq' : null;
   if (!provider) {
     res.status(503).json({
       error: 'concierge_unconfigured',
-      detail: 'Neither ANTHROPIC_API_KEY nor GROQ_API_KEY is set in this environment.'
+      detail: 'Neither NVIDIA_API_KEY nor GROQ_API_KEY is set in this environment.'
     });
     return;
   }
@@ -155,22 +154,19 @@ async function handleTurn(req, res) {
       });
       return messageText(data);
     };
-    if (provider === 'anthropic') {
+    if (provider === 'nvidia') {
       try {
-        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-        const out = await client.messages.create({
-          model: MODEL,
+        const data = await nvidiaChat({
           max_tokens: 1400,
-          system: SYSTEM,
-          messages: messages
-        });
-        text = (out.content || []).filter(function (b) { return b.type === 'text'; })
-          .map(function (b) { return b.text; }).join('');
+          temperature: 0.4,
+          messages: [{ role: 'system', content: SYSTEM }].concat(messages)
+        }, { model: CONCIERGE_MODEL });
+        text = messageText(data);
       } catch (err) {
-        /* A rejected or expired Anthropic key must not take the Concierge down
-           while Groq is available. Log it so the bad key still gets noticed. */
+        /* NVIDIA busy, rate-limited or a retired model must not take the
+           Concierge down while Groq is available. Log it so it gets noticed. */
         if (!process.env.GROQ_API_KEY) throw err;
-        logDegraded('finder:anthropic-failed-using-groq', err);
+        logDegraded('finder:nvidia-failed-using-groq', err);
         used = 'groq';
         text = await viaGroq();
       }
