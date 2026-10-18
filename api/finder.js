@@ -46,6 +46,7 @@ import { enforceRateLimit } from './_lib/ratelimit.js';
 import { groqChat, messageText } from './_lib/groq.js';
 import { getServiceClient } from './_lib/supabase.js';
 import { createRun, runScoutStep, runsStartedToday, scoutConfigured } from './_lib/scout.js';
+import { monthlyBudgetUsd, spentThisMonth } from './_lib/scout-budget.js';
 import { notifyOperator } from './_lib/notify.js';
 
 const MODEL = 'claude-opus-5';
@@ -311,6 +312,15 @@ async function startPaidRun(svc, user, briefId, spendRef = briefId) {
     logDegraded('finder:scout-daily-cap', new Error(`cap ${cap} reached; brief ${briefId} waits`));
     return { started: false, reason: 'daily_capacity' };
   }
+
+  // Check monthly budget
+  const monthlyBudget = monthlyBudgetUsd();
+  const monthlySpent = await spentThisMonth(svc);
+  if (monthlySpent >= monthlyBudget) {
+    logDegraded('finder:scout-monthly-cap', new Error(`monthly budget $${monthlyBudget} reached ($${monthlySpent.toFixed(2)} spent); brief ${briefId} waits`));
+    return { started: false, reason: 'monthly_capacity' };
+  }
+
   const { data: spend, error: spendErr } = await svc.rpc('spend_credit', { p_user: user.id, p_reason: 'search', p_ref: spendRef });
   if (spendErr) throw spendErr;
   if (!spend.ok) return { started: false, reason: 'insufficient_credits', credits: spend.credits };

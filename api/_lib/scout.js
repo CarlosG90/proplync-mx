@@ -34,10 +34,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { mergeCandidates, normalizeUrl, toMxn, parseMoney } from './scout-merge.js';
 import { logDegraded, safeDetail } from './health.js';
+import { monthlyBudgetUsd, runMaxUsd, spentThisMonth, overRunLimit } from './scout-budget.js';
 
 export const SCOUT_MODEL = 'claude-opus-5-5';
 
-const MAX_STEPS = 8;        // completed segments per run; ~10 server tool calls each
+const MAX_STEPS = 5;        // completed segments per run; ~10 server tool calls each
 const MAX_ATTEMPTS = 12;    // started segments, so timeouts and 5xx cannot loop forever
 const LEASE_SECONDS = 330;  // longer than any one segment can run on Vercel (300 s)
 const MAX_TOKENS = 32000;
@@ -61,7 +62,7 @@ HOW TO RESEARCH
 - Start with the PropLync inventory you are given. Include every listing there that fits the brief, using its proplync_listing_id. Those are our own agencies' listings.
 - Then search the web the way a local buyer would, in Spanish: the portals (inmuebles24.com, lamudi.com.mx, vivanuncios.com.mx, inmuebles.mercadolibre.com.mx, propiedades.com) and local agency websites. Use the areas, property type, bedrooms and price words from the brief, for example "departamento en venta Aldea Zama Tulum 2 recamaras".
 - Open promising individual listing pages with web_fetch and read the facts there. A search snippet is only enough for a title and a price.
-- Vary your queries across areas, portals and agencies instead of repeating one. Aim for about 8 to 15 good candidates, and stop when you have them or your searches run out.
+- Vary your queries across areas, portals and agencies instead of repeating one. Aim for about 5 to 10 good candidates, and stop when you have them or your searches run out.
 
 RULES
 - Every fact you report must appear on a page you saw during this research. When no page says it, use null. Never estimate, round, convert or infer bedrooms, size, price, location or features.
@@ -119,11 +120,11 @@ const SUBMIT_SCHEMA = obj({
 
 const TOOLS = [
   {
-    type: 'web_search_20260209', name: 'web_search', max_uses: 15,
+    type: 'web_search_20260209', name: 'web_search', max_uses: 8,
     user_location: { type: 'approximate', country: 'MX', timezone: 'America/Cancun' },
     blocked_domains: BLOCKED
   },
-  { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 20, max_content_tokens: 6000, blocked_domains: BLOCKED },
+  { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 10, max_content_tokens: 3000, blocked_domains: BLOCKED },
   {
     name: 'submit_candidates',
     description: 'Report the properties found for this brief. Call exactly once, at the end of the research.',
@@ -404,6 +405,43 @@ export async function runScoutStep(svc, runId, opts = {}) {
   }
 
   const usage = addUsage(run, message.usage);
+
+  // Check per-run cost limit
+  if (overRunLimit(usage.cost_usd, runMaxUsd())) {
+    const content = message.content || [];
+    const fullTranscript = messages.concat([{ role: 'assistant', content }]);
+    const briefRow = await svc.from('buyer_briefs').select('*').eq('id', run.brief_id).single().then(r => r.data);
+    const inventory = await loadInventory(svc, briefRow.brief);
+    const submit = content.find((b) => b.type === 'tool_use' && b.name === 'submit_candidates');
+    let candidates = { candidates: [], droppedUrls: 0, notes: '' };
+    if (submit) {
+      candidates = validateSubmission(submit.input, {
+        seen: seenUrls(fullTranscript),
+        inventoryIds: new Set(inventory.map((l) => l.public_id))
+      });
+    }
+    const { cards } = mergeCandidates({
+      candidates: candidates.candidates, inventory, brief: briefRow.brief, fx: fxRate(), lang: briefRow.lang, siteOrigin: siteOrigin()
+    });
+    if (cards.length) {
+      const { error: insertError } = await svc.from('scout_candidates').insert(cards.map((c) => ({
+        run_id: run.id,
+        brief_id: run.brief_id,
+        origin: c.origin,
+        listing_public_id: c.listing_public_id,
+        title: c.title, operation: c.operation, property_type: c.property_type,
+        town: c.town, neighborhood: c.neighborhood,
+        bedrooms: c.bedrooms, bathrooms: c.bathrooms, built_m2: c.built_m2, land_m2: c.land_m2,
+        sources: c.sources, photos: c.photos, match: c.match,
+        fit_score: c.fit_score, lowest_price_mxn: c.lowest_price_mxn
+      })));
+      if (insertError) logDegraded('scout:cost-limit-insert', insertError);
+    }
+    const summary = (candidates.notes || '') + (candidates.notes && cards.length ? '\n' : '') + `Cost limit reached ($${usage.cost_usd.toFixed(2)}). Reporting ${cards.length} candidate(s) found.`;
+    await finish(svc, run, { ...usage, messages: fullTranscript, steps: run.steps + 1, status: 'done', search_notes: summary, error: null }, 'review');
+    return { state: 'done', candidates: cards.length, cost_usd: usage.cost_usd };
+  }
+
   const content = message.content;
   const submit = content.find((b) => b.type === 'tool_use' && b.name === 'submit_candidates');
 
