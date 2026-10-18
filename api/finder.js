@@ -7,14 +7,12 @@
  * conversation, by voice or by text, and turns it into a structured brief the
  * buyer approves before anything is searched.
  *
- * WHY TWO PROVIDERS
- * Claude runs the conversation and the extraction when ANTHROPIC_API_KEY is set:
- * tone matters here, it is the only thing the buyer ever talks to. Groq runs
- * Whisper for speech to text (Claude takes no audio input), and also stands in
- * for Claude on the conversation where that key is missing, e.g. Preview. Its
- * 1,000 output-tokens-per-minute cap (api/extract.js) applies to chat
- * completions, not to transcription, which is why it is the fallback and not
- * the first choice.
+ * WHY THREE PROVIDERS
+ * NVIDIA NIM (free tier) is the primary Concierge provider (cheaper than Claude).
+ * Groq is the fallback when NVIDIA is unavailable or rate-limited.
+ * Claude (via Anthropic SDK) is used only for extraction (PDFs, images).
+ * Groq also runs Whisper for speech to text (neither other provider does STT).
+ * All LLM providers have rate limits; failures on one layer fall through to next.
  *
  * ONE FUNCTION, SEVERAL ACTIONS
  * Vercel Hobby allows 12 serverless functions and this is the twelfth. Every
@@ -39,11 +37,11 @@
  */
 
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
-import Anthropic from '@anthropic-ai/sdk';
 import { waitUntil } from '@vercel/functions';
 import { safeDetail, logDegraded } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { groqChat, messageText } from './_lib/groq.js';
+import { conciergeChat } from './_lib/nvidia-concierge.js';
 import { getServiceClient } from './_lib/supabase.js';
 import { createRun, runScoutStep, runsStartedToday, scoutConfigured } from './_lib/scout.js';
 import { monthlyBudgetUsd, spentThisMonth } from './_lib/scout-budget.js';
@@ -108,8 +106,19 @@ function readJson(raw) {
   const text = String(raw || '').replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
-  if (start === -1 || end === -1) throw new Error('model_returned_no_json');
-  return JSON.parse(text.slice(start, end + 1));
+  if (start === -1 || end === -1) {
+    const err = new Error('model_returned_no_json');
+    err.detail = `Expected JSON object. Got: ${text.slice(0, 100)}`;
+    throw err;
+  }
+  try {
+    return JSON.parse(text.slice(start, end + 1));
+  } catch (parseErr) {
+    const err = new Error('model_json_invalid');
+    err.detail = `JSON parse failed: ${parseErr.message}`;
+    err.raw = text.slice(start, end + 1);
+    throw err;
+  }
 }
 
 /* Claude is the intended brain. Where its key is absent (Preview deployments)
@@ -119,12 +128,15 @@ function readJson(raw) {
 const GROQ_MAX_TOKENS = 600;
 
 async function handleTurn(req, res) {
-  const provider = process.env.ANTHROPIC_API_KEY ? 'anthropic'
-    : process.env.GROQ_API_KEY ? 'groq' : null;
-  if (!provider) {
+  /* Check provider availability: NVIDIA (free tier) → Groq fallback.
+     Claude is no longer used for Concierge (moved to NVIDIA to reduce cost). */
+  const haveNvidia = Boolean(process.env.NVIDIA_API_KEY);
+  const haveGroq = Boolean(process.env.GROQ_API_KEY);
+
+  if (!haveNvidia && !haveGroq) {
     res.status(503).json({
       error: 'concierge_unconfigured',
-      detail: 'Neither ANTHROPIC_API_KEY nor GROQ_API_KEY is set in this environment.'
+      detail: 'Neither NVIDIA_API_KEY nor GROQ_API_KEY is set. Concierge requires at least one.'
     });
     return;
   }
@@ -146,38 +158,22 @@ async function handleTurn(req, res) {
   if (messages[0].role !== 'user') messages.unshift({ role: 'user', content: 'Hola' });
 
   try {
-    let text;
-    let used = provider;
-    const viaGroq = async function () {
-      const data = await groqChat({
-        max_tokens: GROQ_MAX_TOKENS,
-        temperature: 0.4,
-        messages: [{ role: 'system', content: SYSTEM }].concat(messages)
-      });
-      return messageText(data);
-    };
-    if (provider === 'anthropic') {
-      try {
-        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-        const out = await client.messages.create({
-          model: MODEL,
-          max_tokens: 1400,
-          system: SYSTEM,
-          messages: messages
-        });
-        text = (out.content || []).filter(function (b) { return b.type === 'text'; })
-          .map(function (b) { return b.text; }).join('');
-      } catch (err) {
-        /* A rejected or expired Anthropic key must not take the Concierge down
-           while Groq is available. Log it so the bad key still gets noticed. */
-        if (!process.env.GROQ_API_KEY) throw err;
-        logDegraded('finder:anthropic-failed-using-groq', err);
-        used = 'groq';
-        text = await viaGroq();
-      }
-    } else {
-      text = await viaGroq();
+    /* Use NVIDIA first (free), fallback to Groq. Both are free tier providers. */
+    const result = await conciergeChat(messages, {
+      groqChat,
+      GROQ_MAX_TOKENS,
+      SYSTEM
+    });
+
+    const text = result.text;
+    const provider = result.provider;
+
+    if (!text) {
+      const err = new Error('provider_returned_empty_response');
+      err.provider = provider;
+      throw err;
     }
+
     const parsed = readJson(text);
 
     res.status(200).json({
@@ -185,15 +181,36 @@ async function handleTurn(req, res) {
       brief: parsed.brief && typeof parsed.brief === 'object' ? parsed.brief : {},
       missing: Array.isArray(parsed.missing) ? parsed.missing.slice(0, 20) : [],
       done: parsed.done === true,
-      provider: used
+      provider: provider
     });
   } catch (err) {
+    const code = err.code || (err.message ? err.message.split(':')[0] : 'unknown');
     logDegraded('finder:turn', err);
-    if (/Groq responded 429/.test(String(err && err.message))) {
-      res.status(429).json({ error: 'concierge_busy', detail: 'The Concierge is busy. Try again in a few seconds.' });
+
+    /* Rate limit (429) from Groq: tell buyer to retry, don't treat as error. */
+    if (/groq.*429|Groq responded 429/.test(String(err && err.message))) {
+      res.status(429).json({
+        error: 'concierge_busy',
+        detail: 'The Concierge is busy. Try again in a few seconds.'
+      });
       return;
     }
-    res.status(502).json({ error: 'concierge_unavailable', detail: safeDetail(err) });
+
+    /* Timeout from NVIDIA: likely rate limit, tell buyer to retry. */
+    if (code === 'nvidia_timeout') {
+      res.status(503).json({
+        error: 'concierge_busy',
+        detail: 'The Concierge is processing many requests. Try again in a moment.'
+      });
+      return;
+    }
+
+    /* All other errors: unavailable. */
+    res.status(502).json({
+      error: 'concierge_unavailable',
+      detail: safeDetail(err, 'finder'),
+      code: code
+    });
   }
 }
 
