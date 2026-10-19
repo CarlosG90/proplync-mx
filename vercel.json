@@ -38,6 +38,10 @@
   },
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/invest"
+    },
+    {
       "source": "/api/describe",
       "destination": "/api/generate?action=describe"
     },
