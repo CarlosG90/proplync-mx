@@ -1,636 +1,238 @@
-<!DOCTYPE html>
-<html lang="es">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title data-es="Inversión inmobiliaria en Riviera Maya" data-en="Investment Properties in Riviera Maya">PropLync.mx</title>
-  <meta name="description" content="Encuentra propiedades verificadas en Cancún, Playa del Carmen y Tulum. El Concierge es gratis. Búsqueda y verificación con tokens.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/tokens.css">
-  <link rel="stylesheet" href="/css/nav.css">
-  <link rel="stylesheet" href="/css/components.css">
-  <style>
-    /* ================================================================
-       /invest — Investor landing page
-       ================================================================ */
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PropLync — Cut your deal research time in half</title>
+<meta name="description" content="AI finds verified Riviera Maya properties. Agents confirm them with you, before you spend your time on them.">
 
-    /* Hero Section (3.1) */
-    .hero {
-      position: relative;
-      background: var(--ink);
-      color: var(--on-ink);
-      overflow: hidden;
-      min-height: 94vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-    }
+<!-- OG image and canonical use the Vercel URL until proplync.mx is
+     registered. Both lines change together when it is. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="PropLync — Cut your deal research time in half">
+<meta property="og:description" content="AI finds verified Riviera Maya properties. Agents confirm them with you.">
+<meta property="og:url" content="https://proplync-mx.vercel.app/invest">
+<link rel="canonical" href="https://proplync-mx.vercel.app/invest">
 
-    .hero::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      background:
-        radial-gradient(ellipse 70% 55% at 72% 18%, rgba(201,169,110,.1), transparent 55%),
-        radial-gradient(ellipse 55% 75% at 8% 82%, rgba(45,138,133,.14), transparent 50%),
-        radial-gradient(ellipse 35% 45% at 50% 50%, rgba(20,34,55,.55), transparent);
-    }
-
-    .hero::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      opacity: .025;
-      pointer-events: none;
-      mix-blend-mode: overlay;
-    }
-
-    .hero .wrap {
-      position: relative;
-      z-index: 2;
-      display: grid;
-      grid-template-columns: 1.15fr .85fr;
-      gap: 72px;
-      align-items: end;
-      padding-top: 140px;
-      padding-bottom: 120px;
-    }
-
-    .hero-content { padding-bottom: 28px; }
-
-    .hero-eyebrow {
-      color: var(--gold);
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 32px;
-      font-family: var(--mono);
-      font-size: .72rem;
-      letter-spacing: .03em;
-    }
-
-    .hero-eyebrow::before {
-      content: "";
-      width: 36px;
-      height: 1px;
-      background: linear-gradient(90deg, var(--gold), transparent);
-    }
-
-    .hero h1 {
-      font-size: var(--text-5xl);
-      letter-spacing: -.035em;
-      font-weight: 300;
-      line-height: 1.02;
-    }
-
-    .hero-sub {
-      margin-top: 32px;
-      font-size: var(--text-md);
-      color: var(--on-ink-dim);
-      max-width: 32em;
-      line-height: 1.75;
-    }
-
-    .hero-cta {
-      margin-top: 36px;
-      display: flex;
-      gap: 16px;
-      align-items: center;
-    }
-
-    .hero-cta-button {
-      background: var(--gold);
-      color: var(--ink);
-      padding: 16px 32px;
-      border: none;
-      border-radius: 4px;
-      font-size: var(--text-base);
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 200ms ease;
-      text-decoration: none;
-      display: inline-block;
-    }
-
-    .hero-cta-button:hover {
-      background: var(--gold-light);
-      transform: translateY(-2px);
-    }
-
-    .hero-cta-micro {
-      font-size: .875rem;
-      color: var(--on-ink-dim);
-    }
-
-    .hero-image {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 4/5;
-      background: var(--surface);
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,.1);
-    }
-
-    .hero-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    @media (max-width: 900px) {
-      .hero .wrap {
-        grid-template-columns: 1fr;
-        gap: 36px;
-        padding-top: 80px;
-        padding-bottom: 60px;
-      }
-      .hero h1 { font-size: var(--text-4xl); }
-    }
-
-    /* Pain Section (3.2) */
-    .pain {
-      background: var(--surface);
-      padding: 80px var(--pad-x);
-    }
-
-    .pain .wrap {
-      max-width: var(--max-width);
-      margin: 0 auto;
-    }
-
-    .pain h2 {
-      font-size: var(--text-3xl);
-      font-weight: 400;
-      margin-bottom: 56px;
-      text-align: center;
-    }
-
-    .pain-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 48px;
-    }
-
-    .pain-card {
-      padding: 32px;
-      background: var(--ink);
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,.05);
-    }
-
-    .pain-card h3 {
-      font-size: var(--text-lg);
-      font-weight: 600;
-      color: var(--gold);
-      margin-bottom: 12px;
-    }
-
-    .pain-card p {
-      color: var(--on-ink-dim);
-      line-height: 1.75;
-      font-size: .95rem;
-    }
-
-    @media (max-width: 900px) {
-      .pain-grid { grid-template-columns: 1fr; }
-      .pain { padding: 60px var(--pad-x); }
-    }
-
-    /* How it Works Section (3.3) */
-    .process {
-      background: var(--ink);
-      padding: 80px var(--pad-x);
-    }
-
-    .process .wrap {
-      max-width: var(--max-width);
-      margin: 0 auto;
-    }
-
-    .process h2 {
-      font-size: var(--text-3xl);
-      font-weight: 400;
-      margin-bottom: 56px;
-      text-align: center;
-      color: var(--on-ink);
-    }
-
-    .process-steps {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px;
-    }
-
-    .process-step {
-      padding: 32px;
-      border: 1px solid rgba(201,169,110,.2);
-      border-radius: 8px;
-      background: rgba(201,169,110,.02);
-    }
-
-    .process-step-number {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      background: var(--gold);
-      color: var(--ink);
-      border-radius: 50%;
-      font-weight: 700;
-      margin-bottom: 20px;
-    }
-
-    .process-step h3 {
-      font-size: var(--text-lg);
-      font-weight: 600;
-      color: var(--on-ink);
-      margin-bottom: 12px;
-    }
-
-    .process-step p {
-      color: var(--on-ink-dim);
-      line-height: 1.75;
-      font-size: .95rem;
-    }
-
-    @media (max-width: 900px) {
-      .process-steps { grid-template-columns: 1fr; }
-      .process { padding: 60px var(--pad-x); }
-    }
-
-    /* Proof Section (3.4) */
-    .proof {
-      background: var(--surface);
-      padding: 80px var(--pad-x);
-    }
-
-    .proof .wrap {
-      max-width: var(--max-width);
-      margin: 0 auto;
-    }
-
-    .proof h2 {
-      font-size: var(--text-3xl);
-      font-weight: 400;
-      margin-bottom: 12px;
-      text-align: center;
-    }
-
-    .proof-subtitle {
-      text-align: center;
-      color: var(--on-surface-dim);
-      margin-bottom: 56px;
-      font-size: var(--text-base);
-    }
-
-    .proof-item {
-      padding: 24px;
-      background: var(--ink);
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,.05);
-      margin-bottom: 16px;
-    }
-
-    .proof-item blockquote {
-      font-style: italic;
-      color: var(--on-ink);
-      margin: 0 0 12px 0;
-      line-height: 1.75;
-    }
-
-    .proof-item-credit {
-      color: var(--gold);
-      font-size: .875rem;
-      font-weight: 600;
-    }
-
-    /* Pricing Section (3.5) */
-    .pricing {
-      background: var(--ink);
-      padding: 80px var(--pad-x);
-    }
-
-    .pricing .wrap {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      text-align: center;
-    }
-
-    .pricing h2 {
-      font-size: var(--text-3xl);
-      font-weight: 400;
-      margin-bottom: 32px;
-      color: var(--on-ink);
-    }
-
-    .pricing-statement {
-      font-size: var(--text-lg);
-      color: var(--on-ink-dim);
-      max-width: 40em;
-      margin: 0 auto;
-      line-height: 1.75;
-    }
-
-    .pricing-statement strong {
-      color: var(--gold);
-      font-weight: 600;
-    }
-
-    /* FAQ Section (3.6) */
-    .faq {
-      background: var(--surface);
-      padding: 80px var(--pad-x);
-    }
-
-    .faq .wrap {
-      max-width: 720px;
-      margin: 0 auto;
-    }
-
-    .faq h2 {
-      font-size: var(--text-3xl);
-      font-weight: 400;
-      margin-bottom: 56px;
-      text-align: center;
-    }
-
-    .faq-item {
-      margin-bottom: 32px;
-      border-bottom: 1px solid rgba(0,0,0,.1);
-      padding-bottom: 32px;
-    }
-
-    .faq-item:last-child {
-      border-bottom: none;
-    }
-
-    .faq-question {
-      font-size: var(--text-base);
-      font-weight: 600;
-      color: var(--on-surface);
-      margin-bottom: 12px;
-      cursor: pointer;
-    }
-
-    .faq-answer {
-      color: var(--on-surface-dim);
-      line-height: 1.75;
-      font-size: .95rem;
-    }
-
-    /* Footer */
-    .footer {
-      background: var(--ink);
-      color: var(--on-ink);
-      padding: 60px var(--pad-x) 40px;
-      border-top: 1px solid rgba(255,255,255,.05);
-    }
-
-    .footer .wrap {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 48px;
-      margin-bottom: 40px;
-    }
-
-    .footer-section h3 {
-      font-size: var(--text-base);
-      font-weight: 600;
-      color: var(--gold);
-      margin-bottom: 16px;
-    }
-
-    .footer-section a {
-      display: block;
-      color: var(--on-ink-dim);
-      text-decoration: none;
-      margin-bottom: 12px;
-      font-size: .875rem;
-      transition: color 200ms ease;
-    }
-
-    .footer-section a:hover {
-      color: var(--gold);
-    }
-
-    .footer-disclaimer {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding-top: 40px;
-      border-top: 1px solid rgba(255,255,255,.05);
-      font-size: .75rem;
-      color: var(--on-ink-dim);
-      line-height: 1.6;
-      text-align: center;
-    }
-
-    @media (max-width: 768px) {
-      .footer .wrap {
-        grid-template-columns: 1fr;
-        gap: 32px;
-      }
-    }
-  </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/landing.css">
 </head>
-<body>
-  <!-- Navigation (shared §2) -->
-  <nav class="nav">
-    <div class="nav-wrap">
-      <div class="nav-logo"><a href="/invest">PropLync</a></div>
-      <div class="nav-links">
-        <a href="/invest" data-es="Para Inversores" data-en="For Investors">Para Inversores</a>
-        <a href="/agents" data-es="Para Agentes" data-en="For Agents">Para Agentes</a>
-        <a href="/resources" data-es="Recursos" data-en="Resources">Recursos</a>
-        <a href="/dashboard" data-es="Ingresar" data-en="Sign in">Ingresar</a>
-      </div>
-    </div>
-  </nav>
 
-  <!-- 3.1 Hero -->
-  <section class="hero">
-    <div class="wrap">
-      <div class="hero-content">
-        <div class="hero-eyebrow" data-es="Búsqueda inteligente" data-en="Smart search">Búsqueda inteligente</div>
-        <h1 data-es="Reduce a la mitad el tiempo de investigación de tu inversión." data-en="Cut your deal research time in half.">Reduce a la mitad el tiempo de investigación de tu inversión.</h1>
-        <p class="hero-sub" data-es="La IA encuentra propiedades verificadas. Los agentes las confirman contigo." data-en="AI finds verified properties. Agents confirm them with you.">La IA encuentra propiedades verificadas. Los agentes las confirman contigo.</p>
-        <div class="hero-cta">
-          <a href="/finder" class="hero-cta-button" data-es="Comienza tu búsqueda" data-en="Start your search">Comienza tu búsqueda</a>
-          <div class="hero-cta-micro" data-es="El Concierge es gratis." data-en="Concierge is free.">El Concierge es gratis.</div>
-        </div>
+<!-- data-default-lang: §9.3 is still open. EN is set here because the
+     plan notes investors are mostly English-speaking; /agents ships ES.
+     Flip this one attribute if the decision lands the other way. -->
+<body class="lp" data-page="invest" data-default-lang="en">
+
+<a class="lp-skip" href="#main" data-en="Skip to content" data-es="Saltar al contenido">Skip to content</a>
+
+<header class="lp-nav">
+  <div class="lp-wrap lp-nav__inner">
+    <a class="lp-nav__logo" href="/invest">PropLync</a>
+    <button class="lp-nav__toggle" aria-expanded="false" aria-label="Menu">☰</button>
+    <ul class="lp-nav__links">
+      <li><a href="/invest" aria-current="page" data-en="For Investors" data-es="Para inversionistas">For Investors</a></li>
+      <li><a href="/agents" data-en="For Agents" data-es="Para asesores">For Agents</a></li>
+      <li><a href="/resources" data-en="Resources" data-es="Recursos">Resources</a></li>
+      <li><a href="/login" data-en="Sign in" data-es="Entrar">Sign in</a></li>
+      <li>
+        <span class="lp-lang">
+          <button type="button" data-lang="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang="es" aria-pressed="false">ES</button>
+        </span>
+      </li>
+    </ul>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ── §3.1 Hero ────────────────────────────────────────── -->
+  <section class="lp-hero">
+    <div class="lp-wrap lp-hero__grid">
+      <div>
+        <p class="lp-eyebrow" data-en="Riviera Maya" data-es="Riviera Maya">Riviera Maya</p>
+        <h1 data-en="Cut your deal research time in half."
+            data-es="Reduce a la mitad el tiempo que inviertes en investigar.">Cut your deal research time in half.</h1>
+        <p class="lp-lede"
+           data-en="AI finds verified properties. Agents confirm them with you."
+           data-es="La IA encuentra propiedades verificadas. Los asesores las confirman contigo.">AI finds verified properties. Agents confirm them with you.</p>
+        <a class="lp-btn lp-btn--primary" href="/finder"
+           data-track="cta_click" data-track-label="hero_start_search"
+           data-en="Start your search" data-es="Comienza tu búsqueda">Start your search</a>
+        <!-- §3.1 micro-copy: the plan's draft said "no sign-up", but
+             AGENT-COMMUNICATION-PLAN D5 collects an email before the
+             first Concierge turn. Only the free part is stated here. -->
+        <small class="lp-btn__note"
+               data-en="The Concierge conversation is free."
+               data-es="La conversación con el Concierge es gratuita.">The Concierge conversation is free.</small>
       </div>
-      <div class="hero-image">
-        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 500'%3E%3Crect fill='%232d3436' width='400' height='500'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23636e72' font-size='16'%3E[Hero image: Riviera Maya property]%3C/text%3E%3C/svg%3E" alt="Riviera Maya property">
+
+      <!-- §3.1 visual: [TBD] one real Riviera Maya property, sourced
+           from a partner agent with permission. No stock photo (§2).
+           Replace this figure with the <img> when the image lands. -->
+      <figure class="lp-hero__media">
+        <figcaption data-en="Property photo pending agent permission"
+                    data-es="Foto de propiedad pendiente de permiso del asesor">Property photo pending agent permission</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ── §3.2 Pain ────────────────────────────────────────── -->
+  <section>
+    <div class="lp-wrap">
+      <h2 data-en="Your time is worth more than scrolling listings."
+          data-es="Tu tiempo vale más que revisar anuncios.">Your time is worth more than scrolling listings.</h2>
+      <div class="lp-grid">
+        <article class="lp-card">
+          <span class="lp-card__num">01</span>
+          <h3 data-en="Listings that are out of date" data-es="Anuncios desactualizados">Listings that are out of date</h3>
+          <p data-en="Online listings often include properties that are already sold or no longer available. Checking each one takes time."
+             data-es="Los anuncios en línea suelen incluir propiedades ya vendidas o que ya no están disponibles. Revisar cada una toma tiempo.">Online listings often include properties that are already sold or no longer available. Checking each one takes time.</p>
+        </article>
+        <article class="lp-card">
+          <span class="lp-card__num">02</span>
+          <h3 data-en="Hard to verify remotely" data-es="Difíciles de verificar a distancia">Hard to verify remotely</h3>
+          <p data-en="Confirming price, condition and paperwork usually means several calls and emails."
+             data-es="Confirmar precio, estado y documentación normalmente implica varias llamadas y correos.">Confirming price, condition and paperwork usually means several calls and emails.</p>
+        </article>
+        <article class="lp-card">
+          <span class="lp-card__num">03</span>
+          <h3 data-en="No efficient way to compare" data-es="Sin una forma eficiente de comparar">No efficient way to compare</h3>
+          <p data-en="Comparing properties against your criteria across portals and agencies is manual work."
+             data-es="Comparar propiedades contra tus criterios entre portales y agencias es trabajo manual.">Comparing properties against your criteria across portals and agencies is manual work.</p>
+        </article>
       </div>
     </div>
   </section>
 
-  <!-- 3.2 Pain -->
-  <section class="pain">
-    <div class="wrap">
-      <h2 data-es="Tu tiempo vale más que desplazarte por listados." data-en="Your time is worth more than scrolling listings.">Tu tiempo vale más que desplazarte por listados.</h2>
-      <div class="pain-grid">
-        <div class="pain-card">
-          <h3 data-es="Listados desactualizados" data-en="Outdated listings">Listados desactualizados</h3>
-          <p data-es="Los listados en línea suelen incluir propiedades ya vendidas o que ya no están disponibles. Verificar cada una lleva tiempo." data-en="Online listings often include properties that are already sold or no longer available. Checking each one takes time.">Los listados en línea suelen incluir propiedades ya vendidas o que ya no están disponibles. Verificar cada una lleva tiempo.</p>
-        </div>
-        <div class="pain-card">
-          <h3 data-es="Difícil de verificar a distancia" data-en="Hard to verify remotely">Difícil de verificar a distancia</h3>
-          <p data-es="Confirmar precio, condición y papeles usualmente requiere varias llamadas y correos electrónicos." data-en="Confirming price, condition and paperwork usually means several calls and emails.">Confirmar precio, condición y papeles usualmente requiere varias llamadas y correos electrónicos.</p>
-        </div>
-        <div class="pain-card">
-          <h3 data-es="Sin forma eficiente de comparar" data-en="No efficient way to compare">Sin forma eficiente de comparar</h3>
-          <p data-es="Comparar propiedades contra tus criterios en portales y agencias es trabajo manual." data-en="Comparing properties against your criteria across portals and agencies is manual work.">Comparar propiedades contra tus criterios en portales y agencias es trabajo manual.</p>
-        </div>
+  <!-- ── §3.3 How it works ────────────────────────────────── -->
+  <section class="lp-band">
+    <div class="lp-wrap">
+      <p class="lp-eyebrow" data-en="How it works" data-es="Cómo funciona">How it works</p>
+      <h2 data-en="Three steps to verified options."
+          data-es="Tres pasos hacia opciones verificadas.">Three steps to verified options.</h2>
+      <div class="lp-grid">
+        <article class="lp-card" style="background:transparent;border-color:rgba(248,245,240,.2)">
+          <span class="lp-card__num">01</span>
+          <h3 data-en="Concierge — free" data-es="Concierge — gratis">Concierge — free</h3>
+          <p data-en="Tell us your criteria: budget, target return, property type, location, timeline."
+             data-es="Cuéntanos tus criterios: presupuesto, retorno objetivo, tipo de propiedad, ubicación y plazo.">Tell us your criteria: budget, target return, property type, location, timeline.</p>
+        </article>
+        <article class="lp-card" style="background:transparent;border-color:rgba(248,245,240,.2)">
+          <span class="lp-card__num">02</span>
+          <h3 data-en="Scout — token-priced" data-es="Scout — con tokens">Scout — token-priced</h3>
+          <p data-en="Scout searches public listings and agency sites, merges duplicates, and ranks matches against your brief. Each result is labelled unverified until confirmed."
+             data-es="Scout busca en anuncios públicos y sitios de agencias, une duplicados y ordena los resultados según tu brief. Cada resultado aparece como no verificado hasta confirmarse.">Scout searches public listings and agency sites, merges duplicates, and ranks matches against your brief. Each result is labelled unverified until confirmed.</p>
+        </article>
+        <article class="lp-card" style="background:transparent;border-color:rgba(248,245,240,.2)">
+          <span class="lp-card__num">03</span>
+          <h3 data-en="Verify — token-priced" data-es="Verificar — con tokens">Verify — token-priced</h3>
+          <p data-en="We ask the listing agent to confirm price, availability and condition. You get the result before you talk to them."
+             data-es="Le pedimos al asesor que confirme precio, disponibilidad y estado. Recibes el resultado antes de hablar con él.">We ask the listing agent to confirm price, availability and condition. You get the result before you talk to them.</p>
+        </article>
       </div>
     </div>
   </section>
 
-  <!-- 3.3 How It Works -->
-  <section class="process">
-    <div class="wrap">
-      <h2 data-es="Tres pasos para opciones verificadas." data-en="Three steps to verified options.">Tres pasos para opciones verificadas.</h2>
-      <div class="process-steps">
-        <div class="process-step">
-          <div class="process-step-number">1</div>
-          <h3 data-es="Concierge (gratis)" data-en="Concierge (free)">Concierge (gratis)</h3>
-          <p data-es="Cuéntanos tus criterios: presupuesto, retorno, tipo de propiedad, ubicación, plazo." data-en="Tell us your criteria: budget, target return, property type, location, timeline.">Cuéntanos tus criterios: presupuesto, retorno, tipo de propiedad, ubicación, plazo.</p>
-        </div>
-        <div class="process-step">
-          <div class="process-step-number">2</div>
-          <h3 data-es="Scout (con tokens)" data-en="Scout (token-priced)">Scout (con tokens)</h3>
-          <p data-es="Scout busca en listados públicos y sitios de agencias, fusiona duplicados y ordena las opciones según tu brief." data-en="Scout searches public listings and agency sites, merges duplicates, and ranks matches against your criteria.">Scout busca en listados públicos y sitios de agencias, fusiona duplicados y ordena las opciones según tu brief.</p>
-        </div>
-        <div class="process-step">
-          <div class="process-step-number">3</div>
-          <h3 data-es="Verificar (con tokens)" data-en="Verify (token-priced)">Verificar (con tokens)</h3>
-          <p data-es="Le pedimos al agente que confirme precio, disponibilidad y condición. Recibes el resultado antes de hablar con él." data-en="We ask the listing agent to confirm price, availability and condition. You get the result before you talk to them.">Le pedimos al agente que confirme precio, disponibilidad y condición. Recibes el resultado antes de hablar con él.</p>
-        </div>
+  <!-- ── §3.4 Proof ───────────────────────────────────────────
+       HIDDEN ON PURPOSE. §3.4 allows nothing here until it is
+       confirmed: no agency count, no agent quotes without written
+       consent (§9.7), no metrics until they are real. Remove the
+       `hidden` attribute once at least one of those lands.
+       ───────────────────────────────────────────────────────── -->
+  <section hidden data-todo="§3.4 — needs confirmed agency count and written agent consent">
+    <div class="lp-wrap">
+      <h2 data-en="Built with agents who work in Riviera Maya."
+          data-es="Construido con asesores que trabajan en la Riviera Maya.">Built with agents who work in Riviera Maya.</h2>
+      <p><!-- [TBD] e.g. "Working with X agencies in Cancún and Playa del Carmen." --></p>
+      <!-- [Agent quote — pending written approval] -->
+    </div>
+  </section>
+
+  <!-- ── §3.5 Pricing line ────────────────────────────────── -->
+  <section class="lp-tight">
+    <div class="lp-wrap">
+      <!-- No figures here. §9.1 (token price and bundles) is still
+           open; the branch commit that hard-coded prices is ahead of
+           that decision. Numbers go in only once §9.1 is closed. -->
+      <h2 data-en="Pricing" data-es="Precios">Pricing</h2>
+      <p class="lp-lede"
+         data-en="Concierge is free. Scout and verification are priced in tokens."
+         data-es="El Concierge es gratuito. Scout y la verificación se cobran con tokens.">Concierge is free. Scout and verification are priced in tokens.</p>
+    </div>
+  </section>
+
+  <!-- ── §3.6 FAQ ─────────────────────────────────────────── -->
+  <section>
+    <div class="lp-wrap">
+      <h2 data-en="Questions" data-es="Preguntas">Questions</h2>
+      <div class="lp-faq">
+
+        <details>
+          <summary data-en="Is this free?" data-es="¿Es gratis?">Is this free?</summary>
+          <p data-en="The Concierge conversation is free. Scout searches and verification requests use tokens."
+             data-es="La conversación con el Concierge es gratuita. Las búsquedas de Scout y las solicitudes de verificación usan tokens.">The Concierge conversation is free. Scout searches and verification requests use tokens.</p>
+        </details>
+
+        <details>
+          <summary data-en="How does verification work?" data-es="¿Cómo funciona la verificación?">How does verification work?</summary>
+          <p data-en="We contact the listing agent and ask them to confirm price, availability and condition. You receive the result before you talk to them."
+             data-es="Contactamos al asesor que publica la propiedad y le pedimos confirmar precio, disponibilidad y estado. Recibes el resultado antes de hablar con él.">We contact the listing agent and ask them to confirm price, availability and condition. You receive the result before you talk to them.</p>
+        </details>
+
+        <!-- Coverage answer held back: the plan's draft says Cancún,
+             Playa del Carmen and Tulum, but BUSINESS-MODEL R5
+             recommends launching Playa del Carmen alone. Publish once
+             that conflict is settled. -->
+        <details hidden data-todo="coverage conflicts with BUSINESS-MODEL R5 (Playa del Carmen first)">
+          <summary data-en="Which areas do you cover?" data-es="¿Qué zonas cubren?">Which areas do you cover?</summary>
+          <p><!-- [CONFIRM current coverage] --></p>
+        </details>
+
+        <details>
+          <summary data-en="How long does it take?" data-es="¿Cuánto tarda?">How long does it take?</summary>
+          <p data-en="The Concierge conversation takes a few minutes. Verification depends on the listing agent's response time."
+             data-es="La conversación con el Concierge toma unos minutos. La verificación depende del tiempo de respuesta del asesor.">The Concierge conversation takes a few minutes. Verification depends on the listing agent's response time.</p>
+        </details>
+
+        <details>
+          <summary data-en="Is my data safe?" data-es="¿Mis datos están seguros?">Is my data safe?</summary>
+          <p data-en="Your profile is private. It is shared only when you choose to request verification from a specific agent."
+             data-es="Tu perfil es privado. Solo se comparte cuando decides solicitar una verificación con un asesor específico.">Your profile is private. It is shared only when you choose to request verification from a specific agent.</p>
+        </details>
+
+        <details>
+          <summary data-en="What if I don't find a match?" data-es="¿Y si no encuentro nada que encaje?">What if I don't find a match?</summary>
+          <p data-en="You can refine your brief and run Scout again. Tokens apply to each run."
+             data-es="Puedes ajustar tu brief y volver a ejecutar Scout. Cada ejecución consume tokens.">You can refine your brief and run Scout again. Tokens apply to each run.</p>
+        </details>
+
       </div>
     </div>
   </section>
 
-  <!-- 3.4 Proof -->
-  <section class="proof">
-    <div class="wrap">
-      <h2 data-es="Construido con agentes que trabajan en Riviera Maya." data-en="Built with agents who work in Riviera Maya.">Construido con agentes que trabajan en Riviera Maya.</h2>
-      <p class="proof-subtitle" data-es="Trabajando con agencias independientes en Cancún, Playa del Carmen y Tulum." data-en="Working with independent agencies in Cancún, Playa del Carmen and Tulum.">Trabajando con agencias independientes en Cancún, Playa del Carmen y Tulum.</p>
-      <div class="proof-item">
-        <blockquote data-es="'Recibo compradores calificados, sin trabajo de prospección. Enfoque en cerrar, no en filtrar.'" data-en="'I get qualified buyers, no prospecting work. Focus on closing, not screening.'">Recibo compradores calificados, sin trabajo de prospección. Enfoque en cerrar, no en filtrar.</blockquote>
-        <div class="proof-item-credit" data-es="Agente independiente, Playa del Carmen" data-en="Independent agent, Playa del Carmen">Agente independiente, Playa del Carmen</div>
-      </div>
-      <div class="proof-item">
-        <blockquote data-es="'Los internacionales saben lo que quieren. PropLync me conecta con los serios.'" data-en="'International buyers know what they want. PropLync connects me with the serious ones.'">Los internacionales saben lo que quieren. PropLync me conecta con los serios.</blockquote>
-        <div class="proof-item-credit" data-es="Agencia boutique, Tulum" data-en="Boutique agency, Tulum">Agencia boutique, Tulum</div>
-      </div>
-    </div>
-  </section>
+</main>
 
-  <!-- 3.5 Pricing -->
-  <section class="pricing">
-    <div class="wrap">
-      <h2 data-es="Precios claros, sin sorpresas." data-en="Clear pricing, no surprises.">Precios claros, sin sorpresas.</h2>
-      <p class="pricing-statement">
-        <span data-es="El Concierge es gratis. Scout y verificación usan tokens." data-en="Concierge is free. Scout and verification use tokens.">El Concierge es gratis. Scout y verificación usan tokens.</span>
-        <br>
-        <strong data-es="$0.99/token · Paquete de 3 tokens: $2.99 · Paquete de 10 tokens: $7.99" data-en="$0.99/token · 3-token pack: $2.99 · 10-token pack: $7.99">$0.99/token · Paquete de 3 tokens: $2.99 · Paquete de 10 tokens: $7.99</strong>
-      </p>
-    </div>
-  </section>
+<footer class="lp-footer">
+  <div class="lp-wrap">
+    <a class="lp-footer__cross" href="/agents"
+       data-track="cta_click" data-track-label="footer_to_agents"
+       data-en="Are you a real estate agent? Reach international investors →"
+       data-es="¿Eres asesor inmobiliario? Llega a inversionistas internacionales →">Are you a real estate agent? Reach international investors →</a>
+    <ul class="lp-footer__links">
+      <li><a href="/privacy" data-en="Privacy" data-es="Privacidad">Privacy</a></li>
+      <li><a href="/terms" data-en="Terms" data-es="Términos">Terms</a></li>
+      <li><a href="/#contacto" data-en="Contact" data-es="Contacto">Contact</a></li>
+    </ul>
+    <p class="lp-footer__disclaimer"
+       data-en="PropLync does not provide investment, tax or legal advice. Consult a licensed notary (notario) and a qualified advisor for fideicomiso, tax and legal matters before any transaction."
+       data-es="PropLync no brinda asesoría de inversión, fiscal ni legal. Consulta a un notario público y a un asesor calificado en materia de fideicomiso, impuestos y temas legales antes de cualquier transacción.">PropLync does not provide investment, tax or legal advice. Consult a licensed notary (notario) and a qualified advisor for fideicomiso, tax and legal matters before any transaction.</p>
+  </div>
+</footer>
 
-  <!-- 3.6 FAQ -->
-  <section class="faq">
-    <div class="wrap">
-      <h2 data-es="Preguntas frecuentes" data-en="Frequently asked questions">Preguntas frecuentes</h2>
-      <div class="faq-item">
-        <div class="faq-question" data-es="¿Esto es gratis?" data-en="Is this free?">¿Esto es gratis?</div>
-        <div class="faq-answer" data-es="El Concierge es totalmente gratis. Scout (búsqueda) y verificación cuestan tokens a $0.99 cada uno. Comienza con un paquete de 3 por $2.99." data-en="Concierge is completely free. Scout and verification cost $0.99 per token. Start with a 3-token pack for $2.99.">El Concierge es totalmente gratis. Scout y verificación cuestan tokens a $0.99 cada uno. Comienza con un paquete de 3 por $2.99.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-question" data-es="¿Cómo funciona la verificación?" data-en="How does verification work?">¿Cómo funciona la verificación?</div>
-        <div class="faq-answer" data-es="Nos comunicamos directamente con el agente y le pedimos que confirme el precio actual, disponibilidad y condición de la propiedad. Tú recibes la respuesta verificada antes de cualquier contacto directo." data-en="We contact the listing agent directly and ask them to confirm current price, availability and condition. You receive the verified response before any direct contact.">Nos comunicamos directamente con el agente y le pedimos que confirme el precio actual, disponibilidad y condición de la propiedad. Tú recibes la respuesta verificada antes de cualquier contacto directo.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-question" data-es="¿Qué zonas cubren?" data-en="Which areas do you cover?">¿Qué zonas cubren?</div>
-        <div class="faq-answer" data-es="Cancún, Playa del Carmen y Tulum. Expandimos según la demanda." data-en="Cancún, Playa del Carmen and Tulum. We expand based on demand.">Cancún, Playa del Carmen y Tulum. Expandimos según la demanda.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-question" data-es="¿Cuánto tiempo tarda?" data-en="How long does it take?">¿Cuánto tiempo tarda?</div>
-        <div class="faq-answer" data-es="El Concierge toma 5-10 minutos. Scout retorna resultados en menos de 1 minuto. Verificación típicamente tarda 24-48 horas (depende de la respuesta del agente)." data-en="Concierge takes 5-10 minutes. Scout returns results in under 1 minute. Verification typically takes 24-48 hours (depends on agent response time).">El Concierge toma 5-10 minutos. Scout retorna resultados en menos de 1 minuto. Verificación típicamente tarda 24-48 horas.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-question" data-es="¿Es seguro mi datos?" data-en="Is my data safe?">¿Es seguro mi datos?</div>
-        <div class="faq-answer" data-es="Tu perfil (brief) es privado y encriptado. Solo se comparte con un agente cuando tú activamente solicitas la verificación de una propiedad específica. No vendemos datos." data-en="Your profile (brief) is private and encrypted. It is only shared with an agent when you actively request verification for a specific property. We never sell data.">Tu perfil es privado y encriptado. Solo se comparte cuando solicitas verificación. No vendemos datos.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-question" data-es="¿Si no encuentro lo que quiero?" data-en="What if I don't find what I want?">¿Si no encuentro lo que quiero?</div>
-        <div class="faq-answer" data-es="Refina tu brief (presupuesto, ubicación, tipo) y ejecuta Scout de nuevo. Cuesta 1 token por búsqueda. Puedes hacer cuantas búsquedas necesites." data-en="Refine your brief (budget, location, type) and run Scout again. Each search costs 1 token. Run as many searches as you need.">Refina tu brief y ejecuta Scout de nuevo. Cada búsqueda cuesta 1 token. Haz cuantas búsquedas necesites.</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="wrap">
-      <div class="footer-section">
-        <h3 data-es="Propiedades" data-en="Properties">Propiedades</h3>
-        <a href="/invest" data-es="Para inversores" data-en="For investors">Para inversores</a>
-        <a href="/resources" data-es="Recursos" data-en="Resources">Recursos</a>
-        <a href="/search" data-es="Búsqueda" data-en="Search">Búsqueda</a>
-      </div>
-      <div class="footer-section">
-        <h3 data-es="Agencias" data-en="Agencies">Agencias</h3>
-        <a href="/agents" data-es="Para agentes" data-en="For agents">Para agentes</a>
-        <a href="/dashboard" data-es="Mi panel" data-en="Dashboard">Mi panel</a>
-        <a href="/contact" data-es="Contacto" data-en="Contact">Contacto</a>
-      </div>
-    </div>
-    <div class="footer-disclaimer">
-      <p data-es="PropLync no es un asesor de inversión, legal o fiscal. PropLync es una plataforma de conectar compradores verificados con agentes. Consulta con un notario público certificado en México y un asesor fiscal e inmobiliario calificado para cualquier transacción de propiedad. Leer la política de privacidad completa antes de usar Concierge." data-en="PropLync is not an investment, legal or tax adviser. PropLync is a platform connecting verified buyers with agents. Consult a licensed Mexican notary (notario) and a qualified real estate and tax advisor for any property transaction. Read the full privacy policy before using Concierge.">PropLync no es un asesor de inversión, legal o fiscal. PropLync es una plataforma de conectar compradores verificados con agentes. Consulta con un notario público certificado en México y un asesor calificado para cualquier transacción.</p>
-    </div>
-  </footer>
-
-  <!-- Internationalization (existing i18n script) -->
-  <script src="/js/escape.js"></script>
-  <script src="/js/i18n.js"></script>
-  <script>
-    /* invest.html tracking and interactions */
-
-    // Track landing view
-    function trackEvent(eventName, details = {}) {
-      if (typeof gtag !== 'undefined') {
-        gtag('event', eventName, details);
-      }
-      console.log(`[analytics] ${eventName}`, details);
-    }
-
-    // Track page view
-    trackEvent('landing_view', { page: 'invest' });
-
-    // Track CTA clicks
-    document.querySelectorAll('.hero-cta-button, .hero-paths a').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        trackEvent('cta_click', {
-          page: 'invest',
-          button: btn.textContent.trim(),
-          href: btn.href
-        });
-      });
-    });
-
-    // Track Concierge start
-    document.addEventListener('concierge:start', () => {
-      trackEvent('concierge_start', { page: 'invest' });
-    });
-  </script>
+<script src="/js/landing.js" defer></script>
 </body>
 </html>

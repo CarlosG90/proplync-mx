@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PropLync — Resources</title>
+<meta name="robots" content="noindex">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/landing.css">
+
+<style>
+  /* Article measure: narrower than the landing grid. */
+  .lp-article { max-width: 70ch; }
+  .lp-article h2 { margin-top: 40px; }
+  .lp-article__meta {
+    font-family: var(--lp-data);
+    font-size: 0.78rem;
+    color: var(--lp-tinta-70);
+    margin-bottom: 28px;
+  }
+  /* §5: every figure carries a source and a date. */
+  .lp-source {
+    font-size: 0.85rem;
+    color: var(--lp-tinta-70);
+    border-left: 2px solid var(--lp-oro);
+    padding-left: 12px;
+    margin: 20px 0;
+  }
+</style>
+</head>
+
+<!-- noindex until a real article is served from here: an empty
+     template in the index is worse than no page at all. Remove the
+     robots meta above when the first article ships. -->
+<body class="lp" data-page="article" data-default-lang="en">
+
+<a class="lp-skip" href="#main" data-en="Skip to content" data-es="Saltar al contenido">Skip to content</a>
+
+<header class="lp-nav">
+  <div class="lp-wrap lp-nav__inner">
+    <a class="lp-nav__logo" href="/invest">PropLync</a>
+    <button class="lp-nav__toggle" aria-expanded="false" aria-label="Menu">☰</button>
+    <ul class="lp-nav__links">
+      <li><a href="/invest" data-en="For Investors" data-es="Para inversionistas">For Investors</a></li>
+      <li><a href="/agents" data-en="For Agents" data-es="Para asesores">For Agents</a></li>
+      <li><a href="/resources" aria-current="page" data-en="Resources" data-es="Recursos">Resources</a></li>
+      <li><a href="/login" data-en="Sign in" data-es="Entrar">Sign in</a></li>
+      <li>
+        <span class="lp-lang">
+          <button type="button" data-lang="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang="es" aria-pressed="false">ES</button>
+        </span>
+      </li>
+    </ul>
+  </div>
+</header>
+
+<main id="main">
+  <section class="lp-hero">
+    <div class="lp-wrap lp-article" id="article-root">
+
+      <!-- Empty state. No article is published yet (§5: write, then
+           fact-check, then publish), so every slug lands here. -->
+      <p class="lp-eyebrow" data-en="Resources" data-es="Recursos">Resources</p>
+      <h1 data-en="This article isn't published yet."
+          data-es="Este artículo todavía no está publicado.">This article isn't published yet.</h1>
+      <p class="lp-lede"
+         data-en="Each guide is reviewed by a qualified professional before it goes live, and every figure carries a source and a date."
+         data-es="Cada guía es revisada por un profesional calificado antes de publicarse, y cada cifra lleva su fuente y fecha.">Each guide is reviewed by a qualified professional before it goes live, and every figure carries a source and a date.</p>
+      <a class="lp-btn lp-btn--primary" href="/resources"
+         data-en="See all resources" data-es="Ver todos los recursos">See all resources</a>
+
+    </div>
+  </section>
+</main>
+
+<footer class="lp-footer">
+  <div class="lp-wrap">
+    <a class="lp-footer__cross" href="/invest"
+       data-track="cta_click" data-track-label="article_to_invest"
+       data-en="Start your search →" data-es="Comienza tu búsqueda →">Start your search →</a>
+    <ul class="lp-footer__links">
+      <li><a href="/privacy" data-en="Privacy" data-es="Privacidad">Privacy</a></li>
+      <li><a href="/terms" data-en="Terms" data-es="Términos">Terms</a></li>
+      <li><a href="/#contacto" data-en="Contact" data-es="Contacto">Contact</a></li>
+    </ul>
+    <p class="lp-footer__disclaimer"
+       data-en="PropLync does not provide investment, tax or legal advice. Consult a licensed notary (notario) and a qualified advisor for fideicomiso, tax and legal matters before any transaction."
+       data-es="PropLync no brinda asesoría de inversión, fiscal ni legal. Consulta a un notario público y a un asesor calificado en materia de fideicomiso, impuestos y temas legales antes de cualquier transacción.">PropLync does not provide investment, tax or legal advice. Consult a licensed notary (notario) and a qualified advisor for fideicomiso, tax and legal matters before any transaction.</p>
+  </div>
+</footer>
+
+<script src="/js/landing.js" defer></script>
+<script>
+/* ──────────────────────────────────────────────────────────────
+   Article router.
+
+   WHY client-side and not an api/*.js function: Vercel Hobby caps
+   the project at 12 functions and all 12 are in use (§1 of the
+   plan). Articles are static content, so the slug is resolved in
+   the browser against a manifest declared here. Adding an article
+   is one entry below plus its markup.
+   ────────────────────────────────────────────────────────────── */
+(function () {
+  'use strict';
+
+  // slug → { file } once articles exist. Empty until §5 clears review.
+  var ARTICLES = {};
+
+  var params = new URLSearchParams(window.location.search);
+  var slug = params.get('slug');
+  if (!slug || !ARTICLES[slug]) return; // empty state already rendered
+
+  var entry = ARTICLES[slug];
+  fetch(entry.file)
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then(function (html) {
+      document.getElementById('article-root').innerHTML = html;
+      document.title = 'PropLync — ' + (entry.title || 'Resources');
+    })
+    .catch(function () { /* empty state stays */ });
+})();
+</script>
+</body>
+</html>
