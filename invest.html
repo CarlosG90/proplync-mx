@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title data-es="Inversión inmobiliaria en Riviera Maya" data-en="Investment Properties in Riviera Maya">PropLync.mx</title>
+  <meta name="description" content="Encuentra propiedades verificadas en Cancún, Playa del Carmen y Tulum. El Concierge es gratis. Búsqueda y verificación con tokens.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/nav.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <style>
+    /* ================================================================
+       /invest — Investor landing page
+       ================================================================ */
+
+    /* Hero Section (3.1) */
+    .hero {
+      position: relative;
+      background: var(--ink);
+      color: var(--on-ink);
+      overflow: hidden;
+      min-height: 94vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        radial-gradient(ellipse 70% 55% at 72% 18%, rgba(201,169,110,.1), transparent 55%),
+        radial-gradient(ellipse 55% 75% at 8% 82%, rgba(45,138,133,.14), transparent 50%),
+        radial-gradient(ellipse 35% 45% at 50% 50%, rgba(20,34,55,.55), transparent);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: .025;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+    }
+
+    .hero .wrap {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 72px;
+      align-items: end;
+      padding-top: 140px;
+      padding-bottom: 120px;
+    }
+
+    .hero-content { padding-bottom: 28px; }
+
+    .hero-eyebrow {
+      color: var(--gold);
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      font-family: var(--mono);
+      font-size: .72rem;
+      letter-spacing: .03em;
+    }
+
+    .hero-eyebrow::before {
+      content: "";
+      width: 36px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+    }
+
+    .hero h1 {
+      font-size: var(--text-5xl);
+      letter-spacing: -.035em;
+      font-weight: 300;
+      line-height: 1.02;
+    }
+
+    .hero-sub {
+      margin-top: 32px;
+      font-size: var(--text-md);
+      color: var(--on-ink-dim);
+      max-width: 32em;
+      line-height: 1.75;
+    }
+
+    .hero-cta {
+      margin-top: 36px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .hero-cta-button {
+      background: var(--gold);
+      color: var(--ink);
+      padding: 16px 32px;
+      border: none;
+      border-radius: 4px;
+      font-size: var(--text-base);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 200ms ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .hero-cta-button:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+    }
+
+    .hero-cta-micro {
+      font-size: .875rem;
+      color: var(--on-ink-dim);
+    }
+
+    .hero-image {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4/5;
+      background: var(--surface);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+
+    .hero-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    @media (max-width: 900px) {
+      .hero .wrap {
+        grid-template-columns: 1fr;
+        gap: 36px;
+        padding-top: 80px;
+        padding-bottom: 60px;
+      }
+      .hero h1 { font-size: var(--text-4xl); }
+    }
+
+    /* Pain Section (3.2) */
+    .pain {
+      background: var(--surface);
+      padding: 80px var(--pad-x);
+    }
+
+    .pain .wrap {
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .pain h2 {
+      font-size: var(--text-3xl);
+      font-weight: 400;
+      margin-bottom: 56px;
+      text-align: center;
+    }
+
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 48px;
+    }
+
+    .pain-card {
+      padding: 32px;
+      background: var(--ink);
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.05);
+    }
+
+    .pain-card h3 {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+
+    .pain-card p {
+      color: var(--on-ink-dim);
+      line-height: 1.75;
+      font-size: .95rem;
+    }
+
+    @media (max-width: 900px) {
+      .pain-grid { grid-template-columns: 1fr; }
+      .pain { padding: 60px var(--pad-x); }
+    }
+
+    /* How it Works Section (3.3) */
+    .process {
+      background: var(--ink);
+      padding: 80px var(--pad-x);
+    }
+
+    .process .wrap {
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .process h2 {
+      font-size: var(--text-3xl);
+      font-weight: 400;
+      margin-bottom: 56px;
+      text-align: center;
+      color: var(--on-ink);
+    }
+
+    .process-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    .process-step {
+      padding: 32px;
+      border: 1px solid rgba(201,169,110,.2);
+      border-radius: 8px;
+      background: rgba(201,169,110,.02);
+    }
+
+    .process-step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: var(--gold);
+      color: var(--ink);
+      border-radius: 50%;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .process-step h3 {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--on-ink);
+      margin-bottom: 12px;
+    }
+
+    .process-step p {
+      color: var(--on-ink-dim);
+      line-height: 1.75;
+      font-size: .95rem;
+    }
+
+    @media (max-width: 900px) {
+      .process-steps { grid-template-columns: 1fr; }
+      .process { padding: 60px var(--pad-x); }
+    }
+
+    /* Proof Section (3.4) */
+    .proof {
+      background: var(--surface);
+      padding: 80px var(--pad-x);
+    }
+
+    .proof .wrap {
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .proof h2 {
+      font-size: var(--text-3xl);
+      font-weight: 400;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .proof-subtitle {
+      text-align: center;
+      color: var(--on-surface-dim);
+      margin-bottom: 56px;
+      font-size: var(--text-base);
+    }
+
+    .proof-item {
+      padding: 24px;
+      background: var(--ink);
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.05);
+      margin-bottom: 16px;
+    }
+
+    .proof-item blockquote {
+      font-style: italic;
+      color: var(--on-ink);
+      margin: 0 0 12px 0;
+      line-height: 1.75;
+    }
+
+    .proof-item-credit {
+      color: var(--gold);
+      font-size: .875rem;
+      font-weight: 600;
+    }
+
+    /* Pricing Section (3.5) */
+    .pricing {
+      background: var(--ink);
+      padding: 80px var(--pad-x);
+    }
+
+    .pricing .wrap {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .pricing h2 {
+      font-size: var(--text-3xl);
+      font-weight: 400;
+      margin-bottom: 32px;
+      color: var(--on-ink);
+    }
+
+    .pricing-statement {
+      font-size: var(--text-lg);
+      color: var(--on-ink-dim);
+      max-width: 40em;
+      margin: 0 auto;
+      line-height: 1.75;
+    }
+
+    .pricing-statement strong {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* FAQ Section (3.6) */
+    .faq {
+      background: var(--surface);
+      padding: 80px var(--pad-x);
+    }
+
+    .faq .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .faq h2 {
+      font-size: var(--text-3xl);
+      font-weight: 400;
+      margin-bottom: 56px;
+      text-align: center;
+    }
+
+    .faq-item {
+      margin-bottom: 32px;
+      border-bottom: 1px solid rgba(0,0,0,.1);
+      padding-bottom: 32px;
+    }
+
+    .faq-item:last-child {
+      border-bottom: none;
+    }
+
+    .faq-question {
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--on-surface);
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+
+    .faq-answer {
+      color: var(--on-surface-dim);
+      line-height: 1.75;
+      font-size: .95rem;
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--ink);
+      color: var(--on-ink);
+      padding: 60px var(--pad-x) 40px;
+      border-top: 1px solid rgba(255,255,255,.05);
+    }
+
+    .footer .wrap {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 48px;
+      margin-bottom: 40px;
+    }
+
+    .footer-section h3 {
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    .footer-section a {
+      display: block;
+      color: var(--on-ink-dim);
+      text-decoration: none;
+      margin-bottom: 12px;
+      font-size: .875rem;
+      transition: color 200ms ease;
+    }
+
+    .footer-section a:hover {
+      color: var(--gold);
+    }
+
+    .footer-disclaimer {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding-top: 40px;
+      border-top: 1px solid rgba(255,255,255,.05);
+      font-size: .75rem;
+      color: var(--on-ink-dim);
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .footer .wrap {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation (shared §2) -->
+  <nav class="nav">
+    <div class="nav-wrap">
+      <div class="nav-logo"><a href="/invest">PropLync</a></div>
+      <div class="nav-links">
+        <a href="/invest" data-es="Para Inversores" data-en="For Investors">Para Inversores</a>
+        <a href="/agents" data-es="Para Agentes" data-en="For Agents">Para Agentes</a>
+        <a href="/resources" data-es="Recursos" data-en="Resources">Recursos</a>
+        <a href="/dashboard" data-es="Ingresar" data-en="Sign in">Ingresar</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 3.1 Hero -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-content">
+        <div class="hero-eyebrow" data-es="Búsqueda inteligente" data-en="Smart search">Búsqueda inteligente</div>
+        <h1 data-es="Reduce a la mitad el tiempo de investigación de tu inversión." data-en="Cut your deal research time in half.">Reduce a la mitad el tiempo de investigación de tu inversión.</h1>
+        <p class="hero-sub" data-es="La IA encuentra propiedades verificadas. Los agentes las confirman contigo." data-en="AI finds verified properties. Agents confirm them with you.">La IA encuentra propiedades verificadas. Los agentes las confirman contigo.</p>
+        <div class="hero-cta">
+          <a href="/finder" class="hero-cta-button" data-es="Comienza tu búsqueda" data-en="Start your search">Comienza tu búsqueda</a>
+          <div class="hero-cta-micro" data-es="El Concierge es gratis." data-en="Concierge is free.">El Concierge es gratis.</div>
+        </div>
+      </div>
+      <div class="hero-image">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 500'%3E%3Crect fill='%232d3436' width='400' height='500'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23636e72' font-size='16'%3E[Hero image: Riviera Maya property]%3C/text%3E%3C/svg%3E" alt="Riviera Maya property">
+      </div>
+    </div>
+  </section>
+
+  <!-- 3.2 Pain -->
+  <section class="pain">
+    <div class="wrap">
+      <h2 data-es="Tu tiempo vale más que desplazarte por listados." data-en="Your time is worth more than scrolling listings.">Tu tiempo vale más que desplazarte por listados.</h2>
+      <div class="pain-grid">
+        <div class="pain-card">
+          <h3 data-es="Listados desactualizados" data-en="Outdated listings">Listados desactualizados</h3>
+          <p data-es="Los listados en línea suelen incluir propiedades ya vendidas o que ya no están disponibles. Verificar cada una lleva tiempo." data-en="Online listings often include properties that are already sold or no longer available. Checking each one takes time.">Los listados en línea suelen incluir propiedades ya vendidas o que ya no están disponibles. Verificar cada una lleva tiempo.</p>
+        </div>
+        <div class="pain-card">
+          <h3 data-es="Difícil de verificar a distancia" data-en="Hard to verify remotely">Difícil de verificar a distancia</h3>
+          <p data-es="Confirmar precio, condición y papeles usualmente requiere varias llamadas y correos electrónicos." data-en="Confirming price, condition and paperwork usually means several calls and emails.">Confirmar precio, condición y papeles usualmente requiere varias llamadas y correos electrónicos.</p>
+        </div>
+        <div class="pain-card">
+          <h3 data-es="Sin forma eficiente de comparar" data-en="No efficient way to compare">Sin forma eficiente de comparar</h3>
+          <p data-es="Comparar propiedades contra tus criterios en portales y agencias es trabajo manual." data-en="Comparing properties against your criteria across portals and agencies is manual work.">Comparar propiedades contra tus criterios en portales y agencias es trabajo manual.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3.3 How It Works -->
+  <section class="process">
+    <div class="wrap">
+      <h2 data-es="Tres pasos para opciones verificadas." data-en="Three steps to verified options.">Tres pasos para opciones verificadas.</h2>
+      <div class="process-steps">
+        <div class="process-step">
+          <div class="process-step-number">1</div>
+          <h3 data-es="Concierge (gratis)" data-en="Concierge (free)">Concierge (gratis)</h3>
+          <p data-es="Cuéntanos tus criterios: presupuesto, retorno, tipo de propiedad, ubicación, plazo." data-en="Tell us your criteria: budget, target return, property type, location, timeline.">Cuéntanos tus criterios: presupuesto, retorno, tipo de propiedad, ubicación, plazo.</p>
+        </div>
+        <div class="process-step">
+          <div class="process-step-number">2</div>
+          <h3 data-es="Scout (con tokens)" data-en="Scout (token-priced)">Scout (con tokens)</h3>
+          <p data-es="Scout busca en listados públicos y sitios de agencias, fusiona duplicados y ordena las opciones. [TBD: proveedor de búsqueda]" data-en="Scout searches public listings and agency sites, merges duplicates, and ranks matches. [TBD: search provider]">Scout busca en listados públicos y sitios de agencias, fusiona duplicados y ordena las opciones.</p>
+        </div>
+        <div class="process-step">
+          <div class="process-step-number">3</div>
+          <h3 data-es="Verificar (con tokens)" data-en="Verify (token-priced)">Verificar (con tokens)</h3>
+          <p data-es="Le pedimos al agente que confirme precio, disponibilidad y condición. Recibes el resultado antes de hablar con él." data-en="We ask the listing agent to confirm price, availability and condition. You get the result before you talk to them.">Le pedimos al agente que confirme precio, disponibilidad y condición. Recibes el resultado antes de hablar con él.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3.4 Proof -->
+  <section class="proof">
+    <div class="wrap">
+      <h2 data-es="Construido con agentes que trabajan en Riviera Maya." data-en="Built with agents who work in Riviera Maya.">Construido con agentes que trabajan en Riviera Maya.</h2>
+      <p class="proof-subtitle">[TBD: confirmación con agentes — ej. "Trabajando con X agencias en Cancún y Playa del Carmen."]</p>
+      <div class="proof-item">
+        <blockquote>"[Cita de agente — pendiente aprobación escrita]"</blockquote>
+        <div class="proof-item-credit">Agent Name, City</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3.5 Pricing -->
+  <section class="pricing">
+    <div class="wrap">
+      <h2 data-es="Precios claros, sin sorpresas." data-en="Clear pricing, no surprises.">Precios claros, sin sorpresas.</h2>
+      <p class="pricing-statement">
+        <span data-es="El Concierge es gratis. Scout y verificación se facturan en tokens." data-en="Concierge is free. Scout and verification are priced in tokens.">El Concierge es gratis. Scout y verificación se facturan en tokens.</span>
+        <strong data-es="[TBD: precio de tokens y tamaños de paquetes]" data-en="[TBD: token price and bundle sizes]">[TBD: precio de tokens y tamaños de paquetes]</strong>
+      </p>
+    </div>
+  </section>
+
+  <!-- 3.6 FAQ -->
+  <section class="faq">
+    <div class="wrap">
+      <h2 data-es="Preguntas frecuentes" data-en="Frequently asked questions">Preguntas frecuentes</h2>
+      <div class="faq-item">
+        <div class="faq-question" data-es="¿Esto es gratis?" data-en="Is this free?">¿Esto es gratis?</div>
+        <div class="faq-answer" data-es="El Concierge es gratis. Scout y verificación usan tokens. [TBD: precio]" data-en="Concierge is free. Scout and verification use tokens. [TBD: price]">El Concierge es gratis. Scout y verificación usan tokens.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question" data-es="¿Cómo funciona la verificación?" data-en="How does verification work?">¿Cómo funciona la verificación?</div>
+        <div class="faq-answer" data-es="Nos comunicamos con el agente y le pedimos que confirme el precio, disponibilidad y condición. Recibes el resultado antes de hablar con él. [CONFIRMAR]" data-en="We contact the listing agent and ask them to confirm price, availability and condition. You receive the result before you talk to them. [CONFIRM]">Nos comunicamos con el agente y le pedimos que confirme el precio, disponibilidad y condición. Recibes el resultado antes de hablar con él.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question" data-es="¿Qué zonas cubren?" data-en="Which areas do you cover?">¿Qué zonas cubren?</div>
+        <div class="faq-answer" data-es="Cancún, Playa del Carmen y Tulum. [CONFIRMAR cobertura actual]" data-en="Cancún, Playa del Carmen and Tulum. [CONFIRM current coverage]">Cancún, Playa del Carmen y Tulum.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question" data-es="¿Cuánto tiempo tarda?" data-en="How long does it take?">¿Cuánto tiempo tarda?</div>
+        <div class="faq-answer" data-es="El Concierge toma unos minutos. La verificación depende del tiempo de respuesta del agente. [CONFIRMAR tiempo típico]" data-en="Concierge takes a few minutes. Verification depends on the agent's response time. [CONFIRM typical time]">El Concierge toma unos minutos. La verificación depende del tiempo de respuesta del agente.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question" data-es="¿Es seguro mi datos?" data-en="Is my data safe?">¿Es seguro mi datos?</div>
+        <div class="faq-answer" data-es="Tu perfil es privado. Se comparte sólo cuando eliges solicitar verificación de un agente específico. [CONFIRMAR contra la política de privacidad]" data-en="Your profile is private. It is shared only when you choose to request verification from a specific agent. [CONFIRM against privacy policy]">Tu perfil es privado. Se comparte sólo cuando eliges solicitar verificación de un agente específico.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question" data-es="¿Si no encuentro una coincidencia?" data-en="What if I don't find a match?">¿Si no encuentro una coincidencia?</div>
+        <div class="faq-answer" data-es="Puedes refinar tu perfil y ejecutar Scout de nuevo. Los tokens se aplican a cada búsqueda. [CONFIRMAR precios de nueva búsqueda]" data-en="You can refine your brief and run Scout again. Tokens apply to each run. [CONFIRM rerun pricing]">Puedes refinar tu perfil y ejecutar Scout de nuevo. Los tokens se aplican a cada búsqueda.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="wrap">
+      <div class="footer-section">
+        <h3 data-es="Propiedades" data-en="Properties">Propiedades</h3>
+        <a href="/invest" data-es="Para inversores" data-en="For investors">Para inversores</a>
+        <a href="/resources" data-es="Recursos" data-en="Resources">Recursos</a>
+        <a href="/search" data-es="Búsqueda" data-en="Search">Búsqueda</a>
+      </div>
+      <div class="footer-section">
+        <h3 data-es="Agencias" data-en="Agencies">Agencias</h3>
+        <a href="/agents" data-es="Para agentes" data-en="For agents">Para agentes</a>
+        <a href="/dashboard" data-es="Mi panel" data-en="Dashboard">Mi panel</a>
+        <a href="/contact" data-es="Contacto" data-en="Contact">Contacto</a>
+      </div>
+    </div>
+    <div class="footer-disclaimer">
+      <p data-es="PropLync no proporciona asesoramiento de inversión, fiscal o legal. Consulta con un notario certificado y un asesor calificado en temas de fideicomiso, fiscales y legales antes de cualquier transacción." data-en="PropLync does not provide investment, tax or legal advice. Consult a licensed notary (notario) and a qualified advisor for fideicomiso, tax and legal matters before any transaction.">PropLync no proporciona asesoramiento de inversión, fiscal o legal. Consulta con un notario certificado y un asesor calificado antes de cualquier transacción.</p>
+    </div>
+  </footer>
+
+  <!-- Internationalization (existing i18n script) -->
+  <script src="/js/escape.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script>
+    /* invest.html tracking and interactions */
+
+    // Track landing view
+    function trackEvent(eventName, details = {}) {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', eventName, details);
+      }
+      console.log(`[analytics] ${eventName}`, details);
+    }
+
+    // Track page view
+    trackEvent('landing_view', { page: 'invest' });
+
+    // Track CTA clicks
+    document.querySelectorAll('.hero-cta-button, .hero-paths a').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        trackEvent('cta_click', {
+          page: 'invest',
+          button: btn.textContent.trim(),
+          href: btn.href
+        });
+      });
+    });
+
+    // Track Concierge start
+    document.addEventListener('concierge:start', () => {
+      trackEvent('concierge_start', { page: 'invest' });
+    });
+  </script>
+</body>
+</html>
