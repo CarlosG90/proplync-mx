@@ -8,6 +8,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/components.css">
 <link rel="stylesheet" href="/css/landing.css">
@@ -43,8 +44,8 @@
 <header class="lp-nav">
   <div class="lp-wrap lp-nav__inner">
     <a class="lp-nav__logo" href="/invest">PropLync</a>
-    <button class="lp-nav__toggle" aria-expanded="false" aria-label="Menu">☰</button>
-    <ul class="lp-nav__links">
+    <button class="lp-nav__toggle" aria-expanded="false" aria-controls="lp-nav-links" aria-label="Menu" data-en-label="Menu" data-es-label="Menú">☰</button>
+    <ul class="lp-nav__links" id="lp-nav-links">
       <li><a href="/invest" data-en="For Investors" data-es="Para inversionistas">For Investors</a></li>
       <li><a href="/agents" data-en="For Agents" data-es="Para asesores">For Agents</a></li>
       <li><a href="/resources" aria-current="page" data-en="Resources" data-es="Recursos">Resources</a></li>

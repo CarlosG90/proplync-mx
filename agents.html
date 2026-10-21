@@ -14,6 +14,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/components.css">
 <link rel="stylesheet" href="/css/landing.css">
@@ -29,8 +30,8 @@
 <header class="lp-nav">
   <div class="lp-wrap lp-nav__inner">
     <a class="lp-nav__logo" href="/invest">PropLync</a>
-    <button class="lp-nav__toggle" aria-expanded="false" aria-label="Menú">☰</button>
-    <ul class="lp-nav__links">
+    <button class="lp-nav__toggle" aria-expanded="false" aria-controls="lp-nav-links" aria-label="Menú" data-en-label="Menu" data-es-label="Menú">☰</button>
+    <ul class="lp-nav__links" id="lp-nav-links">
       <li><a href="/invest" data-en="For Investors" data-es="Para inversionistas">Para inversionistas</a></li>
       <li><a href="/agents" aria-current="page" data-en="For Agents" data-es="Para asesores">Para asesores</a></li>
       <li><a href="/resources" data-en="Resources" data-es="Recursos">Recursos</a></li>
@@ -62,11 +63,33 @@
            data-en="Join as an agent" data-es="Únete como asesor">Únete como asesor</a>
       </div>
 
-      <!-- §4.1 visual: [TBD] a real agent with a real listing, with
-           permission. No stock photography (§2). -->
+      <!-- §4.1 visual: what an agent receives, drawn in HTML. A real agent
+           photo replaces this once permission is given (§2: no stock). -->
       <figure class="lp-hero__media">
-        <figcaption data-en="Agent photo pending permission"
-                    data-es="Foto de asesor pendiente de permiso">Foto de asesor pendiente de permiso</figcaption>
+        <div class="lp-brief" aria-hidden="true">
+          <div class="lp-brief__head">
+            <span data-en="Buyer brief" data-es="Brief del comprador">Brief del comprador</span>
+            <span data-en="Approved by buyer" data-es="Aprobado por el comprador">Aprobado por el comprador</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Budget" data-es="Presupuesto">Presupuesto</span>
+            <span data-en="Shared after approval" data-es="Compartido tras aprobación">Compartido tras aprobación</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Timeline" data-es="Plazo">Plazo</span>
+            <span data-en="Shared after approval" data-es="Compartido tras aprobación">Compartido tras aprobación</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Criteria" data-es="Criterios">Criterios</span>
+            <span data-en="Shared after approval" data-es="Compartido tras aprobación">Compartido tras aprobación</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Verification request" data-es="Solicitud de verificación">Solicitud de verificación</span>
+            <span data-en="Only if buyer asks" data-es="Solo si el comprador lo pide">Solo si el comprador lo pide</span>
+          </div>
+        </div>
+        <figcaption data-en="Illustration: the brief an agent receives. Not a real buyer."
+                    data-es="Ilustración: el brief que recibe un asesor. No es un comprador real.">Ilustración: el brief que recibe un asesor. No es un comprador real.</figcaption>
       </figure>
     </div>
   </section>
@@ -106,17 +129,17 @@
       <h2 data-en="Buyers who arrive with a brief."
           data-es="Compradores que llegan con un brief.">Compradores que llegan con un brief.</h2>
       <div class="lp-grid">
-        <article class="lp-card" style="background:transparent;border-color:rgba(248,245,240,.2)">
+        <article class="lp-card lp-card--on-dark">
           <h3 data-en="Qualified buyer briefs" data-es="Briefs de comprador calificados">Briefs de comprador calificados</h3>
           <p data-en="Budget, timeline, criteria and purpose, approved by the buyer before you see them."
              data-es="Presupuesto, plazo, criterios y propósito, aprobados por el comprador antes de que tú los veas.">Presupuesto, plazo, criterios y propósito, aprobados por el comprador antes de que tú los veas.</p>
         </article>
-        <article class="lp-card" style="background:transparent;border-color:rgba(248,245,240,.2)">
+        <article class="lp-card lp-card--on-dark">
           <h3 data-en="Verification requests" data-es="Solicitudes de verificación">Solicitudes de verificación</h3>
           <p data-en="Buyers ask you to confirm specific listings, so you know which property they mean."
              data-es="Los compradores te piden confirmar propiedades específicas, así sabes exactamente de cuál hablan.">Los compradores te piden confirmar propiedades específicas, así sabes exactamente de cuál hablan.</p>
         </article>
-        <article class="lp-card" style="background:transparent;border-color:rgba(248,245,240,.2)">
+        <article class="lp-card lp-card--on-dark">
           <h3 data-en="Listings in one place" data-es="Tus propiedades en un solo lugar">Tus propiedades en un solo lugar</h3>
           <p data-en="Works with EasyBroker listings today."
              data-es="Hoy funciona con propiedades de EasyBroker.">Hoy funciona con propiedades de EasyBroker.</p>

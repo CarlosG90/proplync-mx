@@ -37,6 +37,12 @@
       if (next !== null) nodes[i].textContent = next;
     }
     root.setAttribute('lang', lang);
+
+    // aria-label is an attribute, so textContent does not reach it.
+    var toggle = document.querySelector('.lp-nav__toggle');
+    if (toggle && toggle.getAttribute('data-' + lang + '-label')) {
+      toggle.setAttribute('aria-label', toggle.getAttribute('data-' + lang + '-label'));
+    }
     var buttons = document.querySelectorAll('.lp-lang button');
     for (var j = 0; j < buttons.length; j++) {
       buttons[j].setAttribute('aria-pressed', String(buttons[j].dataset.lang === lang));

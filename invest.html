@@ -16,6 +16,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/components.css">
 <link rel="stylesheet" href="/css/landing.css">
@@ -31,8 +32,8 @@
 <header class="lp-nav">
   <div class="lp-wrap lp-nav__inner">
     <a class="lp-nav__logo" href="/invest">PropLync</a>
-    <button class="lp-nav__toggle" aria-expanded="false" aria-label="Menu">☰</button>
-    <ul class="lp-nav__links">
+    <button class="lp-nav__toggle" aria-expanded="false" aria-controls="lp-nav-links" aria-label="Menu" data-en-label="Menu" data-es-label="Menú">☰</button>
+    <ul class="lp-nav__links" id="lp-nav-links">
       <li><a href="/invest" aria-current="page" data-en="For Investors" data-es="Para inversionistas">For Investors</a></li>
       <li><a href="/agents" data-en="For Agents" data-es="Para asesores">For Agents</a></li>
       <li><a href="/resources" data-en="Resources" data-es="Recursos">Resources</a></li>
@@ -70,12 +71,38 @@
                data-es="La conversación con el Concierge es gratuita.">The Concierge conversation is free.</small>
       </div>
 
-      <!-- §3.1 visual: [TBD] one real Riviera Maya property, sourced
-           from a partner agent with permission. No stock photo (§2).
-           Replace this figure with the <img> when the image lands. -->
+      <!-- §3.1 visual: the brief's fields, drawn in HTML. A real property
+           photo replaces this once a partner agent gives permission
+           (§2: no stock photos). -->
       <figure class="lp-hero__media">
-        <figcaption data-en="Property photo pending agent permission"
-                    data-es="Foto de propiedad pendiente de permiso del asesor">Property photo pending agent permission</figcaption>
+        <div class="lp-brief" aria-hidden="true">
+          <div class="lp-brief__head">
+            <span data-en="Buyer brief" data-es="Brief del comprador">Buyer brief</span>
+            <span data-en="Approved" data-es="Aprobado">Approved</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Budget" data-es="Presupuesto">Budget</span>
+            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Timeline" data-es="Plazo">Timeline</span>
+            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Purpose" data-es="Propósito">Purpose</span>
+            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Must-haves" data-es="Indispensables">Must-haves</span>
+            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Deal-breakers" data-es="Descartes">Deal-breakers</span>
+            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
+          </div>
+        </div>
+        <figcaption data-en="Illustration: the fields in a buyer brief. Not a real buyer."
+                    data-es="Ilustración: los campos de un brief de comprador. No es un comprador real.">Illustration: the fields in a buyer brief. Not a real buyer.</figcaption>
       </figure>
     </div>
   </section>
@@ -115,19 +142,19 @@
       <h2 data-en="Three steps to verified options."
           data-es="Tres pasos hacia opciones verificadas.">Three steps to verified options.</h2>
       <div class="lp-grid">
-        <article class="lp-card" style="background:transparent;border-color:rgba(248,245,240,.2)">
+        <article class="lp-card lp-card--on-dark">
           <span class="lp-card__num">01</span>
           <h3 data-en="Concierge — free" data-es="Concierge — gratis">Concierge — free</h3>
           <p data-en="Tell us your criteria: budget, target return, property type, location, timeline."
              data-es="Cuéntanos tus criterios: presupuesto, retorno objetivo, tipo de propiedad, ubicación y plazo.">Tell us your criteria: budget, target return, property type, location, timeline.</p>
         </article>
-        <article class="lp-card" style="background:transparent;border-color:rgba(248,245,240,.2)">
+        <article class="lp-card lp-card--on-dark">
           <span class="lp-card__num">02</span>
           <h3 data-en="Scout — token-priced" data-es="Scout — con tokens">Scout — token-priced</h3>
           <p data-en="Scout searches public listings and agency sites, merges duplicates, and ranks matches against your brief. Each result is labelled unverified until confirmed."
              data-es="Scout busca en anuncios públicos y sitios de agencias, une duplicados y ordena los resultados según tu brief. Cada resultado aparece como no verificado hasta confirmarse.">Scout searches public listings and agency sites, merges duplicates, and ranks matches against your brief. Each result is labelled unverified until confirmed.</p>
         </article>
-        <article class="lp-card" style="background:transparent;border-color:rgba(248,245,240,.2)">
+        <article class="lp-card lp-card--on-dark">
           <span class="lp-card__num">03</span>
           <h3 data-en="Verify — token-priced" data-es="Verificar — con tokens">Verify — token-priced</h3>
           <p data-en="We ask the listing agent to confirm price, availability and condition. You get the result before you talk to them."
