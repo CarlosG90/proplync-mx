@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { mergeCandidates, normalizeUrl, parseMoney, toMxn } from '../api/_lib/scout-merge.js';
+import { mergeCandidates, dropKnown, normalizeUrl, parseMoney, toMxn } from '../api/_lib/scout-merge.js';
 import { validateSubmission, seenUrls } from '../api/_lib/scout.js';
 
 const FX = 18;
@@ -116,4 +116,39 @@ test('validateSubmission drops links the model never saw and unknown inventory i
   assert.equal(candidates[1].bedrooms, null, 'out-of-range numbers become unknown');
   assert.equal(candidates[1].sources[0].price, null);
   assert.equal(candidates[1].sources[0].currency, null);
+});
+
+// ---------- a rerun must not show the same listing twice ----------
+const stored = (over = {}) => ({
+  listing_public_id: null, town: 'Tulum', neighborhood: 'Aldea Zama', operation: 'sale', bedrooms: 2, built_m2: 105,
+  sources: [{ url: 'https://www.sienteei.com/property/a?utm_source=x', price: 5400000, currency: 'MXN' }], ...over
+});
+const found = (over = {}) => ({
+  origin: 'web', listing_public_id: null, title: 'Depto', town: 'Tulum', neighborhood: 'Aldea Zama', operation: 'sale',
+  bedrooms: 2, built_m2: 105, sources: [{ url: 'https://www.sienteei.com/property/a', price: 5400000, currency: 'MXN' }], ...over
+});
+
+test('dropKnown: the same listing URL (tracking params ignored) is not added again', () => {
+  const { fresh, repeats } = dropKnown({ cards: [found()], known: [stored()], fx: 18 });
+  assert.equal(fresh.length, 0);
+  assert.equal(repeats.length, 1);
+});
+
+test('dropKnown: the same unit on another portal, judged on its facts, is not added again', () => {
+  const card = found({ sources: [{ url: 'https://propiedades.com/inmuebles/zzz', price: 5400000, currency: 'MXN' }] });
+  assert.equal(dropKnown({ cards: [card], known: [stored()], fx: 18 }).repeats.length, 1);
+});
+
+test('dropKnown: our own listing id counts, and a genuinely different property is kept', () => {
+  const own = found({ origin: 'proplync', listing_public_id: 'PL-1', sources: [{ url: 'https://proplync-mx.vercel.app/propiedad/PL-1' }] });
+  assert.equal(dropKnown({ cards: [own], known: [stored({ listing_public_id: 'PL-1', sources: [] })], fx: 18 }).repeats.length, 1);
+  const other = found({ bedrooms: 3, built_m2: 180, sources: [{ url: 'https://www.hausrealestate.com.mx/property/b', price: 9000000, currency: 'MXN' }] });
+  const out = dropKnown({ cards: [other], known: [stored()], fx: 18 });
+  assert.equal(out.fresh.length, 1);
+  assert.equal(out.repeats.length, 0);
+});
+
+test('dropKnown: with nothing stored yet, every card is new', () => {
+  assert.equal(dropKnown({ cards: [found(), found({ town: 'Cancún' })], known: [], fx: 18 }).fresh.length, 2);
+  assert.equal(dropKnown({ cards: [found()], known: null, fx: 18 }).fresh.length, 1);
 });
