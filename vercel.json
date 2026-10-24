@@ -36,6 +36,9 @@
       "maxDuration": 300
     }
   },
+  "redirects": [
+    { "source": "/finder", "destination": "/invest", "permanent": true }
+  ],
   "rewrites": [
     {
       "source": "/invest",

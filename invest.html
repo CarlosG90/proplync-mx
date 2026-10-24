@@ -4,14 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<title>PropLync — Cut your deal research time in half</title>
-<meta name="description" content="AI finds verified Riviera Maya properties. Agents confirm them with you, before you spend your time on them.">
+<title>PropLync — AI finds the properties, a person confirms them with the agent</title>
+<meta name="description" content="AI searches Riviera Maya listings. For each property you pick, a person confirms it with the listing agent before you spend your time on it.">
 
-<!-- OG image and canonical use the Vercel URL until proplync.mx is
-     registered. Both lines change together when it is. -->
+<!-- OG image and canonical use the Vercel URL until proplync.mx is registered. Both change together then. -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="PropLync — Cut your deal research time in half">
-<meta property="og:description" content="AI finds verified Riviera Maya properties. Agents confirm them with you.">
+<meta property="og:title" content="PropLync — AI finds the properties, a person confirms them with the agent">
+<meta property="og:description" content="AI searches Riviera Maya listings. For each property you pick, a person confirms it with the listing agent before you spend your time on it.">
 <meta property="og:url" content="https://proplync-mx.vercel.app/invest">
 <link rel="canonical" href="https://proplync-mx.vercel.app/invest">
 
@@ -22,14 +21,15 @@
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/components.css">
 <link rel="stylesheet" href="/css/landing.css">
+<link rel="stylesheet" href="/css/invest.css">
 </head>
 
-<!-- data-default-lang: §9.3 is still open. EN is set here because the
-     plan notes investors are mostly English-speaking; /agents ships ES.
-     Flip this one attribute if the decision lands the other way. -->
-<body class="lp" data-page="invest" data-default-lang="en">
+<!-- /invest is the one buyer page. It replaces /finder (now a redirect) and the old /invest, which
+     said the same thing twice: the same promise, the same flow in 3 steps and then in 4, two pricing
+     blocks. EN is the default because the plan notes investors are mostly English-speaking (§9.3). -->
+<body data-page="invest">
 
-<a class="lp-skip" href="#main" data-en="Skip to content" data-es="Saltar al contenido">Skip to content</a>
+<a class="lp-skip" href="#main" data-es="Saltar al contenido" data-en="Skip to content">Skip to content</a>
 
 <header>
   <nav class="wrap" aria-label="Main navigation">
@@ -58,194 +58,155 @@
 
 <main id="main">
 
-  <!-- ── §3.1 Hero ────────────────────────────────────────── -->
-  <section class="lp-hero">
-    <div class="lp-wrap lp-hero__grid">
+  <section class="fx-hero">
+    <div class="wrap fx-hero-grid">
       <div>
-        <p class="lp-eyebrow" data-en="Riviera Maya" data-es="Riviera Maya">Riviera Maya</p>
-        <h1 data-en="Cut your deal research <em>time in half.</em>"
-            data-es="Reduce <em>a la mitad</em> el tiempo que inviertes en investigar.">Cut your deal research <em>time in half.</em></h1>
-        <p class="lp-lede"
-           data-en="AI finds verified properties. Agents confirm them with you."
-           data-es="La IA encuentra propiedades verificadas. Los asesores las confirman contigo.">AI finds verified properties. Agents confirm them with you.</p>
-        <a class="btn btn-dark" href="/finder"
-           data-track="cta_click" data-track-label="hero_start_search"
-           data-en="Start your search" data-es="Comienza tu búsqueda">Start your search</a>
-        <!-- §3.1 micro-copy: the plan's draft said "no sign-up", but
-             AGENT-COMMUNICATION-PLAN D5 collects an email before the
-             first Concierge turn. Only the free part is stated here. -->
-        <small class="lp-btn__note"
-               data-en="The Concierge conversation is free."
-               data-es="La conversación con el Concierge es gratuita.">The Concierge conversation is free.</small>
+        <div class="fx-eyebrow" data-es="Buscamos. Verificamos. Presentamos." data-en="We search. We verify. We introduce.">We search. We verify. We introduce.</div>
+        <!-- WHY not "every home we show you is confirmed": Scout shows results labelled unverified right
+             away, and a person confirms a property when the buyer asks for it. The headline says that. -->
+        <h1 class="fx-h1" data-es="La IA encuentra las propiedades. Una persona las <em>confirma</em> con el asesor." data-en="AI finds the properties. A person <em>confirms</em> them with the agent.">AI finds the properties. A person <em>confirms</em> them with the agent.</h1>
+        <p class="fx-lede" data-es="Buscamos en inmobiliarias de PropLync, portales y sitios de agencias de la Riviera Maya, y juntamos los duplicados en una sola ficha. De las que eliges, una persona le hace cinco preguntas al asesor que la tiene: sigue disponible, el precio es ese, se puede visitar. <strong>Ves qué está confirmado y qué todavía no.</strong>" data-en="We search PropLync agencies, portals and agency sites in the Riviera Maya and merge duplicates into one card. For the ones you pick, a person asks the listing agent five questions: still available, that is the price, you can visit. <strong>You see what is confirmed and what is not yet.</strong>">We search PropLync agencies, portals and agency sites in the Riviera Maya and merge duplicates into one card. For the ones you pick, a person asks the listing agent five questions: still available, that is the price, you can visit. <strong>You see what is confirmed and what is not yet.</strong></p>
+        <div class="fx-cta-row">
+          <a href="/voice" class="btn btn-gold"
+             data-track="cta_click" data-track-label="hero_start_search"
+             data-es="Empieza tu búsqueda &rarr;" data-en="Start your search &rarr;">Start your search &rarr;</a>
+          <a href="#how" class="btn btn-ghost" data-es="Cómo funciona" data-en="How it works">How it works</a>
+        </div>
+        <p class="fx-hint" data-es="Concierge es gratis. Habla o escribe, en español o en inglés." data-en="Concierge is free. Talk or type, in English or Spanish.">Concierge is free. Talk or type, in English or Spanish.</p>
       </div>
 
-      <!-- §3.1 visual: the brief's fields, drawn in HTML. A real property
-           photo replaces this once a partner agent gives permission
-           (§2: no stock photos). -->
-      <figure class="lp-hero__media">
-        <div class="lp-brief" aria-hidden="true">
-          <div class="lp-brief__head">
-            <span data-en="Buyer brief" data-es="Brief del comprador">Buyer brief</span>
-            <span data-en="Approved" data-es="Aprobado">Approved</span>
+      <div class="fx-stage">
+        <div id="hero3d">
+          <!-- Poster sits underneath; the canvas covers it once WebGL is up. -->
+          <div class="fx-poster" aria-hidden="true">
+            <svg viewBox="0 0 200 200" fill="none">
+              <circle cx="100" cy="100" r="62" stroke="#c9a96e" stroke-width="1.2" opacity=".55"/>
+              <circle cx="100" cy="100" r="40" stroke="#5ec4be" stroke-width="1.2" opacity=".4"/>
+              <path d="M100 38l54 31v62l-54 31-54-31V69z" stroke="#c9a96e" stroke-width="1.4" opacity=".75"/>
+              <path d="M100 38v124M46 69l108 62M154 69L46 131" stroke="#c9a96e" stroke-width=".8" opacity=".3"/>
+            </svg>
           </div>
-          <div class="lp-brief__row">
-            <span data-en="Budget" data-es="Presupuesto">Budget</span>
-            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
-          </div>
-          <div class="lp-brief__row">
-            <span data-en="Timeline" data-es="Plazo">Timeline</span>
-            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
-          </div>
-          <div class="lp-brief__row">
-            <span data-en="Purpose" data-es="Propósito">Purpose</span>
-            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
-          </div>
-          <div class="lp-brief__row">
-            <span data-en="Must-haves" data-es="Indispensables">Must-haves</span>
-            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
-          </div>
-          <div class="lp-brief__row">
-            <span data-en="Deal-breakers" data-es="Descartes">Deal-breakers</span>
-            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
+          <canvas aria-label="Interactive 3D model of a property that comes apart into the facts we verify"></canvas>
+          <div class="fx-status" id="hero3d-status">Closed</div>
+          <div class="fx-controls">
+            <button class="fx-ctl fx-ctl-primary" id="hero-toggle" data-es="Desarmar" data-en="Take it apart">Take it apart</button>
+            <button class="fx-ctl" id="hero-zoom" data-es="Acercar" data-en="Zoom">Zoom</button>
+            <button class="fx-ctl fx-ctl-icon" id="hero-reset" title="Reset" aria-label="Reset">&#8634;</button>
+            <button class="fx-ctl fx-ctl-icon" id="hero-pause" title="Pause" aria-label="Pause" aria-pressed="false">&#10073;&#10073;</button>
           </div>
         </div>
-        <figcaption data-en="Illustration: the fields in a buyer brief. Not a real buyer."
-                    data-es="Ilustración: los campos de un brief de comprador. No es un comprador real.">Illustration: the fields in a buyer brief. Not a real buyer.</figcaption>
-      </figure>
-    </div>
-  </section>
-
-  <!-- ── §3.2 Pain ────────────────────────────────────────── -->
-  <section>
-    <div class="lp-wrap">
-      <h2 data-en="Your time is worth more than scrolling listings."
-          data-es="Tu tiempo vale más que revisar anuncios.">Your time is worth more than scrolling listings.</h2>
-      <div class="lp-grid">
-        <article class="lp-card">
-          <span class="lp-card__num">01</span>
-          <h3 data-en="Listings that are out of date" data-es="Anuncios desactualizados">Listings that are out of date</h3>
-          <p data-en="Online listings often include properties that are already sold or no longer available. Checking each one takes time."
-             data-es="Los anuncios en línea suelen incluir propiedades ya vendidas o que ya no están disponibles. Revisar cada una toma tiempo.">Online listings often include properties that are already sold or no longer available. Checking each one takes time.</p>
-        </article>
-        <article class="lp-card">
-          <span class="lp-card__num">02</span>
-          <h3 data-en="Hard to verify remotely" data-es="Difíciles de verificar a distancia">Hard to verify remotely</h3>
-          <p data-en="Confirming price, condition and paperwork usually means several calls and emails."
-             data-es="Confirmar precio, estado y documentación normalmente implica varias llamadas y correos.">Confirming price, condition and paperwork usually means several calls and emails.</p>
-        </article>
-        <article class="lp-card">
-          <span class="lp-card__num">03</span>
-          <h3 data-en="No efficient way to compare" data-es="Sin una forma eficiente de comparar">No efficient way to compare</h3>
-          <p data-en="Comparing properties against your criteria across portals and agencies is manual work."
-             data-es="Comparar propiedades contra tus criterios entre portales y agencias es trabajo manual.">Comparing properties against your criteria across portals and agencies is manual work.</p>
-        </article>
       </div>
     </div>
   </section>
 
-  <!-- ── §3.3 How it works ────────────────────────────────── -->
-  <section class="lp-band">
-    <div class="lp-wrap">
-      <p class="lp-eyebrow" data-en="How it works" data-es="Cómo funciona">How it works</p>
-      <h2 data-en="Three steps to verified options."
-          data-es="Tres pasos hacia opciones verificadas.">Three steps to verified options.</h2>
-      <div class="lp-grid">
-        <article class="lp-card lp-card--on-dark">
-          <span class="lp-card__num">01</span>
-          <h3 data-en="Concierge — free" data-es="Concierge — gratis">Concierge — free</h3>
-          <p data-en="Tell us your criteria: budget, target return, property type, location, timeline."
-             data-es="Cuéntanos tus criterios: presupuesto, retorno objetivo, tipo de propiedad, ubicación y plazo.">Tell us your criteria: budget, target return, property type, location, timeline.</p>
-        </article>
-        <article class="lp-card lp-card--on-dark">
-          <span class="lp-card__num">02</span>
-          <h3 data-en="Scout — token-priced" data-es="Scout — con tokens">Scout — token-priced</h3>
-          <p data-en="Scout searches public listings and agency sites, merges duplicates, and ranks matches against your brief. Each result is labelled unverified until confirmed."
-             data-es="Scout busca en anuncios públicos y sitios de agencias, une duplicados y ordena los resultados según tu brief. Cada resultado aparece como no verificado hasta confirmarse.">Scout searches public listings and agency sites, merges duplicates, and ranks matches against your brief. Each result is labelled unverified until confirmed.</p>
-        </article>
-        <article class="lp-card lp-card--on-dark">
-          <span class="lp-card__num">03</span>
-          <h3 data-en="Verify — token-priced" data-es="Verificar — con tokens">Verify — token-priced</h3>
-          <p data-en="We ask the listing agent to confirm price, availability and condition. You get the result before you talk to them."
-             data-es="Le pedimos al asesor que confirme precio, disponibilidad y estado. Recibes el resultado antes de hablar con él.">We ask the listing agent to confirm price, availability and condition. You get the result before you talk to them.</p>
-        </article>
+  <section class="fx-chapter">
+    <div class="wrap fx-split">
+      <div>
+        <div class="fx-num">01 / <span data-es="El problema" data-en="The problem">The problem</span></div>
+        <h2 class="fx-h2" data-es="El anuncio dice una cosa. El asesor dice otra." data-en="The listing says one thing. The agent says another.">The listing says one thing. The agent says another.</h2>
+        <p class="fx-body" data-es="Una propiedad aparece en varios portales, con varios asesores y varios precios. Muchas llevan meses vendidas. Buscar es gratis y fácil; averiguar qué es real cuesta llamadas, mensajes y viajes perdidos." data-en="One property shows up on several portals, with several agents and several prices. Plenty have been sold for months. Searching is free and easy; finding out what is real costs calls, messages and wasted trips.">One property shows up on several portals, with several agents and several prices. Plenty have been sold for months. Searching is free and easy; finding out what is real costs calls, messages and wasted trips.</p>
+      </div>
+      <div>
+        <div class="fx-num">02 / <span data-es="Lo que revisamos" data-en="What we check">What we check</span></div>
+        <h2 class="fx-h2" data-es="Cinco preguntas, a una persona." data-en="Five questions, to a human.">Five questions, to a human.</h2>
+        <ul class="fx-checks">
+          <li><span class="fx-tick">01</span><div><b data-es="Sigue disponible" data-en="Still available">Still available</b><span data-es="Confirmado por el asesor que la tiene, con fecha." data-en="Confirmed by the agent who holds it, with a date.">Confirmed by the agent who holds it, with a date.</span></div></li>
+          <li><span class="fx-tick">02</span><div><b data-es="El precio es ese" data-en="That is the price">That is the price</b><span data-es="Si cambió, te decimos cuánto y cuándo." data-en="If it changed, we tell you by how much and when.">If it changed, we tell you by how much and when.</span></div></li>
+          <li><span class="fx-tick">03</span><div><b data-es="Se puede visitar" data-en="You can visit">You can visit</b><span data-es="Antes de que tomes un avión o cruces la ciudad." data-en="Before you take a flight or cross the city.">Before you take a flight or cross the city.</span></div></li>
+          <li><span class="fx-tick">04</span><div><b data-es="Tus condiciones" data-en="Your conditions">Your conditions</b><span data-es="Lo que el anuncio no dice: renta vacacional, mascotas, planta baja." data-en="What the ad leaves out: vacation rentals, pets, ground floor.">What the ad leaves out: vacation rentals, pets, ground floor.</span></div></li>
+          <li><span class="fx-tick">05</span><div><b data-es="Quién la tiene" data-en="Who holds it">Who holds it</b><span data-es="El asesor real, no alguien que la volvió a publicar." data-en="The real listing agent, not someone who reposted it.">The real listing agent, not someone who reposted it.</span></div></li>
+        </ul>
       </div>
     </div>
   </section>
 
-  <!-- ── §3.4 Proof ───────────────────────────────────────────
-       HIDDEN ON PURPOSE. §3.4 allows nothing here until it is
-       confirmed: no agency count, no agent quotes without written
-       consent (§9.7), no metrics until they are real. Remove the
-       `hidden` attribute once at least one of those lands.
-       ───────────────────────────────────────────────────────── -->
-  <section hidden data-todo="§3.4 — needs confirmed agency count and written agent consent">
-    <div class="lp-wrap">
-      <h2 data-en="Built with agents who work in Riviera Maya."
-          data-es="Construido con asesores que trabajan en la Riviera Maya.">Built with agents who work in Riviera Maya.</h2>
+  <section class="fx-chapter" id="how">
+    <div class="wrap">
+      <div class="fx-num">03 / <span data-es="Cómo funciona" data-en="How it works">How it works</span></div>
+      <h2 class="fx-h2" data-es="Cuatro pasos. Tú solo haces el primero." data-en="Four steps. You only do the first one.">Four steps. You only do the first one.</h2>
+      <div class="fx-steps">
+        <div class="fx-step"><div class="fx-step-n">1</div><div>
+          <h3><span data-es="Nos cuentas qué buscas" data-en="You tell us what you want">You tell us what you want</span><span class="fx-tag" data-es="Concierge · gratis" data-en="Concierge · free">Concierge · free</span></h3>
+          <p data-es="Habla o escribe, en tu idioma, el tiempo que quieras; puedes parar y seguir después. Empieza por la vida que quieres ahí, no por un formulario. Termina en un resumen de una página que tú apruebas." data-en="Talk or type, in your language, as long as you like, and pick it up later. It starts with the life you want there, not with a form. It ends in a one-page brief you approve.">Talk or type, in your language, as long as you like, and pick it up later. It starts with the life you want there, not with a form. It ends in a one-page brief you approve.</p></div></div>
+        <div class="fx-step"><div class="fx-step-n">2</div><div>
+          <h3><span data-es="Buscamos en el mercado" data-en="We search the market">We search the market</span><span class="fx-tag" data-es="Scout · usa créditos" data-en="Scout · uses credits">Scout · uses credits</span></h3>
+          <p data-es="Inmobiliarias de PropLync, portales y sitios de agencias. La misma propiedad publicada en varios lados se junta en una sola ficha, con todos sus precios a la vista. Cada resultado aparece como no verificado hasta que se confirma." data-en="PropLync agencies, portals and agency sites. The same property listed in several places becomes one card, with every price shown side by side. Each result is labelled unverified until it is confirmed.">PropLync agencies, portals and agency sites. The same property listed in several places becomes one card, with every price shown side by side. Each result is labelled unverified until it is confirmed.</p></div></div>
+        <div class="fx-step"><div class="fx-step-n">3</div><div>
+          <h3><span data-es="Hablamos con el asesor" data-en="We talk to the agent">We talk to the agent</span><span class="fx-tag" data-es="Verificación · usa créditos" data-en="Verification · uses credits">Verification · uses credits</span></h3>
+          <p data-es="Para cada propiedad que pides, una persona confirma las cinco preguntas con quien la tiene. Lo que no pasa se oculta, y cada resultado muestra si está sin verificar, solicitado o confirmado." data-en="For each property you ask about, a person confirms the five questions with whoever holds it. What does not pass is hidden, and every result shows whether it is unverified, requested or confirmed.">For each property you ask about, a person confirms the five questions with whoever holds it. What does not pass is hidden, and every result shows whether it is unverified, requested or confirmed.</p></div></div>
+        <div class="fx-step"><div class="fx-step-n">4</div><div>
+          <h3><span data-es="Te presentamos" data-en="We introduce you">We introduce you</span><span class="fx-tag" data-es="Tú decides" data-en="Your call">Your call</span></h3>
+          <p data-es="Eliges cuáles te interesan y te presentamos directo con su asesor. Tu nombre no se comparte hasta ese momento, y solo con quien tú elijas." data-en="You pick the ones you like and we introduce you straight to the listing agent. Your name is not shared until that moment, and only with the agents you choose.">You pick the ones you like and we introduce you straight to the listing agent. Your name is not shared until that moment, and only with the agents you choose.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Proof stays hidden on purpose (LANDING-PAGES-PLAN §3.4, §9.7): no agency count, no agent quote
+       without written consent, no metrics until they are real. Remove `hidden` when one lands. -->
+  <section class="fx-chapter" hidden data-todo="§3.4 — needs confirmed agency count and written agent consent">
+    <div class="wrap">
+      <h2 class="fx-h2" data-es="Construido con asesores que trabajan en la Riviera Maya." data-en="Built with agents who work in Riviera Maya.">Built with agents who work in Riviera Maya.</h2>
       <p><!-- [TBD] e.g. "Working with X agencies in Cancún and Playa del Carmen." --></p>
-      <!-- [Agent quote — pending written approval] -->
     </div>
   </section>
 
-  <!-- ── §3.5 Pricing line ────────────────────────────────── -->
-  <section class="lp-tight">
-    <div class="lp-wrap">
-      <!-- No figures here. §9.1 (token price and bundles) is still
-           open; the branch commit that hard-coded prices is ahead of
-           that decision. Numbers go in only once §9.1 is closed. -->
-      <h2 data-en="Pricing" data-es="Precios">Pricing</h2>
-      <p class="lp-lede"
-         data-en="Concierge is free. Scout and verification are priced in tokens."
-         data-es="El Concierge es gratuito. Scout y la verificación se cobran con tokens.">Concierge is free. Scout and verification are priced in tokens.</p>
-    </div>
-  </section>
-
-  <!-- ── §3.6 FAQ ─────────────────────────────────────────── -->
-  <section>
-    <div class="lp-wrap">
-      <h2 data-en="Questions" data-es="Preguntas">Questions</h2>
-      <div class="lp-faq">
-
-        <details>
-          <summary data-en="Is this free?" data-es="¿Es gratis?">Is this free?</summary>
-          <p data-en="The Concierge conversation is free. Scout searches and verification requests use tokens."
-             data-es="La conversación con el Concierge es gratuita. Las búsquedas de Scout y las solicitudes de verificación usan tokens.">The Concierge conversation is free. Scout searches and verification requests use tokens.</p>
-        </details>
-
-        <details>
-          <summary data-en="How does verification work?" data-es="¿Cómo funciona la verificación?">How does verification work?</summary>
-          <p data-en="We contact the listing agent and ask them to confirm price, availability and condition. You receive the result before you talk to them."
-             data-es="Contactamos al asesor que publica la propiedad y le pedimos confirmar precio, disponibilidad y estado. Recibes el resultado antes de hablar con él.">We contact the listing agent and ask them to confirm price, availability and condition. You receive the result before you talk to them.</p>
-        </details>
-
-        <!-- Coverage answer held back: the plan's draft says Cancún,
-             Playa del Carmen and Tulum, but BUSINESS-MODEL R5
-             recommends launching Playa del Carmen alone. Publish once
-             that conflict is settled. -->
-        <details hidden data-todo="coverage conflicts with BUSINESS-MODEL R5 (Playa del Carmen first)">
-          <summary data-en="Which areas do you cover?" data-es="¿Qué zonas cubren?">Which areas do you cover?</summary>
-          <p><!-- [CONFIRM current coverage] --></p>
-        </details>
-
-        <details>
-          <summary data-en="How long does it take?" data-es="¿Cuánto tarda?">How long does it take?</summary>
-          <p data-en="The Concierge conversation takes a few minutes. Verification depends on the listing agent's response time."
-             data-es="La conversación con el Concierge toma unos minutos. La verificación depende del tiempo de respuesta del asesor.">The Concierge conversation takes a few minutes. Verification depends on the listing agent's response time.</p>
-        </details>
-
-        <details>
-          <summary data-en="Is my data safe?" data-es="¿Mis datos están seguros?">Is my data safe?</summary>
-          <p data-en="Your profile is private. It is shared only when you choose to request verification from a specific agent."
-             data-es="Tu perfil es privado. Solo se comparte cuando decides solicitar una verificación con un asesor específico.">Your profile is private. It is shared only when you choose to request verification from a specific agent.</p>
-        </details>
-
-        <details>
-          <summary data-en="What if I don't find a match?" data-es="¿Y si no encuentro nada que encaje?">What if I don't find a match?</summary>
-          <p data-en="You can refine your brief and run Scout again. Tokens apply to each run."
-             data-es="Puedes ajustar tu brief y volver a ejecutar Scout. Cada ejecución consume tokens.">You can refine your brief and run Scout again. Tokens apply to each run.</p>
-        </details>
-
+  <section class="fx-chapter" id="pricing">
+    <div class="wrap fx-split">
+      <div>
+        <div class="fx-num">04 / <span data-es="El precio" data-en="Pricing">Pricing</span></div>
+        <h2 class="fx-h2" data-es="Gratis para empezar. Créditos después." data-en="Free to start. Credits after that.">Free to start. Credits after that.</h2>
+        <!-- No figures: §9.1 (credit price and bundles) is still open. The old /finder said "one flat fee,
+             never a percentage"; that conflicts with credits and with the open agent-pricing decision (§9.2). -->
+        <p class="fx-body" data-es="Concierge es gratis, y tu primera búsqueda también. Después, las búsquedas y las solicitudes de verificación usan créditos. No se busca nada hasta que apruebas tu resumen." data-en="Concierge is free, and so is your first search. After that, searches and verification requests use credits. Nothing is searched until you approve your brief.">Concierge is free, and so is your first search. After that, searches and verification requests use credits. Nothing is searched until you approve your brief.</p>
       </div>
+      <div>
+        <div class="fx-honest">
+          <h3 data-es="Lo que no hacemos" data-en="What we do not do">What we do not do</h3>
+          <ul>
+            <li data-es="No damos asesoría legal, fiscal ni financiera. Sobre el fideicomiso y los costos de cierre te decimos lo que sabemos y te mandamos con un profesional." data-en="We give no legal, tax or financial advice. On the fideicomiso and closing costs we tell you what we know and send you to a professional.">We give no legal, tax or financial advice. On the fideicomiso and closing costs we tell you what we know and send you to a professional.</li>
+            <li data-es="No vendemos la propiedad ni representamos al vendedor. Te presentamos con su asesor y ahí termina nuestro trabajo." data-en="We do not sell the property or represent the seller. We introduce you to its agent, and that is where our work ends.">We do not sell the property or represent the seller. We introduce you to its agent, and that is where our work ends.</li>
+            <li data-es="No inventamos datos. Si un dato no aparece en la fuente, queda vacío y se lo preguntamos al asesor." data-en="We do not invent facts. If something is not in the source, it stays blank and we ask the agent.">We do not invent facts. If something is not in the source, it stays blank and we ask the agent.</li>
+            <li data-es="No compartimos tu nombre con nadie hasta que tú lo autorices, propiedad por propiedad." data-en="We do not share your name with anyone until you say so, property by property.">We do not share your name with anyone until you say so, property by property.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="fx-chapter" id="faq">
+    <div class="wrap">
+      <div class="fx-num">05 / <span data-es="Preguntas" data-en="Questions">Questions</span></div>
+      <div class="fx-faq">
+        <details>
+          <summary data-es="¿Es gratis?" data-en="Is this free?">Is this free?</summary>
+          <p data-es="La conversación con Concierge y tu primera búsqueda son gratis. Después, las búsquedas y las solicitudes de verificación usan créditos." data-en="The Concierge conversation and your first search are free. After that, searches and verification requests use credits.">The Concierge conversation and your first search are free. After that, searches and verification requests use credits.</p>
+        </details>
+        <!-- Coverage answer held back: the plan's draft says Cancún, Playa del Carmen and Tulum, but
+             BUSINESS-MODEL R5 recommends launching Playa del Carmen alone. Publish once that is settled. -->
+        <details hidden data-todo="coverage conflicts with BUSINESS-MODEL R5 (Playa del Carmen first)">
+          <summary data-es="¿Qué zonas cubren?" data-en="Which areas do you cover?">Which areas do you cover?</summary>
+          <p data-es="" data-en=""></p>
+        </details>
+        <details>
+          <summary data-es="¿Cuánto tarda?" data-en="How long does it take?">How long does it take?</summary>
+          <p data-es="La conversación con Concierge dura lo que tú quieras, y puedes parar y seguir después. La verificación depende del tiempo de respuesta del asesor." data-en="The Concierge conversation takes as long as you like, and you can stop and pick it up later. Verification depends on the listing agent's response time.">The Concierge conversation takes as long as you like, and you can stop and pick it up later. Verification depends on the listing agent's response time.</p>
+        </details>
+        <details>
+          <summary data-es="¿Y si no encuentro nada que encaje?" data-en="What if I don't find a match?">What if I don't find a match?</summary>
+          <p data-es="Puedes ajustar tu resumen y volver a buscar. Las búsquedas usan créditos después de la primera." data-en="You can refine your brief and search again. Searches use credits after the first one.">You can refine your brief and search again. Searches use credits after the first one.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="fx-close" id="start">
+    <div class="wrap">
+      <h2 class="fx-h2" data-es="Empieza por contarnos la vida que quieres ahí." data-en="Start by telling us the life you want there.">Start by telling us the life you want there.</h2>
+      <p class="fx-body" data-es="Sin compromiso hasta que apruebes tu resumen." data-en="No commitment until you approve your brief.">No commitment until you approve your brief.</p>
+      <a href="/voice" class="btn btn-gold"
+         data-track="cta_click" data-track-label="close_talk_to_concierge"
+         data-es="Hablar con Concierge &rarr;" data-en="Talk to Concierge &rarr;">Talk to Concierge &rarr;</a>
+      <p class="fx-fineprint" data-es="PropLync Finder está en fase piloto. Plazas limitadas mientras lo probamos con compradores reales." data-en="PropLync Finder is in pilot. Places are limited while we test it with real buyers.">PropLync Finder is in pilot. Places are limited while we test it with real buyers.</p>
     </div>
   </section>
 
@@ -296,6 +257,7 @@
 </footer>
 
 <script src="/js/i18n.js"></script>
+<script src="/js/hero3d.js"></script>
 <script src="/js/landing.js" defer></script>
 </body>
 </html>

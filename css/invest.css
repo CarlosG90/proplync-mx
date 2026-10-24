@@ -1,0 +1,118 @@
+/* invest.css — the one buyer page (/invest). Replaces /finder (now a redirect) and the old light
+   /invest, which repeated each other. WHY ink-on-ink: a buyer landing is a showroom, and it sits
+   next to /voice, which is dark too. Header, footer and buttons come from nav.css / landing.css. */
+
+body{background:var(--ink);color:var(--on-ink)}
+[hidden]{display:none !important}
+
+/* ---------- hero ---------- */
+.fx-hero{position:relative;overflow:hidden;padding:var(--sp-24) 0 var(--sp-16)}
+/* Two soft lights behind the object. Without them it floats on flat black and the page reads cheap. */
+.fx-hero::before{
+  content:"";position:absolute;inset:-20% -10% auto -10%;height:120%;
+  background:
+    radial-gradient(42% 46% at 72% 38%, rgba(201,169,110,.20), transparent 70%),
+    radial-gradient(38% 42% at 24% 72%, rgba(94,196,190,.14), transparent 70%);
+  pointer-events:none;
+}
+.fx-hero-grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:var(--sp-10);align-items:center}
+.fx-eyebrow{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold);display:flex;align-items:center;gap:10px;margin-bottom:var(--sp-5);
+}
+.fx-eyebrow::before{content:"";width:28px;height:1px;background:var(--gold);flex:none}
+.fx-h1{
+  font-family:var(--display);font-weight:300;line-height:1.04;letter-spacing:-.03em;
+  font-size:clamp(2.3rem,5.4vw,4rem);margin:0 0 var(--sp-5);text-wrap:balance;
+}
+.fx-h1 em{font-style:italic;color:var(--gold);font-weight:300}
+.fx-lede{font-size:clamp(1rem,1.5vw,1.14rem);line-height:1.6;color:var(--on-ink-dim);max-width:50ch;margin:0 0 var(--sp-8)}
+.fx-lede strong{color:var(--on-ink);font-weight:500}
+.fx-cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.fx-hint{font-family:var(--mono);font-size:.7rem;color:var(--on-ink-dim);opacity:.85;margin:var(--sp-5) 0 0}
+
+/* ---------- the object ---------- */
+.fx-stage{position:relative;aspect-ratio:1/1;min-height:360px}
+#hero3d{position:absolute;inset:0;border-radius:var(--radius-2xl);overflow:hidden}
+#hero3d canvas{width:100%;height:100%;display:block;cursor:grab;touch-action:pan-y}
+#hero3d canvas:active{cursor:grabbing}
+/* The poster sits behind the canvas and is only seen when the canvas is hidden, so there is never an empty rectangle. */
+.fx-poster{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%, rgba(201,169,110,.16), transparent 68%)}
+.fx-poster svg{width:58%;max-width:300px;opacity:.9}
+#hero3d[data-ready="true"] .fx-poster{opacity:0;transition:opacity .6s var(--ease)}
+#hero3d[data-fallback] .fx-poster{opacity:1}
+.fx-controls{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:14px;
+  display:flex;align-items:center;gap:4px;padding:5px;
+  background:rgba(10,22,40,.72);backdrop-filter:blur(10px);
+  border:1px solid rgba(240,237,232,.12);border-radius:999px;
+}
+.fx-ctl{
+  background:none;border:0;cursor:pointer;color:var(--on-ink-dim);
+  font-family:var(--body);font-size:.76rem;font-weight:500;
+  padding:10px 14px;min-height:40px;border-radius:999px;white-space:nowrap;
+  transition:color var(--duration) ease,background var(--duration) ease;
+}
+.fx-ctl:hover{color:var(--on-ink);background:rgba(240,237,232,.08)}
+.fx-ctl-primary{background:var(--gold);color:var(--ink);font-weight:600}
+.fx-ctl-primary:hover{background:var(--gold-light);color:var(--ink)}
+.fx-ctl-icon{padding:10px 12px;font-size:.9rem;line-height:1}
+.fx-ctl:focus-visible,.fx-faq summary:focus-visible{outline:3px solid var(--aqua);outline-offset:3px}
+#hero3d[data-fallback] .fx-controls{display:none}
+.fx-status{position:absolute;left:0;right:0;top:14px;text-align:center;font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--on-ink-dim);opacity:.8}
+
+/* ---------- chapters ---------- */
+.fx-chapter{padding:var(--sp-20) 0;border-top:1px solid rgba(240,237,232,.10)}
+.fx-num{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;color:var(--gold);margin-bottom:var(--sp-4)}
+.fx-h2{font-family:var(--display);font-weight:300;font-size:clamp(1.9rem,4vw,2.9rem);line-height:1.1;letter-spacing:-.025em;margin:0 0 var(--sp-5);text-wrap:balance}
+.fx-body{color:var(--on-ink-dim);line-height:1.65;max-width:58ch;margin:0}
+.fx-split{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-10)}
+
+.fx-checks{list-style:none;margin:var(--sp-7) 0 0;padding:0;display:grid;gap:10px}
+.fx-checks li{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1px solid rgba(240,237,232,.10);border-radius:var(--radius-md);background:rgba(240,237,232,.03)}
+.fx-checks b{font-weight:600;color:var(--on-ink);display:block;font-size:.92rem}
+.fx-checks span{color:var(--on-ink-dim);font-size:.86rem;line-height:1.5}
+.fx-tick{color:var(--gold);font-family:var(--mono);font-size:.78rem;flex:none;margin-top:2px}
+
+.fx-steps{display:grid;gap:var(--sp-6);margin-top:var(--sp-7)}
+.fx-step{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+.fx-step-n{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;border:1px solid var(--gold);color:var(--gold);font-family:var(--mono);font-size:.74rem}
+.fx-step h3{font-family:var(--body);font-size:1rem;font-weight:600;margin:4px 0 4px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.fx-step p{color:var(--on-ink-dim);font-size:.92rem;line-height:1.6;margin:0;max-width:64ch}
+/* What each step costs, right where the buyer reads about it. */
+.fx-tag{display:inline-block;font-family:var(--mono);font-size:.62rem;font-weight:400;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(201,169,110,.14);color:var(--gold)}
+
+.fx-honest{border:1px solid rgba(240,237,232,.12);border-radius:var(--radius-lg);padding:var(--sp-8);background:rgba(240,237,232,.025)}
+.fx-honest h3{font-family:var(--display);font-weight:400;font-size:1.3rem;margin:0 0 var(--sp-4)}
+.fx-honest ul{margin:0;padding-left:1.1rem;color:var(--on-ink-dim);line-height:1.7;font-size:.92rem}
+.fx-honest li{margin-bottom:10px}
+
+.fx-faq{margin-top:var(--sp-5);border-top:1px solid rgba(240,237,232,.12);max-width:760px}
+.fx-faq details{border-bottom:1px solid rgba(240,237,232,.12)}
+.fx-faq summary{cursor:pointer;padding:18px 0;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:16px}
+.fx-faq summary::-webkit-details-marker{display:none}
+.fx-faq summary::after{content:"+";color:var(--gold);font-family:var(--mono)}
+.fx-faq details[open] summary::after{content:"\2212"}
+.fx-faq p{padding:0 0 18px;margin:0;color:var(--on-ink-dim);line-height:1.65;max-width:62ch}
+
+/* ---------- close ---------- */
+.fx-close{text-align:center;padding:var(--sp-20) 0 var(--sp-24);border-top:1px solid rgba(240,237,232,.10)}
+.fx-close .fx-h2{margin-left:auto;margin-right:auto;max-width:18ch}
+.fx-close .fx-body{margin:0 auto var(--sp-8)}
+.fx-fineprint{font-family:var(--mono);font-size:.68rem;color:var(--on-ink-dim);opacity:.8;margin-top:var(--sp-6);line-height:1.7}
+
+@media (max-width:900px){
+  .fx-hero{padding:var(--sp-14) 0 var(--sp-10)}
+  .fx-hero-grid{grid-template-columns:1fr;gap:var(--sp-8)}
+  /* Object first on a phone: it is the reason to keep scrolling. */
+  .fx-stage{order:-1;min-height:300px}
+  .fx-split{grid-template-columns:1fr;gap:var(--sp-7)}
+  .fx-chapter{padding:var(--sp-14) 0}
+}
+@media (max-width:420px){
+  .fx-ctl{padding:9px 10px;font-size:.72rem}
+  .fx-controls{gap:2px}
+}
+@media (prefers-reduced-motion:reduce){
+  #hero3d[data-ready="true"] .fx-poster{transition:none}
+}
