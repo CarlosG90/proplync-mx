@@ -434,6 +434,27 @@ test('Scout may not repeat itself, and its allowances are the ones we planned', 
   assert.equal(fetch.max_uses, 14);
   const system = sent.system.map((b) => b.text).join('\n');
   assert.match(system, /Never run the same query twice/);
-  assert.match(system, /mercadolibre\.com\.mx pages cannot be opened/);
+  assert.match(system, /Never open an address twice/);
+  assert.match(system, /cut after about 3,000 tokens/);
+  for (const site of ['mercadolibre.com.mx', 'lamudi.com.mx', 'vivanuncios.com.mx', 'inmuebles24.com']) {
+    assert.ok(fetch.blocked_domains.includes(site), site + ' is refused by fetch, so do not spend an open on it');
+    assert.ok(!search.blocked_domains.includes(site), site + ' must stay searchable: its snippets are valid sources');
+  }
+  });
+});
+
+test('a rerun does not store a listing the brief already holds', async () => {
+  await withEnv(KEY, async () => {
+    const { db, from } = world({ messages: [{ role: 'user', content: 'brief' }], steps: 1 });
+    // an earlier run of this brief already stored this very listing
+    db.scout_candidates.push({ id: 'old1', run_id: 'r0', brief_id: 'b1', listing_public_id: null, town: 'Playa del Carmen', neighborhood: 'Gonzalo Guerrero',
+      operation: 'sale', bedrooms: 3, built_m2: 180, verification: 'rejected', sources: [{ url: PORTAL_URL, price: 285000, currency: 'USD' }] });
+    const out = await runScoutStep({ from }, 'r1', { client: fakeClient([research(), submission([PORTAL_URL])]) });
+    assert.equal(out.state, 'continue');
+    const second = await runScoutStep({ from }, 'r1', { client: fakeClient([submission([PORTAL_URL])]) });
+    assert.equal(second.state, 'done');
+    assert.equal(second.candidates, 0, 'nothing new to add');
+    assert.equal(db.scout_candidates.length, 1, 'the rejected one is not brought back as a new card');
+    assert.match(db.scout_runs[0].search_notes, /already found in an earlier search/);
   });
 });

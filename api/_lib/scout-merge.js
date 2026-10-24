@@ -106,6 +106,37 @@ export function sameProperty(a, b, fx) {
   return close(lowestMxn(a, fx), lowestMxn(b, fx), PRICE_TOLERANCE);
 }
 
+/**
+ * Leave out the cards a brief already holds from an earlier search. A rerun searches the same market and finds
+ * the same listings, and the buyer should not see each one twice. A card counts as known when it shares our
+ * listing id or a listing URL with a stored candidate, or when its facts say it is the same unit (the same
+ * test mergeCandidates uses inside one run). Rejected candidates are in `known` on purpose: a person ruled
+ * those out, and a rerun must not bring them back.
+ *
+ * @param {object} p
+ * @param {object[]} p.cards  cards from mergeCandidates
+ * @param {object[]} p.known  stored scout_candidates rows of this brief (any verification state)
+ * @param {number}   p.fx     MXN per USD, for the price comparison
+ * @returns {{fresh: object[], repeats: object[]}}
+ */
+export function dropKnown({ cards, known, fx }) {
+  const urls = new Set();
+  const ids = new Set();
+  for (const k of known || []) {
+    if (k.listing_public_id) ids.add(k.listing_public_id);
+    for (const s of Array.isArray(k.sources) ? k.sources : []) { const key = normalizeUrl(s && s.url); if (key) urls.add(key); }
+  }
+  const fresh = [];
+  const repeats = [];
+  for (const card of cards || []) {
+    const seen = (card.listing_public_id && ids.has(card.listing_public_id)) ||
+      card.sources.some((s) => urls.has(normalizeUrl(s.url))) ||
+      (known || []).some((k) => sameProperty(card, { ...k, sources: Array.isArray(k.sources) ? k.sources : [] }, fx));
+    (seen ? repeats : fresh).push(card);
+  }
+  return { fresh, repeats };
+}
+
 function inventoryCard(listing, lang, siteOrigin) {
   const title = lang === 'en'
     ? (listing.title_en || listing.title_es)

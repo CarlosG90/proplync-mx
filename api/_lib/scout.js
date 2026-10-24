@@ -32,7 +32,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { mergeCandidates, normalizeUrl, toMxn, parseMoney } from './scout-merge.js';
+import { mergeCandidates, dropKnown, normalizeUrl, toMxn, parseMoney } from './scout-merge.js';
 import { logDegraded, safeDetail } from './health.js';
 import { monthlyBudgetUsd, runMaxUsd, runHardMaxUsd, spentThisMonth, overRunLimit } from './scout-budget.js';
 
@@ -52,6 +52,13 @@ const PRICE = { input: 4, output: 20, cacheRead: 0.2, cacheWrite: 5, perSearch: 
 const BLOCKED = ['airbnb.com', 'airbnb.mx', 'booking.com', 'vrbo.com', 'expedia.com',
   'facebook.com', 'instagram.com', 'tiktok.com', 'pinterest.com', 'youtube.com'];
 
+/* Sites whose pages the fetch tool could not open in any run so far (3 real runs: MercadoLibre refused 6 of 6,
+   Lamudi 3 of 3, Vivanuncios 2 of 2, Inmuebles24 1 of 1; propiedades.com, sienteei, hausrealestate, mudafy and
+   bestcaribbeanproperty always opened). Blocking them for the fetch tool only saves the open it would waste; the
+   search tool still returns them, and their search snippet is still a valid source. If a site starts opening, take
+   it off this list and out of the prompt's HOW TO RESEARCH section. */
+const FETCH_REFUSED = ['mercadolibre.com.mx', 'lamudi.com.mx', 'vivanuncios.com.mx', 'inmuebles24.com'];
+
 const NUDGE = 'Research is finished. Call submit_candidates now with everything you found, or with an empty list if nothing fits.';
 
 /* Added to the system prompt once a run has spent its soft budget. It is stateless on purpose: it is derived
@@ -67,7 +74,8 @@ HOW TO RESEARCH
 - Then search the web the way a local buyer would, in Spanish: the portals (inmuebles24.com, lamudi.com.mx, vivanuncios.com.mx, inmuebles.mercadolibre.com.mx, propiedades.com) and local agency websites. Use the areas, property type, bedrooms and price words from the brief, for example "departamento en venta Aldea Zama Tulum 2 recamaras".
 - Open promising individual listing pages with web_fetch and read the facts there. A search snippet is only enough for a title and a price.
 - Vary your queries across areas, portals and agencies instead of repeating one. Never run the same query twice and never open the same page twice: every call counts against a small allowance, and a repeat finds nothing new. A first run wasted 3 of 8 searches on one repeated query and 3 of 10 page opens on one page.
-- mercadolibre.com.mx pages cannot be opened (the fetch is refused). Use their search snippet for a title and price and do not try to fetch them. Spend your page opens on propiedades.com, inmuebles24.com, lamudi.com.mx and agency sites.
+- These sites refuse to be opened: mercadolibre.com.mx, lamudi.com.mx, vivanuncios.com.mx and inmuebles24.com. Use their search snippet for a title and a price, and never try to open them. Spend your page opens on propiedades.com, agency sites and developer sites.
+- A page you open is cut after about 3,000 tokens, so opening the same address again returns exactly the same part. Never open an address twice. If a fact is missing from the part you got, report it as unknown and put the question in questions_for_agent. A results page on a portal is a list: take the listing addresses from it and open those, once each.
 - Aim for about 5 to 10 good candidates, and stop when you have them or your searches run out.
 
 RULES
@@ -133,7 +141,7 @@ const TOOLS = [
     user_location: { type: 'approximate', country: 'MX', timezone: 'America/Cancun' },
     blocked_domains: BLOCKED
   },
-  { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 14, max_content_tokens: 3000, blocked_domains: BLOCKED },
+  { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 14, max_content_tokens: 3000, blocked_domains: BLOCKED.concat(FETCH_REFUSED) },
   {
     name: 'submit_candidates',
     description: 'Report the properties found for this brief. Call exactly once, at the end of the research.',
@@ -629,9 +637,16 @@ export async function runScoutStep(svc, runId, opts = {}) {
     seen: seenUrls(fullTranscript),
     inventoryIds: new Set(inventory.map((l) => l.public_id))
   });
-  const { cards, dropped } = mergeCandidates({
+  const merged = mergeCandidates({
     candidates, inventory, brief: briefRow.brief, fx: fxRate(), lang: briefRow.lang, siteOrigin: siteOrigin()
   });
+  const { dropped } = merged;
+
+  // A rerun finds the listings an earlier run already stored; keep those out so the buyer sees each one once.
+  const { data: known, error: knownError } = await svc.from('scout_candidates')
+    .select('listing_public_id, town, neighborhood, operation, bedrooms, built_m2, sources').eq('brief_id', run.brief_id);
+  if (knownError) logDegraded('scout:known-candidates', knownError);
+  const { fresh: cards, repeats } = dropKnown({ cards: merged.cards, known: knownError ? [] : known, fx: fxRate() });
 
   if (cards.length) {
     const { error: insertError } = await svc.from('scout_candidates').insert(cards.map((c) => ({
@@ -650,7 +665,8 @@ export async function runScoutStep(svc, runId, opts = {}) {
 
   const summary = [notes,
     droppedUrls ? `${droppedUrls} source link(s) dropped: not seen in this run's results.` : null,
-    dropped.length ? `${dropped.length} candidate(s) dropped: ${dropped.map((d) => d.reason).join(', ')}.` : null]
+    dropped.length ? `${dropped.length} candidate(s) dropped: ${dropped.map((d) => d.reason).join(', ')}.` : null,
+    repeats.length ? `${repeats.length} candidate(s) already found in an earlier search, not added again.` : null]
     .filter(Boolean).join('\n');
   await finish(svc, run, { ...usage, messages: fullTranscript, steps: run.steps + 1, status: 'done', search_notes: summary, error: null }, 'review');
   return { state: 'done', candidates: cards.length, cost_usd: usage.cost_usd };
