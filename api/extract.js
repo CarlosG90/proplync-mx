@@ -32,6 +32,7 @@ import { safeDetail, logDegraded } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 
 const MODEL = 'claude-opus-5';
+export const EXTRACT_MODEL = MODEL;   // the readiness check verifies this ID still exists (it differs from Scout's)
 
 /* A PDF is inlined as base64, so it counts against the 32 MB request Anthropic
    accepts. Stay well under it — a ficha tecnica bigger than this is a scan

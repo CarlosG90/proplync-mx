@@ -42,6 +42,10 @@ js/api.js, favorites.js, hero3d.js (Three.js object; PropLyncOrb drives it from 
 js/concierge.js        buyer voice client shared by /invest (hero) and /brief: record, transcribe, ask Concierge, speak the reply
                        (browser voices, woman's voice picked by name, spoken phrase by phrase); hands the conversation to /brief
 js/invest.js           the /invest hero's captions, captured-needs chips and hand-off
+api/_lib/concierge-turn.js  one Concierge turn: both providers get the system prompt, replies are validated and repaired once, then fallback
+api/_lib/scout-watch.js     watchdog: the buyer's status poll restarts a lost Scout hand-off or refunds a stalled run
+api/_lib/health-check.js    readiness check behind /api/finder?action=health; run it with `node scripts/doctor.mjs`
+PARTNER-TEST-RUNBOOK.md     how to test the AI agents end to end with a second person
 api/
   generate.js          multi-action: listing copy, describe, nlsearch, enhance, day-to-dusk, Reel start/poll
   finder.js            Concierge (?action=turn | transcribe) + approve | status | scout-step (internal, secret-gated chain)

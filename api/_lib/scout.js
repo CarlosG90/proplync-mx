@@ -34,7 +34,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { mergeCandidates, normalizeUrl, toMxn, parseMoney } from './scout-merge.js';
 import { logDegraded, safeDetail } from './health.js';
-import { monthlyBudgetUsd, runMaxUsd, spentThisMonth, overRunLimit } from './scout-budget.js';
+import { monthlyBudgetUsd, runMaxUsd, runHardMaxUsd, spentThisMonth, overRunLimit } from './scout-budget.js';
 
 export const SCOUT_MODEL = 'claude-opus-5-5';
 
@@ -53,6 +53,10 @@ const BLOCKED = ['airbnb.com', 'airbnb.mx', 'booking.com', 'vrbo.com', 'expedia.
   'facebook.com', 'instagram.com', 'tiktok.com', 'pinterest.com', 'youtube.com'];
 
 const NUDGE = 'Research is finished. Call submit_candidates now with everything you found, or with an empty list if nothing fits.';
+
+/* Added to the system prompt once a run has spent its soft budget. It is stateless on purpose: it is derived
+   from the run's own cost at the start of each segment, so there is no flag to lose between segments. */
+const WRAPUP = 'BUDGET: this run has used most of its research budget. Do not start new searches. Use at most one or two more tool calls, and only if essential, then call submit_candidates with everything you found, describing partial matches honestly.';
 
 const SYSTEM = `You are Scout, the research agent behind PropLync Finder in Mexico. A buyer has approved the brief you are given, after an interview with Concierge. Your job is to find real properties currently advertised that fit it, and report them with their sources.
 
@@ -135,6 +139,24 @@ const TOOLS = [
 
 export function scoutConfigured() {
   return Boolean(process.env.ANTHROPIC_API_KEY);
+}
+
+/**
+ * Does the key work, and does the model still exist? Looking a model up is free (no tokens), so this can be
+ * run any time. It cannot see the account balance: a funded balance is only proven by a real run.
+ */
+export async function checkAnthropic(models = [SCOUT_MODEL]) {
+  if (!process.env.ANTHROPIC_API_KEY) return { configured: false, ok: false, model: models[0], detail: 'ANTHROPIC_API_KEY is not set' };
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 8000 });
+  const results = await Promise.all(models.map(async (model) => {
+    try { await client.models.retrieve(model); return { model, ok: true }; }
+    catch (err) { return { model, ok: false, detail: safeDetail(err, 'scout') }; }
+  }));
+  const failed = results.filter((r) => !r.ok);
+  return {
+    configured: true, ok: failed.length === 0, model: models[0], models: results,
+    detail: failed.length ? failed.map((f) => `${f.model}: ${f.detail}`).join('; ') : undefined
+  };
 }
 
 function fxRate() {
@@ -289,6 +311,53 @@ export function validateSubmission(input, { seen, inventoryIds }) {
   return { candidates: out, droppedUrls, notes: cap(input && input.search_notes, 2000) };
 }
 
+/* ── Deciding what a finished segment means ──
+   Pure functions, so the rules that spend or protect money can be tested without a model. */
+
+/**
+ * What to do with a segment that just came back.
+ * @param {object} a
+ * @param {string}  a.stopReason   the model's stop_reason
+ * @param {boolean} a.hasSubmit    the reply contained submit_candidates
+ * @param {number}  a.costUsd      the run's cost so far, including this segment
+ * @param {number}  a.hardMaxUsd   the hard cap
+ * @param {boolean} a.nudged       the run has already been asked once to submit
+ * @returns {{action: 'submit'|'continue'|'nudge'|'fail', reason?: string}}
+ */
+export function planAfterSegment({ stopReason, hasSubmit, costUsd, hardMaxUsd, nudged }) {
+  // Results in hand are taken whatever they cost: they are what the buyer paid for.
+  if (hasSubmit) return { action: 'submit' };
+  // Over the hard cap without results: stop, count it as failed so the buyer is refunded.
+  if (Number(costUsd) >= hardMaxUsd) return { action: 'fail', reason: 'cost_limit' };
+  // Research in progress. Past the soft cap the next segment carries the wrap-up instruction.
+  if (stopReason === 'pause_turn') return { action: 'continue' };
+  // Ended with prose instead of the tool: ask once, and a second time is a failure.
+  if (stopReason === 'end_turn') return nudged ? { action: 'fail', reason: 'no_submission' } : { action: 'nudge' };
+  // refusal, max_tokens or anything else that is neither research nor a result
+  return { action: 'fail', reason: stopReason === 'refusal' ? 'refusal' : 'stopped:' + stopReason };
+}
+
+/* A run takes minutes. Past these ages something has gone wrong. */
+export const KICK_AFTER_MS = 45 * 1000;        // an active run with nobody working on it
+export const STALL_AFTER_MS = 35 * 60 * 1000;  // five segments of 250 s, with room to spare
+const LEASE_GRACE_MS = 20 * 1000;
+
+/**
+ * Is an active run stuck? Each segment ends by calling the next one over HTTP; if that call is lost, or a
+ * function is killed mid-segment, nothing restarts the run. The buyer's status page polls every few
+ * seconds, so it asks this and acts on the answer. A spurious "kick" is harmless: the lease lets only one
+ * segment run at a time.
+ * @returns {'none'|'wait'|'kick'|'fail'}
+ */
+export function stuckAction(run, nowMs = Date.now()) {
+  if (!run || !['queued', 'running'].includes(run.status)) return 'none';
+  const age = nowMs - new Date(run.created_at).getTime();
+  if (age > STALL_AFTER_MS) return 'fail';
+  const lease = run.lease_until ? new Date(run.lease_until).getTime() : null;
+  if (lease && lease > nowMs - LEASE_GRACE_MS) return 'wait';   // a segment holds the lease, or only just lost it
+  return age > KICK_AFTER_MS ? 'kick' : 'wait';
+}
+
 /* ── Runs ── */
 
 /** Start a run for an approved brief, or return the one already in progress. */
@@ -373,13 +442,16 @@ export async function runScoutStep(svc, runId, opts = {}) {
   let messages = Array.isArray(run.messages) ? run.messages : [];
   if (!messages.length) messages = [firstMessage(briefRow, await loadInventory(svc, briefRow.brief))];
 
+  // Past the soft cap the model is told to wrap up. See scout-budget.js for why this is not a hard stop.
+  const wrapUp = overRunLimit(Number(run.cost_usd), runMaxUsd());
+
   let message;
   try {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const client = opts.client || new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const stream = client.beta.messages.stream({
       model: SCOUT_MODEL,
       max_tokens: MAX_TOKENS,
-      system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
+      system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }].concat(wrapUp ? [{ type: 'text', text: WRAPUP }] : []),
       tools: TOOLS,
       messages,
       output_config: { effort: 'high' },
@@ -405,69 +477,29 @@ export async function runScoutStep(svc, runId, opts = {}) {
   }
 
   const usage = addUsage(run, message.usage);
-
-  // Check per-run cost limit
-  if (overRunLimit(usage.cost_usd, runMaxUsd())) {
-    const content = message.content || [];
-    const fullTranscript = messages.concat([{ role: 'assistant', content }]);
-    const briefRow = await svc.from('buyer_briefs').select('*').eq('id', run.brief_id).single().then(r => r.data);
-    const inventory = await loadInventory(svc, briefRow.brief);
-    const submit = content.find((b) => b.type === 'tool_use' && b.name === 'submit_candidates');
-    let candidates = { candidates: [], droppedUrls: 0, notes: '' };
-    if (submit) {
-      candidates = validateSubmission(submit.input, {
-        seen: seenUrls(fullTranscript),
-        inventoryIds: new Set(inventory.map((l) => l.public_id))
-      });
-    }
-    const { cards } = mergeCandidates({
-      candidates: candidates.candidates, inventory, brief: briefRow.brief, fx: fxRate(), lang: briefRow.lang, siteOrigin: siteOrigin()
-    });
-    if (cards.length) {
-      const { error: insertError } = await svc.from('scout_candidates').insert(cards.map((c) => ({
-        run_id: run.id,
-        brief_id: run.brief_id,
-        origin: c.origin,
-        listing_public_id: c.listing_public_id,
-        title: c.title, operation: c.operation, property_type: c.property_type,
-        town: c.town, neighborhood: c.neighborhood,
-        bedrooms: c.bedrooms, bathrooms: c.bathrooms, built_m2: c.built_m2, land_m2: c.land_m2,
-        sources: c.sources, photos: c.photos, match: c.match,
-        fit_score: c.fit_score, lowest_price_mxn: c.lowest_price_mxn
-      })));
-      if (insertError) logDegraded('scout:cost-limit-insert', insertError);
-    }
-    const summary = (candidates.notes || '') + (candidates.notes && cards.length ? '\n' : '') + `Cost limit reached ($${usage.cost_usd.toFixed(2)}). Reporting ${cards.length} candidate(s) found.`;
-    await finish(svc, run, { ...usage, messages: fullTranscript, steps: run.steps + 1, status: 'done', search_notes: summary, error: null }, 'review');
-    return { state: 'done', candidates: cards.length, cost_usd: usage.cost_usd };
-  }
-
-  const content = message.content;
+  const content = message.content || [];
   const submit = content.find((b) => b.type === 'tool_use' && b.name === 'submit_candidates');
+  const nudged = messages.some((m) => m.role === 'user' && m.content === NUDGE);
 
-  if (message.stop_reason === 'pause_turn' || (message.stop_reason === 'end_turn' && !submit)) {
+  const plan = planAfterSegment({
+    stopReason: message.stop_reason, hasSubmit: Boolean(submit), costUsd: usage.cost_usd, hardMaxUsd: runHardMaxUsd(), nudged
+  });
+
+  if (plan.action === 'continue' || plan.action === 'nudge') {
     messages = messages.concat([{ role: 'assistant', content }]);
-    if (message.stop_reason === 'end_turn') {
-      // Ended with prose instead of the tool. Ask once; a second time is a failure.
-      if (messages.some((m) => m.role === 'user' && m.content === NUDGE)) {
-        await finish(svc, run, { ...usage, messages, steps: run.steps + 1, status: 'failed', error: 'no_submission' }, 'review');
-        return { state: 'failed', detail: 'no_submission' };
-      }
-      messages.push({ role: 'user', content: NUDGE });
-    }
+    if (plan.action === 'nudge') messages.push({ role: 'user', content: NUDGE });
     await svc.from('scout_runs').update({ ...usage, messages, steps: run.steps + 1, lease_until: null, error: null }).eq('id', run.id);
     return { state: 'continue', cost_usd: usage.cost_usd };
   }
 
-  if (!submit) {
-    // refusal, max_tokens, or anything else that is neither research nor a result
-    const detail = message.stop_reason === 'refusal'
-      ? 'refusal' + (message.stop_details && message.stop_details.category ? ':' + message.stop_details.category : '')
-      : 'stopped:' + message.stop_reason;
+  if (plan.action === 'fail') {
+    const detail = plan.reason === 'refusal' && message.stop_details && message.stop_details.category
+      ? 'refusal:' + message.stop_details.category : plan.reason;
     await finish(svc, run, { ...usage, messages: messages.concat([{ role: 'assistant', content }]), steps: run.steps + 1, status: 'failed', error: detail }, 'review');
-    return { state: 'failed', detail };
+    return { state: 'failed', detail, cost_usd: usage.cost_usd };
   }
 
+  // plan.action === 'submit': the model reported its candidates.
   const fullTranscript = messages.concat([{ role: 'assistant', content }]);
   const inventory = await loadInventory(svc, briefRow.brief);
   const { candidates, droppedUrls, notes } = validateSubmission(submit.input, {

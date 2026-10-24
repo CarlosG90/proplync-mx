@@ -44,7 +44,10 @@ import { groqChat, messageText } from './_lib/groq.js';
 import { nvidiaChat } from './_lib/nvidia-concierge.js';
 import { askConcierge, isBusy } from './_lib/concierge-turn.js';
 import { getServiceClient } from './_lib/supabase.js';
-import { createRun, runScoutStep, runsStartedToday, scoutConfigured } from './_lib/scout.js';
+import { createRun, runScoutStep, runsStartedToday, scoutConfigured, checkAnthropic } from './_lib/scout.js';
+import { watchRun } from './_lib/scout-watch.js';
+import { collectHealth, doctorToken } from './_lib/health-check.js';
+import { redisGet, redisSet } from './_lib/redis.js';
 import { monthlyBudgetUsd, spentThisMonth } from './_lib/scout-budget.js';
 import { notifyOperator } from './_lib/notify.js';
 
@@ -408,9 +411,26 @@ async function handleStatus(req, res) {
   if (!brief) { res.status(404).json({ error: 'not_found' }); return; }
 
   const { data: runs } = await svc.from('scout_runs')
-    .select('status, steps, web_searches, web_fetches, created_at, finished_at')
+    .select('id, status, steps, web_searches, web_fetches, created_at, finished_at, lease_until, user_id, charged')
     .eq('brief_id', brief.id).order('created_at', { ascending: false }).limit(1);
-  const run = runs && runs[0];
+  let run = runs && runs[0];
+
+  /* This page polls every few seconds while a run is active, so it is also Scout's watchdog: a run whose
+     hand-off was lost is restarted, and one that is hopelessly stuck is closed and refunded. */
+  if (run) {
+    try {
+      const watched = await watchRun(svc, { ...run }, brief, {
+        recentlyKicked: async (id) => Boolean(await redisGet('scout:rekick:' + id)),
+        markKicked: (id) => redisSet('scout:rekick:' + id, 1, 40),
+        kick: (id) => waitUntil(kickStep(id)),
+        refund: (r) => refundRun(svc, r),
+        notify: (m) => waitUntil(notifyOperator(m))
+      });
+      if (watched === 'failed') run = { ...run, status: 'failed' };
+    } catch (err) {
+      logDegraded('finder:watchdog', err);
+    }
+  }
 
   /* Scout's matches show as soon as it finishes, each labelled with where it
      stands: not yet verified, verification requested, confirmed by the agent,
@@ -473,6 +493,31 @@ async function handleWallet(req, res) {
   });
 }
 
+/* Is everything the agents need actually in place? Operator-only (the step secret), read-only, spends nothing.
+   See api/_lib/health-check.js and scripts/doctor.mjs. */
+async function handleHealth(req, res) {
+  const byStepSecret = sameSecret(req.headers['x-scout-secret'], process.env.SCOUT_STEP_SECRET);
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const byDoctorToken = Boolean(serviceKey) && sameSecret(req.headers['x-doctor-token'], doctorToken(serviceKey));
+  if (!byStepSecret && !byDoctorToken) {
+    res.status(401).json({ error: 'unauthorized' }); return;
+  }
+  try {
+    const report = await collectHealth({
+      env: process.env,
+      svc: getServiceClient(),
+      checkAnthropic,
+      scoutCanRun: scoutCanRun(),
+      stepOriginSet: Boolean(stepOrigin()),
+      dailyCap: Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 5
+    });
+    res.status(200).json(report);
+  } catch (err) {
+    logDegraded('finder:health', err);
+    res.status(500).json({ error: 'health_failed', detail: safeDetail(err, 'finder') });
+  }
+}
+
 async function handleScoutStep(req, res) {
   if (!sameSecret(req.headers['x-scout-secret'], process.env.SCOUT_STEP_SECRET)) {
     res.status(401).json({ error: 'unauthorized' }); return;
@@ -529,6 +574,11 @@ export default async function handler(req, res) {
     if (req.method !== 'GET') { res.status(405).json({ error: 'method_not_allowed' }); return; }
     if (await enforceRateLimit(req, res, { bucket: 'finder-wallet', limit: 60, windowSec: 60 })) return;
     return handleWallet(req, res);
+  }
+
+  if (action === 'health') {
+    if (req.method !== 'GET') { res.status(405).json({ error: 'method_not_allowed' }); return; }
+    return handleHealth(req, res);
   }
 
   if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }

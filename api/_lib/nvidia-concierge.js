@@ -10,6 +10,7 @@
 
 const NVIDIA_NIM_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 const MODEL = 'nvidia/nvidia-nemotron-nano-9b-v2';
+export const NVIDIA_MODEL = MODEL;   // the readiness check verifies this ID is still in NVIDIA's catalog
 const REQUEST_TIMEOUT_MS = 9000;
 
 export async function nvidiaChat(messages, options = {}) {
