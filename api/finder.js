@@ -41,7 +41,8 @@ import { waitUntil } from '@vercel/functions';
 import { safeDetail, logDegraded } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { groqChat, messageText } from './_lib/groq.js';
-import { conciergeChat } from './_lib/nvidia-concierge.js';
+import { nvidiaChat } from './_lib/nvidia-concierge.js';
+import { askConcierge, isBusy } from './_lib/concierge-turn.js';
 import { getServiceClient } from './_lib/supabase.js';
 import { createRun, runScoutStep, runsStartedToday, scoutConfigured } from './_lib/scout.js';
 import { monthlyBudgetUsd, spentThisMonth } from './_lib/scout-budget.js';
@@ -101,27 +102,6 @@ Responde UNICAMENTE con un objeto JSON valido, sin markdown ni backticks:
 }
 Un dato que la persona no haya dado se queda en null o en lista vacia. Nunca lo rellenes tu.`;
 
-function readJson(raw) {
-  /* The model is told to return bare JSON, but surviving a stray fence costs
-     nothing and a 500 in the buyer's face costs a lot. */
-  const text = String(raw || '').replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start === -1 || end === -1) {
-    const err = new Error('model_returned_no_json');
-    err.detail = `Expected JSON object. Got: ${text.slice(0, 100)}`;
-    throw err;
-  }
-  try {
-    return JSON.parse(text.slice(start, end + 1));
-  } catch (parseErr) {
-    const err = new Error('model_json_invalid');
-    err.detail = `JSON parse failed: ${parseErr.message}`;
-    err.raw = text.slice(start, end + 1);
-    throw err;
-  }
-}
-
 /* Claude is the intended brain. Where its key is absent (Preview deployments)
    Groq runs the same conversation so the Concierge still works. Groq's cap is
    1,000 output tokens a minute on this account, so its replies are budgeted
@@ -159,54 +139,36 @@ async function handleTurn(req, res) {
   if (messages[0].role !== 'user') messages.unshift({ role: 'user', content: 'Hola' });
 
   try {
-    /* Use NVIDIA first (free), fallback to Groq. Both are free tier providers. */
-    const result = await conciergeChat(messages, {
-      groqChat,
-      GROQ_MAX_TOKENS,
-      SYSTEM
+    /* NVIDIA first, then Groq. Both get the same system prompt, every reply is validated, and a bad
+       reply gets one repair attempt before the next provider runs (see concierge-turn.js). */
+    const { reply, provider, repaired } = await askConcierge(messages, {
+      nvidiaChat, groqChat, SYSTEM, GROQ_MAX_TOKENS, haveNvidia, haveGroq
     });
 
-    const text = result.text;
-    const provider = result.provider;
-
-    if (!text) {
-      const err = new Error('provider_returned_empty_response');
-      err.provider = provider;
-      throw err;
-    }
-
-    const parsed = readJson(text);
-
     res.status(200).json({
-      say: String(parsed.say || '').slice(0, 4000),
-      brief: parsed.brief && typeof parsed.brief === 'object' ? parsed.brief : {},
-      missing: Array.isArray(parsed.missing) ? parsed.missing.slice(0, 20) : [],
-      done: parsed.done === true,
-      provider: provider
+      say: reply.say,
+      /* null, not {}: a reply that leaves the brief out must not wipe what the page already shows. */
+      brief: reply.brief,
+      missing: reply.missing,
+      done: reply.done,
+      provider: provider,
+      repaired: repaired
     });
   } catch (err) {
     const code = err.code || (err.message ? err.message.split(':')[0] : 'unknown');
     logDegraded('finder:turn', err);
 
-    /* Rate limit (429) from Groq: tell buyer to retry, don't treat as error. */
-    if (/groq.*429|Groq responded 429/.test(String(err && err.message))) {
-      res.status(429).json({
-        error: 'concierge_busy',
-        detail: 'The Concierge is busy. Try again in a few seconds.'
-      });
-      return;
-    }
-
-    /* Timeout from NVIDIA: likely rate limit, tell buyer to retry. */
-    if (code === 'nvidia_timeout') {
+    /* A rate limit or a timeout is "busy", not "broken": the buyer is told to try again, and the page
+       already retries once on its own. */
+    if (err.busy || isBusy(err)) {
       res.status(503).json({
         error: 'concierge_busy',
-        detail: 'The Concierge is processing many requests. Try again in a moment.'
+        detail: 'The Concierge is busy. Try again in a few seconds.',
+        code: code
       });
       return;
     }
 
-    /* All other errors: unavailable. */
     res.status(502).json({
       error: 'concierge_unavailable',
       detail: safeDetail(err, 'finder'),

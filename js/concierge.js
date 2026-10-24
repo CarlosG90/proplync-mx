@@ -347,25 +347,47 @@
       if (opts.onUser) opts.onUser(text);
       messages.push({ role: 'user', content: text });
       voiceState('thinking');
+
+      /* The turn failed for good: take it back out of the conversation (so a retry does not send it
+         twice), say why, and hand the buyer's words back so nothing they said is lost. */
+      function fail(message) {
+        var last = messages[messages.length - 1];
+        if (last && last.role === 'user' && last.content === text) messages.pop();
+        notify('err', message);
+        voiceState('idle');
+        if (opts.onFailedText) opts.onFailedText(text);
+      }
+
       try {
-        var r = await root.fetch('/api/finder?action=turn', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: messages })
-        });
-        var data = await r.json();
+        /* One automatic retry for the failures worth retrying (busy, an outage, a dropped connection),
+           so a hiccup does not reach the buyer as an error. */
+        var out = null;
+        for (var attempt = 0; attempt < 2; attempt++) {
+          try {
+            var resp = await root.fetch('/api/finder?action=turn', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ messages: messages })
+            });
+            out = { r: resp, data: await resp.json() };
+          } catch (e) { out = null; }
+          var retryable = !out || out.r.status === 429 || out.r.status >= 500;
+          if (!retryable) break;
+          if (attempt === 0) await new Promise(function (res) { root.setTimeout(res, 1500); });
+        }
+
+        if (!out) { fail(t('Sin conexión con Concierge.', 'No connection to Concierge.')); return; }
+        var r = out.r, data = out.data;
         if (!r.ok) {
           /* Name the real reason. "Something went wrong" sends people away; "the key is missing in this
              environment" tells whoever is testing what to fix. */
-          var why = data.error === 'concierge_unconfigured'
+          fail(data.error === 'concierge_unconfigured'
             ? t('Concierge no está configurado en este entorno (faltan NVIDIA_API_KEY y GROQ_API_KEY).',
                 'Concierge is not configured in this environment (NVIDIA_API_KEY and GROQ_API_KEY are both missing).')
             : data.error === 'concierge_busy'
               ? t('Concierge está ocupada. Intenta de nuevo en unos segundos.', 'Concierge is busy. Try again in a few seconds.')
             : data.error === 'rate_limited'
               ? t('Demasiados mensajes seguidos. Espera un momento.', 'Too many messages at once. Give it a moment.')
-              : t('Concierge no respondió. Intenta de nuevo.', 'Concierge did not answer. Try again.');
-          notify('err', why);
-          voiceState('idle');
+              : t('Concierge no respondió. Intenta de nuevo.', 'Concierge did not answer. Try again.'));
           return;
         }
         if (data.brief) { brief = data.brief; if (opts.onBrief) opts.onBrief(brief); }
@@ -378,8 +400,7 @@
         }
         if (data.done && opts.onDone) opts.onDone();
       } catch (e) {
-        notify('err', t('Sin conexión con Concierge.', 'No connection to Concierge.'));
-        voiceState('idle');
+        fail(t('Sin conexión con Concierge.', 'No connection to Concierge.'));
       } finally {
         busy = false;
         if (opts.onBusy) opts.onBusy(false);

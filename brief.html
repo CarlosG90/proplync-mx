@@ -281,6 +281,7 @@ var ui = PropLyncConcierge.create({
   },
   onNotice: function (kind, text) { bubble(kind, text); },
   onBusy: function (b) { sendEl.disabled = b; },
+  onFailedText: function (text) { sayEl.value = text; },   // a failed turn: their words come back, ready to send again
   /* After a voice turn the keyboard stays down: focusing the field would cover the stage on a phone. */
   onTurnEnd: function (viaVoice) { if (!viaVoice) sayEl.focus(); }
 });

@@ -69,7 +69,13 @@
     onBrief: function (b) { lastBrief = b; renderChips(b); },
     onDone: function () { done = true; renderChips(lastBrief); showContinue(); track('concierge_complete'); },
     onNotice: function (kind, text) { caption(sayEl, text, kind === 'err'); },
-    onBusy: function (b) { inputEl.disabled = b; formEl.querySelector('button').disabled = b; }
+    onBusy: function (b) { inputEl.disabled = b; formEl.querySelector('button').disabled = b; },
+    /* A turn that failed for good: open the typing box with what they said, ready to send again. */
+    onFailedText: function (text) {
+      formEl.hidden = false;
+      typeBtn.setAttribute('aria-expanded', 'true');
+      inputEl.value = text;
+    }
   });
 
   /* Hand the conversation to /brief, where the brief is approved. The link itself does the navigation. */
