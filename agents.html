@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PropLync — Llega a inversionistas internacionales</title>
+<meta name="description" content="Compradores internacionales que ya te dijeron qué buscan: presupuesto, plazo y criterios.">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="PropLync — Llega a inversionistas internacionales">
+<meta property="og:description" content="Compradores internacionales que ya te dijeron qué buscan.">
+<meta property="og:url" content="https://proplync-mx.vercel.app/agents">
+<link rel="canonical" href="https://proplync-mx.vercel.app/agents">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/landing.css">
+</head>
+
+<!-- ES default: this page's audience is local agents in Cancún,
+     Playa del Carmen and Tulum (§1). /invest ships EN. Both are
+     one attribute away from flipping if §9.3 lands differently. -->
+<body class="lp" data-page="agents" data-default-lang="es">
+
+<a class="lp-skip" href="#main" data-en="Skip to content" data-es="Saltar al contenido">Saltar al contenido</a>
+
+<header>
+  <nav class="wrap" aria-label="Main navigation">
+    <a class="brand" href="/" aria-label="PropLync.mx home">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 23.4h10.8" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" opacity=".45"/></svg>
+      <span class="wordmark">PropLync<span class="accent">.mx</span></span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/invest" data-es="Para inversionistas" data-en="For investors">Para inversionistas</a>
+      <a href="/agents" aria-current="page" data-es="Para asesores" data-en="For agents">Para asesores</a>
+      <a href="/resources" data-es="Recursos" data-en="Resources">Recursos</a>
+      <a href="/search" data-es="Buscar propiedades" data-en="Find properties">Buscar propiedades</a>
+      <a href="/finder" class="nav-buyer" data-es="Soy comprador" data-en="I'm a buyer">Soy comprador</a>
+      <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
+    </div>
+    <div class="navtools">
+      <div class="lang" role="group" aria-label="Language">
+        <button id="es" class="on" onclick="setLang('es')">ES</button>
+        <button id="en" onclick="setLang('en')">EN</button>
+      </div>
+      <button class="navtoggle" aria-label="Menu" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+
+  <!-- ── §4.1 Hero ────────────────────────────────────────── -->
+  <section class="lp-hero">
+    <div class="lp-wrap lp-hero__grid">
+      <div>
+        <p class="lp-eyebrow" data-en="For agents" data-es="Para asesores">Para asesores</p>
+        <h1 data-en="Reach international investors <em>without cold calls.</em>"
+            data-es="Llega a inversionistas internacionales <em>sin llamadas en frío.</em>">Llega a inversionistas internacionales <em>sin llamadas en frío.</em></h1>
+        <p class="lp-lede"
+           data-en="We bring you buyers who have already told us what they want."
+           data-es="Te traemos compradores que ya nos dijeron qué buscan.">Te traemos compradores que ya nos dijeron qué buscan.</p>
+        <a class="btn btn-dark" href="/signup"
+           data-track="agent_signup_start" data-track-label="hero_join_as_agent"
+           data-en="Join as an agent" data-es="Únete como asesor">Únete como asesor</a>
+      </div>
+
+      <!-- §4.1 visual: what an agent receives, drawn in HTML. A real agent
+           photo replaces this once permission is given (§2: no stock). -->
+      <figure class="lp-hero__media">
+        <div class="lp-brief" aria-hidden="true">
+          <div class="lp-brief__head">
+            <span data-en="Buyer brief" data-es="Brief del comprador">Brief del comprador</span>
+            <span data-en="Approved by buyer" data-es="Aprobado por el comprador">Aprobado por el comprador</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Budget" data-es="Presupuesto">Presupuesto</span>
+            <span data-en="Shared after approval" data-es="Compartido tras aprobación">Compartido tras aprobación</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Timeline" data-es="Plazo">Plazo</span>
+            <span data-en="Shared after approval" data-es="Compartido tras aprobación">Compartido tras aprobación</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Criteria" data-es="Criterios">Criterios</span>
+            <span data-en="Shared after approval" data-es="Compartido tras aprobación">Compartido tras aprobación</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Verification request" data-es="Solicitud de verificación">Solicitud de verificación</span>
+            <span data-en="Only if buyer asks" data-es="Solo si el comprador lo pide">Solo si el comprador lo pide</span>
+          </div>
+        </div>
+        <figcaption data-en="Illustration: the brief an agent receives. Not a real buyer."
+                    data-es="Ilustración: el brief que recibe un asesor. No es un comprador real.">Ilustración: el brief que recibe un asesor. No es un comprador real.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ── §4.2 Pain ────────────────────────────────────────── -->
+  <section>
+    <div class="lp-wrap">
+      <h2 data-en="The time goes before the deal does."
+          data-es="El tiempo se va antes que la operación.">El tiempo se va antes que la operación.</h2>
+      <div class="lp-grid">
+        <article class="lp-card">
+          <span class="lp-card__num">01</span>
+          <h3 data-en="Enquiries that don't convert" data-es="Prospectos que no convierten">Prospectos que no convierten</h3>
+          <p data-en="Many enquiries come from people who are not ready to buy."
+             data-es="Muchos prospectos vienen de personas que todavía no están listas para comprar.">Muchos prospectos vienen de personas que todavía no están listas para comprar.</p>
+        </article>
+        <article class="lp-card">
+          <span class="lp-card__num">02</span>
+          <h3 data-en="Limited reach abroad" data-es="Alcance limitado en el extranjero">Alcance limitado en el extranjero</h3>
+          <p data-en="International buyers often don't find local agents directly."
+             data-es="Los compradores internacionales rara vez encuentran asesores locales de forma directa.">Los compradores internacionales rara vez encuentran asesores locales de forma directa.</p>
+        </article>
+        <article class="lp-card">
+          <span class="lp-card__num">03</span>
+          <h3 data-en="Time spent qualifying" data-es="Tiempo gastado en calificar">Tiempo gastado en calificar</h3>
+          <p data-en="Every enquiry needs the same questions before you know if it is worth a visit."
+             data-es="Cada prospecto requiere las mismas preguntas antes de saber si vale la pena una visita.">Cada prospecto requiere las mismas preguntas antes de saber si vale la pena una visita.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── §4.3 What you get ────────────────────────────────── -->
+  <section class="lp-band">
+    <div class="lp-wrap">
+      <p class="lp-eyebrow" data-en="What you get" data-es="Qué recibes">Qué recibes</p>
+      <h2 data-en="Buyers who arrive with a brief."
+          data-es="Compradores que llegan con un brief.">Compradores que llegan con un brief.</h2>
+      <div class="lp-grid">
+        <article class="lp-card lp-card--on-dark">
+          <h3 data-en="Qualified buyer briefs" data-es="Briefs de comprador calificados">Briefs de comprador calificados</h3>
+          <p data-en="Budget, timeline, criteria and purpose, approved by the buyer before you see them."
+             data-es="Presupuesto, plazo, criterios y propósito, aprobados por el comprador antes de que tú los veas.">Presupuesto, plazo, criterios y propósito, aprobados por el comprador antes de que tú los veas.</p>
+        </article>
+        <article class="lp-card lp-card--on-dark">
+          <h3 data-en="Verification requests" data-es="Solicitudes de verificación">Solicitudes de verificación</h3>
+          <p data-en="Buyers ask you to confirm specific listings, so you know which property they mean."
+             data-es="Los compradores te piden confirmar propiedades específicas, así sabes exactamente de cuál hablan.">Los compradores te piden confirmar propiedades específicas, así sabes exactamente de cuál hablan.</p>
+        </article>
+        <article class="lp-card lp-card--on-dark">
+          <h3 data-en="Listings in one place" data-es="Tus propiedades en un solo lugar">Tus propiedades en un solo lugar</h3>
+          <p data-en="Works with EasyBroker listings today."
+             data-es="Hoy funciona con propiedades de EasyBroker.">Hoy funciona con propiedades de EasyBroker.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── §4.4 Pricing ─────────────────────────────────────────
+       HIDDEN ON PURPOSE. §9.2 is an open decision and the earlier
+       drafts conflicted (15% commission vs $50–150 per intro vs
+       $99–299/month). The plan says publish none of them. Unhide
+       once one model is chosen.
+       ───────────────────────────────────────────────────────── -->
+  <section hidden data-todo="§9.2 — agent monetisation model not chosen">
+    <div class="lp-wrap">
+      <h2 data-en="How PropLync is paid" data-es="Cómo cobra PropLync">How PropLync is paid</h2>
+      <p><!-- [TBD] model --></p>
+      <p><!-- [TBD] payout timing --></p>
+      <p><!-- [CONFIRM] opt out of buyer introductions --></p>
+    </div>
+  </section>
+
+  <!-- ── §4.5 Testimonials ────────────────────────────────────
+       HIDDEN: no agent quote ships without written consent (§9.7).
+       ───────────────────────────────────────────────────────── -->
+  <section hidden data-todo="§9.7 — written consent per agent required">
+    <div class="lp-wrap">
+      <!-- [Agent quote — pending written approval] -->
+    </div>
+  </section>
+
+  <!-- ── §4.6 FAQ ─────────────────────────────────────────── -->
+  <section>
+    <div class="lp-wrap">
+      <h2 data-en="Questions" data-es="Preguntas">Preguntas</h2>
+      <div class="lp-faq">
+
+        <details>
+          <summary data-en="Do I need EasyBroker?" data-es="¿Necesito EasyBroker?">¿Necesito EasyBroker?</summary>
+          <p data-en="Not for every workflow. Listings from EasyBroker sync automatically today."
+             data-es="No para todos los flujos. Hoy las propiedades de EasyBroker se sincronizan automáticamente.">No para todos los flujos. Hoy las propiedades de EasyBroker se sincronizan automáticamente.</p>
+        </details>
+
+        <details>
+          <summary data-en="Can I keep using other portals?" data-es="¿Puedo seguir usando otros portales?">¿Puedo seguir usando otros portales?</summary>
+          <p data-en="Yes. PropLync does not require exclusivity."
+             data-es="Sí. PropLync no exige exclusividad.">Sí. PropLync no exige exclusividad.</p>
+        </details>
+
+        <details>
+          <summary data-en="How do buyers' details reach me?" data-es="¿Cómo me llegan los datos del comprador?">¿Cómo me llegan los datos del comprador?</summary>
+          <p data-en="Only after the buyer approves a brief and requests a verification with you."
+             data-es="Solo después de que el comprador aprueba un brief y solicita una verificación contigo.">Solo después de que el comprador aprueba un brief y solicita una verificación contigo.</p>
+        </details>
+
+        <!-- Held back with §4.4: the answer depends on the pricing model. -->
+        <details hidden data-todo="§9.2 — depends on pricing model">
+          <summary data-en="How do I get paid?" data-es="¿Cómo me pagan?">¿Cómo me pagan?</summary>
+          <p><!-- [TBD] --></p>
+        </details>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="lp-footer">
+  <div class="wrap foot-grid">
+    <div class="foot-brand">
+      <span class="brand" style="font-family:var(--display);font-size:1.15rem"><span class="wordmark">PropLync<span class="accent">.mx</span></span></span>
+      <p data-es="Inversión, búsqueda y asesores en la Riviera Maya." data-en="Investment, search and agents in the Riviera Maya.">Inversión, búsqueda y asesores en la Riviera Maya.</p>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Para ti" data-en="For you"></h5>
+      <a href="/invest" data-es="Para inversionistas" data-en="For investors">Para inversionistas</a>
+      <a href="/agents" data-es="Para asesores" data-en="For agents">Para asesores</a>
+      <a href="/resources" data-es="Recursos" data-en="Resources">Recursos</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Producto" data-en="Product"></h5>
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/finder" data-es="Soy comprador" data-en="I'm a buyer">Soy comprador</a>
+      <a href="/generate" data-es="Generador" data-en="Generator">Generador</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Cuenta" data-en="Account"></h5>
+      <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
+      <a href="/signup" data-es="Crear cuenta" data-en="Create account">Crear cuenta</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Contacto" data-en="Contact">Contacto</h5>
+      <a href="mailto:hola@proplync.mx">hola@proplync.mx</a>
+    </div>
+  </div>
+  <div class="wrap foot-legal">
+    <a class="lp-footer__cross" href="/invest"
+       data-track="cta_click" data-track-label="footer_to_invest"
+       data-en="Are you an international investor? Start your search →"
+       data-es="¿Eres inversionista internacional? Comienza tu búsqueda →">¿Eres inversionista internacional? Comienza tu búsqueda →</a>
+    <p class="lp-footer__disclaimer"
+       data-en="PropLync does not provide investment, tax or legal advice. Consult a licensed notary (notario) and a qualified advisor for fideicomiso, tax and legal matters before any transaction."
+       data-es="PropLync no brinda asesoría de inversión, fiscal ni legal. Consulta a un notario público y a un asesor calificado en materia de fideicomiso, impuestos y temas legales antes de cualquier transacción.">PropLync no brinda asesoría de inversión, fiscal ni legal. Consulta a un notario público y a un asesor calificado en materia de fideicomiso, impuestos y temas legales antes de cualquier transacción.</p>
+  </div>
+  <div class="wrap foot-bottom">
+    <span data-es="Hecho en la Riviera Maya" data-en="Built in the Riviera Maya">Hecho en la Riviera Maya</span>
+    <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span>
+  </div>
+</footer>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/landing.js" defer></script>
+</body>
+</html>

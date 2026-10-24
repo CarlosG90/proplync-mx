@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PropLync — Cut your deal research time in half</title>
+<meta name="description" content="AI finds verified Riviera Maya properties. Agents confirm them with you, before you spend your time on them.">
+
+<!-- OG image and canonical use the Vercel URL until proplync.mx is
+     registered. Both lines change together when it is. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="PropLync — Cut your deal research time in half">
+<meta property="og:description" content="AI finds verified Riviera Maya properties. Agents confirm them with you.">
+<meta property="og:url" content="https://proplync-mx.vercel.app/invest">
+<link rel="canonical" href="https://proplync-mx.vercel.app/invest">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/landing.css">
+</head>
+
+<!-- data-default-lang: §9.3 is still open. EN is set here because the
+     plan notes investors are mostly English-speaking; /agents ships ES.
+     Flip this one attribute if the decision lands the other way. -->
+<body class="lp" data-page="invest" data-default-lang="en">
+
+<a class="lp-skip" href="#main" data-en="Skip to content" data-es="Saltar al contenido">Skip to content</a>
+
+<header>
+  <nav class="wrap" aria-label="Main navigation">
+    <a class="brand" href="/" aria-label="PropLync.mx home">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 23.4h10.8" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" opacity=".45"/></svg>
+      <span class="wordmark">PropLync<span class="accent">.mx</span></span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/invest" aria-current="page" data-es="Para inversionistas" data-en="For investors">For investors</a>
+      <a href="/agents" data-es="Para asesores" data-en="For agents">For agents</a>
+      <a href="/resources" data-es="Recursos" data-en="Resources">Resources</a>
+      <a href="/search" data-es="Buscar propiedades" data-en="Find properties">Find properties</a>
+      <a href="/finder" class="nav-buyer" data-es="Soy comprador" data-en="I'm a buyer">I'm a buyer</a>
+      <a href="/login" data-es="Soy agente" data-en="I'm an agent">I'm an agent</a>
+    </div>
+    <div class="navtools">
+      <div class="lang" role="group" aria-label="Language">
+        <button id="es" onclick="setLang('es')">ES</button>
+        <button id="en" class="on" onclick="setLang('en')">EN</button>
+      </div>
+      <button class="navtoggle" aria-label="Menu" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+
+  <!-- ── §3.1 Hero ────────────────────────────────────────── -->
+  <section class="lp-hero">
+    <div class="lp-wrap lp-hero__grid">
+      <div>
+        <p class="lp-eyebrow" data-en="Riviera Maya" data-es="Riviera Maya">Riviera Maya</p>
+        <h1 data-en="Cut your deal research <em>time in half.</em>"
+            data-es="Reduce <em>a la mitad</em> el tiempo que inviertes en investigar.">Cut your deal research <em>time in half.</em></h1>
+        <p class="lp-lede"
+           data-en="AI finds verified properties. Agents confirm them with you."
+           data-es="La IA encuentra propiedades verificadas. Los asesores las confirman contigo.">AI finds verified properties. Agents confirm them with you.</p>
+        <a class="btn btn-dark" href="/finder"
+           data-track="cta_click" data-track-label="hero_start_search"
+           data-en="Start your search" data-es="Comienza tu búsqueda">Start your search</a>
+        <!-- §3.1 micro-copy: the plan's draft said "no sign-up", but
+             AGENT-COMMUNICATION-PLAN D5 collects an email before the
+             first Concierge turn. Only the free part is stated here. -->
+        <small class="lp-btn__note"
+               data-en="The Concierge conversation is free."
+               data-es="La conversación con el Concierge es gratuita.">The Concierge conversation is free.</small>
+      </div>
+
+      <!-- §3.1 visual: the brief's fields, drawn in HTML. A real property
+           photo replaces this once a partner agent gives permission
+           (§2: no stock photos). -->
+      <figure class="lp-hero__media">
+        <div class="lp-brief" aria-hidden="true">
+          <div class="lp-brief__head">
+            <span data-en="Buyer brief" data-es="Brief del comprador">Buyer brief</span>
+            <span data-en="Approved" data-es="Aprobado">Approved</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Budget" data-es="Presupuesto">Budget</span>
+            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Timeline" data-es="Plazo">Timeline</span>
+            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Purpose" data-es="Propósito">Purpose</span>
+            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Must-haves" data-es="Indispensables">Must-haves</span>
+            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
+          </div>
+          <div class="lp-brief__row">
+            <span data-en="Deal-breakers" data-es="Descartes">Deal-breakers</span>
+            <span data-en="Set by buyer" data-es="Lo define el comprador">Set by buyer</span>
+          </div>
+        </div>
+        <figcaption data-en="Illustration: the fields in a buyer brief. Not a real buyer."
+                    data-es="Ilustración: los campos de un brief de comprador. No es un comprador real.">Illustration: the fields in a buyer brief. Not a real buyer.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ── §3.2 Pain ────────────────────────────────────────── -->
+  <section>
+    <div class="lp-wrap">
+      <h2 data-en="Your time is worth more than scrolling listings."
+          data-es="Tu tiempo vale más que revisar anuncios.">Your time is worth more than scrolling listings.</h2>
+      <div class="lp-grid">
+        <article class="lp-card">
+          <span class="lp-card__num">01</span>
+          <h3 data-en="Listings that are out of date" data-es="Anuncios desactualizados">Listings that are out of date</h3>
+          <p data-en="Online listings often include properties that are already sold or no longer available. Checking each one takes time."
+             data-es="Los anuncios en línea suelen incluir propiedades ya vendidas o que ya no están disponibles. Revisar cada una toma tiempo.">Online listings often include properties that are already sold or no longer available. Checking each one takes time.</p>
+        </article>
+        <article class="lp-card">
+          <span class="lp-card__num">02</span>
+          <h3 data-en="Hard to verify remotely" data-es="Difíciles de verificar a distancia">Hard to verify remotely</h3>
+          <p data-en="Confirming price, condition and paperwork usually means several calls and emails."
+             data-es="Confirmar precio, estado y documentación normalmente implica varias llamadas y correos.">Confirming price, condition and paperwork usually means several calls and emails.</p>
+        </article>
+        <article class="lp-card">
+          <span class="lp-card__num">03</span>
+          <h3 data-en="No efficient way to compare" data-es="Sin una forma eficiente de comparar">No efficient way to compare</h3>
+          <p data-en="Comparing properties against your criteria across portals and agencies is manual work."
+             data-es="Comparar propiedades contra tus criterios entre portales y agencias es trabajo manual.">Comparing properties against your criteria across portals and agencies is manual work.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── §3.3 How it works ────────────────────────────────── -->
+  <section class="lp-band">
+    <div class="lp-wrap">
+      <p class="lp-eyebrow" data-en="How it works" data-es="Cómo funciona">How it works</p>
+      <h2 data-en="Three steps to verified options."
+          data-es="Tres pasos hacia opciones verificadas.">Three steps to verified options.</h2>
+      <div class="lp-grid">
+        <article class="lp-card lp-card--on-dark">
+          <span class="lp-card__num">01</span>
+          <h3 data-en="Concierge — free" data-es="Concierge — gratis">Concierge — free</h3>
+          <p data-en="Tell us your criteria: budget, target return, property type, location, timeline."
+             data-es="Cuéntanos tus criterios: presupuesto, retorno objetivo, tipo de propiedad, ubicación y plazo.">Tell us your criteria: budget, target return, property type, location, timeline.</p>
+        </article>
+        <article class="lp-card lp-card--on-dark">
+          <span class="lp-card__num">02</span>
+          <h3 data-en="Scout — token-priced" data-es="Scout — con tokens">Scout — token-priced</h3>
+          <p data-en="Scout searches public listings and agency sites, merges duplicates, and ranks matches against your brief. Each result is labelled unverified until confirmed."
+             data-es="Scout busca en anuncios públicos y sitios de agencias, une duplicados y ordena los resultados según tu brief. Cada resultado aparece como no verificado hasta confirmarse.">Scout searches public listings and agency sites, merges duplicates, and ranks matches against your brief. Each result is labelled unverified until confirmed.</p>
+        </article>
+        <article class="lp-card lp-card--on-dark">
+          <span class="lp-card__num">03</span>
+          <h3 data-en="Verify — token-priced" data-es="Verificar — con tokens">Verify — token-priced</h3>
+          <p data-en="We ask the listing agent to confirm price, availability and condition. You get the result before you talk to them."
+             data-es="Le pedimos al asesor que confirme precio, disponibilidad y estado. Recibes el resultado antes de hablar con él.">We ask the listing agent to confirm price, availability and condition. You get the result before you talk to them.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── §3.4 Proof ───────────────────────────────────────────
+       HIDDEN ON PURPOSE. §3.4 allows nothing here until it is
+       confirmed: no agency count, no agent quotes without written
+       consent (§9.7), no metrics until they are real. Remove the
+       `hidden` attribute once at least one of those lands.
+       ───────────────────────────────────────────────────────── -->
+  <section hidden data-todo="§3.4 — needs confirmed agency count and written agent consent">
+    <div class="lp-wrap">
+      <h2 data-en="Built with agents who work in Riviera Maya."
+          data-es="Construido con asesores que trabajan en la Riviera Maya.">Built with agents who work in Riviera Maya.</h2>
+      <p><!-- [TBD] e.g. "Working with X agencies in Cancún and Playa del Carmen." --></p>
+      <!-- [Agent quote — pending written approval] -->
+    </div>
+  </section>
+
+  <!-- ── §3.5 Pricing line ────────────────────────────────── -->
+  <section class="lp-tight">
+    <div class="lp-wrap">
+      <!-- No figures here. §9.1 (token price and bundles) is still
+           open; the branch commit that hard-coded prices is ahead of
+           that decision. Numbers go in only once §9.1 is closed. -->
+      <h2 data-en="Pricing" data-es="Precios">Pricing</h2>
+      <p class="lp-lede"
+         data-en="Concierge is free. Scout and verification are priced in tokens."
+         data-es="El Concierge es gratuito. Scout y la verificación se cobran con tokens.">Concierge is free. Scout and verification are priced in tokens.</p>
+    </div>
+  </section>
+
+  <!-- ── §3.6 FAQ ─────────────────────────────────────────── -->
+  <section>
+    <div class="lp-wrap">
+      <h2 data-en="Questions" data-es="Preguntas">Questions</h2>
+      <div class="lp-faq">
+
+        <details>
+          <summary data-en="Is this free?" data-es="¿Es gratis?">Is this free?</summary>
+          <p data-en="The Concierge conversation is free. Scout searches and verification requests use tokens."
+             data-es="La conversación con el Concierge es gratuita. Las búsquedas de Scout y las solicitudes de verificación usan tokens.">The Concierge conversation is free. Scout searches and verification requests use tokens.</p>
+        </details>
+
+        <details>
+          <summary data-en="How does verification work?" data-es="¿Cómo funciona la verificación?">How does verification work?</summary>
+          <p data-en="We contact the listing agent and ask them to confirm price, availability and condition. You receive the result before you talk to them."
+             data-es="Contactamos al asesor que publica la propiedad y le pedimos confirmar precio, disponibilidad y estado. Recibes el resultado antes de hablar con él.">We contact the listing agent and ask them to confirm price, availability and condition. You receive the result before you talk to them.</p>
+        </details>
+
+        <!-- Coverage answer held back: the plan's draft says Cancún,
+             Playa del Carmen and Tulum, but BUSINESS-MODEL R5
+             recommends launching Playa del Carmen alone. Publish once
+             that conflict is settled. -->
+        <details hidden data-todo="coverage conflicts with BUSINESS-MODEL R5 (Playa del Carmen first)">
+          <summary data-en="Which areas do you cover?" data-es="¿Qué zonas cubren?">Which areas do you cover?</summary>
+          <p><!-- [CONFIRM current coverage] --></p>
+        </details>
+
+        <details>
+          <summary data-en="How long does it take?" data-es="¿Cuánto tarda?">How long does it take?</summary>
+          <p data-en="The Concierge conversation takes a few minutes. Verification depends on the listing agent's response time."
+             data-es="La conversación con el Concierge toma unos minutos. La verificación depende del tiempo de respuesta del asesor.">The Concierge conversation takes a few minutes. Verification depends on the listing agent's response time.</p>
+        </details>
+
+        <details>
+          <summary data-en="Is my data safe?" data-es="¿Mis datos están seguros?">Is my data safe?</summary>
+          <p data-en="Your profile is private. It is shared only when you choose to request verification from a specific agent."
+             data-es="Tu perfil es privado. Solo se comparte cuando decides solicitar una verificación con un asesor específico.">Your profile is private. It is shared only when you choose to request verification from a specific agent.</p>
+        </details>
+
+        <details>
+          <summary data-en="What if I don't find a match?" data-es="¿Y si no encuentro nada que encaje?">What if I don't find a match?</summary>
+          <p data-en="You can refine your brief and run Scout again. Tokens apply to each run."
+             data-es="Puedes ajustar tu brief y volver a ejecutar Scout. Cada ejecución consume tokens.">You can refine your brief and run Scout again. Tokens apply to each run.</p>
+        </details>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="lp-footer">
+  <div class="wrap foot-grid">
+    <div class="foot-brand">
+      <span class="brand" style="font-family:var(--display);font-size:1.15rem"><span class="wordmark">PropLync<span class="accent">.mx</span></span></span>
+      <p data-es="Inversión, búsqueda y asesores en la Riviera Maya." data-en="Investment, search and agents in the Riviera Maya.">Inversión, búsqueda y asesores en la Riviera Maya.</p>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Para ti" data-en="For you"></h5>
+      <a href="/invest" data-es="Para inversionistas" data-en="For investors">Para inversionistas</a>
+      <a href="/agents" data-es="Para asesores" data-en="For agents">Para asesores</a>
+      <a href="/resources" data-es="Recursos" data-en="Resources">Recursos</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Producto" data-en="Product"></h5>
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/finder" data-es="Soy comprador" data-en="I'm a buyer">Soy comprador</a>
+      <a href="/generate" data-es="Generador" data-en="Generator">Generador</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Cuenta" data-en="Account"></h5>
+      <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
+      <a href="/signup" data-es="Crear cuenta" data-en="Create account">Crear cuenta</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Contacto" data-en="Contact">Contacto</h5>
+      <a href="mailto:hola@proplync.mx">hola@proplync.mx</a>
+    </div>
+  </div>
+  <div class="wrap foot-legal">
+    <a class="lp-footer__cross" href="/agents"
+       data-track="cta_click" data-track-label="footer_to_agents"
+       data-en="Are you a real estate agent? Reach international investors →"
+       data-es="¿Eres asesor inmobiliario? Llega a inversionistas internacionales →">Are you a real estate agent? Reach international investors →</a>
+    <p class="lp-footer__disclaimer"
+       data-en="PropLync does not provide investment, tax or legal advice. Consult a licensed notary (notario) and a qualified advisor for fideicomiso, tax and legal matters before any transaction."
+       data-es="PropLync no brinda asesoría de inversión, fiscal ni legal. Consulta a un notario público y a un asesor calificado en materia de fideicomiso, impuestos y temas legales antes de cualquier transacción.">PropLync does not provide investment, tax or legal advice. Consult a licensed notary (notario) and a qualified advisor for fideicomiso, tax and legal matters before any transaction.</p>
+  </div>
+  <div class="wrap foot-bottom">
+    <span data-es="Hecho en la Riviera Maya" data-en="Built in the Riviera Maya">Hecho en la Riviera Maya</span>
+    <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span>
+  </div>
+</footer>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/landing.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,397 @@
+/* ──────────────────────────────────────────────────────────────
+   landing.css — shared shell for /invest, /agents, /resources
+   Built from LANDING-PAGES-PLAN.md §2 (shared elements).
+
+   WHY a local :root block: maps the plan's names onto the real
+   tokens in css/tokens.css (--ink, --sea, --gold, --paper, and the
+   --display / --body / --mono font stacks). The hex fallbacks only
+   apply if tokens.css fails to load. An earlier version referenced
+   --color-* and --font-* names that tokens.css never defines, so the
+   brand fonts silently fell back to Georgia and system fonts.
+
+   WHY explicit section padding: tokens.css gives every <section>
+   a full-page vertical padding (--sp-32). Everything here sets
+   its own padding so cards don't inherit page-sized gaps.
+   ────────────────────────────────────────────────────────────── */
+
+:root {
+  --lp-tinta: var(--ink, #0a1628);
+  --lp-mar:   var(--sea, #2d8a85);
+  /* Text and button fill. --sea itself is 3.8:1 on paper and 4.1:1
+     under white text, both below AA for the small text we use it on. */
+  --lp-mar-ink: var(--sea-deep, #1f6b67);
+  --lp-oro:   var(--gold, #c9a96e);
+  /* Gold is decorative on dark, but on white it is 2.2:1. This darker
+     gold is 5.0:1 for the numbers that sit on white cards. */
+  --lp-oro-ink: #8a6a35;
+  --lp-papel: var(--paper, #f8f5f0);
+
+  --lp-tinta-70: color-mix(in srgb, var(--lp-tinta) 70%, transparent);
+  --lp-tinta-12: color-mix(in srgb, var(--lp-tinta) 12%, transparent);
+  --lp-tinta-06: color-mix(in srgb, var(--lp-tinta) 6%, transparent);
+
+  --lp-display: var(--display, "Fraunces", Georgia, serif);
+  --lp-body:    var(--body, "Hanken Grotesk", system-ui, sans-serif);
+  --lp-data:    var(--mono, "Space Mono", ui-monospace, monospace);
+
+  --lp-max: var(--maxw, 1240px);
+  --lp-gutter: var(--sp-8, 32px);
+  --lp-radius: 14px;
+}
+
+/* ── Base ─────────────────────────────────────────────────── */
+
+.lp {
+  margin: 0;
+  background: var(--lp-papel);
+  color: var(--lp-tinta);
+  font-family: var(--lp-body);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.lp *, .lp *::before, .lp *::after { box-sizing: border-box; }
+
+.lp img { max-width: 100%; display: block; }
+
+.lp-wrap {
+  width: 100%;
+  max-width: var(--lp-max);
+  margin-inline: auto;
+  padding-inline: var(--lp-gutter);
+}
+
+/* Every landing section declares its own padding. */
+.lp section { padding-block: 72px; }
+.lp section.lp-tight { padding-block: 48px; }
+
+.lp h1, .lp h2, .lp h3 {
+  font-family: var(--lp-display);
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  margin: 0 0 16px;
+  text-wrap: balance;
+}
+
+.lp h1 { font-size: clamp(2.1rem, 6vw, 3.4rem); }
+.lp h2 { font-size: clamp(1.6rem, 4vw, 2.3rem); }
+.lp h3 { font-size: 1.15rem; }
+
+.lp p { margin: 0 0 16px; max-width: 62ch; }
+
+.lp .lp-lede {
+  font-size: clamp(1.05rem, 2.4vw, 1.25rem);
+  color: var(--lp-tinta-70);
+}
+
+.lp .lp-eyebrow {
+  font-family: var(--lp-data);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lp-mar-ink);
+  margin-bottom: 12px;
+}
+
+/* ── CTA note ─────────────────────────────────────────────── */
+.lp-btn__note {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.88rem;
+  color: var(--lp-tinta-70);
+}
+
+/* ── Hero ─────────────────────────────────────────────────── */
+
+/* Specificity: .lp section (0,1,1) beats .lp-hero (0,1,0), so the
+   hero needs the section selector or its padding is ignored. */
+.lp section.lp-hero { padding-block: clamp(56px, 9vw, 104px) 64px; }
+
+.lp-hero__grid {
+  display: grid;
+  gap: 40px;
+  grid-template-columns: 1.05fr 0.95fr;
+  align-items: center;
+}
+
+@media (max-width: 880px) {
+  .lp-hero__grid { grid-template-columns: 1fr; gap: 28px; }
+}
+
+.lp-hero__media {
+  margin: 0;
+  border-radius: var(--lp-radius);
+  background: var(--lp-tinta-06);
+  border: 1px solid var(--lp-tinta-12);
+  padding: 28px 24px 14px;
+  display: grid;
+  gap: 14px;
+}
+
+.lp-hero__media figcaption {
+  font-family: var(--lp-data);
+  font-size: 0.72rem;
+  color: var(--lp-tinta-70);
+  text-align: center;
+}
+
+/* ── Cards / lists ────────────────────────────────────────── */
+
+.lp-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  margin-top: 32px;
+}
+
+.lp-card {
+  background: #fff;
+  border: 1px solid var(--lp-tinta-12);
+  border-radius: var(--lp-radius);
+  padding: 24px;
+}
+
+.lp-card p:last-child { margin-bottom: 0; }
+
+.lp-card__num {
+  font-family: var(--lp-data);
+  font-size: 0.78rem;
+  color: var(--lp-oro);
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.lp-card__tag {
+  display: inline-block;
+  font-family: var(--lp-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--lp-tinta-06);
+  color: var(--lp-tinta-70);
+  margin-bottom: 12px;
+}
+
+/* Dark-band card: transparent, with a light border. Replaces the
+   inline style that each band card used to carry. */
+.lp-card--on-dark {
+  background: transparent;
+  border-color: rgba(248, 245, 240, 0.2);
+}
+
+/* Coming-soon cards keep full text contrast; the tag says the state. */
+
+.lp-band { background: var(--lp-tinta); color: var(--lp-papel); }
+.lp-band .lp-eyebrow { color: var(--lp-oro); }
+.lp-band .lp-lede { color: color-mix(in srgb, var(--lp-papel) 75%, transparent); }
+
+/* ── FAQ ──────────────────────────────────────────────────── */
+
+.lp-faq { margin-top: 28px; border-top: 1px solid var(--lp-tinta-12); }
+
+.lp-faq details {
+  border-bottom: 1px solid var(--lp-tinta-12);
+}
+
+.lp-faq summary {
+  cursor: pointer;
+  padding: 18px 0;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.lp-faq summary::-webkit-details-marker { display: none; }
+.lp-faq summary::after { content: "+"; color: var(--lp-mar); font-family: var(--lp-data); }
+.lp-faq details[open] summary::after { content: "−"; }
+.lp-faq details p { padding-bottom: 18px; margin: 0; }
+
+/* ── Footer (§2) ──────────────────────────────────────────── */
+
+.lp-footer {
+  background: var(--lp-tinta);
+  color: var(--lp-papel);
+  padding-block: 0;
+}
+
+.lp-footer a { color: inherit; }
+
+.lp-footer__cross {
+  display: inline-block;
+  font-family: var(--lp-display);
+  font-size: 1.15rem;
+  text-decoration: none;
+  border-bottom: 2px solid var(--lp-oro);
+  padding-bottom: 3px;
+  margin-bottom: 36px;
+}
+
+.lp-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  font-size: 0.93rem;
+}
+
+.lp-footer__disclaimer {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--lp-papel) 68%, transparent);
+  max-width: 70ch;
+  border-top: 1px solid color-mix(in srgb, var(--lp-papel) 18%, transparent);
+  padding-top: 20px;
+}
+
+/* ── Brief illustration (hero visual) ─────────────────────── */
+
+/* Shows the structure of a buyer brief (the real fields the Concierge
+   collects), not a property or a person. The hero used to show an
+   empty box captioned "pending permission", an internal note. */
+.lp-brief {
+  width: 100%;
+  max-width: 360px;
+  margin-inline: auto;
+  background: #fff;
+  border: 1px solid var(--lp-tinta-12);
+  border-radius: var(--lp-radius);
+  padding: 20px 22px;
+  box-shadow: 0 12px 40px -16px rgba(10, 22, 40, 0.18);
+}
+
+.lp-brief__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  font-family: var(--lp-data);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lp-tinta-70);
+}
+
+.lp-brief__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding-block: 11px;
+  border-top: 1px solid var(--lp-tinta-12);
+  font-size: 0.92rem;
+}
+
+.lp-brief__row span:first-child { color: var(--lp-tinta-70); }
+.lp-brief__row span:last-child { font-weight: 600; text-align: right; }
+
+/* ── Band + focus + motion ────────────────────────────────── */
+
+.lp-band .lp-card__num { color: var(--lp-oro); }
+
+/* Visible focus on every control. Ink outline on paper, gold on the
+   dark band and footer, where ink would vanish. */
+.lp a:focus-visible,
+.lp button:focus-visible,
+.lp summary:focus-visible {
+  outline: 3px solid var(--lp-tinta);
+  outline-offset: 3px;
+}
+
+.lp-band :focus-visible,
+.lp-footer :focus-visible { outline-color: var(--lp-oro); }
+
+/* Touch targets: 44px on phones, where the language switch sits
+   inside the menu. */
+@media (max-width: 820px) {
+  .lang button { min-height: 44px; min-width: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp *, .lp *::before, .lp *::after {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Headline accent + active nav (main-site pattern) ─────── */
+
+.lp h1 em, .lp h2 em {
+  font-style: italic;
+  font-weight: 300;
+  color: var(--lp-mar-ink);
+}
+.lp-band h1 em, .lp-band h2 em { color: var(--lp-oro); }
+
+.navlinks a[aria-current="page"] { color: var(--gold); }
+
+/* ── Footer grid (copied from the main page's footer) ─────── */
+
+.foot-grid {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(4, 1fr);
+  gap: 32px;
+  padding: 64px var(--lp-gutter) 40px;
+}
+.foot-brand p {
+  color: color-mix(in srgb, var(--lp-papel) 68%, transparent);
+  font-size: 0.86rem;
+  margin-top: 10px;
+  line-height: 1.6;
+  max-width: 20em;
+}
+.foot-col h5 {
+  font-family: var(--lp-data);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--lp-papel) 68%, transparent);
+  font-weight: 400;
+  margin: 0 0 16px;
+}
+.foot-col { display: flex; flex-direction: column; gap: 10px; }
+.foot-col a {
+  color: color-mix(in srgb, var(--lp-papel) 82%, transparent);
+  font-size: 0.86rem;
+  text-decoration: none;
+}
+.foot-col a:hover { color: var(--lp-oro); }
+.foot-legal { padding-bottom: 8px; }
+.foot-bottom {
+  padding: 24px var(--lp-gutter);
+  border-top: 1px solid color-mix(in srgb, var(--lp-papel) 18%, transparent);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.82rem;
+  color: color-mix(in srgb, var(--lp-papel) 68%, transparent);
+}
+@media (max-width: 900px) { .foot-grid { grid-template-columns: 1fr 1fr; gap: 28px; } }
+@media (max-width: 560px) { .foot-grid { grid-template-columns: 1fr; } }
+
+/* ── Utility ──────────────────────────────────────────────── */
+
+.lp [hidden] { display: none !important; }
+
+.lp-skip {
+  position: absolute;
+  left: -9999px;
+}
+.lp-skip:focus {
+  left: var(--lp-gutter);
+  top: 10px;
+  z-index: 100;
+  background: var(--lp-papel);
+  padding: 10px 16px;
+  border-radius: 8px;
+}

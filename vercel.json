@@ -38,6 +38,26 @@
   },
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/invest"
+    },
+    {
+      "source": "/invest",
+      "destination": "/invest.html"
+    },
+    {
+      "source": "/agents",
+      "destination": "/agents.html"
+    },
+    {
+      "source": "/resources",
+      "destination": "/resources.html"
+    },
+    {
+      "source": "/resources/:slug",
+      "destination": "/article.html?slug=:slug"
+    },
+    {
       "source": "/api/describe",
       "destination": "/api/generate?action=describe"
     },
