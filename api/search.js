@@ -385,6 +385,10 @@ export default async function handler(req, res) {
       const urls = [
         { loc: `${base}/`, pri: '1.0' },
         { loc: `${base}/search`, pri: '0.9' },
+        { loc: `${base}/invest`, pri: '0.9' },
+        { loc: `${base}/agencias`, pri: '0.8' },
+        { loc: `${base}/agents`, pri: '0.8' },
+        { loc: `${base}/resources`, pri: '0.7' },
         ...towns.map(t => ({ loc: `${base}/propiedades-en-${slugify(t)}`, pri: '0.8' })),
         ...all.map(p => ({ loc: `${base}/property/${encodeURIComponent(p.public_id)}`, pri: '0.7' }))
       ];

@@ -38,10 +38,6 @@
   },
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/invest"
-    },
-    {
       "source": "/invest",
       "destination": "/invest.html"
     },
@@ -56,6 +52,10 @@
     {
       "source": "/resources/:slug",
       "destination": "/article.html?slug=:slug"
+    },
+    {
+      "source": "/agencies",
+      "destination": "/agencias"
     },
     {
       "source": "/api/describe",
