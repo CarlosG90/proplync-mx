@@ -16,6 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/components.css">
 <link rel="stylesheet" href="/css/landing.css">
 </head>
@@ -27,23 +28,28 @@
 
 <a class="lp-skip" href="#main" data-en="Skip to content" data-es="Saltar al contenido">Saltar al contenido</a>
 
-<header class="lp-nav">
-  <div class="lp-wrap lp-nav__inner">
-    <a class="lp-nav__logo" href="/invest">PropLync</a>
-    <button class="lp-nav__toggle" aria-expanded="false" aria-controls="lp-nav-links" aria-label="Menú" data-en-label="Menu" data-es-label="Menú">☰</button>
-    <ul class="lp-nav__links" id="lp-nav-links">
-      <li><a href="/invest" data-en="For Investors" data-es="Para inversionistas">Para inversionistas</a></li>
-      <li><a href="/agents" aria-current="page" data-en="For Agents" data-es="Para asesores">Para asesores</a></li>
-      <li><a href="/resources" data-en="Resources" data-es="Recursos">Recursos</a></li>
-      <li><a href="/login" data-en="Sign in" data-es="Entrar">Entrar</a></li>
-      <li>
-        <span class="lp-lang">
-          <button type="button" data-lang="en" aria-pressed="false">EN</button>
-          <button type="button" data-lang="es" aria-pressed="true">ES</button>
-        </span>
-      </li>
-    </ul>
-  </div>
+<header>
+  <nav class="wrap" aria-label="Main navigation">
+    <a class="brand" href="/" aria-label="PropLync.mx home">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 23.4h10.8" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" opacity=".45"/></svg>
+      <span class="wordmark">PropLync<span class="accent">.mx</span></span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/invest" data-es="Para inversionistas" data-en="For investors">Para inversionistas</a>
+      <a href="/agents" aria-current="page" data-es="Para asesores" data-en="For agents">Para asesores</a>
+      <a href="/resources" data-es="Recursos" data-en="Resources">Recursos</a>
+      <a href="/search" data-es="Buscar propiedades" data-en="Find properties">Buscar propiedades</a>
+      <a href="/finder" class="nav-buyer" data-es="Soy comprador" data-en="I'm a buyer">Soy comprador</a>
+      <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
+    </div>
+    <div class="navtools">
+      <div class="lang" role="group" aria-label="Language">
+        <button id="es" class="on" onclick="setLang('es')">ES</button>
+        <button id="en" onclick="setLang('en')">EN</button>
+      </div>
+      <button class="navtoggle" aria-label="Menu" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
 </header>
 
 <main id="main">
@@ -53,12 +59,12 @@
     <div class="lp-wrap lp-hero__grid">
       <div>
         <p class="lp-eyebrow" data-en="For agents" data-es="Para asesores">Para asesores</p>
-        <h1 data-en="Reach international investors without cold calls."
-            data-es="Llega a inversionistas internacionales sin llamadas en frío.">Llega a inversionistas internacionales sin llamadas en frío.</h1>
+        <h1 data-en="Reach international investors <em>without cold calls.</em>"
+            data-es="Llega a inversionistas internacionales <em>sin llamadas en frío.</em>">Llega a inversionistas internacionales <em>sin llamadas en frío.</em></h1>
         <p class="lp-lede"
            data-en="We bring you buyers who have already told us what they want."
            data-es="Te traemos compradores que ya nos dijeron qué buscan.">Te traemos compradores que ya nos dijeron qué buscan.</p>
-        <a class="lp-btn lp-btn--primary" href="/signup"
+        <a class="btn btn-dark" href="/signup"
            data-track="agent_signup_start" data-track-label="hero_join_as_agent"
            data-en="Join as an agent" data-es="Únete como asesor">Únete como asesor</a>
       </div>
@@ -209,22 +215,49 @@
 </main>
 
 <footer class="lp-footer">
-  <div class="lp-wrap">
+  <div class="wrap foot-grid">
+    <div class="foot-brand">
+      <span class="brand" style="font-family:var(--display);font-size:1.15rem"><span class="wordmark">PropLync<span class="accent">.mx</span></span></span>
+      <p data-es="Inversión, búsqueda y asesores en la Riviera Maya." data-en="Investment, search and agents in the Riviera Maya.">Inversión, búsqueda y asesores en la Riviera Maya.</p>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Para ti" data-en="For you"></h5>
+      <a href="/invest" data-es="Para inversionistas" data-en="For investors">Para inversionistas</a>
+      <a href="/agents" data-es="Para asesores" data-en="For agents">Para asesores</a>
+      <a href="/resources" data-es="Recursos" data-en="Resources">Recursos</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Producto" data-en="Product"></h5>
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/finder" data-es="Soy comprador" data-en="I'm a buyer">Soy comprador</a>
+      <a href="/generate" data-es="Generador" data-en="Generator">Generador</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Cuenta" data-en="Account"></h5>
+      <a href="/login" data-es="Soy agente" data-en="I'm an agent">Soy agente</a>
+      <a href="/signup" data-es="Crear cuenta" data-en="Create account">Crear cuenta</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Contacto" data-en="Contact">Contacto</h5>
+      <a href="mailto:hola@proplync.mx">hola@proplync.mx</a>
+    </div>
+  </div>
+  <div class="wrap foot-legal">
     <a class="lp-footer__cross" href="/invest"
        data-track="cta_click" data-track-label="footer_to_invest"
        data-en="Are you an international investor? Start your search →"
        data-es="¿Eres inversionista internacional? Comienza tu búsqueda →">¿Eres inversionista internacional? Comienza tu búsqueda →</a>
-    <ul class="lp-footer__links">
-      <li><a href="/privacy" data-en="Privacy" data-es="Privacidad">Privacidad</a></li>
-      <li><a href="/terms" data-en="Terms" data-es="Términos">Términos</a></li>
-      <li><a href="/#contacto" data-en="Contact" data-es="Contacto">Contacto</a></li>
-    </ul>
     <p class="lp-footer__disclaimer"
        data-en="PropLync does not provide investment, tax or legal advice. Consult a licensed notary (notario) and a qualified advisor for fideicomiso, tax and legal matters before any transaction."
        data-es="PropLync no brinda asesoría de inversión, fiscal ni legal. Consulta a un notario público y a un asesor calificado en materia de fideicomiso, impuestos y temas legales antes de cualquier transacción.">PropLync no brinda asesoría de inversión, fiscal ni legal. Consulta a un notario público y a un asesor calificado en materia de fideicomiso, impuestos y temas legales antes de cualquier transacción.</p>
   </div>
+  <div class="wrap foot-bottom">
+    <span data-es="Hecho en la Riviera Maya" data-en="Built in the Riviera Maya">Hecho en la Riviera Maya</span>
+    <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span>
+  </div>
 </footer>
 
+<script src="/js/i18n.js"></script>
 <script src="/js/landing.js" defer></script>
 </body>
 </html>

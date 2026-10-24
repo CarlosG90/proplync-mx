@@ -1,80 +1,14 @@
 /* ──────────────────────────────────────────────────────────────
-   landing.js — shared behaviour for /invest, /agents, /resources
+   landing.js — tracking for /invest, /agents, /resources
 
-   Three jobs:
-   1. Language switch over the repo's data-es / data-en convention.
-   2. Mobile nav toggle.
-   3. Tracking events from LANDING-PAGES-PLAN.md §7.
-
-   WHY the tracking layer is a stub: §7 lists the event names but
-   the analytics tool is still [TBD] (GA4 vs a privacy-friendly
-   alternative, and EU cookie consent hangs off that choice).
-   Every call site is already in place; wiring a vendor means
-   filling in one function, not hunting for the call sites.
+   Language and the mobile menu are shared with the main site: the
+   pages load js/i18n.js (same proplync_lang key, so the choice carries
+   across pages) and the header uses the same inline menu toggle.
+   This file only handles the §7 tracking events.
    ────────────────────────────────────────────────────────────── */
 
 (function () {
   'use strict';
-
-  /* ── 1. Language ─────────────────────────────────────────── */
-
-  var STORE_KEY = 'pl-lang';
-  var root = document.documentElement;
-
-  function readStoredLang() {
-    // Storage can throw in private mode or with site data blocked.
-    try { return window.localStorage.getItem(STORE_KEY); } catch (e) { return null; }
-  }
-
-  function writeStoredLang(lang) {
-    try { window.localStorage.setItem(STORE_KEY, lang); } catch (e) { /* non-fatal */ }
-  }
-
-  function applyLang(lang) {
-    var nodes = document.querySelectorAll('[data-' + lang + ']');
-    for (var i = 0; i < nodes.length; i++) {
-      var next = nodes[i].getAttribute('data-' + lang);
-      if (next !== null) nodes[i].textContent = next;
-    }
-    root.setAttribute('lang', lang);
-
-    // aria-label is an attribute, so textContent does not reach it.
-    var toggle = document.querySelector('.lp-nav__toggle');
-    if (toggle && toggle.getAttribute('data-' + lang + '-label')) {
-      toggle.setAttribute('aria-label', toggle.getAttribute('data-' + lang + '-label'));
-    }
-    var buttons = document.querySelectorAll('.lp-lang button');
-    for (var j = 0; j < buttons.length; j++) {
-      buttons[j].setAttribute('aria-pressed', String(buttons[j].dataset.lang === lang));
-    }
-    writeStoredLang(lang);
-  }
-
-  function initLang() {
-    // Page default wins on first visit; a stored choice wins after.
-    var pageDefault = document.body.dataset.defaultLang || 'en';
-    applyLang(readStoredLang() || pageDefault);
-
-    document.addEventListener('click', function (e) {
-      var btn = e.target.closest('.lp-lang button');
-      if (!btn) return;
-      applyLang(btn.dataset.lang);
-    });
-  }
-
-  /* ── 2. Mobile nav ───────────────────────────────────────── */
-
-  function initNav() {
-    var toggle = document.querySelector('.lp-nav__toggle');
-    var links = document.querySelector('.lp-nav__links');
-    if (!toggle || !links) return;
-
-    toggle.addEventListener('click', function () {
-      var open = links.getAttribute('data-open') === 'true';
-      links.setAttribute('data-open', String(!open));
-      toggle.setAttribute('aria-expanded', String(!open));
-    });
-  }
 
   /* ── 3. Tracking (§7) ────────────────────────────────────── */
 
@@ -109,15 +43,9 @@
 
   /* ── Boot ────────────────────────────────────────────────── */
 
-  function boot() {
-    initLang();
-    initNav();
-    initTracking();
-  }
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
+    document.addEventListener('DOMContentLoaded', initTracking);
   } else {
-    boot();
+    initTracking();
   }
 })();
