@@ -410,9 +410,13 @@ async function handleStatus(req, res) {
   }
   if (!brief) { res.status(404).json({ error: 'not_found' }); return; }
 
-  const { data: runs } = await svc.from('scout_runs')
-    .select('id, status, steps, web_searches, web_fetches, created_at, finished_at, lease_until, user_id, charged')
+  /* `progress` (migration 016) is what Scout is doing right now. If the column is not there yet the page just
+     goes without the live feed, instead of losing the whole status. */
+  const runCols = 'id, status, steps, web_searches, web_fetches, created_at, finished_at, lease_until, user_id, charged';
+  const latestRun = (cols) => svc.from('scout_runs').select(cols)
     .eq('brief_id', brief.id).order('created_at', { ascending: false }).limit(1);
+  let { data: runs, error: runsError } = await latestRun(runCols + ', progress');
+  if (runsError) ({ data: runs } = await latestRun(runCols));
   let run = runs && runs[0];
 
   /* This page polls every few seconds while a run is active, so it is also Scout's watchdog: a run whose
@@ -449,7 +453,10 @@ async function handleStatus(req, res) {
 
   res.status(200).json({
     status: brief.status, lang: brief.lang, brief: brief.brief, created_at: brief.created_at,
-    run: run ? { status: run.status, steps: run.steps, searches: run.web_searches, pages: run.web_fetches } : null,
+    run: run ? {
+      status: run.status, steps: run.steps, searches: run.web_searches, pages: run.web_fetches,
+      progress: Array.isArray(run.progress) ? run.progress.slice(-30) : []
+    } : null,
     candidates
   });
 }

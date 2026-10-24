@@ -14,11 +14,13 @@
  *   SCOUT_RUN_MAX_USD         the SOFT cap. A run that reaches this cost is told
  *                             to stop researching and submit what it has: the
  *                             next segment carries a wrap-up instruction.
- *                             Default 3.
+ *                             Default 1. (A first run on a real brief cost
+ *                             about US$0.54 for 8 searches and 10 pages, so 1
+ *                             leaves room for a deeper search and no more.)
  *   SCOUT_RUN_HARD_MAX_USD    the HARD cap. A run that reaches this without
  *                             submitting is stopped and counted as failed, so
- *                             the buyer is refunded. Default 6, and never less
- *                             than 1.5 times the soft cap.
+ *                             the buyer is refunded. Default 1.5, and never
+ *                             less than 1.5 times the soft cap.
  *
  * WHY A WRAP-UP INSTEAD OF STOPPING AT THE SOFT CAP
  * The old code ended a run "done" the moment it crossed the cap. A run crosses
@@ -38,8 +40,8 @@
  */
 
 export const DEFAULT_MONTHLY_BUDGET_USD = 50;
-export const DEFAULT_RUN_MAX_USD = 3;
-export const DEFAULT_RUN_HARD_MAX_USD = 6;
+export const DEFAULT_RUN_MAX_USD = 1;
+export const DEFAULT_RUN_HARD_MAX_USD = 1.5;
 
 /** A positive number from an env value, or the fallback. */
 export function usdFromEnv(raw, fallback) {

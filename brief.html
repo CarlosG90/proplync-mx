@@ -89,6 +89,26 @@
   .bf-verify{width:100%;margin-top:12px;background:var(--gold);color:var(--ink);border:0;border-radius:999px;padding:11px;font-weight:600;cursor:pointer;font-family:var(--body);font-size:.86rem}
   .bf-verify:disabled{opacity:.5;cursor:default}
   .bf-progress{font-family:var(--mono);font-size:.7rem;color:var(--on-ink-dim);margin-top:var(--sp-3)}
+  /* the recap shown when Concierge is done, before the buyer approves */
+  .bf-recap{margin:0 0 var(--sp-4);padding:0}
+  .bf-recap .bf-field:first-child{padding-top:0}
+  .bf-recap-lead{font-size:.9rem;line-height:1.55;margin:0 0 var(--sp-3)}
+  .bf-edit{width:100%;margin-top:var(--sp-3);background:none;color:var(--on-ink);border:1px solid rgba(240,237,232,.22);border-radius:999px;padding:11px;font-weight:600;cursor:pointer;font-family:var(--body);font-size:.86rem}
+  .bf-edit:hover{border-color:var(--gold);color:var(--gold)}
+
+  /* Scout at work: what it is searching and reading right now */
+  .bf-live{border:1px solid rgba(201,169,110,.28);border-radius:var(--radius-lg);background:rgba(201,169,110,.05);padding:var(--sp-5)}
+  .bf-live-head{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+  .bf-dot{width:9px;height:9px;border-radius:50%;background:var(--gold);flex:none}
+  @media (prefers-reduced-motion:no-preference){.bf-live[data-active="true"] .bf-dot{animation:pulse 1.2s infinite}}
+  .bf-live-count{margin-left:auto;color:var(--on-ink-dim);text-transform:none;letter-spacing:0}
+  .bf-feed{list-style:none;margin:var(--sp-4) 0 0;padding:0;display:grid;gap:8px}
+  .bf-feed li{display:grid;grid-template-columns:auto 1fr;gap:10px;font-size:.84rem;line-height:1.45;color:var(--on-ink-dim)}
+  .bf-feed li:first-child{color:var(--on-ink)}
+  .bf-feed b{font-family:var(--mono);font-weight:500;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);padding-top:2px;min-width:5.2em}
+  .bf-feed li.skip b{color:var(--on-ink-dim)}
+  .bf-done-log{margin-top:var(--sp-3)}
+  .bf-done-log summary{cursor:pointer;font-family:var(--mono);font-size:.7rem;color:var(--on-ink-dim)}
   @media (max-width:900px){
     .bf-grid{grid-template-columns:1fr}
     .bf-side{position:static}
@@ -177,12 +197,20 @@
         <p class="bf-status-text" id="st-text"></p>
         <div id="st-link"></div>
       </div>
+      <div class="bf-live" id="st-live" data-active="true" hidden>
+        <div class="bf-live-head"><span class="bf-dot" aria-hidden="true"></span><span id="st-live-title"></span><span class="bf-live-count" id="st-live-count"></span></div>
+        <ol class="bf-feed" id="st-feed"></ol>
+      </div>
       <div class="bf-status" id="st-results"></div>
     </section>
 
     <aside class="bf-side">
       <div class="bf-card" id="approve-card" hidden>
-        <h2 data-es="Aprueba y Scout busca" data-en="Approve and Scout searches">Approve and Scout searches</h2>
+        <h2 data-es="Esto es lo que entendí" data-en="Here is what I understood">Here is what I understood</h2>
+        <p class="bf-recap-lead" data-es="Revisa el resumen. Si falta algo o algo está mal, dímelo y lo corrijo. Si está bien, apruébalo y Scout empieza a buscar." data-en="Check the summary. If something is missing or wrong, tell me and I will fix it. If it looks right, approve it and Scout starts searching.">Check the summary. If something is missing or wrong, tell me and I will fix it. If it looks right, approve it and Scout starts searching.</p>
+        <div class="bf-recap" id="recap"></div>
+        <button class="bf-edit" id="recap-edit" type="button" data-es="Quiero agregar o cambiar algo" data-en="I want to add or change something">I want to add or change something</button>
+        <h2 style="margin-top:var(--sp-6)" data-es="Aprueba y Scout busca" data-en="Approve and Scout searches">Approve and Scout searches</h2>
         <p class="bf-note" data-es="Al aprobar, Scout busca en este momento en agencias PropLync, portales y sitios de agencias. Tu primera b&uacute;squeda es gratis. Pedir que una persona confirme una propiedad con su agente cuesta 1 cr&eacute;dito." data-en="When you approve, Scout searches right away across PropLync agencies, portals and agency sites. Your first search is free. Asking a person to confirm a property with its agent costs 1 credit.">When you approve, Scout searches right away across PropLync agencies, portals and agency sites. Your first search is free. Asking a person to confirm a property with its agent costs 1 credit.</p>
 
         <div class="bf-form" id="signin-box">
@@ -247,6 +275,23 @@ function bubble(role, text) {
 var FIELDS = PropLyncConcierge.FIELDS;
 var flat = PropLyncConcierge.flat;
 
+/* The recap shows only what Concierge actually captured, in plain words: an empty "not yet" row would read as
+   a gap the buyer must fill, when many briefs are valid without a timeline or a financing plan. */
+function renderRecap() {
+  var host = document.getElementById('recap');
+  if (!host) return;
+  host.innerHTML = '';
+  FIELDS.forEach(function (f) {
+    var val = flat(brief[f[0]]);
+    if (!val) return;
+    var row = document.createElement('div');
+    row.className = 'bf-field';
+    var k = document.createElement('div'); k.className = 'bf-k'; k.textContent = t(f[1], f[2]);
+    var v = document.createElement('div'); v.className = 'bf-v'; v.textContent = val;
+    row.appendChild(k); row.appendChild(v); host.appendChild(row);
+  });
+}
+
 function renderBrief() {
   var host = document.getElementById('brief');
   host.innerHTML = '';
@@ -260,6 +305,7 @@ function renderBrief() {
     v.textContent = val || t('pendiente', 'not yet');
     row.appendChild(k); row.appendChild(v); host.appendChild(row);
   });
+  renderRecap();
   /* Each captured need closes the object a little more. */
   if (window.PropLyncOrb) PropLyncOrb.setProgress(FIELDS.filter(function (f) { return flat(brief[f[0]]); }).length / FIELDS.length);
 }
@@ -292,6 +338,15 @@ function turn(text, viaVoice) { return ui.turn(text, viaVoice); }
 
 sendEl.addEventListener('click', function () { turn(sayEl.value.trim()); });
 sayEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') turn(sayEl.value.trim()); });
+
+/* "Add or change something": the recap steps aside and the conversation picks up where it left off. Concierge
+   decides again whether the brief is complete, so the recap comes back by itself when it is. */
+document.getElementById('recap-edit').addEventListener('click', function () {
+  document.getElementById('approve-card').hidden = true;
+  bubble('sys', t('Dime qué quieres agregar o cambiar y lo actualizo en el resumen.', 'Tell me what you want to add or change and I will update the brief.'));
+  sayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  sayEl.focus();
+});
 
 /* ---------- sign in (Supabase Auth: Google or a one-time email code) ----------
    Credits belong to a signed-in buyer, so a new tab cannot reset a wallet.
@@ -516,6 +571,75 @@ async function rerun() {
   loadStatus();
 }
 
+/* ---------- Scout at work: what it is searching and reading ----------
+   run.progress is Scout's own list of steps, newest last. Every string in it comes from a model talking about
+   public web pages, so it is drawn with textContent only. */
+function feedLine(ev) {
+  var host = ev.host || '';
+  switch (ev.k) {
+    case 'search': return [t('Busca', 'Search'), '“' + ev.q + '”'];
+    case 'results': return [t('Resultados', 'Results'), ev.n + t(' anuncios', ' listings') + (ev.sites && ev.sites.length ? ' · ' + ev.sites.join(', ') : '')];
+    case 'read': return [t('Abre', 'Opening'), host];
+    case 'page': return [t('Leyó', 'Read'), (ev.title ? ev.title + ' · ' : '') + host];
+    case 'skipped': return [t('Omitió', 'Skipped'), host ? host + t(': no se pudo abrir, usa el resumen de la búsqueda', ': could not be opened, using the search summary') : t('una página no se pudo abrir', 'a page could not be opened')];
+  }
+  return null;
+}
+
+function fillFeed(list, events, limit) {
+  list.innerHTML = '';
+  events.slice().reverse().slice(0, limit).forEach(function (ev) {
+    var line = feedLine(ev);
+    if (!line) return;
+    var li = document.createElement('li');
+    if (ev.k === 'skipped') li.className = 'skip';
+    var b = document.createElement('b'); b.textContent = line[0];
+    var span = document.createElement('span'); span.textContent = line[1];
+    li.appendChild(b); li.appendChild(span); list.appendChild(li);
+  });
+}
+
+function renderLive(s) {
+  var box = document.getElementById('st-live');
+  var run = s.run;
+  var running = Boolean(run && (run.status === 'queued' || run.status === 'running'));
+  var events = (run && run.progress) || [];
+  var old = document.getElementById('st-done-log');
+  if (old) old.remove();
+  if (!running) {
+    box.hidden = true;
+    /* Once it has finished, the trail stays one click away: it shows the buyer what the results rest on. */
+    if (run && events.length) {
+      var d = document.createElement('details');
+      d.className = 'bf-done-log'; d.id = 'st-done-log';
+      var sum = document.createElement('summary');
+      sum.textContent = t('Ver qué hizo Scout (', 'See what Scout did (') + events.length + t(' pasos)', ' steps)');
+      var ol = document.createElement('ol'); ol.className = 'bf-feed';
+      d.appendChild(sum); d.appendChild(ol);
+      fillFeed(ol, events, 40);
+      document.getElementById('st-results').before(d);
+    }
+    return;
+  }
+  var searches = Math.max(run.searches || 0, events.filter(function (e) { return e.k === 'search'; }).length);
+  var pages = Math.max(run.pages || 0, events.filter(function (e) { return e.k === 'page'; }).length);
+  box.hidden = false;
+  document.getElementById('st-live-title').textContent = t('Scout está buscando en el mercado', 'Scout is searching the market');
+  document.getElementById('st-live-count').textContent =
+    searches + (searches === 1 ? t(' búsqueda · ', ' search · ') : t(' búsquedas · ', ' searches · ')) +
+    pages + (pages === 1 ? t(' página leída', ' page read') : t(' páginas leídas', ' pages read'));
+  var feed = document.getElementById('st-feed');
+  if (!events.length) {
+    feed.innerHTML = '';
+    var li = document.createElement('li');
+    var b = document.createElement('b'); b.textContent = t('Preparando', 'Starting');
+    var sp = document.createElement('span'); sp.textContent = t('Scout lee tu resumen y planea las búsquedas…', 'Scout is reading your brief and planning its searches…');
+    li.appendChild(b); li.appendChild(sp); feed.appendChild(li);
+  } else {
+    fillFeed(feed, events, 8);
+  }
+}
+
 async function loadStatus() {
   try {
     var r = await fetch('/api/finder?action=status&t=' + encodeURIComponent(statusToken));
@@ -528,16 +652,14 @@ async function loadStatus() {
     }
     brief = s.brief || {}; renderBrief();
     document.getElementById('st-text').textContent = statusLine(s);
-    var prog = s.run && (s.run.status === 'queued' || s.run.status === 'running')
-      ? t('Búsquedas: ', 'Searches: ') + (s.run.searches || 0) + ' · ' + t('páginas leídas: ', 'pages read: ') + (s.run.pages || 0) : '';
-    if (prog) document.getElementById('st-text').textContent += ' (' + prog + ')';
+    renderLive(s);
     document.getElementById('st-results').innerHTML = (s.candidates || []).map(propCard).join('');
     if ((s.candidates || []).length && !resultsTracked) { resultsTracked = true; if (window.plTrack) plTrack('scout_result_viewed'); }
     renderWallet(s);
     clearTimeout(statusTimer);
     var running = s.run && (s.run.status === 'queued' || s.run.status === 'running');
     var waiting = (s.candidates || []).some(function (c) { return c.verify_requested && c.verification === 'pending'; });
-    if (running) statusTimer = setTimeout(loadStatus, 8000);
+    if (running) statusTimer = setTimeout(loadStatus, 4000);   // the live feed is only as fresh as this poll
     else if (waiting) statusTimer = setTimeout(loadStatus, 60000);
   } catch (e) {
     document.getElementById('st-text').textContent = t('Sin conexión.', 'No connection.');
