@@ -93,6 +93,36 @@
     .bf-side{position:static}
     .bf-log{max-height:46vh}
   }
+
+  /* ---------- voice stage: the object is Concierge's presence ---------- */
+  /* tokens.css gives every <section> 128px of vertical padding, which left dead space inside these two cards. */
+  .bf-chat,.bf-status{padding:0}
+  /* A text input's default width counts toward a grid track's minimum, so the chat card could not shrink below ~359px and ran off a 375px phone. */
+  .bf-grid>*{min-width:0}
+  .bf-stage{display:grid;justify-items:center;gap:12px;padding:var(--sp-6) var(--sp-6) var(--sp-5);border-bottom:1px solid rgba(240,237,232,.10);background:radial-gradient(circle at 50% 36%, rgba(201,169,110,.10), transparent 62%)}
+  .vo-orb{position:relative;width:min(300px,62vw);aspect-ratio:1/1}
+  .vo-orb canvas{width:100%;height:100%;display:block;touch-action:pan-y}
+  /* The poster sits behind the canvas and shows only when WebGL is unavailable. */
+  .vo-orb .fx-poster{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%, rgba(201,169,110,.16), transparent 68%)}
+  .vo-orb .fx-poster svg{width:62%;opacity:.9}
+  .vo-orb[data-ready="true"] .fx-poster{opacity:0;transition:opacity .6s var(--ease)}
+  .vo-orb[data-fallback] .fx-poster{opacity:1}
+  .vo-state{font-family:var(--mono);font-size:.74rem;letter-spacing:.05em;color:var(--on-ink-dim);min-height:1.5em;text-align:center;margin:0;max-width:34ch}
+  .vo-mic{width:76px;height:76px;border-radius:50%;border:0;background:linear-gradient(160deg,var(--gold),var(--gold-deep));color:var(--ink);display:grid;place-items:center;cursor:pointer;touch-action:manipulation;box-shadow:0 0 0 calc(var(--lvl,0) * 22px) rgba(201,169,110,.28),var(--shadow-gold);transition:transform .15s ease,background .2s ease}
+  .vo-mic:hover{transform:translateY(-1px)}
+  .vo-mic:active{transform:scale(.97)}
+  .vo-mic svg{width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .vo-mic .ic-stop{display:none}
+  .vo-mic[data-state="listening"]{background:#b84a3e;color:#fff}
+  .vo-mic[data-state="listening"] .ic-mic{display:none}
+  .vo-mic[data-state="listening"] .ic-stop{display:block;fill:currentColor}
+  .vo-mic[data-state="thinking"],.vo-mic[data-state="transcribing"]{opacity:.55;cursor:progress}
+  .vo-mic:focus-visible,.bf-icon:focus-visible{outline:3px solid var(--aqua);outline-offset:3px}
+  .bf-icon[aria-pressed="false"]{opacity:.55}
+  .bf-icon svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .bf-chat .bf-log{max-height:34vh;min-height:110px}
+  @media (prefers-reduced-motion:reduce){.vo-mic{transition:none;box-shadow:var(--shadow-gold)}}
+  @media (max-width:900px){.bf-chat .bf-log{max-height:30vh}}
 </style>
 </head>
 <body>
@@ -121,12 +151,32 @@
 
   <div class="bf-grid">
     <section class="bf-chat">
-      <div class="bf-log" id="log" aria-live="polite"></div>
+      <div class="bf-stage">
+        <div class="vo-orb" id="hero3d" data-voice>
+          <div class="fx-poster" aria-hidden="true">
+            <svg viewBox="0 0 200 200" fill="none">
+              <circle cx="100" cy="100" r="62" stroke="#c9a96e" stroke-width="1.2" opacity=".55"/>
+              <circle cx="100" cy="100" r="40" stroke="#5ec4be" stroke-width="1.2" opacity=".4"/>
+              <path d="M100 38l54 31v62l-54 31-54-31V69z" stroke="#c9a96e" stroke-width="1.4" opacity=".75"/>
+              <path d="M100 38v124M46 69l108 62M154 69L46 131" stroke="#c9a96e" stroke-width=".8" opacity=".3"/>
+            </svg>
+          </div>
+          <canvas aria-hidden="true"></canvas>
+        </div>
+        <p class="vo-state" id="vo-state" role="status" aria-live="polite"></p>
+        <button class="vo-mic" id="mic" type="button" data-rec="false" data-state="idle" aria-pressed="false" aria-label="Talk to Concierge">
+          <svg class="ic-mic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
+          <svg class="ic-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
+        </button>
+      </div>
+      <div class="bf-log" id="log" aria-live="polite" aria-label="Transcript"></div>
       <div class="bf-compose">
-        <button class="bf-icon" id="mic" title="Record a voice note" aria-label="Record a voice note" data-rec="false">&#127908;</button>
+        <button class="bf-icon" id="voice-out" type="button" aria-pressed="true" title="Spoken replies" aria-label="Spoken replies">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16.5 9a4 4 0 010 6M19 6.5a8 8 0 010 11"/></svg>
+        </button>
         <input class="bf-input" id="say" autocomplete="off"
-               data-es-placeholder="Escribe o toca el microfono..." data-en-placeholder="Type, or tap the microphone..."
-               placeholder="Type, or tap the microphone...">
+               data-es-placeholder="O escribe aqui si prefieres..." data-en-placeholder="Or type here if you prefer..."
+               placeholder="Or type here if you prefer...">
         <button class="bf-send" id="send" data-es="Enviar" data-en="Send">Send</button>
       </div>
     </section>
@@ -174,6 +224,7 @@
   </div>
 </main>
 
+<script src="/js/hero3d.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/js/supabase-client.js"></script>
 <script src="/js/escape.js"></script>
@@ -235,16 +286,21 @@ function renderBrief() {
     v.textContent = val || t('pendiente', 'not yet');
     row.appendChild(k); row.appendChild(v); host.appendChild(row);
   });
+  /* Each captured need closes the object a little more. */
+  if (window.PropLyncOrb) PropLyncOrb.setProgress(FIELDS.filter(function (f) { return flat(brief[f[0]]); }).length / FIELDS.length);
 }
 
-async function turn(text) {
+async function turn(text, viaVoice) {
   if (busy || !text) return;
   busy = true; sendEl.disabled = true;
   bubble('u', text);
   messages.push({ role: 'user', content: text });
   sayEl.value = '';
 
-  var thinking = bubble('sys', t('Concierge esta escuchando...', 'Concierge is listening...'));
+  if (speechOk) speechSynthesis.cancel();
+  voiceState('thinking');
+  /* The stage shows the state now, so a chat bubble for it would say it twice. */
+  var thinking = { remove: function () {} };
 
   try {
     var r = await fetch('/api/finder?action=turn', {
@@ -259,14 +315,15 @@ async function turn(text) {
       /* Name the real reason. "Something went wrong" sends people away; "the key
          is missing in this environment" tells whoever is testing what to fix. */
       var why = data.error === 'concierge_unconfigured'
-        ? t('Concierge no esta configurado en este entorno (faltan ANTHROPIC_API_KEY y GROQ_API_KEY).',
-             'Concierge is not configured in this environment (ANTHROPIC_API_KEY and GROQ_API_KEY are both missing).')
+        ? t('Concierge no esta configurado en este entorno (faltan NVIDIA_API_KEY y GROQ_API_KEY).',
+             'Concierge is not configured in this environment (NVIDIA_API_KEY and GROQ_API_KEY are both missing).')
         : data.error === 'concierge_busy'
           ? t('Concierge esta ocupado. Intenta de nuevo en unos segundos.', 'Concierge is busy. Try again in a few seconds.')
         : data.error === 'rate_limited'
           ? t('Demasiados mensajes seguidos. Espera un momento.', 'Too many messages at once. Give it a moment.')
           : t('Concierge no respondio. Intenta de nuevo.', 'Concierge did not answer. Try again.');
       bubble('err', why);
+      voiceState('idle');
       return;
     }
 
@@ -274,21 +331,137 @@ async function turn(text) {
     if (data.say) {
       bubble('a', data.say);
       messages.push({ role: 'assistant', content: data.say });
+      speak(data.say);
+    } else {
+      voiceState('idle');
     }
     if (data.done) {
       bubble('sys', t('Revisa el resumen y aprueba cuando este bien.', 'Review the brief and approve it when it looks right.'));
       document.getElementById('approve-card').hidden = false;
+      if (window.PropLyncOrb) PropLyncOrb.setProgress(1);   // brief complete: the object closes
     }
   } catch (e) {
     thinking.remove();
     bubble('err', t('Sin conexion con Concierge.', 'No connection to Concierge.'));
+    voiceState('idle');
   } finally {
-    busy = false; sendEl.disabled = false; sayEl.focus();
+    /* After a voice turn the keyboard stays down: focusing the field would cover the stage on a phone. */
+    busy = false; sendEl.disabled = false; if (!viaVoice) sayEl.focus();
   }
 }
 
-/* ---------- voice ---------- */
-var rec = null, chunks = [];
+/* ---------- voice ----------
+   Tap to talk: one tap records, the next tap sends. The same microphone stream
+   feeds a level meter, so the 3D object opens with the buyer's voice. Concierge's
+   reply is spoken with the browser's own voices (free, nothing leaves the device),
+   and typing, the transcript and a speaker switch stay available. */
+var stateEl = document.getElementById('vo-state');
+var outEl = document.getElementById('voice-out');
+var curState = 'idle';
+var STATE_TEXT = {
+  idle:         ['Toca el microfono y cuentame que buscas.', 'Tap the mic and tell me what you are looking for.'],
+  listening:    ['Te escucho. Toca de nuevo para enviar.', 'Listening. Tap again to send.'],
+  transcribing: ['Transcribiendo...', 'Transcribing...'],
+  thinking:     ['Pensando...', 'Thinking...'],
+  speaking:     ['Concierge responde. Toca el microfono para interrumpir.', 'Concierge is answering. Tap the mic to interrupt.']
+};
+
+function voiceState(s) {
+  curState = s;
+  if (window.PropLyncOrb) PropLyncOrb.setState(s === 'transcribing' ? 'thinking' : s);
+  stateEl.textContent = t(STATE_TEXT[s][0], STATE_TEXT[s][1]);
+  micEl.setAttribute('data-state', s);
+  micEl.setAttribute('data-rec', s === 'listening' ? 'true' : 'false');
+  micEl.setAttribute('aria-pressed', s === 'listening' ? 'true' : 'false');
+  micEl.setAttribute('aria-label', s === 'listening' ? t('Terminar y enviar', 'Stop and send') : t('Hablar con Concierge', 'Talk to Concierge'));
+}
+document.addEventListener('langchange', function () { voiceState(curState); paintOut(); });
+
+/* ----- spoken replies ----- */
+var speechOk = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
+var voiceOut = speechOk;
+try { if (localStorage.getItem('pl_voice_out') === 'off') voiceOut = false; } catch (e) { /* storage blocked: keep the default */ }
+
+function paintOut() {
+  outEl.setAttribute('aria-pressed', voiceOut ? 'true' : 'false');
+  var label = voiceOut ? t('Respuestas en voz: activadas', 'Spoken replies: on') : t('Respuestas en voz: apagadas', 'Spoken replies: off');
+  outEl.setAttribute('title', label);
+  outEl.setAttribute('aria-label', label);
+}
+if (!speechOk) { outEl.hidden = true; } else { paintOut(); }
+outEl.addEventListener('click', function () {
+  voiceOut = !voiceOut;
+  try { localStorage.setItem('pl_voice_out', voiceOut ? 'on' : 'off'); } catch (e) { /* not fatal */ }
+  if (!voiceOut) { speechSynthesis.cancel(); if (curState === 'speaking') voiceState('idle'); }
+  paintOut();
+});
+
+/* Safari only lets speech start from a tap, and the reply arrives seconds after
+   the tap. Speaking a silent utterance on the first tap unlocks it for later. */
+var speechUnlocked = false;
+function unlockSpeech() {
+  if (!speechOk || speechUnlocked) return;
+  speechUnlocked = true;
+  try { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) { /* not fatal */ }
+}
+
+function pickVoice() {
+  var want = document.documentElement.lang === 'es' ? 'es' : 'en';
+  var prefer = want === 'es' ? ['es-mx', 'es-us', 'es-es'] : ['en-us', 'en-gb'];
+  var all = speechSynthesis.getVoices().filter(function (v) { return v.lang && v.lang.toLowerCase().indexOf(want) === 0; });
+  for (var i = 0; i < prefer.length; i++) {
+    for (var j = 0; j < all.length; j++) { if (all[j].lang.toLowerCase().replace('_', '-') === prefer[i]) return all[j]; }
+  }
+  return all[0] || null;
+}
+
+function speak(text) {
+  if (!speechOk || !voiceOut || !text) { voiceState('idle'); return; }
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    var v = pickVoice();
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = document.documentElement.lang === 'es' ? 'es-MX' : 'en-US'; }
+    u.onstart = function () { voiceState('speaking'); };
+    u.onend = u.onerror = function () { if (curState === 'speaking') voiceState('idle'); };
+    speechSynthesis.speak(u);
+    /* A browser with no voice installed can accept the call and never start. */
+    setTimeout(function () { if (curState === 'thinking' && !speechSynthesis.speaking) voiceState('idle'); }, 3000);
+  } catch (e) { voiceState('idle'); }
+}
+
+/* ----- recording ----- */
+var rec = null, chunks = [], recTimer = null;
+var audioCtx = null, analyser = null, levelRaf = 0;
+var MAX_RECORD_MS = 60000;   // a longer note is rarely one thought, and the server caps the upload
+
+function watchLevel(stream) {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var src = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    src.connect(analyser);
+    var buf = new Uint8Array(analyser.fftSize);
+    (function tick() {
+      if (!analyser) return;
+      analyser.getByteTimeDomainData(buf);
+      var sum = 0;
+      for (var i = 0; i < buf.length; i++) { var x = (buf[i] - 128) / 128; sum += x * x; }
+      var lv = Math.min(1, Math.sqrt(sum / buf.length) * 4);
+      if (window.PropLyncOrb) PropLyncOrb.setLevel(lv);
+      micEl.style.setProperty('--lvl', lv.toFixed(2));
+      levelRaf = requestAnimationFrame(tick);
+    })();
+  } catch (e) { /* no meter, the recording itself still works */ }
+}
+function stopLevel() {
+  analyser = null;
+  cancelAnimationFrame(levelRaf);
+  if (audioCtx) { try { audioCtx.close(); } catch (e) { /* already closed */ } audioCtx = null; }
+  if (window.PropLyncOrb) PropLyncOrb.setLevel(0);
+  micEl.style.setProperty('--lvl', '0');
+}
 
 async function startRec() {
   try {
@@ -297,10 +470,12 @@ async function startRec() {
     rec = new MediaRecorder(stream);
     rec.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
     rec.onstop = async function () {
+      clearTimeout(recTimer);
+      stopLevel();
       stream.getTracks().forEach(function (tr) { tr.stop(); });
       var blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
-      if (!blob.size) return;
-      var note = bubble('sys', t('Transcribiendo...', 'Transcribing...'));
+      if (!blob.size) { voiceState('idle'); return; }
+      voiceState('transcribing');
       try {
         var b64 = await new Promise(function (resolve, reject) {
           var fr = new FileReader();
@@ -313,30 +488,36 @@ async function startRec() {
           body: JSON.stringify({ audio: b64, mime: blob.type })
         });
         var data = await r.json();
-        note.remove();
-        if (r.ok && data.text) { turn(data.text); }
-        else { bubble('err', t('No pude transcribir esa nota.', 'I could not transcribe that note.')); }
+        if (r.ok && data.text) { turn(data.text, true); }
+        else { bubble('err', t('No pude transcribir esa nota.', 'I could not transcribe that note.')); voiceState('idle'); }
       } catch (e) {
-        note.remove();
         bubble('err', t('No pude transcribir esa nota.', 'I could not transcribe that note.'));
+        voiceState('idle');
       }
     };
     rec.start();
-    micEl.setAttribute('data-rec', 'true');
+    watchLevel(stream);
+    voiceState('listening');
+    recTimer = setTimeout(function () { if (rec && rec.state === 'recording') rec.stop(); }, MAX_RECORD_MS);
   } catch (e) {
     /* A denied microphone is a choice, not a failure. Typing still works. */
     bubble('err', t('Sin acceso al microfono. Puedes escribir.', 'No microphone access. You can type instead.'));
+    voiceState('idle');
   }
 }
 
 micEl.addEventListener('click', function () {
+  unlockSpeech();
+  if (speechOk) speechSynthesis.cancel();                 // tapping the mic interrupts Concierge
   if (!navigator.mediaDevices || typeof MediaRecorder === 'undefined') {
     bubble('err', t('Este navegador no graba audio. Puedes escribir.', 'This browser cannot record audio. You can type instead.'));
     return;
   }
-  if (rec && rec.state === 'recording') { rec.stop(); micEl.setAttribute('data-rec', 'false'); }
-  else { startRec(); }
+  if (rec && rec.state === 'recording') { rec.stop(); }
+  else if (!busy) { startRec(); }
 });
+
+voiceState('idle');
 
 sendEl.addEventListener('click', function () { turn(sayEl.value.trim()); });
 sayEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') turn(sayEl.value.trim()); });

@@ -27,6 +27,21 @@
 (function () {
   'use strict';
 
+  /* VOICE MODE. brief.html drives the object from the conversation instead of
+     from the Take-it-apart buttons: the buyer's voice level opens the panels
+     while they speak, the object turns faster while Concierge thinks, pulses
+     while it answers, and closes as the brief fills in. The state lives here
+     (not in the WebGL scope) so callers can set it before Three.js has
+     loaded, and it is a harmless no-op when there is no object on the page. */
+  var orb = window.PropLyncOrb = {
+    state: 'idle',        // idle | listening | thinking | speaking
+    level: 0,             // 0..1, the buyer's voice
+    progress: 0,          // 0..1, how much of the brief is captured
+    setState: function (s) { this.state = s; },
+    setLevel: function (v) { this.level = Math.max(0, Math.min(1, v || 0)); },
+    setProgress: function (p) { this.progress = Math.max(0, Math.min(1, p || 0)); }
+  };
+
   var THREE_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
 
   var root = document.getElementById('hero3d');
@@ -132,7 +147,8 @@
       uExplode: { value: 0 },
       uInk:     { value: new THREE.Color('#16243c') },
       uGold:    { value: new THREE.Color('#c9a96e') },
-      uAqua:    { value: new THREE.Color('#5ec4be') }
+      uAqua:    { value: new THREE.Color('#5ec4be') },
+      uGlow:    { value: 0 }          // voice mode: cool light that follows the conversation
     };
 
     /* Shared displacement, so panels and their edges move as one object. */
@@ -164,7 +180,7 @@
         '}'
       ].join('\n'),
       fragmentShader: [
-        'uniform vec3 uInk; uniform vec3 uGold; uniform vec3 uAqua;',
+        'uniform vec3 uInk; uniform vec3 uGold; uniform vec3 uAqua; uniform float uGlow;',
         'varying vec3 vN; varying vec3 vV;',
         'void main(){',
         '  vec3 N = normalize(vN);',
@@ -178,6 +194,7 @@
         '  vec3 col = mix(uInk * 0.55, vec3(0.42, 0.52, 0.66), lam);',
         '  col += uGold * fres * 0.85;',            // warm rim, the expensive look
         '  col += uAqua * pow(lam, 26.0) * 0.55;',  // one cool specular glint
+        '  col += uAqua * uGlow * (0.18 + fres) * 0.6;',
         '  gl_FragColor = vec4(col, 1.0);',
         '}'
       ].join('\n'),
@@ -238,6 +255,7 @@
     var spin = reduced ? 0 : 0.0016;
     var dragging = false, lastX = 0, lastY = 0, velX = 0, velY = 0;
     var paused = reduced, visible = true, rafId = null;
+    var voiceMode = root.hasAttribute('data-voice');
 
     function setOpen(open) {
       explodeTarget = open ? 1 : 0;
@@ -322,14 +340,29 @@
 
     canvas.addEventListener('webglcontextlost', function (ev) { ev.preventDefault(); fail('context-lost'); });
 
-    function frame() {
+    function frame(now) {
       rafId = null;
-      explode += (explodeTarget - explode) * 0.075;
+      var ease = 0.075, sp = spin;
+      if (voiceMode) {
+        var tm = now || 0, st = orb.state, lv = orb.level, glowTarget = 0;
+        if (st === 'listening') {
+          explodeTarget = Math.min(1, 0.2 + lv * 1.2); sp = 0.0028; glowTarget = 0.35 + lv; ease = 0.18;
+        } else if (st === 'thinking') {
+          explodeTarget = 0.34 + 0.1 * Math.sin(tm * 0.0026); sp = 0.0065; glowTarget = 0.45;
+        } else if (st === 'speaking') {
+          explodeTarget = 0.24 + 0.2 * (0.5 + 0.5 * Math.sin(tm * 0.009)) * (0.75 + 0.25 * Math.sin(tm * 0.0023));
+          sp = 0.0035; glowTarget = 0.7; ease = 0.14;
+        } else {
+          explodeTarget = 0.3 * (1 - orb.progress);   // a complete brief is a closed object
+        }
+        uniforms.uGlow.value += (glowTarget - uniforms.uGlow.value) * 0.1;
+      }
+      explode += (explodeTarget - explode) * ease;
       zoom += (zoomTarget - zoom) * 0.08;
       uniforms.uExplode.value = explode;
       camera.position.z = zoom;
       if (!dragging) {
-        group.rotation.y += spin + velY;
+        group.rotation.y += sp + velY;
         group.rotation.x += velX;
         velX *= 0.93; velY *= 0.93;             // inertia, then settle
       }

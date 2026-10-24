@@ -58,6 +58,14 @@
       "destination": "/agencias"
     },
     {
+      "source": "/voice",
+      "destination": "/brief"
+    },
+    {
+      "source": "/voz",
+      "destination": "/brief"
+    },
+    {
       "source": "/api/describe",
       "destination": "/api/generate?action=describe"
     },
