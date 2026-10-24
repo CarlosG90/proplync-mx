@@ -11,9 +11,22 @@
  *   SCOUT_MONTHLY_BUDGET_USD  no new automatic run starts once the runs created
  *                             this calendar month (UTC) have cost this much.
  *                             Default 50.
- *   SCOUT_RUN_MAX_USD         a run that reaches this cost is told to submit
- *                             what it has; if it keeps going it is stopped.
- *                             Default 2.
+ *   SCOUT_RUN_MAX_USD         the SOFT cap. A run that reaches this cost is told
+ *                             to stop researching and submit what it has: the
+ *                             next segment carries a wrap-up instruction.
+ *                             Default 3.
+ *   SCOUT_RUN_HARD_MAX_USD    the HARD cap. A run that reaches this without
+ *                             submitting is stopped and counted as failed, so
+ *                             the buyer is refunded. Default 6, and never less
+ *                             than 1.5 times the soft cap.
+ *
+ * WHY A WRAP-UP INSTEAD OF STOPPING AT THE SOFT CAP
+ * The old code ended a run "done" the moment it crossed the cap. A run crosses
+ * it in the middle of researching, before anything is submitted, so it ended
+ * with zero candidates, was never refunded (it was not "failed") and the buyer
+ * lost a credit for nothing. Telling the model to wrap up keeps what it already
+ * read; only a run that ignores the instruction is stopped, and that one fails
+ * and is refunded.
  *
  * WHY NOT 0 TO TURN SCOUT OFF
  * A missing or invalid value falls back to the default, so a typo can never
@@ -25,7 +38,8 @@
  */
 
 export const DEFAULT_MONTHLY_BUDGET_USD = 50;
-export const DEFAULT_RUN_MAX_USD = 2;
+export const DEFAULT_RUN_MAX_USD = 3;
+export const DEFAULT_RUN_HARD_MAX_USD = 6;
 
 /** A positive number from an env value, or the fallback. */
 export function usdFromEnv(raw, fallback) {
@@ -39,6 +53,11 @@ export function monthlyBudgetUsd(env = process.env) {
 
 export function runMaxUsd(env = process.env) {
   return usdFromEnv(env.SCOUT_RUN_MAX_USD, DEFAULT_RUN_MAX_USD);
+}
+
+/** The hard cap is always comfortably above the soft one, so a wrap-up has room to finish. */
+export function runHardMaxUsd(env = process.env) {
+  return Math.max(usdFromEnv(env.SCOUT_RUN_HARD_MAX_USD, DEFAULT_RUN_HARD_MAX_USD), runMaxUsd(env) * 1.5);
 }
 
 /** First instant of the current calendar month, UTC. */

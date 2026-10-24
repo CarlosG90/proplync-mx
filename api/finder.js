@@ -41,9 +41,13 @@ import { waitUntil } from '@vercel/functions';
 import { safeDetail, logDegraded } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { groqChat, messageText } from './_lib/groq.js';
-import { conciergeChat } from './_lib/nvidia-concierge.js';
+import { nvidiaChat } from './_lib/nvidia-concierge.js';
+import { askConcierge, isBusy } from './_lib/concierge-turn.js';
 import { getServiceClient } from './_lib/supabase.js';
-import { createRun, runScoutStep, runsStartedToday, scoutConfigured } from './_lib/scout.js';
+import { createRun, runScoutStep, runsStartedToday, scoutConfigured, checkAnthropic } from './_lib/scout.js';
+import { watchRun } from './_lib/scout-watch.js';
+import { collectHealth, doctorToken } from './_lib/health-check.js';
+import { redisGet, redisSet } from './_lib/redis.js';
 import { monthlyBudgetUsd, spentThisMonth } from './_lib/scout-budget.js';
 import { notifyOperator } from './_lib/notify.js';
 
@@ -58,10 +62,10 @@ const MAX_TURNS = 40;
 /* The brief is the contract between Concierge and Scout. Keep this shape and
    these field names identical to the planned table, so storing it later is a
    straight insert rather than a translation. */
-const SYSTEM = `Eres Concierge, el asistente de PropLync Finder. Hablas con una persona que quiere comprar una propiedad en Mexico.
+const SYSTEM = `Eres Concierge, la asistente de PropLync Finder. Hablas con una persona que quiere comprar una propiedad en Mexico.
 
 QUIEN ERES
-Di desde el principio, una sola vez, que eres un asistente de IA de PropLync. Nunca afirmes ser humano. Si la persona pide hablar con alguien, dile que puede pedirlo cuando quiera y que un humano la contactara.
+Di desde el principio, una sola vez, que eres una asistente de IA de PropLync. Nunca afirmes ser humano. Si la persona pide hablar con alguien, dile que puede pedirlo cuando quiera y que un humano la contactara.
 
 COMO CONVERSAS
 - Empieza por la historia, no por el formulario: "Cuentame de la vida que quieres tener ahi."
@@ -71,7 +75,8 @@ COMO CONVERSAS
 - Cuando un deseo es vago, conviertelo en peso con una pregunta de intercambio: "Cambiarias la alberca por diez minutos caminando a la playa?"
 - Si el presupuesto y los imprescindibles se contradicen, dilo pronto y pregunta cual se relaja. No dejes que la busqueda salga vacia.
 - Nunca relajes un imprescindible por tu cuenta.
-- Se calido y breve. Dos o tres frases por turno.
+- Se calida, dulce y breve. Dos o tres frases por turno.
+- Tu respuesta se lee en voz alta: escribe como hablas, con frases cortas y naturales. Sin listas, sin asteriscos, sin emojis ni simbolos.
 
 LIMITES
 - No das asesoria legal, fiscal ni financiera. Sobre fideicomiso, impuestos o costos de cierre: di lo general y remite a un profesional.
@@ -99,27 +104,6 @@ Responde UNICAMENTE con un objeto JSON valido, sin markdown ni backticks:
   "done": false
 }
 Un dato que la persona no haya dado se queda en null o en lista vacia. Nunca lo rellenes tu.`;
-
-function readJson(raw) {
-  /* The model is told to return bare JSON, but surviving a stray fence costs
-     nothing and a 500 in the buyer's face costs a lot. */
-  const text = String(raw || '').replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start === -1 || end === -1) {
-    const err = new Error('model_returned_no_json');
-    err.detail = `Expected JSON object. Got: ${text.slice(0, 100)}`;
-    throw err;
-  }
-  try {
-    return JSON.parse(text.slice(start, end + 1));
-  } catch (parseErr) {
-    const err = new Error('model_json_invalid');
-    err.detail = `JSON parse failed: ${parseErr.message}`;
-    err.raw = text.slice(start, end + 1);
-    throw err;
-  }
-}
 
 /* Claude is the intended brain. Where its key is absent (Preview deployments)
    Groq runs the same conversation so the Concierge still works. Groq's cap is
@@ -158,54 +142,36 @@ async function handleTurn(req, res) {
   if (messages[0].role !== 'user') messages.unshift({ role: 'user', content: 'Hola' });
 
   try {
-    /* Use NVIDIA first (free), fallback to Groq. Both are free tier providers. */
-    const result = await conciergeChat(messages, {
-      groqChat,
-      GROQ_MAX_TOKENS,
-      SYSTEM
+    /* NVIDIA first, then Groq. Both get the same system prompt, every reply is validated, and a bad
+       reply gets one repair attempt before the next provider runs (see concierge-turn.js). */
+    const { reply, provider, repaired } = await askConcierge(messages, {
+      nvidiaChat, groqChat, SYSTEM, GROQ_MAX_TOKENS, haveNvidia, haveGroq
     });
 
-    const text = result.text;
-    const provider = result.provider;
-
-    if (!text) {
-      const err = new Error('provider_returned_empty_response');
-      err.provider = provider;
-      throw err;
-    }
-
-    const parsed = readJson(text);
-
     res.status(200).json({
-      say: String(parsed.say || '').slice(0, 4000),
-      brief: parsed.brief && typeof parsed.brief === 'object' ? parsed.brief : {},
-      missing: Array.isArray(parsed.missing) ? parsed.missing.slice(0, 20) : [],
-      done: parsed.done === true,
-      provider: provider
+      say: reply.say,
+      /* null, not {}: a reply that leaves the brief out must not wipe what the page already shows. */
+      brief: reply.brief,
+      missing: reply.missing,
+      done: reply.done,
+      provider: provider,
+      repaired: repaired
     });
   } catch (err) {
     const code = err.code || (err.message ? err.message.split(':')[0] : 'unknown');
     logDegraded('finder:turn', err);
 
-    /* Rate limit (429) from Groq: tell buyer to retry, don't treat as error. */
-    if (/groq.*429|Groq responded 429/.test(String(err && err.message))) {
-      res.status(429).json({
-        error: 'concierge_busy',
-        detail: 'The Concierge is busy. Try again in a few seconds.'
-      });
-      return;
-    }
-
-    /* Timeout from NVIDIA: likely rate limit, tell buyer to retry. */
-    if (code === 'nvidia_timeout') {
+    /* A rate limit or a timeout is "busy", not "broken": the buyer is told to try again, and the page
+       already retries once on its own. */
+    if (err.busy || isBusy(err)) {
       res.status(503).json({
         error: 'concierge_busy',
-        detail: 'The Concierge is processing many requests. Try again in a moment.'
+        detail: 'The Concierge is busy. Try again in a few seconds.',
+        code: code
       });
       return;
     }
 
-    /* All other errors: unavailable. */
     res.status(502).json({
       error: 'concierge_unavailable',
       detail: safeDetail(err, 'finder'),
@@ -445,9 +411,26 @@ async function handleStatus(req, res) {
   if (!brief) { res.status(404).json({ error: 'not_found' }); return; }
 
   const { data: runs } = await svc.from('scout_runs')
-    .select('status, steps, web_searches, web_fetches, created_at, finished_at')
+    .select('id, status, steps, web_searches, web_fetches, created_at, finished_at, lease_until, user_id, charged')
     .eq('brief_id', brief.id).order('created_at', { ascending: false }).limit(1);
-  const run = runs && runs[0];
+  let run = runs && runs[0];
+
+  /* This page polls every few seconds while a run is active, so it is also Scout's watchdog: a run whose
+     hand-off was lost is restarted, and one that is hopelessly stuck is closed and refunded. */
+  if (run) {
+    try {
+      const watched = await watchRun(svc, { ...run }, brief, {
+        recentlyKicked: async (id) => Boolean(await redisGet('scout:rekick:' + id)),
+        markKicked: (id) => redisSet('scout:rekick:' + id, 1, 40),
+        kick: (id) => waitUntil(kickStep(id)),
+        refund: (r) => refundRun(svc, r),
+        notify: (m) => waitUntil(notifyOperator(m))
+      });
+      if (watched === 'failed') run = { ...run, status: 'failed' };
+    } catch (err) {
+      logDegraded('finder:watchdog', err);
+    }
+  }
 
   /* Scout's matches show as soon as it finishes, each labelled with where it
      stands: not yet verified, verification requested, confirmed by the agent,
@@ -510,6 +493,31 @@ async function handleWallet(req, res) {
   });
 }
 
+/* Is everything the agents need actually in place? Operator-only (the step secret), read-only, spends nothing.
+   See api/_lib/health-check.js and scripts/doctor.mjs. */
+async function handleHealth(req, res) {
+  const byStepSecret = sameSecret(req.headers['x-scout-secret'], process.env.SCOUT_STEP_SECRET);
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const byDoctorToken = Boolean(serviceKey) && sameSecret(req.headers['x-doctor-token'], doctorToken(serviceKey));
+  if (!byStepSecret && !byDoctorToken) {
+    res.status(401).json({ error: 'unauthorized' }); return;
+  }
+  try {
+    const report = await collectHealth({
+      env: process.env,
+      svc: getServiceClient(),
+      checkAnthropic,
+      scoutCanRun: scoutCanRun(),
+      stepOriginSet: Boolean(stepOrigin()),
+      dailyCap: Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 5
+    });
+    res.status(200).json(report);
+  } catch (err) {
+    logDegraded('finder:health', err);
+    res.status(500).json({ error: 'health_failed', detail: safeDetail(err, 'finder') });
+  }
+}
+
 async function handleScoutStep(req, res) {
   if (!sameSecret(req.headers['x-scout-secret'], process.env.SCOUT_STEP_SECRET)) {
     res.status(401).json({ error: 'unauthorized' }); return;
@@ -566,6 +574,11 @@ export default async function handler(req, res) {
     if (req.method !== 'GET') { res.status(405).json({ error: 'method_not_allowed' }); return; }
     if (await enforceRateLimit(req, res, { bucket: 'finder-wallet', limit: 60, windowSec: 60 })) return;
     return handleWallet(req, res);
+  }
+
+  if (action === 'health') {
+    if (req.method !== 'GET') { res.status(405).json({ error: 'method_not_allowed' }); return; }
+    return handleHealth(req, res);
   }
 
   if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }

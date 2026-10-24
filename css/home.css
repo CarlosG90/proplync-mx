@@ -1,0 +1,100 @@
+/* home.css — the "/" chooser (LANDING-PAGES-PLAN §9.4, two-door split).
+   WHY small: the page only routes people. The agency pitch, demo, ROI calculator and
+   contact form moved to /agencias (css/agencias.css); header, footer and buttons come
+   from nav.css / landing.css so the whole marketing site looks like one product. */
+
+.home-hero {
+  background: var(--ink);
+  color: var(--on-ink);
+  padding: clamp(64px, 10vw, 120px) 0 clamp(56px, 8vw, 88px);
+}
+.home-hero .eyebrow { color: var(--gold); }
+.home-hero h1 {
+  font-size: clamp(2.2rem, 5.6vw, 3.9rem);
+  max-width: 20ch;
+  margin: 14px 0 20px;
+  text-wrap: balance;
+}
+.home-hero h1 em { font-style: italic; color: var(--gold); font-weight: 300; }
+.home-sub {
+  color: var(--on-ink-dim);
+  font-size: clamp(1.05rem, 2.4vw, 1.25rem);
+  max-width: 46ch;
+  margin: 0;
+}
+
+/* Two doors */
+.doors {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 48px;
+}
+.door {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line-dark);
+  background: rgba(240, 237, 232, 0.04);
+  transition: border-color var(--duration) ease, transform var(--duration) ease;
+}
+.door:hover { border-color: var(--gold); transform: translateY(-2px); }
+.door-tag {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.door h2 { font-size: clamp(1.45rem, 3vw, 1.9rem); color: var(--on-ink); margin: 0; }
+.door p { color: var(--on-ink-dim); margin: 0; max-width: 40ch; }
+.door-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 22px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+.door-alt {
+  color: var(--on-ink-dim);
+  font-size: 0.92rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.door-alt:hover { color: var(--gold); }
+
+/* Trust strip (the three badges the old hero carried) */
+.home-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  list-style: none;
+  margin: 40px 0 0;
+  padding: 0;
+  color: var(--on-ink-dim);
+  font-size: 0.9rem;
+}
+.home-trust li { display: flex; align-items: center; gap: 10px; }
+.home-trust svg {
+  width: 20px; height: 20px; flex: none;
+  fill: none; stroke: var(--gold); stroke-width: 1.6;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* Resources teaser */
+.home-resources { padding: clamp(56px, 8vw, 88px) 0; }
+.home-resources h2 { font-size: clamp(1.6rem, 4vw, 2.3rem); margin: 10px 0 12px; }
+.home-resources p { color: var(--on-sand-dim); margin: 0 0 24px; }
+.home-resources .eyebrow { color: var(--sea-deep); }
+
+@media (max-width: 760px) {
+  .doors { grid-template-columns: 1fr; }
+  .door { padding: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .door { transition: none; }
+  .door:hover { transform: none; }
+}

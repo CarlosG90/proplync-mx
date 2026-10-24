@@ -1,15 +1,17 @@
 /**
- * Proplync.mx · NVIDIA Concierge via NIM API
+ * Proplync.mx · NVIDIA Concierge via the NIM API
  * ─────────────────────────────────────────────────────────────────────────
  * WHY THIS EXISTS
- * Concierge runs on NVIDIA NIM free tier to reduce costs (Claude is expensive).
- * NVIDIA API is OpenAI-compatible and includes rate-limit retry logic.
+ * Concierge runs on NVIDIA NIM's free tier first (Claude is gone from this path). The API
+ * is OpenAI-compatible. This file only talks to NVIDIA: choosing providers, sending the
+ * system prompt, validating the reply and falling back all live in concierge-turn.js.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 const NVIDIA_NIM_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 const MODEL = 'nvidia/nvidia-nemotron-nano-9b-v2';
-const REQUEST_TIMEOUT_MS = 9000; // Vercel limit is 10s; leave 1s margin
+export const NVIDIA_MODEL = MODEL;   // the readiness check verifies this ID is still in NVIDIA's catalog
+const REQUEST_TIMEOUT_MS = 9000;
 
 export async function nvidiaChat(messages, options = {}) {
   const apiKey = process.env.NVIDIA_API_KEY;
@@ -29,88 +31,39 @@ export async function nvidiaChat(messages, options = {}) {
   try {
     const response = await (options.fetchImpl || fetch)(NVIDIA_NIM_URL, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body,
       signal: controller.signal,
     });
 
     if (!response.ok) {
-      const detail = response.status === 401 ? 'nvidia_auth_failed' :
-                     response.status === 404 ? 'nvidia_model_unavailable' :
-                     response.status >= 500 ? 'nvidia_unavailable' :
-                     'nvidia_request_failed';
+      const code = response.status === 401 ? 'nvidia_auth_failed' :
+                   response.status === 404 ? 'nvidia_model_unavailable' :
+                   response.status === 429 ? 'nvidia_rate_limited' :
+                   response.status >= 500 ? 'nvidia_unavailable' :
+                   'nvidia_request_failed';
       const text = await response.text();
       const error = new Error(`NVIDIA NIM ${response.status}: ${text}`);
-      error.code = detail;
+      error.code = code;
       throw error;
     }
 
     const data = await response.json();
-
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
       throw new Error('nvidia_invalid_response: no message in choices');
     }
-
-    return data.choices[0].message.content;
+    /* Empty content (a reasoning model that spent its budget thinking) is bad output, not an outage:
+       the caller validates it and gets one repair attempt. */
+    return data.choices[0].message.content || '';
   } catch (err) {
     if (err.name === 'AbortError') {
-      const timeout_err = new Error('nvidia_timeout: request exceeded 9s');
-      timeout_err.code = 'nvidia_timeout';
-      throw timeout_err;
+      const timeoutErr = new Error('nvidia_timeout: request exceeded 9s');
+      timeoutErr.code = 'nvidia_timeout';
+      throw timeoutErr;
     }
     if (err.code) throw err;
     throw new Error(`nvidia_unavailable: ${err.message}`);
   } finally {
     clearTimeout(timeout);
   }
-}
-
-/**
- * Try NVIDIA, fall back to Groq on failure.
- * Returns { text, provider, error? }
- */
-export async function conciergeChat(messages, { groqChat, GROQ_MAX_TOKENS, SYSTEM }) {
-  let lastError;
-
-  // Try NVIDIA first
-  if (process.env.NVIDIA_API_KEY) {
-    try {
-      const text = await nvidiaChat(messages.map(m => ({
-        role: m.role || 'user',
-        content: m.content || ''
-      })), {
-        max_tokens: 1400,
-        temperature: 0.4
-      });
-      return { text, provider: 'nvidia' };
-    } catch (err) {
-      lastError = err;
-      // Log but continue to fallback
-      console.error('[Concierge] NVIDIA failed:', err.code || err.message);
-    }
-  }
-
-  // Fall back to Groq
-  if (process.env.GROQ_API_KEY) {
-    try {
-      const data = await groqChat({
-        max_tokens: GROQ_MAX_TOKENS,
-        temperature: 0.4,
-        messages: [{ role: 'system', content: SYSTEM }].concat(messages)
-      });
-      const text = data.choices?.[0]?.message?.content;
-      if (!text) throw new Error('groq_no_message');
-      return { text, provider: 'groq' };
-    } catch (err) {
-      lastError = err;
-      // Both providers failed
-    }
-  }
-
-  // All providers failed
-  if (lastError) throw lastError;
-  throw new Error('concierge_no_provider: neither NVIDIA_API_KEY nor GROQ_API_KEY configured');
 }

@@ -12,7 +12,7 @@ PropLync.mx is a bilingual (ES/EN) real-estate platform for the **Riviera Maya, 
    - Accounts are invite-only (`/invitacion/:code`, `/signup`). Onboarding happens through the `onboard-agency` skill or `scripts/onboard-agency.mjs`.
 2. **Buyers (free, the demand side).**
    - `/` home with agency/buyer "doors", **`/search` (search v2: one index of PropLync listings + crawled portal listings, natural-language queries, ranked, semantic)** and `/propiedades-en-:city`, `/propiedad/:id` (server-rendered for SEO), `/favoritos`.
-   - **PropLync Finder** (`/finder`, `/brief`): **Concierge**, a voice- or text-based AI agent, interviews the buyer about the life they want, turns that into a structured *brief* (must-haves, deal-breakers, budget, areas, purpose, timeline), and the buyer approves it (with name, email and consent), getting a private link `/brief?b=<token>`. **Scout** then searches PropLync inventory, the portals and agency sites, merges the same property across sites into one card with every price, and a person confirms five questions with each listing agent before anything is shown to the buyer (see *Scout* below).
+   - **PropLync Finder** (`/invest` is the buyer landing, `/voice` opens `/brief`; `/finder` redirects to `/invest`): **Concierge**, a voice- or text-based AI agent, interviews the buyer about the life they want, turns that into a structured *brief* (must-haves, deal-breakers, budget, areas, purpose, timeline), and the buyer approves it (with name, email and consent), getting a private link `/brief?b=<token>`. **Scout** then searches PropLync inventory, the portals and agency sites, merges the same property across sites into one card with every price, and a person confirms five questions with each listing agent before anything is shown to the buyer (see *Scout* below).
 
 Business model: plans `free` / `pro` / `vip` in `api/_lib/plans.js` (listing caps, marketing module, Instagram, monthly Reel quota). `agencies.plan` is set by hand today; there's no billing yet.
 
@@ -38,7 +38,15 @@ js/escape.js           escapeHtml / safeUrl / cssUrl; load before i18n.js on any
 js/i18n.js             ES/EN toggle; language saved in localStorage 'proplync_lang', carried across pages
 js/nav-auth.js         reads the stored Supabase session to pick nav labels; secures nothing
 js/supabase-client.js  SDK client, used only on authenticated pages
-js/api.js, favorites.js, hero3d.js (Three.js hero)
+js/api.js, favorites.js, hero3d.js (Three.js object; PropLyncOrb drives it from the voice UI)
+js/concierge.js        buyer voice client shared by /invest (hero) and /brief: record, transcribe, ask Concierge, speak the reply
+                       (browser voices, woman's voice picked by name, spoken phrase by phrase); hands the conversation to /brief
+js/invest.js           the /invest hero's captions, captured-needs chips and hand-off
+api/_lib/concierge-turn.js  one Concierge turn: both providers get the system prompt, replies are validated and repaired once, then fallback
+api/_lib/scout-watch.js     watchdog: the buyer's status poll restarts a lost Scout hand-off or refunds a stalled run
+api/_lib/health-check.js    readiness check behind /api/finder?action=health; run it with `node scripts/doctor.mjs`
+api/_lib/funnel.js          the funnel from the events table; `node scripts/funnel.mjs` prints it (first-party, anonymous, no vendor; supabase/014_events.sql)
+PARTNER-TEST-RUNBOOK.md     how to test the AI agents end to end with a second person
 api/
   generate.js          multi-action: listing copy, describe, nlsearch, enhance, day-to-dusk, Reel start/poll
   finder.js            Concierge (?action=turn | transcribe) + approve | status | scout-step (internal, secret-gated chain)

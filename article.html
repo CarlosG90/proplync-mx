@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<title>PropLync — Resources</title>
+<meta name="robots" content="noindex">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/landing.css">
+
+<style>
+  /* Article measure: narrower than the landing grid. */
+  .lp-article { max-width: 70ch; }
+  .lp-article h2 { margin-top: 40px; }
+  .lp-article__meta {
+    font-family: var(--lp-data);
+    font-size: 0.78rem;
+    color: var(--lp-tinta-70);
+    margin-bottom: 28px;
+  }
+  /* §5: every figure carries a source and a date. */
+  .lp-source {
+    font-size: 0.85rem;
+    color: var(--lp-tinta-70);
+    border-left: 2px solid var(--lp-oro);
+    padding-left: 12px;
+    margin: 20px 0;
+  }
+</style>
+</head>
+
+<!-- noindex until a real article is served from here: an empty
+     template in the index is worse than no page at all. Remove the
+     robots meta above when the first article ships. -->
+<body class="lp" data-page="article" data-default-lang="en">
+
+<a class="lp-skip" href="#main" data-en="Skip to content" data-es="Saltar al contenido">Skip to content</a>
+
+<header>
+  <nav class="wrap" aria-label="Main navigation">
+    <a class="brand" href="/" aria-label="PropLync.mx home">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 23.4h10.8" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" opacity=".45"/></svg>
+      <span class="wordmark">PropLync<span class="accent">.mx</span></span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/invest" data-es="Inversionistas" data-en="Investors">Investors</a>
+      <a href="/agencias" data-es="Agencias" data-en="Agencies">Agencies</a>
+      <a href="/agents" data-es="Asesores" data-en="Agents">Agents</a>
+      <a href="/resources" aria-current="page" data-es="Recursos" data-en="Resources">Resources</a>
+      <a href="/search" data-es="Buscar" data-en="Search">Search</a>
+      <a href="/login" data-es="Entrar" data-en="Sign in">Sign in</a>
+    </div>
+    <div class="navtools">
+      <div class="lang" role="group" aria-label="Language">
+        <button id="es" onclick="setLang('es')">ES</button>
+        <button id="en" class="on" onclick="setLang('en')">EN</button>
+      </div>
+
+      <button class="navtoggle" aria-label="Menu" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="lp-hero">
+    <div class="lp-wrap lp-article" id="article-root">
+
+      <!-- Empty state. No article is published yet (§5: write, then
+           fact-check, then publish), so every slug lands here. -->
+      <p class="lp-eyebrow" data-en="Resources" data-es="Recursos">Resources</p>
+      <h1 data-en="This article isn't published yet."
+          data-es="Este artículo todavía no está publicado.">This article isn't published yet.</h1>
+      <p class="lp-lede"
+         data-en="Each guide is reviewed by a qualified professional before it goes live, and every figure carries a source and a date."
+         data-es="Cada guía es revisada por un profesional calificado antes de publicarse, y cada cifra lleva su fuente y fecha.">Each guide is reviewed by a qualified professional before it goes live, and every figure carries a source and a date.</p>
+      <a class="btn btn-dark" href="/resources"
+         data-en="See all resources" data-es="Ver todos los recursos">See all resources</a>
+
+    </div>
+  </section>
+</main>
+
+<footer class="lp-footer">
+  <div class="wrap foot-grid">
+    <div class="foot-brand">
+      <span class="brand" style="font-family:var(--display);font-size:1.15rem"><span class="wordmark">PropLync<span class="accent">.mx</span></span></span>
+      <p data-es="Inversión, búsqueda y agencias en la Riviera Maya." data-en="Investment, search and agencies in the Riviera Maya.">Investment, search and agencies in the Riviera Maya.</p>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Para ti" data-en="For you">For you</h5>
+      <a href="/invest" data-es="Inversionistas" data-en="Investors">Investors</a>
+      <a href="/agencias" data-es="Agencias" data-en="Agencies">Agencies</a>
+      <a href="/agents" data-es="Asesores" data-en="Agents">Agents</a>
+      <a href="/resources" data-es="Recursos" data-en="Resources">Resources</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Producto" data-en="Product">Product</h5>
+      <a href="/search" data-es="Buscar" data-en="Search">Search</a>
+      <a href="/generate" data-es="Generador" data-en="Generator">Generator</a>
+      <a href="/favoritos" data-es="Favoritos" data-en="Favorites">Favorites</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Cuenta" data-en="Account">Account</h5>
+      <a href="/login" data-es="Entrar" data-en="Sign in">Sign in</a>
+      <a href="/signup" data-es="Crear cuenta" data-en="Create account">Create account</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Contacto" data-en="Contact">Contact</h5>
+      <a href="mailto:hola@proplync.mx">hola@proplync.mx</a>
+    </div>
+  </div>
+  <div class="wrap foot-legal">
+    <a class="lp-footer__cross" href="/invest"
+       data-track="cta_click" data-track-label="article_to_invest"
+       data-en="Start your search →" data-es="Comienza tu búsqueda →">Start your search →</a>
+    <p class="lp-footer__disclaimer"
+       data-en="PropLync does not provide investment, tax or legal advice. Consult a licensed notary (notario) and a qualified advisor for fideicomiso, tax and legal matters before any transaction."
+       data-es="PropLync no brinda asesoría de inversión, fiscal ni legal. Consulta a un notario público y a un asesor calificado en materia de fideicomiso, impuestos y temas legales antes de cualquier transacción.">PropLync does not provide investment, tax or legal advice. Consult a licensed notary (notario) and a qualified advisor for fideicomiso, tax and legal matters before any transaction.</p>
+  </div>
+  <div class="wrap foot-bottom">
+    <span data-es="Hecho en la Riviera Maya" data-en="Built in the Riviera Maya">Built in the Riviera Maya</span>
+    <span class="foot-legal-links"><a href="/privacy" data-es="Privacidad" data-en="Privacy">Privacy</a> &middot; <a href="/terms" data-es="Términos" data-en="Terms">Terms</a> &middot; <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span></span>
+  </div>
+</footer>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/landing.js" defer></script>
+<script>
+/* ──────────────────────────────────────────────────────────────
+   Article router.
+
+   WHY client-side and not an api/*.js function: Vercel Hobby caps
+   the project at 12 functions and all 12 are in use (§1 of the
+   plan). Articles are static content, so the slug is resolved in
+   the browser against a manifest declared here. Adding an article
+   is one entry below plus its markup.
+   ────────────────────────────────────────────────────────────── */
+(function () {
+  'use strict';
+
+  // slug → { file } once articles exist. Empty until §5 clears review.
+  var ARTICLES = {};
+
+  var params = new URLSearchParams(window.location.search);
+  var slug = params.get('slug');
+  if (!slug || !ARTICLES[slug]) return; // empty state already rendered
+
+  var entry = ARTICLES[slug];
+  fetch(entry.file)
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then(function (html) {
+      document.getElementById('article-root').innerHTML = html;
+      document.title = 'PropLync — ' + (entry.title || 'Resources');
+    })
+    .catch(function () { /* empty state stays */ });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>PropLync.mx — Portafolio, CRM y marketing con IA para agencias</title>
+<meta name="description" content="Plataforma inmobiliaria para agencias: portafolio con mini-sitio propio, CRM de prospectos con seguimiento, y marketing con IA en siete formatos desde una sola captura de la propiedad.">
+<meta name="description" content="Captura una propiedad una vez: mini-sitio, CRM de prospectos y siete piezas de marketing con IA para tu agencia inmobiliaria en la Riviera Maya.">
+<link rel="canonical" href="https://proplync-mx.vercel.app/agencias">
+<meta property="og:type" content="website">
+<meta property="og:title" content="PropLync.mx — Portafolio, CRM y marketing con IA para agencias">
+<meta property="og:description" content="Captura una propiedad una vez: mini-sitio, CRM de prospectos y siete piezas de marketing con IA para tu agencia inmobiliaria en la Riviera Maya.">
+<meta property="og:url" content="https://proplync-mx.vercel.app/agencias">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/landing.css">
+<link rel="stylesheet" href="/css/agencias.css">
+</head>
+
+<body data-page="agencias">
+<a class="lp-skip" href="#main" data-es="Saltar al contenido" data-en="Skip to content">Saltar al contenido</a>
+
+<header>
+  <nav class="wrap" aria-label="Main navigation">
+    <a class="brand" href="/" aria-label="PropLync.mx home">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 23.4h10.8" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" opacity=".45"/></svg>
+      <span class="wordmark">PropLync<span class="accent">.mx</span></span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="/invest" data-es="Inversionistas" data-en="Investors">Inversionistas</a>
+      <a href="/agencias" aria-current="page" data-es="Agencias" data-en="Agencies">Agencias</a>
+      <a href="/agents" data-es="Asesores" data-en="Agents">Asesores</a>
+      <a href="/resources" data-es="Recursos" data-en="Resources">Recursos</a>
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/login" data-es="Entrar" data-en="Sign in">Entrar</a>
+    </div>
+    <div class="navtools">
+      <div class="lang" role="group" aria-label="Language">
+        <button id="es" class="on" onclick="setLang('es')">ES</button>
+        <button id="en" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="/dashboard" class="btn btn-gold" id="agent-return" data-agent-only hidden
+         data-es="Volver a mi agencia" data-en="Back to my agency">Volver a mi agencia</a>
+      <a href="#contacto" class="btn btn-gold" data-guest-only
+         data-es="Reservar llamada" data-en="Book a call">Reservar llamada</a>
+      <button class="navtoggle" aria-label="Menu" onclick="document.getElementById('navlinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════════
+     HERO
+     ══════════════════════════════════════════════════════════════ -->
+<main id="main">
+<section class="hero" id="top" style="padding:0">
+  <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
+  <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="hero-content">
+      
+      <div class="hero-eyebrow eyebrow" data-es="Plataforma para agencias inmobiliarias" data-en="Platform for real estate agencies">Plataforma para agencias inmobiliarias</div>
+      <h1 data-es="Toda tu operacion inmobiliaria, <em>en un lugar.</em>" data-en="Your whole real estate operation, <em>in one place.</em>">Toda tu operacion inmobiliaria, <em>en un lugar.</em></h1>
+      <p class="hero-sub" data-es="Captura una propiedad una vez. PropLync le da su mini-sitio, guarda cada prospecto con seguimiento, y convierte sus datos en el contenido con el que la vendes." data-en="Capture a listing once. PropLync gives it a mini-site, keeps every lead with follow-up, and turns its data into the content you sell it with.">Captura una propiedad una vez. PropLync le da su mini-sitio, guarda cada prospecto con seguimiento, y convierte sus datos en el contenido con el que la vendes.</p>
+      <div class="modules">
+        <a href="/login" class="module">
+          <span class="module-status on" data-es="Activo" data-en="Live">Activo</span>
+          <span class="module-name" data-es="Portafolio y mini-sitio" data-en="Portfolio & mini-site">Portafolio y mini-sitio</span>
+          <span class="module-desc" data-es="Cada propiedad con su pagina publica y tu marca." data-en="Every listing with its own public page, under your brand.">Cada propiedad con su pagina publica y tu marca.</span>
+        </a>
+        <a href="/login" class="module">
+          <span class="module-status on" data-es="Activo" data-en="Live">Activo</span>
+          <span class="module-name" data-es="CRM y prospectos" data-en="CRM & leads">CRM y prospectos</span>
+          <span class="module-desc" data-es="Notas, siguiente contacto y respuesta por WhatsApp." data-en="Notes, next follow-up, and one-tap WhatsApp reply.">Notas, siguiente contacto y respuesta por WhatsApp.</span>
+        </a>
+        <a href="/generate" class="module">
+          <span class="module-status on" data-es="Activo" data-en="Live">Activo</span>
+          <span class="module-name" data-es="Marketing con IA" data-en="AI marketing">Marketing con IA</span>
+          <span class="module-desc" data-es="Ficha PDF, post, carrusel, story, email, reel y anuncio." data-en="PDF sheet, post, carousel, story, email, reel and ad.">Ficha PDF, post, carrusel, story, email, reel y anuncio.</span>
+        </a>
+        <div class="module module-soon">
+          <span class="module-status soon" data-es="Pronto" data-en="Soon">Pronto</span>
+          <span class="module-name" data-es="Publicacion en redes" data-en="Social publishing">Publicacion en redes</span>
+          <span class="module-desc" data-es="Publica en Instagram sin salir del panel." data-en="Publish to Instagram without leaving the dashboard.">Publica en Instagram sin salir del panel.</span>
+        </div>
+        <div class="module module-soon">
+          <span class="module-status soon" data-es="Pronto" data-en="Soon">Pronto</span>
+          <span class="module-name" data-es="Valoracion y mercado" data-en="Valuation & market">Valoracion y mercado</span>
+          <span class="module-desc" data-es="Comparables y precio sugerido por zona." data-en="Comparables and a suggested price per area.">Comparables y precio sugerido por zona.</span>
+        </div>
+      </div>
+      <div class="hero-cta">
+        <a href="/login" class="btn btn-gold" data-es="Soy una agencia" data-en="I'm an agency">Soy una agencia</a>
+        <a href="#contacto" class="btn btn-ghost" data-es="Reservar diagnostico de 15 min" data-en="Book a 15-min diagnosis">Reservar diagnostico de 15 min</a>
+      </div>
+      <div class="hero-trust">
+        <span class="hero-trust-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v5c0 5.3-3.4 8.6-8 10-4.6-1.4-8-4.7-8-10v-5L12 3z"/></svg><span data-es="LFPDPPP desde el dia uno" data-en="LFPDPPP-ready day one">LFPDPPP desde el dia uno</span></span>
+        <span class="hero-trust-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><span data-es="Revision humana obligatoria" data-en="Mandatory human review">Revision humana obligatoria</span></span>
+        <span class="hero-trust-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L2 7v5c0 5.5 4 10.7 10 12 6-1.3 10-6.5 10-12V7L12 2z"/></svg><span data-es="La IA no inventa datos" data-en="The AI never invents data">La IA no inventa datos</span></span>
+      </div>
+    </div>
+
+    <!-- Signature interactive demo -->
+    <div class="demo">
+      <div class="demo-card reveal">
+        <div class="listing">
+          <div class="listing-photo" id="d-photo"></div>
+          <div class="listing-info">
+            <div class="t" id="d-title">Depa en preventa</div>
+            <div class="loc" id="d-loc">TULUM &middot; ALDEA ZAMA</div>
+            <div class="listing-specs" id="d-specs"></div>
+          </div>
+          <div class="listing-price" id="d-price">USD<br>$245,000</div>
+        </div>
+        <div class="demo-arrow" data-es="genera automaticamente" data-en="generates automatically">genera automaticamente</div>
+        <div class="chips" id="chips">
+          <button class="chip on" data-fmt="pdf" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg><span data-es="Ficha PDF" data-en="PDF sheet">Ficha PDF</span></button>
+          <button class="chip" data-fmt="post" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.4"/></svg><span>Post</span></button>
+          <button class="chip" data-fmt="carousel" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><rect x="7" y="6" width="10" height="12" rx="2"/><path d="M4 9v6M20 9v6"/></svg><span data-es="Carrusel" data-en="Carousel">Carrusel</span></button>
+          <button class="chip" data-fmt="story" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="3"/></svg><span>Story</span></button>
+          <button class="chip" data-fmt="email" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 8l9 6 9-6"/></svg><span>Email</span></button>
+          <button class="chip" data-fmt="video" onclick="pick(this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg><span>Video</span></button>
+        </div>
+        <div class="preview" id="preview"></div>
+        <a href="/generate" class="btn btn-gold" style="margin-top:16px;width:100%;justify-content:center" data-es="Probar el generador" data-en="Try the generator">Probar el generador</a>
+      </div>
+    </div>
+  </div>
+  <!-- Organic wave edge -->
+  <div class="hero-edge">
+    <svg viewBox="0 0 1440 80" fill="none" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 32C240 80 480 0 720 40C960 80 1200 8 1440 48V80H0V32Z" fill="var(--paper)"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     AUDIENCE SEGMENTATION
+     ══════════════════════════════════════════════════════════════ -->
+<section id="como">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Como funciona" data-en="How it works">Como funciona</span>
+      <h2 data-es="Capturas una vez. El resto ya esta hecho." data-en="Capture it once. The rest is already done.">Capturas una vez. El resto ya esta hecho.</h2>
+      <p data-es="Los modulos no son productos sueltos: son un solo flujo. Los datos que escribes al dar de alta una propiedad son los mismos con los que se arma su pagina, su contenido y el seguimiento de cada prospecto." data-en="The modules are not separate products, they are one flow. The data you type when you add a listing is the same data that builds its page, its content, and the follow-up on every lead.">Los modulos no son productos sueltos: son un solo flujo. Los datos que escribes al dar de alta una propiedad son los mismos con los que se arma su pagina, su contenido y el seguimiento de cada prospecto.</p>
+    </div>
+    <div class="audience-grid stagger">
+      <div class="audience-card reveal">
+        <span class="aud-eyebrow" data-es="1 &middot; Captura" data-en="1 &middot; Capture">1 &middot; Captura</span>
+        <h3 data-es="Da de alta la propiedad" data-en="Add the listing">Da de alta la propiedad</h3>
+        <p class="aud-sub" data-es="Los datos y las fotos, una sola vez. Sale publicada con su propia pagina bajo tu marca." data-en="Details and photos, once. It goes live with its own page, under your brand.">Los datos y las fotos, una sola vez. Sale publicada con su propia pagina bajo tu marca.</p>
+        <ul>
+          <li data-es="Alta, edicion y publicacion en minutos" data-en="Add, edit and publish in minutes">Alta, edicion y publicacion en minutos</li>
+          <li data-es="Mini-sitio propio, con link y QR para compartir" data-en="Its own mini-site, with a link and QR to share">Mini-sitio propio, con link y QR para compartir</li>
+          <li data-es="&iquest;Ya tienes la ficha en PDF? La leemos por ti" data-en="Already have a PDF fact sheet? We read it for you">&iquest;Ya tienes la ficha en PDF? La leemos por ti</li>
+        </ul>
+        <a href="/login" class="btn btn-dark" data-es="Ver el panel" data-en="See the dashboard">Ver el panel</a>
+      </div>
+      <div class="audience-card reveal">
+        <span class="aud-eyebrow" data-es="2 &middot; Marketing" data-en="2 &middot; Marketing">2 &middot; Marketing</span>
+        <h3 data-es="Convierte los datos en contenido" data-en="Turn the data into content">Convierte los datos en contenido</h3>
+        <p class="aud-sub" data-es="Siete formatos desde la misma propiedad, sin volver a escribir nada." data-en="Seven formats from the same listing, without retyping anything.">Siete formatos desde la misma propiedad, sin volver a escribir nada.</p>
+        <ul>
+          <li data-es="Ficha PDF, post, carrusel, story, email, reel y anuncio" data-en="PDF sheet, post, carousel, story, email, reel and ad">Ficha PDF, post, carrusel, story, email, reel y anuncio</li>
+          <li data-es="Eliges el tono y el objetivo de cada pieza" data-en="You choose the tone and objective of each piece">Eliges el tono y el objetivo de cada pieza</li>
+          <li data-es="Publica en Instagram sin salir del panel" data-en="Publish to Instagram without leaving the dashboard">Publica en Instagram sin salir del panel</li>
+        </ul>
+        <a href="/generate" class="btn btn-dark" data-es="Probar el generador" data-en="Try the generator">Probar el generador</a>
+      </div>
+      <div class="audience-card reveal">
+        <span class="aud-eyebrow" data-es="3 &middot; Seguimiento" data-en="3 &middot; Follow-up">3 &middot; Seguimiento</span>
+        <h3 data-es="No se te cae un prospecto" data-en="No lead goes cold">No se te cae un prospecto</h3>
+        <p class="aud-sub" data-es="Cada mensaje que entra por una propiedad llega con su historia y su siguiente paso." data-en="Every enquiry on a listing arrives with its history and its next step.">Cada mensaje que entra por una propiedad llega con su historia y su siguiente paso.</p>
+        <ul>
+          <li data-es="Notas por prospecto: que le dijiste y cuando" data-en="Notes per lead: what you said, and when">Notas por prospecto: que le dijiste y cuando</li>
+          <li data-es="Fecha de siguiente contacto, y los vencidos primero" data-en="A next-contact date, with overdue ones first">Fecha de siguiente contacto, y los vencidos primero</li>
+          <li data-es="Responde por WhatsApp con un toque" data-en="Reply on WhatsApp in one tap">Responde por WhatsApp con un toque</li>
+        </ul>
+        <a href="/login" class="btn btn-dark" data-es="Ver el CRM" data-en="See the CRM">Ver el CRM</a>
+      </div>
+    </div>
+    <p class="props-note reveal" style="margin-top:26px" data-es="&iquest;Propietario o desarrolladora, sin agencia? El generador funciona sin cuenta para una sola propiedad." data-en="An owner or developer without an agency? The generator works with no account for a single property.">&iquest;Propietario o desarrolladora, sin agencia? El generador funciona sin cuenta para una sola propiedad.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SOCIAL PROOF
+     ══════════════════════════════════════════════════════════════ -->
+<!-- Hidden on purpose: no quote ships without the person's written consent (§9.7).
+     Remove `hidden` once consent is on file for each one. -->
+<section class="proof" hidden data-todo="§9.7 — written consent per person required">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Resultados reales" data-en="Real results">Resultados reales</span>
+      <h2 data-es="Agencias y propietarios que ya lo usan" data-en="Agencies and owners already using it">Agencias y propietarios que ya lo usan</h2>
+    </div>
+    <div class="proof-grid stagger">
+      <div class="proof-card reveal">
+        <div class="proof-stars"><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg></div>
+        <p class="proof-quote" data-es="Antes tardaba medio dia armando los posts de una propiedad. Ahora en 10 minutos tengo todo el paquete listo." data-en="I used to spend half a day putting together posts for one property. Now in 10 minutes the whole package is ready.">&ldquo;Antes tardaba medio dia armando los posts de una propiedad. Ahora en 10 minutos tengo todo el paquete listo.&rdquo;</p>
+        <div class="proof-author">
+          <div class="proof-avatar">MR</div>
+          <div><div class="proof-name">Mariana R.</div><div class="proof-role" data-es="Agente independiente &middot; Playa del Carmen" data-en="Independent agent &middot; Playa del Carmen">Agente independiente &middot; Playa del Carmen</div></div>
+        </div>
+      </div>
+      <div class="proof-card reveal">
+        <div class="proof-stars"><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg></div>
+        <p class="proof-quote" data-es="Tenemos 40 unidades en preventa y el contenido de cada una salio uniforme, bilingue y listo para Instagram el mismo dia." data-en="We have 40 pre-sale units and each one's content came out uniform, bilingual, and Instagram-ready the same day.">&ldquo;Tenemos 40 unidades en preventa y el contenido de cada una salio uniforme, bilingue y listo para Instagram el mismo dia.&rdquo;</p>
+        <div class="proof-author">
+          <div class="proof-avatar" style="background:linear-gradient(135deg,var(--gold),var(--gold-deep))">JL</div>
+          <div><div class="proof-name">Jorge L.</div><div class="proof-role" data-es="Director comercial &middot; Desarrolladora en Tulum" data-en="Commercial director &middot; Developer in Tulum">Director comercial &middot; Desarrolladora en Tulum</div></div>
+        </div>
+      </div>
+      <div class="proof-card reveal">
+        <div class="proof-stars"><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg><svg viewBox="0 0 20 20"><path d="M10 1l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L10 15.4l-5.8 3.5 1.1-6.5L.6 7.8l6.5-.9z"/></svg></div>
+        <p class="proof-quote" data-es="Lo que mas me convencio es que la IA no inventa datos. Todo sale de lo que yo mismo subo, y reviso antes de publicar." data-en="What convinced me the most is that the AI doesn't make things up. Everything comes from what I upload, and I review before publishing.">&ldquo;Lo que mas me convencio es que la IA no inventa datos. Todo sale de lo que yo mismo subo, y reviso antes de publicar.&rdquo;</p>
+        <div class="proof-author">
+          <div class="proof-avatar" style="background:linear-gradient(135deg,var(--ink-3),var(--ink-4))">AC</div>
+          <div><div class="proof-name">Andrea C.</div><div class="proof-role" data-es="Propietaria &middot; Cancun" data-en="Property owner &middot; Cancun">Propietaria &middot; Cancun</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     PIECES
+     ══════════════════════════════════════════════════════════════ -->
+<section id="piezas" class="sec-gradient">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Todo lo que PropLync hace por ti" data-en="Everything PropLync does for you">Todo lo que PropLync hace por ti</span>
+      <h2 data-es="Un generador de contenido, no solo un formulario" data-en="A content engine, not just a form">Un generador de contenido, no solo un formulario</h2>
+      <p data-es="Desde una ficha llegas a siete piezas de marketing, fotos reales, busqueda inteligente y un panel para gestionar todo." data-en="From one record you get seven marketing pieces, real photos, smart search, and a dashboard to manage it all.">Desde una ficha llegas a siete piezas de marketing, fotos reales, busqueda inteligente y un panel para gestionar todo.</p>
+    </div>
+    <div class="grid6 stagger">
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg></div><h3 data-es="Marketing con IA" data-en="AI marketing">Marketing con IA</h3><p data-es="Ficha PDF, post, carrusel, story, email, reel y anuncio &mdash; desde una sola propiedad." data-en="PDF sheet, post, carousel, story, email, reel and ad copy &mdash; from a single property.">Ficha PDF, post, carrusel, story, email, reel y anuncio &mdash; desde una sola propiedad.</p><div class="fmt" data-es="7 formatos" data-en="7 formats">7 formatos</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.4"/></svg></div><h3 data-es="Publicacion directa a Instagram" data-en="Direct Instagram publishing">Publicacion directa a Instagram</h3><p data-es="El post generado se publica directo en tu cuenta, sin descargar y volver a subir." data-en="The generated post publishes straight to your account, no download-and-reupload.">El post generado se publica directo en tu cuenta, sin descargar y volver a subir.</p><div class="fmt" data-es="Meta Graph API" data-en="Meta Graph API">Meta Graph API</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M3 12h3M18 12h3M12 3v3M12 18v3"/></svg></div><h3 data-es="Fotos reales automaticas" data-en="Automatic real photos">Fotos reales automaticas</h3><p data-es="Si no subes una foto, el sistema busca una fotografia real y con licencia para tu propiedad." data-en="If you don't upload a photo, the system finds a real, licensed one for your property.">Si no subes una foto, el sistema busca una fotografia real y con licencia para tu propiedad.</p><div class="fmt" data-es="Fotos con licencia" data-en="Licensed photos">Fotos con licencia</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div><h3 data-es="Busqueda con lenguaje natural" data-en="Natural-language search">Busqueda con lenguaje natural</h3><p data-es="Escribe lo que buscas en una frase; la IA lo convierte en filtros. Cada resultado trae mapa y amenidades cercanas." data-en="Describe what you're looking for in a sentence; the AI turns it into filters. Every result shows a map and nearby amenities.">Escribe lo que buscas en una frase; la IA lo convierte en filtros. Cada resultado trae mapa y amenidades cercanas.</p><div class="fmt" data-es="Busqueda IA" data-en="AI search">Busqueda IA</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 8l9 6 9-6"/></svg></div><h3 data-es="CRM de leads" data-en="Lead CRM">CRM de leads</h3><p data-es="Cada contacto interesado en una propiedad llega a tu bandeja con estado de seguimiento." data-en="Every contact interested in a property lands in your inbox with a follow-up status.">Cada contacto interesado en una propiedad llega a tu bandeja con estado de seguimiento.</p><div class="fmt" data-es="Panel de leads" data-en="Leads dashboard">Panel de leads</div></div>
+      <div class="piece reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 10v10"/></svg></div><h3 data-es="Panel para tu inmobiliaria" data-en="Dashboard for your agency">Panel para tu inmobiliaria</h3><p data-es="Agrega, edita y publica tus propias propiedades desde un solo lugar." data-en="Add, edit, and publish your own listings from one place.">Agrega, edita y publica tus propias propiedades desde un solo lugar.</p><div class="fmt" data-es="Dashboard" data-en="Dashboard">Dashboard</div></div>
+    </div>
+    <div class="guard stagger">
+      <div class="reveal"><h4 data-es="La IA no inventa" data-en="The AI never invents">La IA no inventa</h4><p data-es="Si un dato no esta en la ficha, no aparece en la pieza. Nada de m&sup2; o rentabilidades inventadas." data-en="If a value isn't in the form, it doesn't appear in the piece. No made-up m&sup2; or yields.">Si un dato no esta en la ficha, no aparece en la pieza. Nada de m&sup2; o rentabilidades inventadas.</p></div>
+      <div class="reveal"><h4 data-es="Revision humana obligatoria" data-en="Human review, always">Revision humana obligatoria</h4><p data-es="Todo pasa por una vista previa editable antes de descargar y publicar." data-en="Everything passes through an editable preview before download and publishing.">Todo pasa por una vista previa editable antes de descargar y publicar.</p></div>
+      <div class="reveal"><h4 data-es="Marca coherente" data-en="Consistent brand">Marca coherente</h4><p data-es="Tus colores, tipografias y CTAs aplicados igual en las siete piezas." data-en="Your colors, fonts, and CTAs applied the same way across all seven pieces.">Tus colores, tipografias y CTAs aplicados igual en las siete piezas.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     MICRO-CTA 1 — Free trial after features
+     ══════════════════════════════════════════════════════════════ -->
+<div class="micro-cta">
+  <div class="wrap">
+    <div class="micro-cta-inner reveal">
+      <div class="micro-cta-content">
+        <span class="eyebrow" data-es="Pruebalo gratis" data-en="Try it free">Pruebalo gratis</span>
+        <h3 data-es="Genera un ejemplo con <em>tu propia propiedad</em>" data-en="Generate a sample with <em>your own property</em>">Genera un ejemplo con <em>tu propia propiedad</em></h3>
+        <p data-es="Sin registro, sin tarjeta. Sube los datos de una propiedad y mira el resultado en menos de dos minutos." data-en="No signup, no credit card. Enter one property's data and see the result in under two minutes.">Sin registro, sin tarjeta. Sube los datos de una propiedad y mira el resultado en menos de dos minutos.</p>
+      </div>
+      <div class="micro-cta-actions">
+        <a href="/generate" class="btn btn-gold" data-es="Probarlo gratis &rarr;" data-en="Try it free &rarr;">Probarlo gratis &rarr;</a>
+        <span class="micro-note" data-es="Sin cuenta &middot; resultado inmediato" data-en="No account &middot; instant result">Sin cuenta &middot; resultado inmediato</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PROPERTIES
+     ══════════════════════════════════════════════════════════════ -->
+<section id="propiedades">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Inventario conectado" data-en="Connected inventory">Inventario conectado</span>
+      <h2 data-es="Tus propiedades, listas para generar contenido" data-en="Your properties, ready to generate content">Tus propiedades, listas para generar contenido</h2>
+      <p data-es="Estas fichas se sincronizan desde tu cuenta de EasyBroker (MLS de Mexico). Elige una propiedad y conviertela en las siete piezas." data-en="These listings sync from your EasyBroker account (Mexico's MLS). Pick a property and turn it into the seven pieces.">Estas fichas se sincronizan desde tu cuenta de EasyBroker (MLS de Mexico). Elige una propiedad y conviertela en las siete piezas.</p>
+    </div>
+    <div class="pfilter" id="pfilter">
+      <button class="on" data-op="all" onclick="filterProps(this)" data-es="Todas" data-en="All">Todas</button>
+      <button data-op="sale" onclick="filterProps(this)" data-es="Venta" data-en="For sale">Venta</button>
+      <button data-op="rental" onclick="filterProps(this)" data-es="Renta" data-en="For rent">Renta</button>
+    </div>
+    <div class="props-layout">
+      <div class="pgrid" id="pgrid"></div>
+      <aside class="pside">
+        <div class="pside-inner reveal">
+          <span class="eyebrow" style="color:var(--gold)" data-es="Propiedad seleccionada" data-en="Selected property">Propiedad seleccionada</span>
+          <h3 id="ps-title"></h3>
+          <div class="ps-map"><iframe id="ps-map-frame" title="map" loading="lazy"></iframe></div>
+          <div class="ps-amenities" id="ps-amenities"></div>
+          <div class="ps-ai-block">
+            <button class="btn btn-dark ps-btn" id="ps-ai-btn" onclick="generateDescription()" data-es="Generar descripcion con IA" data-en="Generate AI description">Generar descripcion con IA</button>
+            <div id="ps-ai-out"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <div class="props-note reveal">
+      <span class="eb">EasyBroker API</span>
+      <p data-es="Datos y fotos de muestra con la estructura real de la API de EasyBroker (las imagenes son ilustraciones). En produccion, un proxy en el servidor entrega tu inventario y tus fotografias reales sin exponer tu API Key. El panel lateral usa OpenStreetMap (ubicacion y lugares cercanos) y Groq (descripcion con IA) &mdash; ambas APIs reales y gratuitas." data-en="Sample data and illustrated photos using EasyBroker's real API schema. In production, a server-side proxy serves your real inventory and photos without exposing your API Key. The side panel uses OpenStreetMap (location & nearby places) and Groq (AI description) &mdash; both real, free APIs.">Datos y fotos de muestra con la estructura real de la API de EasyBroker (las imagenes son ilustraciones). En produccion, un proxy en el servidor entrega tu inventario y tus fotografias reales sin exponer tu API Key. El panel lateral usa OpenStreetMap (ubicacion y lugares cercanos) y Groq (descripcion con IA) &mdash; ambas APIs reales y gratuitas.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     ROI CALCULATOR
+     ══════════════════════════════════════════════════════════════ -->
+<section class="roi" id="roi">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Calculadora de retorno" data-en="ROI calculator">Calculadora de retorno</span>
+      <h2 data-es="Cuanto tiempo recuperas al mes" data-en="How much time you get back each month">Cuanto tiempo recuperas al mes</h2>
+      <p data-es="Ajusta los valores a tu operacion. Es una estimacion prudente para empezar la conversacion, no una promesa." data-en="Adjust the values to your operation. It's a conservative estimate to start the conversation, not a promise.">Ajusta los valores a tu operacion. Es una estimacion prudente para empezar la conversacion, no una promesa.</p>
+    </div>
+    <div class="roi-grid">
+      <div class="roi-form reveal">
+        <div class="field">
+          <label><span data-es="Propiedades al mes" data-en="Properties per month">Propiedades al mes</span><span class="val" id="v-props">15</span></label>
+          <input type="range" id="props" min="1" max="80" value="15" oninput="calc()">
+        </div>
+        <div class="field">
+          <label><span data-es="Horas por propiedad" data-en="Hours per property">Horas por propiedad</span><span class="val" id="v-hours">3.0</span></label>
+          <input type="range" id="hours" min="0.5" max="8" step="0.5" value="3" oninput="calc()">
+        </div>
+        <div class="field">
+          <label><span data-es="Costo por hora" data-en="Cost per hour">Costo por hora</span><span class="val" id="v-rate">$25</span></label>
+          <input type="range" id="rate" min="5" max="120" value="25" oninput="calc()">
+        </div>
+        <div class="field" style="margin-bottom:0;display:flex;justify-content:space-between;align-items:center">
+          <label style="margin:0"><span data-es="Moneda" data-en="Currency">Moneda</span></label>
+          <div class="curr">
+            <button id="usd" class="on" onclick="setCurr('USD')">USD</button>
+            <button id="mxn" onclick="setCurr('MXN')">MXN</button>
+          </div>
+        </div>
+      </div>
+      <div class="roi-out reveal">
+        <div class="roi-big"><small data-es="Ahorro mensual estimado" data-en="Estimated monthly saving">Ahorro mensual estimado</small><span id="out-month">$1,125</span></div>
+        <div class="roi-second">
+          <div><div class="n" id="out-year">$13,500</div><div class="l" data-es="al ano" data-en="per year">al ano</div></div>
+          <div><div class="n" id="out-hrs">45 h</div><div class="l" data-es="horas recuperadas / mes" data-en="hours recovered / month">horas recuperadas / mes</div></div>
+        </div>
+        <p class="roi-note" data-es="Formula: propiedades &times; horas &times; costo por hora. Ajustalo a tus datos reales antes de tomar decisiones." data-en="Formula: properties &times; hours &times; cost per hour. Adjust it to your real numbers before making decisions.">Formula: propiedades &times; horas &times; costo por hora. Ajustalo a tus datos reales antes de tomar decisiones.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     FAQ
+     ══════════════════════════════════════════════════════════════ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-es="Preguntas frecuentes" data-en="FAQ">Preguntas frecuentes</span>
+      <h2 data-es="Preguntas frecuentes sobre PropLync" data-en="Frequently asked questions about PropLync">Preguntas frecuentes sobre PropLync</h2>
+    </div>
+    <div class="faq-list stagger">
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;Necesito ser agencia para usar el generador?" data-en="Do I need to be an agency to use the generator?">&iquest;Necesito ser agencia para usar el generador?</summary>
+        <p data-es="No, para una sola propiedad no. El generador funciona sin cuenta en /generate. Para gestionar varias propiedades, leads y publicar desde un panel, se necesita una cuenta de agencia." data-en="Not for a single property. The generator works with no account at /generate. To manage multiple properties, leads, and publish from a dashboard, you need an agency account.">No, para una sola propiedad no. El generador funciona sin cuenta en /generate. Para gestionar varias propiedades, leads y publicar desde un panel, se necesita una cuenta de agencia.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;Puedo publicar directo a Instagram?" data-en="Can I publish directly to Instagram?">&iquest;Puedo publicar directo a Instagram?</summary>
+        <p data-es="Si, para el formato de post via la API oficial de Meta (Instagram Graph API) &mdash; sin descargar y volver a subir. Los demas formatos (carrusel, story, video, etc.) se descargan para publicarlos manualmente." data-en="Yes, for the post format via Meta's official Instagram Graph API &mdash; no download-and-reupload. The other formats (carousel, story, video, etc.) download for manual posting.">Si, para el formato de post via la API oficial de Meta (Instagram Graph API) &mdash; sin descargar y volver a subir. Los demas formatos (carrusel, story, video, etc.) se descargan para publicarlos manualmente.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;De donde salen las fotos?" data-en="Where do the photos come from?">&iquest;De donde salen las fotos?</summary>
+        <p data-es="Si subes tu propia foto, se usa esa. Si no, el sistema busca automaticamente una fotografia real y con licencia que combine con tu propiedad." data-en="If you upload your own photo, that's what gets used. If not, the system automatically finds a real, licensed photo that fits your property.">Si subes tu propia foto, se usa esa. Si no, el sistema busca automaticamente una fotografia real y con licencia que combine con tu propiedad.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;Que pasa con mis datos y los de mis clientes?" data-en="What happens with my data and my clients' data?">&iquest;Que pasa con mis datos y los de mis clientes?</summary>
+        <p data-es="PropLync esta pensado para cumplir con la LFPDPPP desde el diseno. La direccion exacta se mantiene interna: las piezas publicas muestran zona o colonia. Los datos personales solo se usan con una finalidad definida. Y solo se usan fotos propias o autorizadas por la agencia." data-en="PropLync is designed to meet LFPDPPP from the ground up. The exact address stays internal: public pieces show the zone or neighborhood. Personal data is only used with a defined purpose. Only the agency's own or authorized photos are used.">PropLync esta pensado para cumplir con la LFPDPPP desde el diseno. La direccion exacta se mantiene interna: las piezas publicas muestran zona o colonia. Los datos personales solo se usan con una finalidad definida. Y solo se usan fotos propias o autorizadas por la agencia.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;Cuanto cuesta?" data-en="How much does it cost?">&iquest;Cuanto cuesta?</summary>
+        <p data-es="Depende del alcance real de tu operacion. Lo definimos juntos en un diagnostico corto, sin compromiso." data-en="It depends on the real scope of your operation. We define it together in a short, no-commitment diagnosis.">Depende del alcance real de tu operacion. Lo definimos juntos en un diagnostico corto, sin compromiso.</p>
+      </details>
+      <details class="faq-item reveal">
+        <summary data-es="&iquest;La locucion del video tiene costo?" data-en="Does the video voiceover cost extra?">&iquest;La locucion del video tiene costo?</summary>
+        <p data-es="Una voz local (generada en tu equipo) es gratuita. Si prefieres una voz profesional por API (ElevenLabs, etc.), se paga por uso &mdash; generalmente centavos por video." data-en="A local voice (generated on your machine) is free. If you prefer a professional API voice (ElevenLabs, etc.), it's paid per use &mdash; usually pennies per video.">Una voz local (generada en tu equipo) es gratuita. Si prefieres una voz profesional por API (ElevenLabs, etc.), se paga por uso &mdash; generalmente centavos por video.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     CTA
+     ══════════════════════════════════════════════════════════════ -->
+<!-- EARLY ACCESS + CONTACT, one section. Pricing stays off the public page while the project
+     runs on a Vercel Hobby plan (non-commercial use); restore the tiers from git history
+     together with the move to Pro, not before. -->
+<span id="acceso"></span>
+<section class="cta" id="contacto">
+  <div class="wrap">
+    <div class="cta-layout">
+      <div class="cta-text reveal">
+        <span class="eyebrow" data-es="Acceso anticipado" data-en="Early access">Acceso anticipado</span>
+        <h2 data-es="Convierte cada propiedad en <em>siete piezas</em> listas para publicar" data-en="Turn every property into <em>seven pieces</em> ready to publish">Convierte cada propiedad en <em>siete piezas</em> listas para publicar</h2>
+        <p data-es="Estamos incorporando a las primeras agencias y desarrolladoras. Los primeros clientes reciben onboarding personalizado, acceso a cada modulo nuevo antes que nadie, y una linea directa con quien construye el producto." data-en="We're onboarding the first agencies and developers. Early clients get personalized onboarding, every new module before anyone else, and a direct line to the people building it.">Estamos incorporando a las primeras agencias y desarrolladoras. Los primeros clientes reciben onboarding personalizado, acceso a cada modulo nuevo antes que nadie, y una linea directa con quien construye el producto.</p>
+        <p data-es="Dejanos tus datos y en menos de 24 horas te contactamos para una llamada de diagnostico de 15 minutos &mdash; sin costo y sin compromiso." data-en="Leave your details and within 24 hours we'll reach out for a 15-minute diagnosis call &mdash; free and no commitment.">Dejanos tus datos y en menos de 24 horas te contactamos para una llamada de diagnostico de 15 minutos &mdash; sin costo y sin compromiso.</p>
+        <div class="cta-perks">
+          <div class="cta-perk"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><span data-es="Revisamos tu proceso actual" data-en="We review your current process">Revisamos tu proceso actual</span></div>
+          <div class="cta-perk"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><span data-es="Identificamos que automatizar primero" data-en="We identify what to automate first">Identificamos que automatizar primero</span></div>
+          <div class="cta-perk"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><span data-es="Te mostramos un ejemplo con tus datos" data-en="We show you an example with your data">Te mostramos un ejemplo con tus datos</span></div>
+        </div>
+      </div>
+      <div class="cta-form reveal" id="contact-form-wrap">
+        <form id="contact-form" onsubmit="submitContact(event)">
+          <div class="form-row">
+            <div class="field">
+              <label data-es="Nombre" data-en="Name">Nombre</label>
+              <input type="text" name="name" required placeholder="Tu nombre">
+            </div>
+            <div class="field">
+              <label data-es="Empresa / Agencia" data-en="Company / Agency">Empresa / Agencia</label>
+              <input type="text" name="company" placeholder="Opcional">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label>Email</label>
+              <input type="email" name="email" required placeholder="tu@correo.com">
+            </div>
+            <div class="field">
+              <label>WhatsApp</label>
+              <input type="tel" name="phone" placeholder="+52 984 ___">
+            </div>
+          </div>
+          <div class="field">
+            <label data-es="Tipo de operacion" data-en="Type of operation">Tipo de operacion</label>
+            <select name="type">
+              <option value="agency" data-es="Agencia inmobiliaria" data-en="Real estate agency">Agencia inmobiliaria</option>
+              <option value="owner" data-es="Propietario" data-en="Property owner">Propietario</option>
+              <option value="developer" data-es="Desarrolladora" data-en="Developer">Desarrolladora</option>
+              <option value="other" data-es="Otro" data-en="Other">Otro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label data-es="Cuentanos brevemente" data-en="Tell us briefly">Cuentanos brevemente</label>
+            <textarea name="message" rows="3" placeholder="" data-es-placeholder="Cuantas propiedades manejas, que formatos usas hoy..." data-en-placeholder="How many properties you manage, what formats you use today..."></textarea>
+          </div>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp-field">
+          <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center" data-es="Solicitar diagnostico gratuito" data-en="Request free diagnosis">Solicitar diagnostico gratuito</button>
+          <p class="form-error" id="contact-error" role="alert" hidden></p>
+        </form>
+        <div class="cta-form-success" id="contact-success">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
+          <h4 data-es="Mensaje enviado" data-en="Message sent">Mensaje enviado</h4>
+          <p data-es="Te contactaremos en menos de 24 horas para agendar tu diagnostico." data-en="We'll reach out within 24 hours to schedule your diagnosis.">Te contactaremos en menos de 24 horas para agendar tu diagnostico.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="lp-footer">
+  <div class="wrap foot-grid">
+    <div class="foot-brand">
+      <span class="brand" style="font-family:var(--display);font-size:1.15rem"><span class="wordmark">PropLync<span class="accent">.mx</span></span></span>
+      <p data-es="Inversión, búsqueda y agencias en la Riviera Maya." data-en="Investment, search and agencies in the Riviera Maya.">Inversión, búsqueda y agencias en la Riviera Maya.</p>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Para ti" data-en="For you">Para ti</h5>
+      <a href="/invest" data-es="Inversionistas" data-en="Investors">Inversionistas</a>
+      <a href="/agencias" data-es="Agencias" data-en="Agencies">Agencias</a>
+      <a href="/agents" data-es="Asesores" data-en="Agents">Asesores</a>
+      <a href="/resources" data-es="Recursos" data-en="Resources">Recursos</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Producto" data-en="Product">Producto</h5>
+      <a href="/search" data-es="Buscar" data-en="Search">Buscar</a>
+      <a href="/generate" data-es="Generador" data-en="Generator">Generador</a>
+      <a href="/favoritos" data-es="Favoritos" data-en="Favorites">Favoritos</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Cuenta" data-en="Account">Cuenta</h5>
+      <a href="/login" data-es="Entrar" data-en="Sign in">Entrar</a>
+      <a href="/signup" data-es="Crear cuenta" data-en="Create account">Crear cuenta</a>
+    </div>
+    <div class="foot-col">
+      <h5 data-es="Contacto" data-en="Contact">Contacto</h5>
+      <a href="mailto:hola@proplync.mx">hola@proplync.mx</a>
+    </div>
+  </div>
+  <div class="wrap foot-legal">
+    
+    <p class="lp-footer__disclaimer"
+       data-en="PropLync does not provide investment, tax or legal advice. Consult a licensed notary (notario) and a qualified advisor for fideicomiso, tax and legal matters before any transaction."
+       data-es="PropLync no brinda asesoría de inversión, fiscal ni legal. Consulta a un notario público y a un asesor calificado en materia de fideicomiso, impuestos y temas legales antes de cualquier transacción.">PropLync no brinda asesoría de inversión, fiscal ni legal. Consulta a un notario público y a un asesor calificado en materia de fideicomiso, impuestos y temas legales antes de cualquier transacción.</p>
+  </div>
+  <div class="wrap foot-bottom">
+    <span data-es="Hecho en la Riviera Maya" data-en="Built in the Riviera Maya">Hecho en la Riviera Maya</span>
+    <span class="foot-legal-links"><a href="/privacy" data-es="Privacidad" data-en="Privacy">Privacidad</a> &middot; <a href="/terms" data-es="Términos" data-en="Terms">Términos</a> &middot; <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span></span>
+  </div>
+</footer>
+
+<script src="/js/escape.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/nav-auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/favorites.js"></script>
+<script src="/js/agencias.js"></script>
+</body>
+</html>

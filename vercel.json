@@ -36,7 +36,50 @@
       "maxDuration": 300
     }
   },
+  "redirects": [
+    { "source": "/finder", "destination": "/invest", "permanent": true }
+  ],
   "rewrites": [
+    {
+      "source": "/invest",
+      "destination": "/invest.html"
+    },
+    {
+      "source": "/agents",
+      "destination": "/agents.html"
+    },
+    {
+      "source": "/resources",
+      "destination": "/resources.html"
+    },
+    {
+      "source": "/resources/:slug",
+      "destination": "/article.html?slug=:slug"
+    },
+    {
+      "source": "/agencies",
+      "destination": "/agencias"
+    },
+    {
+      "source": "/voice",
+      "destination": "/brief"
+    },
+    {
+      "source": "/privacidad",
+      "destination": "/privacy"
+    },
+    {
+      "source": "/aviso-de-privacidad",
+      "destination": "/privacy"
+    },
+    {
+      "source": "/terminos",
+      "destination": "/terms"
+    },
+    {
+      "source": "/voz",
+      "destination": "/brief"
+    },
     {
       "source": "/api/describe",
       "destination": "/api/generate?action=describe"
