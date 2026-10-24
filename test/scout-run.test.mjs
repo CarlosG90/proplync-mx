@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import Anthropic from '@anthropic-ai/sdk';
-import { runScoutStep, probeScout, operatorDetail, planAfterSegment, stuckAction, KICK_AFTER_MS, STALL_AFTER_MS } from '../api/_lib/scout.js';
+import { SUBMIT_SCHEMA, runScoutStep, probeScout, operatorDetail, planAfterSegment, stuckAction, KICK_AFTER_MS, STALL_AFTER_MS } from '../api/_lib/scout.js';
 import { runHardMaxUsd, runMaxUsd, DEFAULT_RUN_MAX_USD, DEFAULT_RUN_HARD_MAX_USD } from '../api/_lib/scout-budget.js';
 import { fakeDb } from './_fake-db.mjs';
 
@@ -351,4 +351,15 @@ test('Scout\'s first request carries everything Concierge captured: areas, budge
     assert.deepEqual(sent, BRIEF.brief, 'the brief reaches Scout exactly as Concierge saved it');
     for (const needle of ['Playa del Carmen', '300000', 'pool', 'invest']) assert.ok(text.includes(needle), needle);
   });
+});
+
+test('submit_candidates schema stays under Anthropic\'s limit of 16 union-typed fields', () => {
+  let unions = 0;
+  const walk = (n) => {
+    if (!n || typeof n !== 'object') return;
+    if (Array.isArray(n.anyOf) || Array.isArray(n.type)) unions++;
+    Object.values(n).forEach(walk);
+  };
+  walk(SUBMIT_SCHEMA);
+  assert.ok(unions <= 12, `${unions} union-typed fields; Anthropic rejects more than 16 with HTTP 400, keep a margin`);
 });

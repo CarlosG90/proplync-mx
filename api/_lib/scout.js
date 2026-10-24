@@ -69,7 +69,7 @@ HOW TO RESEARCH
 - Vary your queries across areas, portals and agencies instead of repeating one. Aim for about 5 to 10 good candidates, and stop when you have them or your searches run out.
 
 RULES
-- Every fact you report must appear on a page you saw during this research. When no page says it, use null. Never estimate, round, convert or infer bedrooms, size, price, location or features.
+- Every fact you report must appear on a page you saw during this research. When no page says it, use null for numbers and options, and an empty string "" for text. Never estimate, round, convert or infer bedrooms, size, price, location or features.
 - Only report URLs that appeared in your search results or that you fetched. Never build or guess a URL.
 - Leave out anything marked sold, vendido, apartado, rented or expired, and short-term vacation rentals.
 - Respect the maximum budget. Never relax a must-have.
@@ -82,22 +82,25 @@ Call submit_candidates exactly once, with everything you found (an empty list if
 
 const STR = { type: 'string' };
 const NUM = { type: 'number' };
+// Anthropic compiles strict schemas and rejects more than 16 union-typed fields (it returned HTTP 400 and every
+// run died before the first token). Only numbers and enums can't say "unknown" with an empty string (0 bedrooms
+// is a real value), so only those stay nullable; text fields use "" and validateSubmission turns it into null.
 const nullable = (schema) => ({ anyOf: [schema, { type: 'null' }] });
 const obj = (properties) => ({
   type: 'object', properties, required: Object.keys(properties), additionalProperties: false
 });
-const check = (statuses) => obj({ item: STR, status: { type: 'string', enum: statuses }, evidence: nullable(STR) });
+const check = (statuses) => obj({ item: STR, status: { type: 'string', enum: statuses }, evidence: STR });
 
-const SUBMIT_SCHEMA = obj({
+export const SUBMIT_SCHEMA = obj({
   candidates: {
     type: 'array',
     items: obj({
-      proplync_listing_id: nullable(STR),
-      title: nullable(STR),
+      proplync_listing_id: STR,
+      title: STR,
       operation: nullable({ type: 'string', enum: ['sale', 'rental'] }),
-      property_type: nullable(STR),
-      town: nullable(STR),
-      neighborhood: nullable(STR),
+      property_type: STR,
+      town: STR,
+      neighborhood: STR,
       bedrooms: nullable(NUM),
       bathrooms: nullable(NUM),
       built_m2: nullable(NUM),
@@ -106,8 +109,8 @@ const SUBMIT_SCHEMA = obj({
         type: 'array',
         items: obj({
           url: STR,
-          site: nullable(STR),
-          listed_by: nullable(STR),
+          site: STR,
+          listed_by: STR,
           price: nullable(NUM),
           currency: nullable({ type: 'string', enum: ['MXN', 'USD', 'EUR', 'CAD'] })
         })
@@ -115,7 +118,7 @@ const SUBMIT_SCHEMA = obj({
       photos: { type: 'array', items: STR },
       must_haves: { type: 'array', items: check(['met', 'no', 'unknown']) },
       deal_breakers: { type: 'array', items: check(['present', 'absent', 'unknown']) },
-      summary: nullable(STR),
+      summary: STR,
       questions_for_agent: { type: 'array', items: STR }
     })
   },
