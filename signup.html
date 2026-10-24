@@ -16,7 +16,7 @@
   .auth-main{padding:80px 20px;min-height:calc(100vh - 200px);display:flex;align-items:center;justify-content:center}
 </style>
 </head>
-<body>
+<body data-page="signup">
 
 <header>
   <nav class="wrap">
@@ -136,6 +136,7 @@
       const { error: signInErr } = await sbClient.auth.signInWithPassword({ email, password });
       if (signInErr) throw signInErr;
 
+      if (window.plTrack) plTrack('agent_signup_complete');
       window.location.href = '/dashboard';
     } catch (e) {
       errEl.textContent = e.message;
@@ -147,5 +148,6 @@
 
   document.querySelectorAll('#navlinks a').forEach(a => a.addEventListener('click', () => document.getElementById('navlinks').classList.remove('open')));
 </script>
+<script src="/js/landing.js" defer></script>
 </body>
 </html>

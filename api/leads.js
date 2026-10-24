@@ -182,7 +182,7 @@ export default async function handler(req, res) {
   if (req.method === 'POST' && action === 'contact') {
     if (await enforceRateLimit(req, res, { bucket: 'contact-request', limit: 6, windowSec: 3600 })) return;
 
-    const { name, company, email, phone, type, message, lang, website } = req.body || {};
+    const { name, company, email, phone, type, message, lang, website, source } = req.body || {};
 
     // Honeypot: the form carries a field no person sees. Bots fill it; answer
     // as if it worked so they learn nothing, and store nothing.
@@ -206,7 +206,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const kind = ['agency', 'owner', 'developer', 'other'].includes(type) ? type : 'other';
+    const kind = ['agency', 'owner', 'developer', 'agent', 'other'].includes(type) ? type : 'other';
     const row = {
       name: cleanName.slice(0, 120),
       company: company ? String(company).trim().slice(0, 160) : null,
@@ -215,7 +215,8 @@ export default async function handler(req, res) {
       kind,
       message: message ? String(message).trim().slice(0, 2000) : null,
       lang: lang === 'en' ? 'en' : 'es',
-      source: 'agencias'
+      /* Which form it came from, from a short list: the client never gets to invent a label. */
+      source: ['agencias', 'agents'].includes(source) ? source : 'agencias'
     };
 
     const { error } = await getServiceClient().from('contact_requests').insert(row);

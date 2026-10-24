@@ -115,7 +115,7 @@
   @media (max-width:900px){.bf-chat .bf-log{max-height:30vh}}
 </style>
 </head>
-<body>
+<body data-page="brief">
 
 <header>
   <nav class="wrap">
@@ -216,6 +216,7 @@
 
 <script src="/js/hero3d.js"></script>
 <script src="/js/concierge.js"></script>
+<script src="/js/landing.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/js/supabase-client.js"></script>
 <script src="/js/escape.js"></script>
@@ -294,6 +295,7 @@ sayEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') turn(say
    Credits belong to a signed-in buyer, so a new tab cannot reset a wallet.
    The brief waits in localStorage while the buyer signs in: the email link
    usually opens in a new tab, which sessionStorage would not reach. */
+var resultsTracked = false;   // scout_result_viewed fires once per visit, not on every status poll
 var PENDING_KEY = 'pl_pending_brief';
 var PENDING_TTL = 24 * 3600 * 1000;
 var siMsg = document.getElementById('si-msg');
@@ -391,6 +393,7 @@ document.getElementById('ap-send').addEventListener('click', async function () {
       return;
     }
     clearPending();
+    if (window.plTrack) plTrack('brief_approved');
     history.replaceState(null, '', '/brief?b=' + encodeURIComponent(data.token));
     showStatusView(data.token, true, data.scout);
   } catch (e) {
@@ -525,6 +528,7 @@ async function loadStatus() {
       ? t('Búsquedas: ', 'Searches: ') + (s.run.searches || 0) + ' · ' + t('páginas leídas: ', 'pages read: ') + (s.run.pages || 0) : '';
     if (prog) document.getElementById('st-text').textContent += ' (' + prog + ')';
     document.getElementById('st-results').innerHTML = (s.candidates || []).map(propCard).join('');
+    if ((s.candidates || []).length && !resultsTracked) { resultsTracked = true; if (window.plTrack) plTrack('scout_result_viewed'); }
     renderWallet(s);
     clearTimeout(statusTimer);
     var running = s.run && (s.run.status === 'queued' || s.run.status === 'running');
@@ -548,6 +552,7 @@ document.getElementById('st-results').addEventListener('click', async function (
   btn.disabled = true;
   var r = await authedFetch('/api/finder?action=verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ candidate_id: btn.dataset.verify }) });
   if (r.status === 402) { btn.textContent = t('Sin créditos', 'Out of credits'); renderWallet({}); return; }
+  if (r.ok && window.plTrack) plTrack('verification_requested');
   loadStatus();
 });
 

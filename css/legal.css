@@ -1,0 +1,19 @@
+/* legal.css — privacy notice and terms of use. Reading pages: one narrow column, calm type, the same ink
+   background as the buyer page so the footer links do not jump to a different site. */
+body{background:var(--ink);color:var(--on-ink)}
+[hidden]{display:none !important}
+.lg-wrap{max-width:760px;padding-top:var(--sp-16);padding-bottom:var(--sp-20)}
+.lg-eyebrow{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:0 0 var(--sp-3)}
+.lg-wrap h1{font-size:clamp(2rem,5vw,3rem);margin:0 0 var(--sp-3)}
+.lg-meta{font-family:var(--mono);font-size:.72rem;color:var(--on-ink-dim);margin:0 0 var(--sp-6)}
+.lg-banner{border:1px solid rgba(201,169,110,.45);background:rgba(201,169,110,.08);border-radius:var(--radius-md);padding:14px 16px;font-size:.9rem;line-height:1.55;margin:0 0 var(--sp-6)}
+.lg-banner b{color:var(--gold);font-weight:600}
+.lg-lead{font-size:1.08rem;line-height:1.65;color:var(--on-ink-dim);margin:0 0 var(--sp-8)}
+.lg-sec{padding:var(--sp-6) 0;border-top:1px solid rgba(240,237,232,.10)}
+.lg-sec h2{font-family:var(--display);font-weight:400;font-size:1.35rem;margin:0 0 var(--sp-3)}
+.lg-sec p,.lg-sec li{color:var(--on-ink-dim);line-height:1.7;font-size:.97rem}
+.lg-sec p{margin:0 0 var(--sp-3)}
+.lg-sec ul{margin:0;padding-left:1.2rem;display:grid;gap:8px}
+.lg-sec a{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+/* A fact only the business or its lawyer can supply. Loud on purpose, so none ships unnoticed. */
+.lg-confirm{font-family:var(--mono);font-size:.82em;color:var(--ink);background:var(--gold);border-radius:4px;padding:1px 6px;white-space:nowrap}

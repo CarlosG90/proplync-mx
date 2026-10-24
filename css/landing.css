@@ -395,3 +395,24 @@
   padding: 10px 16px;
   border-radius: 8px;
 }
+
+/* Legal links beside the copyright in the shared footer. */
+.foot-legal-links{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}
+.foot-legal-links a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.foot-legal-links a:hover{color:var(--lp-oro)}
+
+/* ── Request-access form (/agents) ─────────────────────────── */
+.lp-access{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-10,40px);align-items:start}
+.lp-access__invite{font-size:.95rem;color:var(--lp-tinta-70)}
+.lp-access__invite a{color:var(--lp-mar-ink);font-weight:600}
+.lp-form{display:grid;gap:14px;background:#fff;border:1px solid var(--lp-tinta-12);border-radius:var(--lp-radius);padding:24px}
+.lp-field{display:grid;gap:6px;font-size:.88rem;font-weight:600}
+.lp-field input,.lp-field textarea{font:inherit;font-weight:400;padding:12px 14px;min-height:44px;border:1px solid var(--lp-tinta-12);border-radius:10px;background:var(--lp-papel);color:var(--lp-tinta)}
+.lp-field input:focus,.lp-field textarea:focus{outline:3px solid var(--lp-mar);outline-offset:1px;border-color:var(--lp-mar-ink)}
+/* Spam trap: kept out of sight but not display:none, so simple bots still fill it. */
+.lp-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.lp-form__error{margin:0;color:#a3362a;font-size:.9rem}
+.lp-form__done{background:#fff;border:1px solid var(--lp-tinta-12);border-radius:var(--lp-radius);padding:28px}
+.lp-form__done h3{margin:0 0 8px}
+.lp-form__done p{margin:0}
+@media (max-width:820px){.lp-access{grid-template-columns:1fr}}

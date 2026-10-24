@@ -65,6 +65,18 @@
       "destination": "/brief"
     },
     {
+      "source": "/privacidad",
+      "destination": "/privacy"
+    },
+    {
+      "source": "/aviso-de-privacidad",
+      "destination": "/privacy"
+    },
+    {
+      "source": "/terminos",
+      "destination": "/terms"
+    },
+    {
       "source": "/voz",
       "destination": "/brief"
     },

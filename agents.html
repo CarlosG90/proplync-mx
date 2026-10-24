@@ -66,9 +66,9 @@
         <p class="lp-lede"
            data-en="We bring you buyers who have already told us what they want."
            data-es="Te traemos compradores que ya nos dijeron qué buscan.">Te traemos compradores que ya nos dijeron qué buscan.</p>
-        <a class="btn btn-dark" href="/signup"
-           data-track="agent_signup_start" data-track-label="hero_join_as_agent"
-           data-en="Join as an agent" data-es="Únete como asesor">Únete como asesor</a>
+        <a class="btn btn-dark" href="#acceso"
+           data-track="agent_signup_start" data-track-label="hero_request_access"
+           data-en="Request access" data-es="Pedir acceso">Pedir acceso</a>
       </div>
 
       <!-- §4.1 visual: what an agent receives, drawn in HTML. A real agent
@@ -180,6 +180,43 @@
     </div>
   </section>
 
+  <!-- ── §4.7 Request access ────────────────────────────────────
+       Agent accounts are invite-only (the onboard-agency skill or scripts/onboard-agency.mjs issue the
+       invite). The old hero button sent a cold visitor straight to an invite-code wall. This form stores a
+       request in contact_requests (kind "agent", source "agents"); someone reads it and sends an invite.
+       ───────────────────────────────────────────────────────── -->
+  <section id="acceso">
+    <div class="lp-wrap lp-access">
+      <div>
+        <p class="lp-eyebrow" data-en="Request access" data-es="Pide acceso">Pide acceso</p>
+        <h2 data-en="Tell us who you are." data-es="Cuéntanos quién eres.">Cuéntanos quién eres.</h2>
+        <p class="lp-lede"
+           data-en="Agent accounts are by invitation while we onboard the first agencies. Leave your details and we will write to you."
+           data-es="Las cuentas de asesor son por invitación mientras incorporamos a las primeras agencias. Deja tus datos y te escribimos.">Las cuentas de asesor son por invitación mientras incorporamos a las primeras agencias. Deja tus datos y te escribimos.</p>
+        <p class="lp-access__invite"><span data-es="¿Ya tienes un código de invitación?" data-en="Already have an invite code?">¿Ya tienes un código de invitación?</span>
+          <a href="/signup" data-track="agent_signup_start" data-track-label="invite_code"
+             data-es="Crea tu cuenta →" data-en="Create your account →">Crea tu cuenta →</a></p>
+      </div>
+      <div>
+        <form class="lp-form" id="agent-form">
+          <label class="lp-field"><span data-es="Nombre" data-en="Name">Nombre</span><input type="text" name="name" required autocomplete="name" maxlength="120"></label>
+          <label class="lp-field"><span data-es="Agencia" data-en="Agency">Agencia</span><input type="text" name="company" autocomplete="organization" maxlength="160"></label>
+          <label class="lp-field"><span>Email</span><input type="email" name="email" required autocomplete="email" maxlength="200"></label>
+          <label class="lp-field"><span>WhatsApp</span><input type="tel" name="phone" autocomplete="tel" maxlength="40"></label>
+          <label class="lp-field"><span data-es="Cuéntanos brevemente" data-en="Tell us briefly">Cuéntanos brevemente</span>
+            <textarea name="message" rows="3" maxlength="2000" data-es-placeholder="Cuántas propiedades manejas y en qué zonas..." data-en-placeholder="How many properties you manage and in which areas..."></textarea></label>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="lp-hp">
+          <button type="submit" class="btn btn-dark" id="agent-submit" data-es="Pedir acceso" data-en="Request access">Pedir acceso</button>
+          <p class="lp-form__error" id="agent-error" role="alert" hidden></p>
+        </form>
+        <div class="lp-form__done" id="agent-done" role="status" hidden>
+          <h3 data-es="Recibimos tu solicitud" data-en="We got your request">Recibimos tu solicitud</h3>
+          <p data-es="Te escribiremos al correo que dejaste." data-en="We will write to the email you left.">Te escribiremos al correo que dejaste.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ── §4.6 FAQ ─────────────────────────────────────────── -->
   <section>
     <div class="lp-wrap">
@@ -256,11 +293,12 @@
   </div>
   <div class="wrap foot-bottom">
     <span data-es="Hecho en la Riviera Maya" data-en="Built in the Riviera Maya">Hecho en la Riviera Maya</span>
-    <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span>
+    <span class="foot-legal-links"><a href="/privacy" data-es="Privacidad" data-en="Privacy">Privacidad</a> &middot; <a href="/terms" data-es="Términos" data-en="Terms">Términos</a> &middot; <span class="mono" style="font-size:.72rem;opacity:.5">&copy; 2026</span></span>
   </div>
 </footer>
 
 <script src="/js/i18n.js"></script>
 <script src="/js/landing.js" defer></script>
+<script src="/js/agents.js"></script>
 </body>
 </html>

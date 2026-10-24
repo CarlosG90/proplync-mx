@@ -1,5 +1,5 @@
 -- 013 · contact_requests
--- The "request a free diagnosis" form on /agencias. These are prospects for
+-- The "request a free diagnosis" form on /agencias and the "request access" form on /agents. These are prospects for
 -- Proplync itself, so like download_leads they do not live in `leads` (an
 -- agency's own buyers, scoped to an agency by RLS). It is a separate table
 -- from download_leads because those rows require a phone and have no place
@@ -13,7 +13,7 @@ create table if not exists contact_requests (
   email text not null,
   phone text,
   kind text not null default 'agency'
-    check (kind in ('agency', 'owner', 'developer', 'other')),
+    check (kind in ('agency', 'owner', 'developer', 'agent', 'other')),
   message text,
   lang text check (lang in ('es', 'en')),
   source text not null default 'agencias',
