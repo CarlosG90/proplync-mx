@@ -11,7 +11,8 @@
  * Notes live on this route rather than their own file so the deployment stays
  * under Vercel's function count; `action=note` selects them. That makes the
  * method/auth split load-bearing, so it is written to fail closed: the ONLY
- * unauthenticated path is a POST with no `action`, and it is checked first.
+ * unauthenticated paths are POSTs (no `action`, `download` and `contact`), and
+ * all of them are checked before anything that needs a session.
  * -----------------------------------------------------------------------------
  */
 
@@ -19,7 +20,7 @@ import { requireAgencyUser } from './_lib/auth.js';
 import { getUserClient, getServiceClient } from './_lib/supabase.js';
 import { safeDetail } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
-import { notifyNewLead } from './_lib/notify.js';
+import { notifyNewLead, notifyOperator } from './_lib/notify.js';
 
 const STATUSES = ['new', 'contacted', 'won', 'lost'];
 
@@ -168,6 +169,81 @@ export default async function handler(req, res) {
       res.status(500).json({ error: 'download_lead_failed', detail: safeDetail(error) });
       return;
     }
+    res.status(200).json({ ok: true });
+    return;
+  }
+
+  // -------------------------------------------------------------------------
+  // Public: the "request a diagnosis" form on /agencias. Prospects for Proplync
+  // itself, like download_leads, but with the company, type and message the
+  // call needs. Before this existed the form only showed a success message and
+  // opened a mailto window, so a visitor who closed it was lost without knowing.
+  // -------------------------------------------------------------------------
+  if (req.method === 'POST' && action === 'contact') {
+    if (await enforceRateLimit(req, res, { bucket: 'contact-request', limit: 6, windowSec: 3600 })) return;
+
+    const { name, company, email, phone, type, message, lang, website } = req.body || {};
+
+    // Honeypot: the form carries a field no person sees. Bots fill it; answer
+    // as if it worked so they learn nothing, and store nothing.
+    if (website) {
+      res.status(200).json({ ok: true });
+      return;
+    }
+
+    const cleanName = String(name || '').trim();
+    if (!cleanName || !email) {
+      res.status(400).json({ error: 'name_and_email_required' });
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email))) {
+      res.status(400).json({ error: 'invalid_email' });
+      return;
+    }
+    // Phone is optional here; when given it only has to look like a number.
+    if (phone && String(phone).replace(/\D/g, '').length < 8) {
+      res.status(400).json({ error: 'invalid_phone' });
+      return;
+    }
+
+    const kind = ['agency', 'owner', 'developer', 'other'].includes(type) ? type : 'other';
+    const row = {
+      name: cleanName.slice(0, 120),
+      company: company ? String(company).trim().slice(0, 160) : null,
+      email: String(email).trim().slice(0, 200).toLowerCase(),
+      phone: phone ? String(phone).trim().slice(0, 40) : null,
+      kind,
+      message: message ? String(message).trim().slice(0, 2000) : null,
+      lang: lang === 'en' ? 'en' : 'es',
+      source: 'agencias'
+    };
+
+    const { error } = await getServiceClient().from('contact_requests').insert(row);
+    if (error) {
+      res.status(500).json({ error: 'contact_request_failed', detail: safeDetail(error) });
+      return;
+    }
+
+    // The row is the record; the email is only a nudge. It can fail or be
+    // unconfigured without the visitor's request being lost.
+    try {
+      await notifyOperator({
+        subject: `Solicitud de diagnóstico: ${row.name}${row.company ? ' · ' + row.company : ''}`,
+        text: [
+          `Nombre: ${row.name}`,
+          `Empresa: ${row.company || '-'}`,
+          `Email: ${row.email}`,
+          `WhatsApp: ${row.phone || '-'}`,
+          `Tipo: ${row.kind}`,
+          `Idioma: ${row.lang}`,
+          '',
+          row.message || '(sin mensaje)'
+        ].join('\n')
+      });
+    } catch (e) {
+      console.error('contact_notify_failed', safeDetail(e));
+    }
+
     res.status(200).json({ ok: true });
     return;
   }

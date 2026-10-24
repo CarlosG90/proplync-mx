@@ -641,3 +641,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radiu
   .grid6{grid-template-columns:1fr}
   .hero-trust-badge{font-size:.58rem;padding:6px 12px}
 }
+
+/* Contact form: spam trap (kept out of sight, not display:none, so simple bots still fill it) and error line */
+.hp-field{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.form-error{margin:12px 0 0;color:#ffb4a8;font-size:.9rem;line-height:1.5}

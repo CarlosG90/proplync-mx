@@ -404,32 +404,44 @@
   loadPhotos();
 
   /* ---------- contact form submission ---------- */
-  function submitContact(e){
+  async function submitContact(e){
     e.preventDefault();
     const form = document.getElementById('contact-form');
-    const data = Object.fromEntries(new FormData(form));
-    // For now: send via mailto as fallback, show success state
-    // In production: POST to /api/leads or a webhook
     const btn = form.querySelector('button[type=submit]');
+    const err = document.getElementById('contact-error');
+    const label = btn.textContent;
+    err.hidden = true;
     btn.disabled = true;
     btn.textContent = lang === 'en' ? 'Sending...' : 'Enviando...';
-    // Simulate send (replace with fetch('/api/leads', ...) when backend is ready)
-    setTimeout(function(){
+
+    const data = Object.fromEntries(new FormData(form));
+    data.lang = lang;
+    try{
+      const r = await fetch('/api/leads?action=contact', {
+        method: 'POST',
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+      const out = await r.json().catch(function(){ return {}; });
+      if(!r.ok){ const f = new Error(out.error || ('http_' + r.status)); f.status = r.status; throw f; }
+      // Only now is it true that the request was received.
       form.style.display = 'none';
-      var success = document.getElementById('contact-success');
-      success.style.display = 'flex';
-      // Also fire a mailto as backup so Carlos gets the lead
-      var subject = encodeURIComponent('Diagnostico Proplync.mx — ' + (data.name || 'Lead'));
-      var body = encodeURIComponent(
-        'Nombre: ' + (data.name||'') + '\n' +
-        'Empresa: ' + (data.company||'') + '\n' +
-        'Email: ' + (data.email||'') + '\n' +
-        'WhatsApp: ' + (data.phone||'') + '\n' +
-        'Tipo: ' + (data.type||'') + '\n' +
-        'Mensaje: ' + (data.message||'')
-      );
-      window.open('mailto:hola@proplync.mx?subject=' + subject + '&body=' + body, '_blank');
-    }, 800);
+      document.getElementById('contact-success').style.display = 'flex';
+    }catch(f){
+      const en = lang === 'en';
+      const msgs = {
+        invalid_email: en ? 'Please check your email address.' : 'Revisa tu correo: no parece válido.',
+        name_and_email_required: en ? 'Please enter your name and email.' : 'Escribe tu nombre y tu correo.',
+        invalid_phone: en ? 'Please check your WhatsApp number.' : 'Revisa tu número de WhatsApp.'
+      };
+      err.textContent = msgs[f.message]
+        || (f.status === 429
+            ? (en ? 'Too many attempts. Try again later or email hola@proplync.mx.' : 'Demasiados intentos. Intenta más tarde o escríbenos a hola@proplync.mx.')
+            : (en ? "We couldn't send your message. Email us at hola@proplync.mx." : 'No pudimos enviar tu mensaje. Escríbenos a hola@proplync.mx.'));
+      err.hidden = false;
+      btn.disabled = false;
+      btn.textContent = label;
+    }
   }
 
   /* ---------- textarea placeholder i18n ---------- */
