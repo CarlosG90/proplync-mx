@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import Anthropic from '@anthropic-ai/sdk';
-import { SUBMIT_SCHEMA, progressFromBlock, progressLog, runScoutStep, probeScout, operatorDetail, planAfterSegment, stuckAction, KICK_AFTER_MS, STALL_AFTER_MS } from '../api/_lib/scout.js';
+import { SUBMIT_SCHEMA, fetchOutcomes, progressFromBlock, progressLog, runScoutStep, probeScout, operatorDetail, planAfterSegment, stuckAction, KICK_AFTER_MS, STALL_AFTER_MS } from '../api/_lib/scout.js';
 import { runHardMaxUsd, runMaxUsd, DEFAULT_RUN_MAX_USD, DEFAULT_RUN_HARD_MAX_USD } from '../api/_lib/scout-budget.js';
 import { fakeDb } from './_fake-db.mjs';
 
@@ -457,4 +457,46 @@ test('a rerun does not store a listing the brief already holds', async () => {
     assert.equal(db.scout_candidates.length, 1, 'the rejected one is not brought back as a new card');
     assert.match(db.scout_runs[0].search_notes, /already found in an earlier search/);
   });
+});
+
+test('the refused-site list: bare domains, in the prompt, fetch-only, and never a site that has opened', async () => {
+  await withEnv(KEY, async () => {
+    const { from } = world();
+    const client = fakeClient([submission([PORTAL_URL])]);
+    await runScoutStep({ from }, 'r1', { client });
+    const sent = client.calls[0];
+    const search = sent.tools.find((t) => t.name === 'web_search');
+    const fetch = sent.tools.find((t) => t.name === 'web_fetch');
+    const refused = fetch.blocked_domains.filter((d) => !search.blocked_domains.includes(d));
+    assert.ok(refused.length >= 10, 'the evidence-based list is in place');
+    const system = sent.system.map((b) => b.text).join('\n');
+    for (const d of refused) {
+      assert.match(d, /^[a-z0-9-]+(\.[a-z0-9-]+)+$/, d + ' is a bare domain: no scheme, no path');
+      assert.ok(system.includes(d), d + ' is named in the prompt, so Scout does not spend an open on it');
+    }
+    // these opened in every real run: they must never end up on the list
+    for (const ok of ['propiedades.com', 'bestcaribbeanproperty.com', 'sienteei.com', 'hausrealestate.com.mx', 'selvacorealty.com', 'mudafy.com.mx']) {
+      assert.ok(!fetch.blocked_domains.includes(ok), ok + ' opens fine, do not block it');
+    }
+  });
+});
+
+test('fetchOutcomes tallies, per site, the opens that worked and the ones that failed, with the error code', () => {
+  const run = (url, id, content) => [
+    { role: 'assistant', content: [
+      { type: 'server_tool_use', id, name: 'web_fetch', input: { url } },
+      { type: 'web_fetch_tool_result', tool_use_id: id, content }
+    ] }
+  ];
+  const ok = { type: 'web_fetch_result', url: 'x', content: {} };
+  const tally = new Map();
+  fetchOutcomes(run('https://www.propiedades.com/a', 't1', ok), tally);
+  fetchOutcomes(run('https://propiedades.com/b', 't2', ok), tally);
+  fetchOutcomes(run('https://www.lamudi.com.mx/x', 't3', { type: 'web_fetch_tool_result_error', error_code: 'url_not_accessible' }), tally);
+  fetchOutcomes(run('https://www.lamudi.com.mx/y', 't4', { type: 'web_fetch_tool_result_error' }), tally);
+  assert.deepEqual([tally.get('propiedades.com').ok, tally.get('propiedades.com').fail], [2, 0]);
+  const lamudi = tally.get('lamudi.com.mx');
+  assert.deepEqual([lamudi.ok, lamudi.fail], [0, 2]);
+  assert.deepEqual([...lamudi.codes].sort(), ['unknown', 'url_not_accessible']);
+  assert.equal(fetchOutcomes(null).size, 0, 'a run with no transcript is just empty');
 });

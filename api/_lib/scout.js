@@ -52,12 +52,17 @@ const PRICE = { input: 4, output: 20, cacheRead: 0.2, cacheWrite: 5, perSearch: 
 const BLOCKED = ['airbnb.com', 'airbnb.mx', 'booking.com', 'vrbo.com', 'expedia.com',
   'facebook.com', 'instagram.com', 'tiktok.com', 'pinterest.com', 'youtube.com'];
 
-/* Sites whose pages the fetch tool could not open in any run so far (3 real runs: MercadoLibre refused 6 of 6,
-   Lamudi 3 of 3, Vivanuncios 2 of 2, Inmuebles24 1 of 1; propiedades.com, sienteei, hausrealestate, mudafy and
-   bestcaribbeanproperty always opened). Blocking them for the fetch tool only saves the open it would waste; the
-   search tool still returns them, and their search snippet is still a valid source. If a site starts opening, take
-   it off this list and out of the prompt's HOW TO RESEARCH section. */
-const FETCH_REFUSED = ['mercadolibre.com.mx', 'lamudi.com.mx', 'vivanuncios.com.mx', 'inmuebles24.com'];
+/* Sites whose pages the fetch tool could not open, every time it tried (4 real runs, `node scripts/fetch-stats.mjs`
+   prints the live tally): MercadoLibre 6 of 6 (url_not_allowed), Lamudi 3, Vivanuncios 2, gipgrupoinmobiliariodelpacifico 2,
+   and one failed try each for Inmuebles24, arcturusrealestatenetwork (url_not_allowed), best-inmobiliaria.easybroker.com,
+   realestateab, playa-home and iadmexico. Sites that always opened: propiedades.com, bestcaribbeanproperty, sienteei,
+   hausrealestate, selvacorealty, mudafy, propiedadesenmexico, somoscasarealestate.
+   Blocking a site for the fetch tool only saves the open it would waste: the search tool still returns it and its
+   search snippet is still a valid source. A site is listed only if it has never opened. When one starts opening, take
+   it off this list (the prompt reads from here, so that is the only edit). */
+const FETCH_REFUSED = ['mercadolibre.com.mx', 'lamudi.com.mx', 'vivanuncios.com.mx', 'inmuebles24.com',
+  'gipgrupoinmobiliariodelpacifico.com', 'arcturusrealestatenetwork.com', 'best-inmobiliaria.easybroker.com',
+  'realestateab.com.mx', 'playa-home.com', 'iadmexico.mx'];
 
 const NUDGE = 'Research is finished. Call submit_candidates now with everything you found, or with an empty list if nothing fits.';
 
@@ -74,7 +79,7 @@ HOW TO RESEARCH
 - Then search the web the way a local buyer would, in Spanish: the portals (inmuebles24.com, lamudi.com.mx, vivanuncios.com.mx, inmuebles.mercadolibre.com.mx, propiedades.com) and local agency websites. Use the areas, property type, bedrooms and price words from the brief, for example "departamento en venta Aldea Zama Tulum 2 recamaras".
 - Open promising individual listing pages with web_fetch and read the facts there. A search snippet is only enough for a title and a price.
 - Vary your queries across areas, portals and agencies instead of repeating one. Never run the same query twice and never open the same page twice: every call counts against a small allowance, and a repeat finds nothing new. A first run wasted 3 of 8 searches on one repeated query and 3 of 10 page opens on one page.
-- These sites refuse to be opened: mercadolibre.com.mx, lamudi.com.mx, vivanuncios.com.mx and inmuebles24.com. Use their search snippet for a title and a price, and never try to open them. Spend your page opens on propiedades.com, agency sites and developer sites.
+- These sites refuse to be opened: ${FETCH_REFUSED.join(', ')}. Use their search snippet for a title and a price, and never try to open them. Spend your page opens on propiedades.com, agency sites and developer sites that are not listed here.
 - A page you open is cut after about 3,000 tokens, so opening the same address again returns exactly the same part. Never open an address twice. If a fact is missing from the part you got, report it as unknown and put the question in questions_for_agent. A results page on a portal is a list: take the listing addresses from it and open those, once each.
 - Aim for about 5 to 10 good candidates, and stop when you have them or your searches run out.
 
@@ -448,6 +453,28 @@ async function finish(svc, run, fields, briefStatus) {
   if (briefStatus) {
     await svc.from('buyer_briefs').update({ status: briefStatus, updated_at: new Date().toISOString() }).eq('id', run.brief_id);
   }
+}
+
+/**
+ * How each site fared when Scout tried to open its pages, read from a run's stored transcript. This is what the
+ * FETCH_REFUSED list is judged on, so it lives next to the list. Returns Map<host, {ok, fail, codes:Set}>.
+ */
+export function fetchOutcomes(messages, into = new Map()) {
+  const urls = new Map();
+  for (const m of Array.isArray(messages) ? messages : []) {
+    for (const b of Array.isArray(m && m.content) ? m.content : []) {
+      if (b.type === 'server_tool_use' && b.name === 'web_fetch') urls.set(b.id, b.input && b.input.url);
+      if (b.type === 'web_fetch_tool_result') {
+        const host = hostOf(urls.get(b.tool_use_id));
+        if (!host) continue;
+        const stat = into.get(host) || { ok: 0, fail: 0, codes: new Set() };
+        const c = b.content || {};
+        if (c.type === 'web_fetch_result') stat.ok++; else { stat.fail++; stat.codes.add(c.error_code || 'unknown'); }
+        into.set(host, stat);
+      }
+    }
+  }
+  return into;
 }
 
 /* ── What Scout is doing, for the buyer to watch ──
