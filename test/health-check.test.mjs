@@ -16,11 +16,12 @@ function stubSvc(cfg = {}) {
     const state = { head: false, count: false, cols: '' };
     const q = {
       select(cols, opts) { state.cols = cols || ''; state.head = Boolean(opts && opts.head); state.count = Boolean(opts && opts.count); return q; },
-      in() { return q; }, gte() { return q; }, limit() { return q; }, eq() { return q; },
+      in() { return q; }, gte() { return q; }, limit() { return q; }, eq() { return q; }, order() { return q; },
       then(res, rej) {
         let out;
         if ((cfg.missing || []).includes(table)) out = { data: null, count: null, error: { code: '42P01', message: 'relation does not exist' } };
         else if (state.count) out = { data: [], count: (cfg.counts || {})[table] ?? 5, error: null };
+        else if (table === 'scout_runs' && state.cols.includes('created_at, error')) out = { data: cfg.failedRuns || [], error: null };
         else if (table === 'scout_runs' && state.cols.includes('lease_until')) out = { data: cfg.active || [], error: null };
         else out = { data: cfg.costRows || [], error: null };
         return Promise.resolve(out).then(res, rej);
@@ -201,4 +202,24 @@ test('migration 014 not applied is a problem that says what is lost', async () =
   const r = await collectHealth(base({ svc: stubSvc({ missing: ['events'] }) }));
   assert.equal(r.ok, false);
   assert.ok(r.problems.some((p) => /Migration 014 is not applied/.test(p)));
+});
+
+test('a failed Scout run shows its real error in the report, and points to the probe', async () => {
+  const failedRuns = [{ id: 'abcdef12-0000-0000-0000-000000000000', created_at: '2026-10-24T16:18:06Z', error: 'HTTP 400 invalid_request_error: bad field' }];
+  const r = await collectHealth(base({ svc: stubSvc({ failedRuns }) }));
+  assert.equal(r.recent_failures[0].error, 'HTTP 400 invalid_request_error: bad field');
+  assert.ok(r.notes.some((n) => /--probe/.test(n)));
+  assert.equal(r.scout_request, null);
+});
+
+test('with the probe, a rejected real request is a problem that carries the provider\'s words', async () => {
+  const r = await collectHealth(base({ probeScout: async () => ({ ok: false, model: SCOUT_MODEL, detail: 'HTTP 400 invalid_request_error: bad field' }) }));
+  assert.equal(r.ok, false);
+  assert.ok(r.problems.some((p) => /rejects Scout's real request: HTTP 400 invalid_request_error: bad field/.test(p)));
+});
+
+test('with the probe, an accepted real request is ok and recorded', async () => {
+  const r = await collectHealth(base({ probeScout: async () => ({ ok: true, model: SCOUT_MODEL, stop_reason: 'end_turn' }) }));
+  assert.equal(r.ok, true);
+  assert.equal(r.scout_request.ok, true);
 });

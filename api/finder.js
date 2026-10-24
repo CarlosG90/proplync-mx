@@ -44,7 +44,7 @@ import { groqChat, messageText } from './_lib/groq.js';
 import { nvidiaChat } from './_lib/nvidia-concierge.js';
 import { askConcierge, isBusy } from './_lib/concierge-turn.js';
 import { getServiceClient } from './_lib/supabase.js';
-import { createRun, runScoutStep, runsStartedToday, scoutConfigured, checkAnthropic } from './_lib/scout.js';
+import { createRun, runScoutStep, runsStartedToday, scoutConfigured, checkAnthropic, probeScout } from './_lib/scout.js';
 import { watchRun } from './_lib/scout-watch.js';
 import { collectHealth, doctorToken } from './_lib/health-check.js';
 import { redisGet, redisSet } from './_lib/redis.js';
@@ -507,6 +507,7 @@ async function handleHealth(req, res) {
       env: process.env,
       svc: getServiceClient(),
       checkAnthropic,
+      probeScout: req.query.probe === '1' ? probeScout : undefined,
       scoutCanRun: scoutCanRun(),
       stepOriginSet: Boolean(stepOrigin()),
       dailyCap: Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 5

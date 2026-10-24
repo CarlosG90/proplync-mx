@@ -98,6 +98,7 @@ async function checkDatabase(svc, now) {
  * @param {boolean} deps.stepOriginSet
  * @param {number} deps.dailyCap
  * @param {Function} [deps.fetchImpl]
+ * @param {Function} [deps.probeScout]  sends Scout's real request once (costs a few cents); only when the operator asks
  */
 export async function collectHealth(deps) {
   const { env, svc, checkAnthropic, scoutCanRun, stepOriginSet, dailyCap } = deps;
@@ -155,11 +156,26 @@ export async function collectHealth(deps) {
   if (index && index.exists && index.rows < 20) notes.push(`The search index holds only ${index.rows} properties. Scout still researches the web; the index adds PropLync's own listings.`);
   if (spent !== null && spent >= limits.monthly_budget_usd * 0.8) notes.push(`Scout has spent US$${spent.toFixed(2)} of its US$${limits.monthly_budget_usd} monthly budget.`);
 
+  // The real reason recent runs failed. A model lookup passing says nothing about whether a run is accepted.
+  let recent_failures = [];
+  try {
+    const { data } = await svc.from('scout_runs').select('id, created_at, error').eq('status', 'failed').order('created_at', { ascending: false }).limit(3);
+    recent_failures = (data || []).map((r) => ({ id: r.id, at: r.created_at, error: r.error }));
+  } catch { /* the report is still useful without it */ }
+
+  let scout_request = null;
+  if (deps.probeScout) {
+    scout_request = await deps.probeScout();
+    if (!scout_request.ok) problems.push(`Anthropic rejects Scout's real request: ${scout_request.detail}`);
+  } else if (recent_failures.length) {
+    notes.push('Recent Scout runs failed. Run `node scripts/doctor.mjs --probe` to send Scout\'s real request once (a few cents) and see why.');
+  }
+
   return {
     ok: problems.length === 0,
     checked_at: new Date(now).toISOString(),
     problems, notes,
     providers: { anthropic, extractor, nvidia, groq },
-    scout, email, database
+    scout, email, database, recent_failures, scout_request
   };
 }

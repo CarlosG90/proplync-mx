@@ -137,6 +137,55 @@ const TOOLS = [
   }
 ];
 
+/**
+ * What really went wrong, for the operator. safeDetail() replaces every error with one generic sentence so
+ * internals never reach a buyer; stored in scout_runs.error that sentence hid the cause of three failed runs
+ * and left nothing to fix. This keeps the provider's status, error type and message (Anthropic's messages
+ * name the problem, never a key). scout_runs has no browser access and the buyer status page does not select
+ * `error`, so only an operator ever reads it.
+ */
+export function operatorDetail(err) {
+  logDegraded('scout', err);
+  const status = err && err.status ? `HTTP ${err.status} ` : '';
+  const type = err && err.error && err.error.error && err.error.error.type ? `${err.error.error.type}: ` : '';
+  const message = String((err && err.message) || err || 'unknown error').replace(/\s+/g, ' ');
+  return (status + type + message).slice(0, 400);
+}
+
+/* The one request Scout sends each segment. The doctor's probe sends this same request, so a probe that is
+   accepted means a real segment is accepted. */
+function segmentRequest(messages, wrapUp, maxTokens = MAX_TOKENS) {
+  return {
+    model: SCOUT_MODEL,
+    max_tokens: maxTokens,
+    system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }].concat(wrapUp ? [{ type: 'text', text: WRAPUP }] : []),
+    tools: TOOLS,
+    messages,
+    output_config: { effort: 'high' },
+    // The transcript grows by whole pages each segment; caching it means the
+    // next segment pays a tenth for everything it has already read.
+    cache_control: { type: 'ephemeral' },
+    betas: ['server-side-fallback-2026-07-01'],
+    fallbacks: 'default'
+  };
+}
+
+/**
+ * Would Anthropic accept Scout's real request? checkAnthropic() only looks the model up, which passed while
+ * every real run was being rejected. This sends the real request with a tiny output cap (a rejection comes
+ * back before anything is generated; an accepted one costs a few cents), and returns the provider's own words.
+ */
+export async function probeScout(opts = {}) {
+  if (!process.env.ANTHROPIC_API_KEY && !opts.client) return { ok: false, model: SCOUT_MODEL, detail: 'ANTHROPIC_API_KEY is not set' };
+  try {
+    const client = opts.client || new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 60000 });
+    const msg = await client.beta.messages.create(segmentRequest([{ role: 'user', content: 'Reply with the single word: ok' }], false, 64));
+    return { ok: true, model: SCOUT_MODEL, stop_reason: msg.stop_reason, tokens: (msg.usage && (msg.usage.input_tokens + msg.usage.output_tokens)) || null };
+  } catch (err) {
+    return { ok: false, model: SCOUT_MODEL, detail: operatorDetail(err) };
+  }
+}
+
 export function scoutConfigured() {
   return Boolean(process.env.ANTHROPIC_API_KEY);
 }
@@ -448,32 +497,22 @@ export async function runScoutStep(svc, runId, opts = {}) {
   let message;
   try {
     const client = opts.client || new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const stream = client.beta.messages.stream({
-      model: SCOUT_MODEL,
-      max_tokens: MAX_TOKENS,
-      system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }].concat(wrapUp ? [{ type: 'text', text: WRAPUP }] : []),
-      tools: TOOLS,
-      messages,
-      output_config: { effort: 'high' },
-      // The transcript grows by whole pages each segment; caching it means the
-      // next segment pays a tenth for everything it has already read.
-      cache_control: { type: 'ephemeral' },
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default'
-    }, { signal: opts.signal });
+    const stream = client.beta.messages.stream(segmentRequest(messages, wrapUp), { signal: opts.signal });
     message = await stream.finalMessage();
   } catch (err) {
     const permanent = err instanceof Anthropic.BadRequestError || err instanceof Anthropic.AuthenticationError ||
       err instanceof Anthropic.PermissionDeniedError || err instanceof Anthropic.NotFoundError;
     logDegraded('scout:segment', err);
     if (permanent) {
-      await finish(svc, run, { status: 'failed', error: safeDetail(err, 'scout') }, 'review');
-      return { state: 'failed', detail: safeDetail(err, 'scout') };
+      const why = operatorDetail(err);
+      await finish(svc, run, { status: 'failed', error: why }, 'review');
+      return { state: 'failed', detail: why };
     }
     // Timeout, overload, rate limit: nothing from this segment was saved, so
     // releasing the lease lets the next kick redo it from the same transcript.
-    await svc.from('scout_runs').update({ lease_until: null, error: safeDetail(err, 'scout') }).eq('id', run.id);
-    return { state: 'retry', detail: safeDetail(err, 'scout') };
+    const why = operatorDetail(err);
+    await svc.from('scout_runs').update({ lease_until: null, error: why }).eq('id', run.id);
+    return { state: 'retry', detail: why };
   }
 
   const usage = addUsage(run, message.usage);
