@@ -10,7 +10,7 @@
     "sharp": "^0.35.3"
   },
   "scripts": {
-    "test": "node --test test/scout-budget.test.mjs test/scout-merge.test.mjs test/search-lib.test.mjs test/extract-fields.test.mjs test/leads-contact.test.mjs test/concierge-voice.test.mjs test/concierge-turn.test.mjs test/scout-run.test.mjs test/scout-watch.test.mjs test/health-check.test.mjs",
+    "test": "node --test test/scout-budget.test.mjs test/scout-merge.test.mjs test/search-lib.test.mjs test/extract-fields.test.mjs test/leads-contact.test.mjs test/concierge-voice.test.mjs test/concierge-turn.test.mjs test/scout-run.test.mjs test/scout-watch.test.mjs test/health-check.test.mjs test/events.test.mjs",
     "scout": "node scripts/scout.mjs"
   }
 }

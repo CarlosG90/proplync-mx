@@ -11,7 +11,7 @@
  * Notes live on this route rather than their own file so the deployment stays
  * under Vercel's function count; `action=note` selects them. That makes the
  * method/auth split load-bearing, so it is written to fail closed: the ONLY
- * unauthenticated paths are POSTs (no `action`, `download` and `contact`), and
+ * unauthenticated paths are POSTs (no `action`, `download`, `contact` and `event`), and
  * all of them are checked before anything that needs a session.
  * -----------------------------------------------------------------------------
  */
@@ -23,6 +23,34 @@ import { enforceRateLimit } from './_lib/ratelimit.js';
 import { notifyNewLead, notifyOperator } from './_lib/notify.js';
 
 const STATUSES = ['new', 'contacted', 'won', 'lost'];
+
+/* The funnel (LANDING-PAGES-PLAN §7). A fixed list, so the table cannot be filled with arbitrary names. */
+const EVENT_NAMES = new Set([
+  'landing_view', 'cta_click', 'concierge_start', 'concierge_complete', 'brief_approved',
+  'scout_result_viewed', 'verification_requested', 'agent_signup_start', 'agent_signup_complete', 'agent_request_sent'
+]);
+
+/** A short, plain label (campaign tags): letters, digits and a few separators. Anything else is dropped, not repaired. */
+function cleanLabel(v, max) {
+  const s = String(v == null ? '' : v).trim();
+  return s && s.length <= max && /^[\w .:/+~-]+$/.test(s) ? s : null;
+}
+
+/** Event properties: a few short, plain values. Anything that looks like contact data is dropped. */
+function cleanProps(p) {
+  const out = {};
+  if (!p || typeof p !== 'object' || Array.isArray(p)) return out;
+  for (const [k, v] of Object.entries(p).slice(0, 8)) {
+    if (!/^[a-z_]{1,30}$/.test(k) || k === 'page') continue;
+    if (typeof v === 'number' && Number.isFinite(v)) out[k] = v;
+    else if (typeof v === 'boolean') out[k] = v;
+    else if (typeof v === 'string') {
+      const s = v.trim().slice(0, 100);
+      if (s && !/@|\d{7,}/.test(s)) out[k] = s;   // no emails, no phone numbers
+    }
+  }
+  return out;
+}
 
 /**
  * True when a write failed because the row is not this agency's (or does not
@@ -246,6 +274,37 @@ export default async function handler(req, res) {
     }
 
     res.status(200).json({ ok: true });
+    return;
+  }
+
+  // -------------------------------------------------------------------------
+  // Public: one funnel event from a visitor's browser (supabase/014_events.sql). Anonymous by design: a random
+  // id that lives in the visitor's tab, never an IP, a name or an email. Write-only: nothing is read back.
+  // -------------------------------------------------------------------------
+  if (req.method === 'POST' && action === 'event') {
+    if (await enforceRateLimit(req, res, { bucket: 'event', limit: 240, windowSec: 3600 })) return;
+    const b = req.body || {};
+    if (!EVENT_NAMES.has(b.name)) { res.status(400).json({ error: 'unknown_event' }); return; }
+    const session = String(b.session || '');
+    if (!/^[a-z0-9-]{8,40}$/.test(session)) { res.status(400).json({ error: 'invalid_session' }); return; }
+    const host = String(b.ref_host || '').toLowerCase();
+    const row = {
+      name: b.name,
+      page: /^[a-z0-9_-]{1,40}$/.test(String(b.page || '')) ? b.page : 'unknown',
+      session,
+      lang: b.lang === 'en' ? 'en' : b.lang === 'es' ? 'es' : null,
+      utm_source: cleanLabel(b.utm_source, 80),
+      utm_medium: cleanLabel(b.utm_medium, 80),
+      utm_campaign: cleanLabel(b.utm_campaign, 80),
+      ref_host: /^[a-z0-9.-]{1,100}$/.test(host) ? host : null,
+      props: cleanProps(b.props)
+    };
+    const { error } = await getServiceClient().from('events').insert(row);
+    if (error) {
+      res.status(500).json({ error: 'event_failed', detail: safeDetail(error) });
+      return;
+    }
+    res.status(202).json({ ok: true });
     return;
   }
 

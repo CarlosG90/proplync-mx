@@ -31,7 +31,7 @@ export function doctorToken(serviceRoleKey) {
 }
 
 const STT_MODEL = 'whisper-large-v3';
-const TABLES = ['buyer_briefs', 'scout_runs', 'scout_candidates', 'buyer_wallets', 'contact_requests', 'search_properties'];
+const TABLES = ['buyer_briefs', 'scout_runs', 'scout_candidates', 'buyer_wallets', 'contact_requests', 'events', 'search_properties'];
 
 async function listModels(url, key, fetchImpl) {
   const r = await fetchImpl(url, { headers: { authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(8000) });
@@ -142,7 +142,9 @@ export async function collectHealth(deps) {
     if (database.tables[t] && !database.tables[t].exists) {
       problems.push(t === 'contact_requests'
         ? 'Migration 013 is not applied: the /agencias and /agents forms cannot save requests.'
-        : `Table ${t} is missing or unreachable (${database.tables[t].error}).`);
+        : t === 'events'
+          ? 'Migration 014 is not applied: the funnel cannot be recorded (events are lost silently).'
+          : `Table ${t} is missing or unreachable (${database.tables[t].error}).`);
     }
   }
   if (database.stuck_runs > 0) problems.push(`${database.stuck_runs} Scout run(s) look stuck. The buyer's status page restarts them; operator fallback: node scripts/scout.mjs run <briefId>.`);

@@ -45,6 +45,7 @@ js/invest.js           the /invest hero's captions, captured-needs chips and han
 api/_lib/concierge-turn.js  one Concierge turn: both providers get the system prompt, replies are validated and repaired once, then fallback
 api/_lib/scout-watch.js     watchdog: the buyer's status poll restarts a lost Scout hand-off or refunds a stalled run
 api/_lib/health-check.js    readiness check behind /api/finder?action=health; run it with `node scripts/doctor.mjs`
+api/_lib/funnel.js          the funnel from the events table; `node scripts/funnel.mjs` prints it (first-party, anonymous, no vendor; supabase/014_events.sql)
 PARTNER-TEST-RUNBOOK.md     how to test the AI agents end to end with a second person
 api/
   generate.js          multi-action: listing copy, describe, nlsearch, enhance, day-to-dusk, Reel start/poll

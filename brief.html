@@ -269,6 +269,7 @@ function renderBrief() {
    the /invest hero. This page only draws its half: bubbles, the live brief and the approve card. */
 var ui = PropLyncConcierge.create({
   micEl: micEl,
+  onStart: function () { if (window.plTrack) plTrack('concierge_start'); },   // counted once per tab: the /invest hero may have started it
   stateEl: document.getElementById('vo-state'),
   outEl: document.getElementById('voice-out'),
   messages: messages,
@@ -276,6 +277,7 @@ var ui = PropLyncConcierge.create({
   onReply: function (text) { bubble('a', text); },
   onBrief: function (b) { brief = b; renderBrief(); },
   onDone: function () {
+    if (window.plTrack) plTrack('concierge_complete');
     bubble('sys', t('Revisa el resumen y aprueba cuando esté bien.', 'Review the brief and approve it when it looks right.'));
     document.getElementById('approve-card').hidden = false;
     if (window.PropLyncOrb) PropLyncOrb.setProgress(1);   // brief complete: the object closes

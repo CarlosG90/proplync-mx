@@ -196,3 +196,9 @@ test('the extractor uses a different Claude model from Scout, and a retired one 
   assert.ok(r.problems.some((p) => /Listing import from PDFs and photos will fail/.test(p)));
   assert.equal(r.problems.some((p) => /Scout cannot research/.test(p)), false, 'and the message does not blame Scout');
 });
+
+test('migration 014 not applied is a problem that says what is lost', async () => {
+  const r = await collectHealth(base({ svc: stubSvc({ missing: ['events'] }) }));
+  assert.equal(r.ok, false);
+  assert.ok(r.problems.some((p) => /Migration 014 is not applied/.test(p)));
+});
