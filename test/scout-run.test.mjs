@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import Anthropic from '@anthropic-ai/sdk';
-import { SUBMIT_SCHEMA, runScoutStep, probeScout, operatorDetail, planAfterSegment, stuckAction, KICK_AFTER_MS, STALL_AFTER_MS } from '../api/_lib/scout.js';
+import { SUBMIT_SCHEMA, progressFromBlock, progressLog, runScoutStep, probeScout, operatorDetail, planAfterSegment, stuckAction, KICK_AFTER_MS, STALL_AFTER_MS } from '../api/_lib/scout.js';
 import { runHardMaxUsd, runMaxUsd, DEFAULT_RUN_MAX_USD, DEFAULT_RUN_HARD_MAX_USD } from '../api/_lib/scout-budget.js';
 import { fakeDb } from './_fake-db.mjs';
 
@@ -30,7 +30,7 @@ const research = (cost = 'low') => ({
     { type: 'web_search_tool_result', tool_use_id: 's1', content: [{ type: 'web_search_result', url: PORTAL_URL, title: 'Casa 1' }] }
   ],
   usage: cost === 'huge'
-    ? { input_tokens: 600000, output_tokens: 40000, server_tool_use: { web_search_requests: 6 } }
+    ? { input_tokens: 250000, output_tokens: 8000, server_tool_use: { web_search_requests: 6 } }
     : { input_tokens: 20000, output_tokens: 800, server_tool_use: { web_search_requests: 2 } }
 });
 const candidate = (urls) => ({
@@ -54,10 +54,12 @@ function fakeClient(script) {
     calls,
     beta: { messages: { stream: (params) => {
       calls.push(params);
-      return { finalMessage: async () => {
+      const handlers = [];
+      return { on: (ev, fn) => { if (ev === 'contentBlock') handlers.push(fn); }, finalMessage: async () => {
         const next = script.shift();
         if (next instanceof Error) throw next;
         if (!next) throw new Error('script ran out');
+        for (const b of next.content || []) handlers.forEach((h) => h(b));
         return next;
       } };
     } } }
@@ -98,13 +100,13 @@ test('planAfterSegment: prose gets one nudge, then a failure; refusals and trunc
   assert.deepEqual(planAfterSegment({ ...base, stopReason: 'max_tokens', nudged: false }), { action: 'fail', reason: 'stopped:max_tokens' });
 });
 
-test('limits: soft default 3, hard default 6, and the hard cap is never below 1.5x the soft one', () => {
-  assert.equal(DEFAULT_RUN_MAX_USD, 3);
-  assert.equal(DEFAULT_RUN_HARD_MAX_USD, 6);
-  assert.equal(runHardMaxUsd({}), 6);
+test('limits: soft default 1, hard default 1.5, and the hard cap is never below 1.5x the soft one', () => {
+  assert.equal(DEFAULT_RUN_MAX_USD, 1);
+  assert.equal(DEFAULT_RUN_HARD_MAX_USD, 1.5);
+  assert.equal(runHardMaxUsd({}), 1.5);
   assert.equal(runHardMaxUsd({ SCOUT_RUN_MAX_USD: '10' }), 15);          // a high soft cap drags the hard cap up with it
-  assert.equal(runHardMaxUsd({ SCOUT_RUN_HARD_MAX_USD: '4' }), 4.5);     // a hard cap set too low is lifted to 1.5x the soft cap, not obeyed
-  assert.equal(runMaxUsd({ SCOUT_RUN_MAX_USD: 'oops' }), 3);
+  assert.equal(runHardMaxUsd({ SCOUT_RUN_HARD_MAX_USD: '1.2' }), 1.5);   // a hard cap set too low is lifted to 1.5x the soft cap, not obeyed
+  assert.equal(runMaxUsd({ SCOUT_RUN_MAX_USD: 'oops' }), 1);
 });
 
 test('stuckAction: a healthy run waits; a lost hand-off is kicked; a dead run fails', () => {
@@ -174,11 +176,11 @@ test('under the soft cap there is no wrap-up instruction', async () => {
 test('the cost-cap bug: a run that crosses the soft cap mid-research is NOT ended with nothing', async () => {
   await withEnv(KEY, async () => {
     const { db, from } = world();
-    const out = await runScoutStep({ from }, 'r1', { client: fakeClient([research('huge')]) });   // about US$4 in one segment
+    const out = await runScoutStep({ from }, 'r1', { client: fakeClient([research('huge')]) });   // about US$1.2 in one segment: over the US$1 soft cap, under the US$1.5 hard cap
     assert.equal(out.state, 'continue');
     assert.notEqual(db.scout_runs[0].status, 'done');
     assert.equal(db.scout_candidates.length, 0);
-    assert.ok(db.scout_runs[0].cost_usd >= 3 && db.scout_runs[0].cost_usd < 6);
+    assert.ok(db.scout_runs[0].cost_usd >= 1 && db.scout_runs[0].cost_usd < 1.5);
   });
 });
 
@@ -362,4 +364,76 @@ test('submit_candidates schema stays under Anthropic\'s limit of 16 union-typed 
   };
   walk(SUBMIT_SCHEMA);
   assert.ok(unions <= 12, `${unions} union-typed fields; Anthropic rejects more than 16 with HTTP 400, keep a margin`);
+});
+
+test('progressFromBlock turns streamed blocks into short, safe events', () => {
+  const ctx = {};
+  assert.deepEqual(
+    (({ at, ...e }) => e)(progressFromBlock({ type: 'server_tool_use', name: 'web_search', input: { query: '  casa   tulum\n2 recamaras ' } }, ctx)),
+    { k: 'search', q: 'casa tulum 2 recamaras' });
+  const results = progressFromBlock({ type: 'web_search_tool_result', content: [
+    { url: 'https://www.inmuebles24.com/a' }, { url: 'https://inmuebles24.com/b' }, { url: 'https://lamudi.com.mx/c' }, { url: 'not a url' }] }, ctx);
+  assert.equal(results.n, 4);
+  assert.deepEqual(results.sites, ['inmuebles24.com', 'lamudi.com.mx']);
+  assert.equal(progressFromBlock({ type: 'server_tool_use', name: 'web_fetch', input: { url: 'https://www.sienteei.com/p/1' } }, ctx).host, 'sienteei.com');
+  const page = progressFromBlock({ type: 'web_fetch_tool_result', content: { type: 'web_fetch_result', url: 'https://www.sienteei.com/p/1', content: { title: 'Departamento <b>3</b>' } } }, ctx);
+  assert.equal(page.k, 'page');
+  assert.equal(page.host, 'sienteei.com');
+  // a refused fetch carries no URL: the last host opened names it
+  progressFromBlock({ type: 'server_tool_use', name: 'web_fetch', input: { url: 'https://departamento.mercadolibre.com.mx/MLM-1' } }, ctx);
+  const refused = progressFromBlock({ type: 'web_fetch_tool_result', content: { type: 'web_fetch_tool_result_error', error_code: 'url_not_allowed' } }, ctx);
+  assert.deepEqual([refused.k, refused.host], ['skipped', 'departamento.mercadolibre.com.mx']);
+  // thinking, prose and code execution are not shown
+  assert.equal(progressFromBlock({ type: 'text', text: 'hola' }, ctx), null);
+  assert.equal(progressFromBlock({ type: 'server_tool_use', name: 'code_execution', input: {} }, ctx), null);
+  assert.equal(progressFromBlock(null, ctx), null);
+});
+
+test('progressLog drops immediate repeats, keeps the last 40 and writes to the run', async () => {
+  const { db, from } = world();
+  const svc = { from };
+  const log = progressLog(svc, 'r1', []);
+  log.add({ k: 'search', q: 'a' });
+  log.add({ k: 'search', q: 'a' });
+  assert.equal(log.events().length, 1, 'the same step twice in a row is shown once');
+  for (let i = 0; i < 60; i++) log.add({ k: 'search', q: 'q' + i });
+  assert.equal(log.events().length, 40);
+  assert.equal(log.events()[39].q, 'q59');
+  await log.flush();
+  assert.equal(db.scout_runs[0].progress.length, 40);
+});
+
+test('a segment records what it searched and read, and tells the buyer', async () => {
+  await withEnv(KEY, async () => {
+  const { db, from } = world({ messages: [{ role: 'user', content: 'brief' }], steps: 1 });
+  const client = fakeClient([{
+    stop_reason: 'tool_use',
+    content: [
+      { type: 'server_tool_use', id: 's1', name: 'web_search', input: { query: 'casa playa del carmen alberca' } },
+      { type: 'web_search_tool_result', tool_use_id: 's1', content: [{ type: 'web_search_result', url: PORTAL_URL, title: 'Casa 1' }] },
+      { type: 'tool_use', id: 'u1', name: 'submit_candidates', input: { candidates: [candidate([PORTAL_URL])], search_notes: 'ok' } }
+    ],
+    usage: { input_tokens: 5000, output_tokens: 600 }
+  }]);
+  const out = await runScoutStep({ from }, 'r1', { client });
+  assert.equal(out.state, 'done');
+  assert.deepEqual(db.scout_runs[0].progress.map((e) => e.k), ['search', 'results']);
+  assert.equal(db.scout_runs[0].progress[0].q, 'casa playa del carmen alberca');
+  });
+});
+
+test('Scout may not repeat itself, and its allowances are the ones we planned', async () => {
+  await withEnv(KEY, async () => {
+  const { from } = world();
+  const client = fakeClient([submission([PORTAL_URL])]);
+  await runScoutStep({ from }, 'r1', { client });
+  const sent = client.calls[0];
+  const search = sent.tools.find((t) => t.name === 'web_search');
+  const fetch = sent.tools.find((t) => t.name === 'web_fetch');
+  assert.equal(search.max_uses, 10);
+  assert.equal(fetch.max_uses, 14);
+  const system = sent.system.map((b) => b.text).join('\n');
+  assert.match(system, /Never run the same query twice/);
+  assert.match(system, /mercadolibre\.com\.mx pages cannot be opened/);
+  });
 });

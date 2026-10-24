@@ -42,7 +42,7 @@ test('everything in place: ok, no problems, and the only note is about email', a
   assert.ok(r.notes.some((n) => /Nobody is emailed/.test(n)));
   assert.equal(r.providers.nvidia.listed, true);
   assert.equal(r.scout.can_start_runs, true);
-  assert.deepEqual(r.scout.limits, { run_soft_cap_usd: 3, run_hard_cap_usd: 6, monthly_budget_usd: 50, daily_run_cap: 5 });
+  assert.deepEqual(r.scout.limits, { run_soft_cap_usd: 1, run_hard_cap_usd: 1.5, monthly_budget_usd: 50, daily_run_cap: 5 });
 });
 
 test('the report never contains a secret', async () => {

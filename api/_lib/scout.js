@@ -66,7 +66,9 @@ HOW TO RESEARCH
 - Start with the PropLync inventory you are given. Include every listing there that fits the brief, using its proplync_listing_id. Those are our own agencies' listings.
 - Then search the web the way a local buyer would, in Spanish: the portals (inmuebles24.com, lamudi.com.mx, vivanuncios.com.mx, inmuebles.mercadolibre.com.mx, propiedades.com) and local agency websites. Use the areas, property type, bedrooms and price words from the brief, for example "departamento en venta Aldea Zama Tulum 2 recamaras".
 - Open promising individual listing pages with web_fetch and read the facts there. A search snippet is only enough for a title and a price.
-- Vary your queries across areas, portals and agencies instead of repeating one. Aim for about 5 to 10 good candidates, and stop when you have them or your searches run out.
+- Vary your queries across areas, portals and agencies instead of repeating one. Never run the same query twice and never open the same page twice: every call counts against a small allowance, and a repeat finds nothing new. A first run wasted 3 of 8 searches on one repeated query and 3 of 10 page opens on one page.
+- mercadolibre.com.mx pages cannot be opened (the fetch is refused). Use their search snippet for a title and price and do not try to fetch them. Spend your page opens on propiedades.com, inmuebles24.com, lamudi.com.mx and agency sites.
+- Aim for about 5 to 10 good candidates, and stop when you have them or your searches run out.
 
 RULES
 - Every fact you report must appear on a page you saw during this research. When no page says it, use null for numbers and options, and an empty string "" for text. Never estimate, round, convert or infer bedrooms, size, price, location or features.
@@ -127,11 +129,11 @@ export const SUBMIT_SCHEMA = obj({
 
 const TOOLS = [
   {
-    type: 'web_search_20260209', name: 'web_search', max_uses: 8,
+    type: 'web_search_20260209', name: 'web_search', max_uses: 10,
     user_location: { type: 'approximate', country: 'MX', timezone: 'America/Cancun' },
     blocked_domains: BLOCKED
   },
-  { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 10, max_content_tokens: 3000, blocked_domains: BLOCKED },
+  { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 14, max_content_tokens: 3000, blocked_domains: BLOCKED },
   {
     name: 'submit_candidates',
     description: 'Report the properties found for this brief. Call exactly once, at the end of the research.',
@@ -440,6 +442,78 @@ async function finish(svc, run, fields, briefStatus) {
   }
 }
 
+/* ── What Scout is doing, for the buyer to watch ──
+   The request streams, so each search and page arrives as its own block while the segment is still running.
+   We keep a short list of them in scout_runs.progress and the /brief page shows it. It is only a view: a
+   failure to write it is logged and ignored, never allowed to fail a run. */
+
+const PROGRESS_MAX_EVENTS = 40;
+const PROGRESS_FLUSH_MS = 4000;
+
+const clip = (v, n) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
+
+function hostOf(url) {
+  try { return new URL(String(url)).hostname.replace(/^www\./, '').slice(0, 80); } catch (e) { return ''; }
+}
+
+/**
+ * One progress event from one streamed content block, or null for blocks that are not worth showing.
+ * `ctx.lastRead` remembers the host of the last page opened, because a refused fetch carries no URL.
+ */
+export function progressFromBlock(block, ctx = {}) {
+  if (!block || typeof block !== 'object') return null;
+  const at = new Date().toISOString();
+  if (block.type === 'server_tool_use' && block.name === 'web_search') {
+    const q = clip(block.input && block.input.query, 140);
+    return q ? { k: 'search', q, at } : null;
+  }
+  if (block.type === 'web_search_tool_result') {
+    if (!Array.isArray(block.content)) return { k: 'skipped', host: '', at };
+    const sites = [...new Set(block.content.map((r) => hostOf(r && r.url)).filter(Boolean))].slice(0, 4);
+    return { k: 'results', n: block.content.length, sites, at };
+  }
+  if (block.type === 'server_tool_use' && block.name === 'web_fetch') {
+    const host = hostOf(block.input && block.input.url);
+    ctx.lastRead = host;
+    return host ? { k: 'read', host, at } : null;
+  }
+  if (block.type === 'web_fetch_tool_result') {
+    const c = block.content;
+    if (c && c.type === 'web_fetch_result') {
+      const doc = c.content && typeof c.content === 'object' ? c.content : {};
+      return { k: 'page', host: hostOf(c.url) || ctx.lastRead || '', title: clip(doc.title, 110), at };
+    }
+    return { k: 'skipped', host: ctx.lastRead || '', at };
+  }
+  return null;
+}
+
+/** Collects events during a segment and writes them to the run at most every few seconds. */
+export function progressLog(svc, runId, existing) {
+  let events = (Array.isArray(existing) ? existing : []).slice(-PROGRESS_MAX_EVENTS);
+  let lastFlush = 0;
+  let chain = Promise.resolve();
+  const same = (a, b) => a && b && a.k === b.k && a.q === b.q && a.host === b.host && a.title === b.title;
+  const write = () => {
+    lastFlush = Date.now();
+    const snapshot = events.slice();
+    chain = chain.then(async () => {
+      const { error } = await svc.from('scout_runs').update({ progress: snapshot }).eq('id', runId);
+      if (error) logDegraded('scout:progress', error);
+    }).catch((err) => logDegraded('scout:progress', err));
+    return chain;
+  };
+  return {
+    events: () => events,
+    add(ev) {
+      if (!ev || same(events[events.length - 1], ev)) return;
+      events = events.concat([ev]).slice(-PROGRESS_MAX_EVENTS);
+      if (Date.now() - lastFlush >= PROGRESS_FLUSH_MS) write();
+    },
+    flush: () => write()
+  };
+}
+
 function addUsage(run, usage) {
   const u = usage || {};
   const st = u.server_tool_use || {};
@@ -497,12 +571,19 @@ export async function runScoutStep(svc, runId, opts = {}) {
   // Past the soft cap the model is told to wrap up. See scout-budget.js for why this is not a hard stop.
   const wrapUp = overRunLimit(Number(run.cost_usd), runMaxUsd());
 
+  const log = progressLog(svc, run.id, run.progress);
   let message;
   try {
     const client = opts.client || new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const stream = client.beta.messages.stream(segmentRequest(messages, wrapUp), { signal: opts.signal });
+    if (typeof stream.on === 'function') {
+      const ctx = {};
+      stream.on('contentBlock', (block) => { try { log.add(progressFromBlock(block, ctx)); } catch (e) { /* a view, never a failure */ } });
+    }
     message = await stream.finalMessage();
+    await log.flush();
   } catch (err) {
+    await log.flush();
     const permanent = err instanceof Anthropic.BadRequestError || err instanceof Anthropic.AuthenticationError ||
       err instanceof Anthropic.PermissionDeniedError || err instanceof Anthropic.NotFoundError;
     logDegraded('scout:segment', err);
