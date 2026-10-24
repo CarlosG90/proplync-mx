@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import Anthropic from '@anthropic-ai/sdk';
-import { runScoutStep, planAfterSegment, stuckAction, KICK_AFTER_MS, STALL_AFTER_MS } from '../api/_lib/scout.js';
+import { runScoutStep, probeScout, operatorDetail, planAfterSegment, stuckAction, KICK_AFTER_MS, STALL_AFTER_MS } from '../api/_lib/scout.js';
 import { runHardMaxUsd, runMaxUsd, DEFAULT_RUN_MAX_USD, DEFAULT_RUN_HARD_MAX_USD } from '../api/_lib/scout-budget.js';
 import { fakeDb } from './_fake-db.mjs';
 
@@ -272,5 +272,83 @@ test('without an Anthropic key Scout says so and does nothing', async () => {
     const out = await runScoutStep({ from }, 'r1', { client: fakeClient([]) });
     assert.deepEqual(out, { state: 'failed', detail: 'scout_unconfigured' });
     assert.equal(db.scout_runs[0].status, 'queued');
+  });
+});
+
+// ---------- seeing why a run failed ----------
+const rejection = (status, type, message) => Object.assign(Object.create(Anthropic.BadRequestError.prototype), {
+  status, message: `${status} ${message}`, error: { type: 'error', error: { type, message } }
+});
+
+test('operatorDetail keeps the provider\'s status, type and message (the generic sentence hid three failed runs)', () => {
+  const d = operatorDetail(rejection(400, 'invalid_request_error', 'fallbacks: unknown field'));
+  assert.match(d, /^HTTP 400 invalid_request_error: /);
+  assert.match(d, /unknown field/);
+  assert.equal(/contact support/i.test(d), false);
+  assert.ok(operatorDetail(new Error('x'.repeat(2000))).length <= 400, 'capped');
+  assert.ok(operatorDetail(undefined).length > 0);
+});
+
+test('a rejected request fails the run AND records the real reason for the operator', async () => {
+  await withEnv(KEY, async () => {
+    const { db, from } = world();
+    const out = await runScoutStep({ from }, 'r1', { client: fakeClient([rejection(400, 'invalid_request_error', 'output_config.effort: not supported for this model')]) });
+    assert.equal(out.state, 'failed');
+    assert.equal(db.scout_runs[0].status, 'failed');
+    assert.match(db.scout_runs[0].error, /output_config\.effort: not supported/);
+  });
+});
+
+test('a retried (transient) failure also records its real reason', async () => {
+  await withEnv(KEY, async () => {
+    const { db, from } = world({ messages: [{ role: 'user', content: 'brief' }], steps: 1 });
+    await runScoutStep({ from }, 'r1', { client: fakeClient([new Error('Overloaded: try again')]) });
+    assert.match(db.scout_runs[0].error, /Overloaded: try again/);
+  });
+});
+
+test('the probe sends the same request a real segment sends, with a tiny output cap', async () => {
+  await withEnv(KEY, async () => {
+    const seen = [];
+    const client = { beta: { messages: { create: async (p) => { seen.push(p); return { stop_reason: 'end_turn', usage: { input_tokens: 10, output_tokens: 2 } }; } } } };
+    const real = fakeClient([submission([PORTAL_URL])]);
+    const { from } = world({ messages: [{ role: 'user', content: 'brief' }] });
+    await runScoutStep({ from }, 'r1', { client: real });
+    const out = await probeScout({ client });
+    assert.equal(out.ok, true);
+    assert.equal(seen[0].max_tokens, 64);
+    for (const k of ['model', 'tools', 'output_config', 'betas', 'fallbacks', 'cache_control', 'system']) {
+      assert.deepEqual(seen[0][k], real.calls[0][k], `${k} must match what a real segment sends`);
+    }
+  });
+});
+
+test('the probe reports Anthropic\'s own words when the request is rejected', async () => {
+  const client = { beta: { messages: { create: async () => { throw rejection(400, 'invalid_request_error', 'tools.2.strict: not allowed'); } } } };
+  const out = await probeScout({ client });
+  assert.equal(out.ok, false);
+  assert.match(out.detail, /HTTP 400 invalid_request_error: .*tools\.2\.strict/);
+});
+
+test('the probe says so when there is no key', async () => {
+  await withEnv({ ANTHROPIC_API_KEY: undefined }, async () => {
+    const out = await probeScout();
+    assert.equal(out.ok, false);
+    assert.match(out.detail, /ANTHROPIC_API_KEY is not set/);
+  });
+});
+
+test('Scout\'s first request carries everything Concierge captured: areas, budget, must-haves, purpose and language', async () => {
+  await withEnv(KEY, async () => {
+    const { from } = world();   // a queued run with no transcript yet: the first segment builds it from the brief
+    const client = fakeClient([submission([PORTAL_URL])]);
+    await runScoutStep({ from }, 'r1', { client });
+    const first = client.calls[0].messages[0];
+    assert.equal(first.role, 'user');
+    const text = first.content;
+    assert.match(text, /Buyer language: English/);
+    const sent = JSON.parse(text.slice(text.indexOf('<brief>') + 7, text.indexOf('</brief>')));
+    assert.deepEqual(sent, BRIEF.brief, 'the brief reaches Scout exactly as Concierge saved it');
+    for (const needle of ['Playa del Carmen', '300000', 'pool', 'invest']) assert.ok(text.includes(needle), needle);
   });
 });
