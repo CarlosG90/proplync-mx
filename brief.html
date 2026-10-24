@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/concierge.css">
 <style>
   body{background:var(--ink);color:var(--on-ink)}
   /* .bf-chat and .bf-status set display, which would beat the hidden attribute. */
@@ -107,21 +108,10 @@
   .vo-orb .fx-poster svg{width:62%;opacity:.9}
   .vo-orb[data-ready="true"] .fx-poster{opacity:0;transition:opacity .6s var(--ease)}
   .vo-orb[data-fallback] .fx-poster{opacity:1}
-  .vo-state{font-family:var(--mono);font-size:.74rem;letter-spacing:.05em;color:var(--on-ink-dim);min-height:1.5em;text-align:center;margin:0;max-width:34ch}
-  .vo-mic{width:76px;height:76px;border-radius:50%;border:0;background:linear-gradient(160deg,var(--gold),var(--gold-deep));color:var(--ink);display:grid;place-items:center;cursor:pointer;touch-action:manipulation;box-shadow:0 0 0 calc(var(--lvl,0) * 22px) rgba(201,169,110,.28),var(--shadow-gold);transition:transform .15s ease,background .2s ease}
-  .vo-mic:hover{transform:translateY(-1px)}
-  .vo-mic:active{transform:scale(.97)}
-  .vo-mic svg{width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-  .vo-mic .ic-stop{display:none}
-  .vo-mic[data-state="listening"]{background:#b84a3e;color:#fff}
-  .vo-mic[data-state="listening"] .ic-mic{display:none}
-  .vo-mic[data-state="listening"] .ic-stop{display:block;fill:currentColor}
-  .vo-mic[data-state="thinking"],.vo-mic[data-state="transcribing"]{opacity:.55;cursor:progress}
-  .vo-mic:focus-visible,.bf-icon:focus-visible{outline:3px solid var(--aqua);outline-offset:3px}
+  .bf-icon:focus-visible{outline:3px solid var(--aqua);outline-offset:3px}
   .bf-icon[aria-pressed="false"]{opacity:.55}
   .bf-icon svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .bf-chat .bf-log{max-height:34vh;min-height:110px}
-  @media (prefers-reduced-motion:reduce){.vo-mic{transition:none;box-shadow:var(--shadow-gold)}}
   @media (max-width:900px){.bf-chat .bf-log{max-height:30vh}}
 </style>
 </head>
@@ -217,7 +207,7 @@
         <div id="brief"></div>
       </div>
       <div class="bf-card">
-        <p class="bf-note" data-es="Tus notas de voz se transcriben en un servicio externo y despues se descartan. No pedimos identificacion ni datos bancarios. Concierge es un asistente de IA y no da asesoria legal, fiscal ni financiera." data-en="Your voice notes are transcribed by an outside service and then discarded. We never ask for ID or bank details. Concierge is an AI assistant and gives no legal, tax or financial advice.">Your voice notes are transcribed by an outside service and then discarded. We never ask for ID or bank details. Concierge is an AI assistant and gives no legal, tax or financial advice.</p>
+        <p class="bf-note" data-es="Tus notas de voz se transcriben en un servicio externo y despues se descartan. No pedimos identificacion ni datos bancarios. Concierge es una asistente de IA y no da asesoria legal, fiscal ni financiera." data-en="Your voice notes are transcribed by an outside service and then discarded. We never ask for ID or bank details. Concierge is an AI assistant and gives no legal, tax or financial advice.">Your voice notes are transcribed by an outside service and then discarded. We never ask for ID or bank details. Concierge is an AI assistant and gives no legal, tax or financial advice.</p>
         <a class="bf-human" href="mailto:hola@proplync.mx?subject=Finder" data-es="Prefiero hablar con una persona" data-en="I would rather talk to a person">I would rather talk to a person</a>
       </div>
     </aside>
@@ -225,6 +215,7 @@
 </main>
 
 <script src="/js/hero3d.js"></script>
+<script src="/js/concierge.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/js/supabase-client.js"></script>
 <script src="/js/escape.js"></script>
@@ -234,7 +225,6 @@
    and is never stored. What is stored is the brief, once the buyer approves it
    (action=approve), and the page then becomes their private status link. */
 var messages = [];
-var busy = false;
 var brief = {};
 
 var logEl = document.getElementById('log');
@@ -253,25 +243,8 @@ function bubble(role, text) {
   return d;
 }
 
-var FIELDS = [
-  ['budget',        'Presupuesto',    'Budget'],
-  ['location',      'Zona',           'Location'],
-  ['must_haves',    'Imprescindible', 'Must-haves'],
-  ['deal_breakers', 'Descartan',      'Deal-breakers'],
-  ['nice_to_haves', 'Deseable',       'Nice to have'],
-  ['purpose',       'Proposito',      'Purpose'],
-  ['timeline',      'Cuando',         'Timeline']
-];
-
-function flat(v) {
-  if (v === null || v === undefined || v === '') return '';
-  if (Array.isArray(v)) return v.filter(Boolean).join(', ');
-  if (typeof v === 'object') {
-    return Object.keys(v).map(function (k) { return v[k]; })
-      .filter(function (x) { return x !== null && x !== undefined && x !== ''; }).join(' · ');
-  }
-  return String(v);
-}
+var FIELDS = PropLyncConcierge.FIELDS;
+var flat = PropLyncConcierge.flat;
 
 function renderBrief() {
   var host = document.getElementById('brief');
@@ -290,234 +263,28 @@ function renderBrief() {
   if (window.PropLyncOrb) PropLyncOrb.setProgress(FIELDS.filter(function (f) { return flat(brief[f[0]]); }).length / FIELDS.length);
 }
 
-async function turn(text, viaVoice) {
-  if (busy || !text) return;
-  busy = true; sendEl.disabled = true;
-  bubble('u', text);
-  messages.push({ role: 'user', content: text });
-  sayEl.value = '';
-
-  if (speechOk) speechSynthesis.cancel();
-  voiceState('thinking');
-  /* The stage shows the state now, so a chat bubble for it would say it twice. */
-  var thinking = { remove: function () {} };
-
-  try {
-    var r = await fetch('/api/finder?action=turn', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: messages })
-    });
-    var data = await r.json();
-    thinking.remove();
-
-    if (!r.ok) {
-      /* Name the real reason. "Something went wrong" sends people away; "the key
-         is missing in this environment" tells whoever is testing what to fix. */
-      var why = data.error === 'concierge_unconfigured'
-        ? t('Concierge no esta configurado en este entorno (faltan NVIDIA_API_KEY y GROQ_API_KEY).',
-             'Concierge is not configured in this environment (NVIDIA_API_KEY and GROQ_API_KEY are both missing).')
-        : data.error === 'concierge_busy'
-          ? t('Concierge esta ocupado. Intenta de nuevo en unos segundos.', 'Concierge is busy. Try again in a few seconds.')
-        : data.error === 'rate_limited'
-          ? t('Demasiados mensajes seguidos. Espera un momento.', 'Too many messages at once. Give it a moment.')
-          : t('Concierge no respondio. Intenta de nuevo.', 'Concierge did not answer. Try again.');
-      bubble('err', why);
-      voiceState('idle');
-      return;
-    }
-
-    if (data.brief) { brief = data.brief; renderBrief(); }
-    if (data.say) {
-      bubble('a', data.say);
-      messages.push({ role: 'assistant', content: data.say });
-      speak(data.say);
-    } else {
-      voiceState('idle');
-    }
-    if (data.done) {
-      bubble('sys', t('Revisa el resumen y aprueba cuando este bien.', 'Review the brief and approve it when it looks right.'));
-      document.getElementById('approve-card').hidden = false;
-      if (window.PropLyncOrb) PropLyncOrb.setProgress(1);   // brief complete: the object closes
-    }
-  } catch (e) {
-    thinking.remove();
-    bubble('err', t('Sin conexion con Concierge.', 'No connection to Concierge.'));
-    voiceState('idle');
-  } finally {
-    /* After a voice turn the keyboard stays down: focusing the field would cover the stage on a phone. */
-    busy = false; sendEl.disabled = false; if (!viaVoice) sayEl.focus();
-  }
-}
-
-/* ---------- voice ----------
-   Tap to talk: one tap records, the next tap sends. The same microphone stream
-   feeds a level meter, so the 3D object opens with the buyer's voice. Concierge's
-   reply is spoken with the browser's own voices (free, nothing leaves the device),
-   and typing, the transcript and a speaker switch stay available. */
-var stateEl = document.getElementById('vo-state');
-var outEl = document.getElementById('voice-out');
-var curState = 'idle';
-var STATE_TEXT = {
-  idle:         ['Toca el microfono y cuentame que buscas.', 'Tap the mic and tell me what you are looking for.'],
-  listening:    ['Te escucho. Toca de nuevo para enviar.', 'Listening. Tap again to send.'],
-  transcribing: ['Transcribiendo...', 'Transcribing...'],
-  thinking:     ['Pensando...', 'Thinking...'],
-  speaking:     ['Concierge responde. Toca el microfono para interrumpir.', 'Concierge is answering. Tap the mic to interrupt.']
-};
-
-function voiceState(s) {
-  curState = s;
-  if (window.PropLyncOrb) PropLyncOrb.setState(s === 'transcribing' ? 'thinking' : s);
-  stateEl.textContent = t(STATE_TEXT[s][0], STATE_TEXT[s][1]);
-  micEl.setAttribute('data-state', s);
-  micEl.setAttribute('data-rec', s === 'listening' ? 'true' : 'false');
-  micEl.setAttribute('aria-pressed', s === 'listening' ? 'true' : 'false');
-  micEl.setAttribute('aria-label', s === 'listening' ? t('Terminar y enviar', 'Stop and send') : t('Hablar con Concierge', 'Talk to Concierge'));
-}
-document.addEventListener('langchange', function () { voiceState(curState); paintOut(); });
-
-/* ----- spoken replies ----- */
-var speechOk = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
-var voiceOut = speechOk;
-try { if (localStorage.getItem('pl_voice_out') === 'off') voiceOut = false; } catch (e) { /* storage blocked: keep the default */ }
-
-function paintOut() {
-  outEl.setAttribute('aria-pressed', voiceOut ? 'true' : 'false');
-  var label = voiceOut ? t('Respuestas en voz: activadas', 'Spoken replies: on') : t('Respuestas en voz: apagadas', 'Spoken replies: off');
-  outEl.setAttribute('title', label);
-  outEl.setAttribute('aria-label', label);
-}
-if (!speechOk) { outEl.hidden = true; } else { paintOut(); }
-outEl.addEventListener('click', function () {
-  voiceOut = !voiceOut;
-  try { localStorage.setItem('pl_voice_out', voiceOut ? 'on' : 'off'); } catch (e) { /* not fatal */ }
-  if (!voiceOut) { speechSynthesis.cancel(); if (curState === 'speaking') voiceState('idle'); }
-  paintOut();
+/* ---------- the conversation ----------
+   Record, transcribe, ask Concierge and speak the answer live in js/concierge.js, shared with
+   the /invest hero. This page only draws its half: bubbles, the live brief and the approve card. */
+var ui = PropLyncConcierge.create({
+  micEl: micEl,
+  stateEl: document.getElementById('vo-state'),
+  outEl: document.getElementById('voice-out'),
+  messages: messages,
+  onUser: function (text) { bubble('u', text); sayEl.value = ''; },
+  onReply: function (text) { bubble('a', text); },
+  onBrief: function (b) { brief = b; renderBrief(); },
+  onDone: function () {
+    bubble('sys', t('Revisa el resumen y aprueba cuando esté bien.', 'Review the brief and approve it when it looks right.'));
+    document.getElementById('approve-card').hidden = false;
+    if (window.PropLyncOrb) PropLyncOrb.setProgress(1);   // brief complete: the object closes
+  },
+  onNotice: function (kind, text) { bubble(kind, text); },
+  onBusy: function (b) { sendEl.disabled = b; },
+  /* After a voice turn the keyboard stays down: focusing the field would cover the stage on a phone. */
+  onTurnEnd: function (viaVoice) { if (!viaVoice) sayEl.focus(); }
 });
-
-/* Safari only lets speech start from a tap, and the reply arrives seconds after
-   the tap. Speaking a silent utterance on the first tap unlocks it for later. */
-var speechUnlocked = false;
-function unlockSpeech() {
-  if (!speechOk || speechUnlocked) return;
-  speechUnlocked = true;
-  try { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) { /* not fatal */ }
-}
-
-function pickVoice() {
-  var want = document.documentElement.lang === 'es' ? 'es' : 'en';
-  var prefer = want === 'es' ? ['es-mx', 'es-us', 'es-es'] : ['en-us', 'en-gb'];
-  var all = speechSynthesis.getVoices().filter(function (v) { return v.lang && v.lang.toLowerCase().indexOf(want) === 0; });
-  for (var i = 0; i < prefer.length; i++) {
-    for (var j = 0; j < all.length; j++) { if (all[j].lang.toLowerCase().replace('_', '-') === prefer[i]) return all[j]; }
-  }
-  return all[0] || null;
-}
-
-function speak(text) {
-  if (!speechOk || !voiceOut || !text) { voiceState('idle'); return; }
-  try {
-    speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(text);
-    var v = pickVoice();
-    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = document.documentElement.lang === 'es' ? 'es-MX' : 'en-US'; }
-    u.onstart = function () { voiceState('speaking'); };
-    u.onend = u.onerror = function () { if (curState === 'speaking') voiceState('idle'); };
-    speechSynthesis.speak(u);
-    /* A browser with no voice installed can accept the call and never start. */
-    setTimeout(function () { if (curState === 'thinking' && !speechSynthesis.speaking) voiceState('idle'); }, 3000);
-  } catch (e) { voiceState('idle'); }
-}
-
-/* ----- recording ----- */
-var rec = null, chunks = [], recTimer = null;
-var audioCtx = null, analyser = null, levelRaf = 0;
-var MAX_RECORD_MS = 60000;   // a longer note is rarely one thought, and the server caps the upload
-
-function watchLevel(stream) {
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    var src = audioCtx.createMediaStreamSource(stream);
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 512;
-    src.connect(analyser);
-    var buf = new Uint8Array(analyser.fftSize);
-    (function tick() {
-      if (!analyser) return;
-      analyser.getByteTimeDomainData(buf);
-      var sum = 0;
-      for (var i = 0; i < buf.length; i++) { var x = (buf[i] - 128) / 128; sum += x * x; }
-      var lv = Math.min(1, Math.sqrt(sum / buf.length) * 4);
-      if (window.PropLyncOrb) PropLyncOrb.setLevel(lv);
-      micEl.style.setProperty('--lvl', lv.toFixed(2));
-      levelRaf = requestAnimationFrame(tick);
-    })();
-  } catch (e) { /* no meter, the recording itself still works */ }
-}
-function stopLevel() {
-  analyser = null;
-  cancelAnimationFrame(levelRaf);
-  if (audioCtx) { try { audioCtx.close(); } catch (e) { /* already closed */ } audioCtx = null; }
-  if (window.PropLyncOrb) PropLyncOrb.setLevel(0);
-  micEl.style.setProperty('--lvl', '0');
-}
-
-async function startRec() {
-  try {
-    var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    chunks = [];
-    rec = new MediaRecorder(stream);
-    rec.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
-    rec.onstop = async function () {
-      clearTimeout(recTimer);
-      stopLevel();
-      stream.getTracks().forEach(function (tr) { tr.stop(); });
-      var blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
-      if (!blob.size) { voiceState('idle'); return; }
-      voiceState('transcribing');
-      try {
-        var b64 = await new Promise(function (resolve, reject) {
-          var fr = new FileReader();
-          fr.onload = function () { resolve(String(fr.result).split(',')[1]); };
-          fr.onerror = reject;
-          fr.readAsDataURL(blob);
-        });
-        var r = await fetch('/api/finder?action=transcribe', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ audio: b64, mime: blob.type })
-        });
-        var data = await r.json();
-        if (r.ok && data.text) { turn(data.text, true); }
-        else { bubble('err', t('No pude transcribir esa nota.', 'I could not transcribe that note.')); voiceState('idle'); }
-      } catch (e) {
-        bubble('err', t('No pude transcribir esa nota.', 'I could not transcribe that note.'));
-        voiceState('idle');
-      }
-    };
-    rec.start();
-    watchLevel(stream);
-    voiceState('listening');
-    recTimer = setTimeout(function () { if (rec && rec.state === 'recording') rec.stop(); }, MAX_RECORD_MS);
-  } catch (e) {
-    /* A denied microphone is a choice, not a failure. Typing still works. */
-    bubble('err', t('Sin acceso al microfono. Puedes escribir.', 'No microphone access. You can type instead.'));
-    voiceState('idle');
-  }
-}
-
-micEl.addEventListener('click', function () {
-  unlockSpeech();
-  if (speechOk) speechSynthesis.cancel();                 // tapping the mic interrupts Concierge
-  if (!navigator.mediaDevices || typeof MediaRecorder === 'undefined') {
-    bubble('err', t('Este navegador no graba audio. Puedes escribir.', 'This browser cannot record audio. You can type instead.'));
-    return;
-  }
-  if (rec && rec.state === 'recording') { rec.stop(); }
-  else if (!busy) { startRec(); }
-});
-
-voiceState('idle');
+function turn(text, viaVoice) { return ui.turn(text, viaVoice); }
 
 sendEl.addEventListener('click', function () { turn(sayEl.value.trim()); });
 sayEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') turn(sayEl.value.trim()); });
@@ -825,11 +592,37 @@ fetch(SUPABASE_URL + '/auth/v1/settings', { headers: { apikey: SUPABASE_ANON_KEY
   })
   .catch(function () { document.getElementById('google-btn').hidden = true; document.querySelector('#signin-box .bf-or').hidden = true; });
 var savedToken = new URLSearchParams(location.search).get('b');
+var SEED = 'Hi, I am Concierge. Tell me: what life do you picture there?';   // what the model is told it already said
+function greeting() {
+  return t('Hola, soy Concierge, la asistente de IA de PropLync. Antes de buscar nada quiero entender qué estás buscando. Cuéntame: ¿qué vida te imaginas ahí?',
+           'Hi, I am Concierge, PropLync’s AI assistant. Before searching anything I want to understand what you are after. Tell me: what life do you picture there?');
+}
+
+/* The /invest hero hands its conversation over here (same tab, deleted on read), so the buyer
+   neither repeats themselves nor loses the brief on the way to approve it. */
+function restoreHandoff(h) {
+  h.messages.forEach(function (m, i) {
+    messages.push(m);
+    if (i === 0 && m.role === 'assistant') bubble('a', greeting());
+    else bubble(m.role === 'user' ? 'u' : 'a', m.content);
+  });
+  brief = h.brief; renderBrief();
+  if (h.done) {
+    bubble('sys', t('Tu resumen está listo. Apruébalo y Scout empieza a buscar.', 'Your brief is ready. Approve it and Scout starts searching.'));
+    document.getElementById('approve-card').hidden = false;
+    if (window.PropLyncOrb) PropLyncOrb.setProgress(1);
+    refreshWho();
+  } else {
+    bubble('sys', t('Seguimos donde lo dejaste.', 'Picking up where you left off.'));
+  }
+}
+
+var handoff = null;
 if (savedToken) { showStatusView(savedToken, false); }
 else if (restorePending()) { /* back from Google: brief restored, approve card open */ }
-else bubble('a', t('Hola, soy Concierge, el asistente de IA de PropLync. Antes de buscar nada quiero entender que estas buscando. Cuentame: que vida te imaginas ahi?',
-              'Hi, I am Concierge, PropLync’s AI assistant. Before searching anything I want to understand what you are after. Tell me: what life do you picture there?'));
-messages.push({ role: 'assistant', content: 'Hi, I am Concierge. Tell me: what life do you picture there?' });
+else if ((handoff = PropLyncConcierge.takeHandoff())) { restoreHandoff(handoff); }
+else bubble('a', greeting());
+if (!handoff) messages.push({ role: 'assistant', content: SEED });
 </script>
 </body>
 </html>

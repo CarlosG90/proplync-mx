@@ -38,7 +38,10 @@ js/escape.js           escapeHtml / safeUrl / cssUrl; load before i18n.js on any
 js/i18n.js             ES/EN toggle; language saved in localStorage 'proplync_lang', carried across pages
 js/nav-auth.js         reads the stored Supabase session to pick nav labels; secures nothing
 js/supabase-client.js  SDK client, used only on authenticated pages
-js/api.js, favorites.js, hero3d.js (Three.js hero)
+js/api.js, favorites.js, hero3d.js (Three.js object; PropLyncOrb drives it from the voice UI)
+js/concierge.js        buyer voice client shared by /invest (hero) and /brief: record, transcribe, ask Concierge, speak the reply
+                       (browser voices, woman's voice picked by name, spoken phrase by phrase); hands the conversation to /brief
+js/invest.js           the /invest hero's captions, captured-needs chips and hand-off
 api/
   generate.js          multi-action: listing copy, describe, nlsearch, enhance, day-to-dusk, Reel start/poll
   finder.js            Concierge (?action=turn | transcribe) + approve | status | scout-step (internal, secret-gated chain)

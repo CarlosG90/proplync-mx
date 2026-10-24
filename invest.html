@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="/css/nav.css">
 <link rel="stylesheet" href="/css/components.css">
 <link rel="stylesheet" href="/css/landing.css">
+<link rel="stylesheet" href="/css/concierge.css">
 <link rel="stylesheet" href="/css/invest.css">
 </head>
 
@@ -67,33 +68,54 @@
         <h1 class="fx-h1" data-es="La IA encuentra las propiedades. Una persona las <em>confirma</em> con el asesor." data-en="AI finds the properties. A person <em>confirms</em> them with the agent.">AI finds the properties. A person <em>confirms</em> them with the agent.</h1>
         <p class="fx-lede" data-es="Buscamos en inmobiliarias de PropLync, portales y sitios de agencias de la Riviera Maya, y juntamos los duplicados en una sola ficha. De las que eliges, una persona le hace cinco preguntas al asesor que la tiene: sigue disponible, el precio es ese, se puede visitar. <strong>Ves qué está confirmado y qué todavía no.</strong>" data-en="We search PropLync agencies, portals and agency sites in the Riviera Maya and merge duplicates into one card. For the ones you pick, a person asks the listing agent five questions: still available, that is the price, you can visit. <strong>You see what is confirmed and what is not yet.</strong>">We search PropLync agencies, portals and agency sites in the Riviera Maya and merge duplicates into one card. For the ones you pick, a person asks the listing agent five questions: still available, that is the price, you can visit. <strong>You see what is confirmed and what is not yet.</strong></p>
         <div class="fx-cta-row">
-          <a href="/voice" class="btn btn-gold"
-             data-track="cta_click" data-track-label="hero_start_search"
-             data-es="Empieza tu búsqueda &rarr;" data-en="Start your search &rarr;">Start your search &rarr;</a>
           <a href="#how" class="btn btn-ghost" data-es="Cómo funciona" data-en="How it works">How it works</a>
         </div>
         <p class="fx-hint" data-es="Concierge es gratis. Habla o escribe, en español o en inglés." data-en="Concierge is free. Talk or type, in English or Spanish.">Concierge is free. Talk or type, in English or Spanish.</p>
       </div>
 
-      <div class="fx-stage">
-        <div id="hero3d">
-          <!-- Poster sits underneath; the canvas covers it once WebGL is up. -->
-          <div class="fx-poster" aria-hidden="true">
-            <svg viewBox="0 0 200 200" fill="none">
-              <circle cx="100" cy="100" r="62" stroke="#c9a96e" stroke-width="1.2" opacity=".55"/>
-              <circle cx="100" cy="100" r="40" stroke="#5ec4be" stroke-width="1.2" opacity=".4"/>
-              <path d="M100 38l54 31v62l-54 31-54-31V69z" stroke="#c9a96e" stroke-width="1.4" opacity=".75"/>
-              <path d="M100 38v124M46 69l108 62M154 69L46 131" stroke="#c9a96e" stroke-width=".8" opacity=".3"/>
-            </svg>
+      <div class="fx-right">
+        <div class="fx-stage">
+          <div id="hero3d" data-voice>
+            <!-- Poster sits underneath; the canvas covers it once WebGL is up. -->
+            <div class="fx-poster" aria-hidden="true">
+              <svg viewBox="0 0 200 200" fill="none">
+                <circle cx="100" cy="100" r="62" stroke="#c9a96e" stroke-width="1.2" opacity=".55"/>
+                <circle cx="100" cy="100" r="40" stroke="#5ec4be" stroke-width="1.2" opacity=".4"/>
+                <path d="M100 38l54 31v62l-54 31-54-31V69z" stroke="#c9a96e" stroke-width="1.4" opacity=".75"/>
+                <path d="M100 38v124M46 69l108 62M154 69L46 131" stroke="#c9a96e" stroke-width=".8" opacity=".3"/>
+              </svg>
+            </div>
+            <canvas aria-hidden="true"></canvas>
+            <button class="fx-pause" id="hero-pause" type="button" aria-pressed="false" title="Pause animation" aria-label="Pause animation">&#10073;&#10073;</button>
           </div>
-          <canvas aria-label="Interactive 3D model of a property that comes apart into the facts we verify"></canvas>
-          <div class="fx-status" id="hero3d-status">Closed</div>
-          <div class="fx-controls">
-            <button class="fx-ctl fx-ctl-primary" id="hero-toggle" data-es="Desarmar" data-en="Take it apart">Take it apart</button>
-            <button class="fx-ctl" id="hero-zoom" data-es="Acercar" data-en="Zoom">Zoom</button>
-            <button class="fx-ctl fx-ctl-icon" id="hero-reset" title="Reset" aria-label="Reset">&#8634;</button>
-            <button class="fx-ctl fx-ctl-icon" id="hero-pause" title="Pause" aria-label="Pause" aria-pressed="false">&#10073;&#10073;</button>
+        </div>
+
+        <!-- The object is Concierge. Talking to it here replaces the old "Start your search" link to a
+             second page; /brief is only for approving the brief, and receives this conversation. -->
+        <div class="vo-panel" id="voice-panel">
+          <p class="vo-state" id="vo-state" role="status" aria-live="polite"></p>
+          <div class="vo-row">
+            <button class="vo-side" id="voice-out" type="button" aria-pressed="true" title="Spoken replies" aria-label="Spoken replies">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16.5 9a4 4 0 010 6M19 6.5a8 8 0 010 11"/></svg>
+            </button>
+            <button class="vo-mic" id="mic" type="button" data-rec="false" data-state="idle" aria-pressed="false" aria-label="Talk to Concierge">
+              <svg class="ic-mic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
+              <svg class="ic-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
+            </button>
+            <button class="vo-side" id="vo-type-toggle" type="button" aria-expanded="false" aria-controls="vo-form" title="Prefer to type?" aria-label="Prefer to type?">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 11h.01M11 11h.01M15 11h.01M7 14.5h10"/></svg>
+            </button>
           </div>
+          <form class="vo-form" id="vo-form" hidden>
+            <input class="vo-input" id="vo-input" autocomplete="off" aria-label="Message to Concierge" data-es-placeholder="Escribe aquí..." data-en-placeholder="Type here..." placeholder="Type here...">
+            <button class="vo-send" type="submit" data-es="Enviar" data-en="Send">Send</button>
+          </form>
+          <div class="vo-caption" aria-live="polite">
+            <p class="vo-you" id="vo-you"></p>
+            <p class="vo-say" id="vo-say" data-es="Hola, soy Concierge, la asistente de IA de PropLync. Cuéntame: ¿qué vida te imaginas ahí?" data-en="Hi, I'm Concierge, PropLync's AI assistant. Tell me: what life do you picture there?">Hi, I'm Concierge, PropLync's AI assistant. Tell me: what life do you picture there?</p>
+          </div>
+          <div class="vo-chips" id="vo-chips"></div>
+          <a class="btn btn-ghost vo-continue" id="vo-continue" href="/brief" hidden data-es="Seguir en pantalla completa →" data-en="Continue in full screen →">Continue in full screen →</a>
         </div>
       </div>
     </div>
@@ -203,7 +225,7 @@
     <div class="wrap">
       <h2 class="fx-h2" data-es="Empieza por contarnos la vida que quieres ahí." data-en="Start by telling us the life you want there.">Start by telling us the life you want there.</h2>
       <p class="fx-body" data-es="Sin compromiso hasta que apruebes tu resumen." data-en="No commitment until you approve your brief.">No commitment until you approve your brief.</p>
-      <a href="/voice" class="btn btn-gold"
+      <a href="#voice-panel" id="close-cta" class="btn btn-gold"
          data-track="cta_click" data-track-label="close_talk_to_concierge"
          data-es="Hablar con Concierge &rarr;" data-en="Talk to Concierge &rarr;">Talk to Concierge &rarr;</a>
       <p class="fx-fineprint" data-es="PropLync Finder está en fase piloto. Plazas limitadas mientras lo probamos con compradores reales." data-en="PropLync Finder is in pilot. Places are limited while we test it with real buyers.">PropLync Finder is in pilot. Places are limited while we test it with real buyers.</p>
@@ -258,6 +280,8 @@
 
 <script src="/js/i18n.js"></script>
 <script src="/js/hero3d.js"></script>
+<script src="/js/concierge.js"></script>
+<script src="/js/invest.js"></script>
 <script src="/js/landing.js" defer></script>
 </body>
 </html>

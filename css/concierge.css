@@ -1,0 +1,18 @@
+/* concierge.css — the microphone button and the state label of the Concierge voice UI,
+   shared by /brief and the /invest hero (both use js/concierge.js). Page-specific layout
+   stays in each page's own stylesheet. */
+
+.vo-state{font-family:var(--mono);font-size:.74rem;letter-spacing:.05em;color:var(--on-ink-dim);min-height:1.5em;text-align:center;margin:0;max-width:34ch}
+.vo-mic{width:76px;height:76px;border-radius:50%;border:0;background:linear-gradient(160deg,var(--gold),var(--gold-deep));color:var(--ink);display:grid;place-items:center;cursor:pointer;touch-action:manipulation;box-shadow:0 0 0 calc(var(--lvl,0) * 22px) rgba(201,169,110,.28),var(--shadow-gold);transition:transform .15s ease,background .2s ease}
+.vo-mic:hover{transform:translateY(-1px)}
+.vo-mic:active{transform:scale(.97)}
+.vo-mic svg{width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.vo-mic .ic-stop{display:none}
+.vo-mic[data-state="listening"]{background:#b84a3e;color:#fff}
+.vo-mic[data-state="listening"] .ic-mic{display:none}
+.vo-mic[data-state="listening"] .ic-stop{display:block;fill:currentColor}
+.vo-mic[data-state="thinking"],.vo-mic[data-state="transcribing"]{opacity:.55;cursor:progress}
+.vo-mic:focus-visible{outline:3px solid var(--aqua);outline-offset:3px}
+@keyframes vo-nudge{0%,100%{box-shadow:var(--shadow-gold)}50%{box-shadow:0 0 0 14px rgba(201,169,110,.3),var(--shadow-gold)}}
+.vo-mic.nudge{animation:vo-nudge .8s ease 2}
+@media (prefers-reduced-motion:reduce){.vo-mic{transition:none;box-shadow:var(--shadow-gold)}.vo-mic.nudge{animation:none}}
