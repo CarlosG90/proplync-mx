@@ -70,7 +70,7 @@
     var en = 'My agency';
 
     /* Swap the elements that only make sense for one audience: a signed-in
-       agent does not need "Soy una agencia" or a sales call, and a visitor
+       agent does not need "Iniciar sesión" or a sales call, and a visitor
        must not see a dashboard button. Declared in the HTML so each page
        decides for itself; this file just flips them. */
     document.querySelectorAll('[data-agent-only]').forEach(function (el) {
@@ -83,7 +83,7 @@
     /* Relabel the identity-claim links only. "Ver mi panel" / "Ver el CRM"
        already read correctly once you are signed in, so they only need the
        href change below. */
-    ['Soy agente', 'Soy una agencia'].forEach(function (label) {
+    ['Soy agente', 'Soy una agencia', 'Iniciar sesión'].forEach(function (label) {
       document.querySelectorAll('[data-es="' + label + '"]').forEach(function (el) {
         /* data-es/data-en too, not just the text: setLang() in js/i18n.js
            rewrites innerHTML from these attributes on every language toggle
