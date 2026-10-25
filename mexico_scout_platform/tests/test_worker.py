@@ -78,3 +78,44 @@ def test_scrape_command_prints_one_json_record_per_line_and_nothing_else(setting
     lines = [l for l in capsys.readouterr().out.splitlines() if l.strip()]
     assert len(lines) == 1, "the blocked page and the nightly rental are not records"
     assert json.loads(lines[0])["price"] == 4_500_000
+
+
+# ---------- sanity bounds, from the first real backfill ----------
+BASE = {"title": "Casa en venta en Playa del Carmen", "operation": "sale", "property_type": "house", "town": "Playa del Carmen", "bedrooms": 3,
+        "m2_size": 220, "price": 450_000, "currency": "USD"}
+
+
+def rec(**over):
+    hints = {**BASE, **over}
+    return worker.record_from_page("https://x.mx/a", hints, "texto", hints.get("title"), 18.0, "Site")
+
+
+def test_an_implausible_price_is_never_indexed():
+    assert rec()["price"] == 450_000
+    assert rec(price=4, currency="MXN") is None, "houses priced at MXN 4 were indexed in the first backfill"
+    assert rec(price=500, currency="USD") is None
+    assert rec(price=90_558, currency="USD", operation="rental_long") is None, "a US$90k monthly rent is a sale ad mislabelled"
+    assert rec(price=1_800, currency="USD", operation="rental_long")["operation"] == "rental"
+    assert rec(price=100, currency="USD", operation="rental_long") is None
+    assert rec(price=50_000_000, currency="USD") is None
+
+
+def test_an_area_that_cannot_be_right_is_dropped_but_the_listing_stays():
+    assert rec()["built_m2"] == 220
+    assert rec(m2_size=36, property_type="penthouse", price=1_960_704)["built_m2"] is None, "a 3-bedroom penthouse with 36 m2 for US$1.96M"
+    assert rec(m2_size=3750, property_type="apartment", price=300_000)["built_m2"] is None
+    kept = rec(m2_size=3750, property_type="apartment", price=300_000)
+    assert kept["price"] == 300_000 and kept["bedrooms"] == 3, "only the area is dropped"
+    assert rec(m2_size=220, price=45_000_000 // 10, currency="USD")["built_m2"] == 220
+
+
+def test_a_lot_keeps_its_land_area_from_the_title_and_loses_its_rooms():
+    lot = rec(title="Terreno en Venta 240m² en El Cielo, Playa del Carmen", property_type="land", bedrooms=1, bathrooms=1, m2_size=334.83, price=87_000)
+    assert (lot["land_m2"], lot["built_m2"], lot["bedrooms"], lot["bathrooms"]) == (240, None, None, None)
+    nosize = rec(title="Lotes en Venta en Tulum", property_type="land", m2_size=97, price=173_188)
+    assert nosize["land_m2"] is None and nosize["built_m2"] is None, "an area found only in the body is not trusted for a lot"
+    assert nosize["price"] == 173_188
+
+
+def test_a_place_outside_the_markets_is_skipped():
+    assert rec(out_of_area=True) is None

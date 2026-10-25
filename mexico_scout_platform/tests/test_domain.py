@@ -135,3 +135,54 @@ def test_visible_text_beats_json_ld_and_a_disagreement_is_recorded():
     # JSON-LD still fills what the visible text does not say, and agreement is not a conflict
     fill = hints_from_text("# Casa en venta en Tulum", '<script type="application/ld+json">{"offers":{"price":"200000","priceCurrency":"USD"}}</script>')
     assert fill["price"] == 200_000 and "conflicts" not in fill
+
+
+# ---------- found by the first real backfill (2026-10-25) ----------
+
+def test_a_stray_small_number_next_to_a_currency_word_is_not_the_price():
+    assert parse_money("Casa 4 MN de calle. Precio $550,553") == (550_553, None)
+    assert parse_money("Habitaciones 4 mxn") == (None, None)
+
+
+def test_millions_written_with_a_capital_m():
+    assert parse_money("US$1.2M") == (1_200_000, "USD")
+    assert parse_money("$4.5M USD") == (4_500_000, "USD")
+    assert parse_money("105 m2 de construcción") == (None, None), "m2 is an area, not millions"
+
+
+def test_investment_talk_about_rent_is_not_a_rental():
+    page = "# Apartamento Playa del Carmen: oportunidad perfecta de inversión para generar renta\n$1,495,000 USD\n2 recámaras"
+    assert hints_from_text(page)["operation"] == "sale"
+    assert detect_operation("# Casa de renta en Tulum\n$900 USD", title="Casa de renta en Tulum")[0] == "rental_long"
+    assert detect_operation("Renta 2 recámaras Aldea Zama")[0] == "rental_long"
+
+
+def test_the_town_comes_from_the_title_not_from_a_menu():
+    page = "# Macrolotes en Venta en Corasol, Playa del Carmen\n$133,900 USD\nMenu: Tulum | Cancún | Contacto"
+    assert hints_from_text(page)["town"] == "Playa del Carmen"
+    # a menu that lists another town first must not win either
+    assert hints_from_text("# Casa en venta, Playacar\n$400,000 USD\n" + "Tulum Tulum Tulum")["town"] == "Playa del Carmen"
+
+
+def test_places_outside_the_four_markets_are_flagged_from_the_title():
+    assert hints_from_text("# Terreno en Venta en Mérida Norte - Comunidad de Golf\n$238,000 USD\nTambién en Playa del Carmen")["out_of_area"] is True
+    assert hints_from_text("# Lotes en Venta en Bacalar\n$50,500 USD")["out_of_area"] is True
+    assert "out_of_area" not in hints_from_text("# Terreno en Venta en Tulum, cerca de Bacalar\n$90,000 USD"), "a title that names one of ours is ours"
+
+
+def test_a_lot_has_no_bedrooms():
+    hints = hints_from_text("# Lotes en Venta en Akumal desde $38,000 USD\nLote de 300 m2. 1 recámara disponible en el desarrollo cercano")
+    assert hints["property_type"] == "land"
+    assert "bedrooms" not in hints and "bathrooms" not in hints
+
+
+def test_akumal_and_puerto_aventuras_belong_to_our_markets():
+    assert hints_from_text("# Lotes en Venta en Akumal desde $38,000 USD")["town"] == "Tulum"
+    assert hints_from_text("# Villa en Venta en Puerto Aventuras\n$900,000 USD")["town"] == "Playa del Carmen"
+
+
+def test_without_a_town_at_the_top_the_text_may_name_one_town_only():
+    only_one = "# Sukha - 111 - Moskito Real Estate\n" + "Descripción del condominio. " * 20 + "\nUbicado en La Veleta, Tulum.\n$11,000 MXN /mes"
+    assert hints_from_text(only_one)["town"] == "Tulum"
+    menu = "# Sukha - 111\n" + "Texto. " * 60 + "\nMenú: Tulum | Playa del Carmen | Cancún"
+    assert "town" not in hints_from_text(menu), "a menu that lists several towns is not an address"
