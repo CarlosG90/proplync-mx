@@ -89,6 +89,9 @@
   .bf-verify{width:100%;margin-top:12px;background:var(--gold);color:var(--ink);border:0;border-radius:999px;padding:11px;font-weight:600;cursor:pointer;font-family:var(--body);font-size:.86rem}
   .bf-verify:disabled{opacity:.5;cursor:default}
   .bf-progress{font-family:var(--mono);font-size:.7rem;color:var(--on-ink-dim);margin-top:var(--sp-3)}
+  .bf-fin{margin:var(--sp-3) 0;padding:var(--sp-3) var(--sp-4);border:1px solid rgba(201,169,110,.28);border-radius:var(--radius-md);background:rgba(201,169,110,.05)}
+  .bf-fin summary{cursor:pointer;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+  .bf-fin .bf-note{margin-top:var(--sp-3)}
   /* the recap shown when Concierge is done, before the buyer approves */
   .bf-recap{margin:0 0 var(--sp-4);padding:0}
   .bf-recap .bf-field:first-child{padding-top:0}
@@ -482,6 +485,32 @@ function money(price, currency) {
   return price == null ? '' : (currency ? currency + ' ' : '') + '$' + Number(price).toLocaleString('en-US');
 }
 
+/* Investor estimate, from api/_lib/candidate-financials.js. The server only sends a track that rests on real rental comps,
+   and every number here is an estimate on asking prices, so the card says what it is made of. */
+function financeBlock(f) {
+  if (!f || (!f.long_term && !f.short_term)) return '';
+  function usd(n) { return 'US$' + Math.round(n).toLocaleString('en-US'); }
+  function pct(n) { return (n * 100).toFixed(1) + '%'; }
+  var rows = [];
+  if (f.long_term) {
+    rows.push([t('Renta mensual estimada', 'Estimated monthly rent'), usd(f.long_term.monthly_rent_usd)]);
+    rows.push([t('Rendimiento bruto anual', 'Gross annual yield'), pct(f.long_term.gross_yield)]);
+    rows.push([t('Tasa de capitalización (neta)', 'Cap rate (net)'), pct(f.long_term.cap_rate)]);
+  }
+  if (f.short_term) {
+    rows.push([t('Tarifa por noche (comparables)', 'Nightly rate (comparables)'), usd(f.short_term.adr_usd)]);
+    rows.push([t('Ocupación supuesta', 'Assumed occupancy'), pct(f.short_term.occupancy_assumed)]);
+    rows.push([t('Cap rate renta vacacional', 'Vacation-rental cap rate'), pct(f.short_term.cap_rate)]);
+  }
+  var scope = f.comps_scope === 'neighborhood' ? t('de la misma colonia', 'from the same neighbourhood') : t('de la misma ciudad', 'from the same town');
+  return '<details class="bf-fin"><summary>' + escapeHtml(t('Estimado de rendimiento', 'Return estimate')) + '</summary>' +
+    rows.map(function (r) { return '<div class="bf-prop-row"><span>' + escapeHtml(r[0]) + '</span><span>' + escapeHtml(r[1]) + '</span></div>'; }).join('') +
+    '<p class="bf-note">' + escapeHtml(t(
+      'Basado en ' + f.comps_used + ' rentas ' + scope + ' y en precios de lista, no de venta. Incluye predial (0.3%), fideicomiso (US$750/año), seguro, mantenimiento, cuota de condominio y 6% de gastos de cierre; no incluye impuesto sobre la renta. Es una estimación para comparar, no asesoría legal, fiscal ni financiera.',
+      'Based on ' + f.comps_used + ' rentals ' + scope + ' and on asking prices, not sale prices. Includes property tax (0.3%), fideicomiso (US$750/yr), insurance, maintenance, HOA and 6% closing costs; excludes income tax. A screening estimate, not legal, tax or financial advice.'
+    )) + '</p></details>';
+}
+
 function propCard(c) {
   var specs = [
     c.bedrooms != null ? c.bedrooms + ' ' + t('rec', 'bd') : null,
@@ -519,6 +548,7 @@ function propCard(c) {
       '<h3>' + escapeHtml(c.title || t('Propiedad', 'Property')) + '</h3>' +
       (specs ? '<div class="bf-prop-specs">' + escapeHtml(specs) + '</div>' : '') +
       (c.summary ? '<p class="bf-note">' + escapeHtml(c.summary) + '</p>' : '') +
+      financeBlock(c.financials) +
       (answers ? '<div class="bf-prop-k">' + escapeHtml(t('Lo que dijo el agente', 'What the agent said')) + '</div>' + answers : '') +
       (sources ? '<div class="bf-prop-k">' + escapeHtml(t('Dónde se anuncia', 'Where it is listed')) + '</div>' + sources : '') +
       verifyBtn +
