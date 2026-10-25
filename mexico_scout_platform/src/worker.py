@@ -64,6 +64,14 @@ SITES: dict[str, dict[str, Any]] = {
 AMBIGUOUS_SALE = (400_000, 2_500_000)
 AMBIGUOUS_RENT_MONTH = (3_000, 15_000)
 
+# Sanity bounds, in USD. Outside them a figure is almost surely a parsing mistake, and a wrong price in the index is worse than a missing
+# listing. Found in the first real backfill: houses priced at "4" MXN, a "rental" at US$90,558 a month.
+SALE_USD = (15_000, 20_000_000)
+RENT_MONTH_USD = (150, 15_000)
+BUILT_M2 = {"apartment": (15, 800), "penthouse": (15, 1_200), "house": (25, 3_500)}
+BUILT_M2_ANY = (10, 10_000)
+SALE_USD_PER_M2 = (250, 25_000)
+
 
 def site_for(url: str, sites: dict[str, dict[str, Any]] = SITES) -> str | None:
     host = host_of(url)
@@ -104,10 +112,26 @@ def _ambiguous(price: float, operation: Operation) -> bool:
     return low <= price <= high
 
 
+def _area_in_title(title: str | None) -> float | None:
+    """A lot says its size in its title ("Terreno 240m²"); the body is full of other areas."""
+    m = re.search(r"(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?|\d+)\s*m(?:2|²)", str(title or ""), re.IGNORECASE)
+    if not m:
+        return None
+    raw = m.group(1)
+    raw = raw.replace(",", "") if raw.count(",") >= 1 and "." not in raw else raw.replace(".", "").replace(",", ".") if raw.count(".") > 1 else raw.replace(",", "")
+    try:
+        return float(raw)
+    except ValueError:
+        return None
+
+
 def record_from_page(url: str, page_hints: dict[str, Any], markdown: str, title: str | None, usd_mxn: float,
                      site_name: str | None = None) -> dict[str, Any] | None:
     """One index record from a scraped page, or None when it must not be indexed (see the module docstring)."""
     hints = dict(page_hints)
+    if hints.get("out_of_area"):
+        logger.info("Skipped {}: the title names a place outside the four markets", url)
+        return None
     if hints.get("price") is None and hints.get("m2_size") is None:
         return None
     try:
@@ -130,6 +154,24 @@ def record_from_page(url: str, page_hints: dict[str, Any], markdown: str, title:
             return None
         if currency is None:  # cannot happen once a price exists, kept as a guard: the index would default it to MXN
             currency = infer_currency(listing.price, listing.price_period, listing.operation.value)
+        low, high = SALE_USD if listing.operation is Operation.SALE else RENT_MONTH_USD
+        if listing.price_usd is None or not (low <= listing.price_usd <= high):
+            logger.info("Skipped {}: price {} {} (about US${}) is outside what a {} here can be", url, listing.price, currency, listing.price_usd,
+                        "sale" if listing.operation is Operation.SALE else "monthly rent")
+            return None
+
+    built, land, bedrooms, bathrooms = listing.m2_size, listing.land_m2, listing.bedrooms, listing.bathrooms
+    if listing.property_type == "land":
+        # A lot: its area is land, taken from the title when it says one; it has no rooms.
+        land, built, bedrooms, bathrooms = _area_in_title(listing.title or title) or land, None, None, None
+    elif built is not None:
+        low_m2, high_m2 = BUILT_M2.get(listing.property_type or "", BUILT_M2_ANY)
+        per_m2 = (listing.price_usd / built) if (listing.price_usd and listing.operation is Operation.SALE) else None
+        if not (low_m2 <= built <= high_m2) or (per_m2 is not None and not (SALE_USD_PER_M2[0] <= per_m2 <= SALE_USD_PER_M2[1])):
+            logger.info("Dropped the area of {}: {} m2 does not fit a {} at this price", url, built, listing.property_type)
+            built = None
+    if built is None and listing.price is None:
+        return None
     return {
         "url": url,
         "external_id": urlsplit(url).path.rstrip("/").rsplit("/", 1)[-1][:80],
@@ -139,10 +181,10 @@ def record_from_page(url: str, page_hints: dict[str, Any], markdown: str, title:
         "currency": currency if listing.price is not None else None,
         "currency_assumed": listing.currency_assumed,
         "property_type": listing.property_type,
-        "built_m2": listing.m2_size,
-        "land_m2": listing.land_m2,
-        "bedrooms": listing.bedrooms,
-        "bathrooms": listing.bathrooms,
+        "built_m2": built,
+        "land_m2": land,
+        "bedrooms": bedrooms,
+        "bathrooms": bathrooms,
         "town": listing.town,
         "neighborhood": listing.neighborhood,
         "description": (markdown or "")[:900],

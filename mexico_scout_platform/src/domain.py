@@ -60,11 +60,22 @@ NEIGHBORHOODS: dict[str, tuple[str, tuple[str, ...]]] = {
 }
 
 TOWNS: dict[str, tuple[str, ...]] = {
-    "Tulum": ("tulum",),
-    "Playa del Carmen": ("playa del carmen", "playa del c", "solidaridad"),
+    "Tulum": ("tulum", "akumal"),   # Akumal belongs to the municipality of Tulum
+    "Playa del Carmen": ("playa del carmen", "playa del c", "solidaridad", "puerto aventuras", "playacar", "mayakoba"),
     "Cancún": ("cancun",),
     "Puerto Morelos": ("puerto morelos",),
 }
+
+
+# Places a Riviera Maya agency also sells in that are NOT one of our four markets. A title that names one (and none of ours) is skipped:
+# the rules would otherwise find "Tulum" somewhere in the page's menu and file a Mérida lot under it.
+OUT_OF_AREA = ("merida", "bacalar", "cozumel", "holbox", "isla mujeres", "chetumal", "valladolid", "yucatan", "mahahual", "costa maya",
+               "campeche", "oaxaca", "ciudad de mexico", "cdmx", "san miguel de allende", "puerto vallarta", "los cabos", "cabo san lucas")
+
+
+def mentions_out_of_area(text: str | None) -> bool:
+    folded = fold(text)
+    return any(re.search(rf"(?<![a-z]){re.escape(place)}(?![a-z])", folded) for place in OUT_OF_AREA) and detect_town(text) is None
 
 
 def detect_town(text: str | None) -> str | None:
@@ -105,12 +116,12 @@ _CURRENCY_WORDS: dict[str, str] = {
     "eur": "EUR", "euros": "EUR", "cad": "CAD",
 }
 _MULTIPLIERS: dict[str, float] = {
-    "millones": 1e6, "millon": 1e6, "mdp": 1e6, "mdd": 1e6, "mm": 1e6, "mil": 1e3, "k": 1e3,
+    "millones": 1e6, "millon": 1e6, "mdp": 1e6, "mdd": 1e6, "mm": 1e6, "mil": 1e3, "k": 1e3, "m": 1e6,
 }
 _NUM = r"\d{1,3}(?:[, ]\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?"
 _MONEY_RE = re.compile(
     rf"(?P<cur1>(?:usd|mxn|mxp|mn|eur|cad|us|u\$s)\s*\$?|\$)?\s*(?P<num>{_NUM})\s*"
-    rf"(?P<mult>millones|millon|mdp|mdd|mm\b|mil\b|k\b)?\s*(?:de\s+)?(?P<cur2>usd|mxn|mxp|mn\b|eur|cad|dolares|dlls|dls|pesos|mdp|mdd)?",
+    rf"(?P<mult>millones|millon|mdp|mdd|mm\b|mil\b|k\b|m(?![a-z0-9]))?\s*(?:de\s+)?(?P<cur2>usd|mxn|mxp|mn\b|eur|cad|dolares|dlls|dls|pesos|mdp|mdd)?",
     re.IGNORECASE,
 )
 
@@ -137,7 +148,9 @@ def parse_money(text: str | None) -> tuple[float | None, str | None]:
         cur1_word = re.sub(r"[\s$]", "", cur1 or "") or None
         marker = (cur2 or cur1_word or mult or "").lower().strip()
         currency = _CURRENCY_WORDS.get(marker)
-        if amount > 0:
+        # A "4" next to a currency word ("4 MN", a room count in a line that also says MXN) is never a price: the first real
+        # amount on a page is often preceded by such noise. 20 is below any nightly rate, rent or sale price in this market.
+        if amount >= 20:
             return amount, currency
     return None, None
 
@@ -265,7 +278,7 @@ def detect_property_type(text: str | None) -> str | None:
 _SHORT_PERIOD = re.compile(r"por noche|/\s*noche|per night|nightly|/\s*night")
 _LONG_PERIOD = re.compile(r"/\s*mes\b|al mes|por mes|per month|/\s*month|mensuales?\b|monthly")
 _SHORT_WORDS = re.compile(r"renta vacacional|vacation rental|vacacional|airbnb|renta corta|short[- ]term")
-_RENT_WORDS = re.compile(r"en renta|se renta|for rent|alquiler|rental|\brenta\b")
+_RENT_WORDS = re.compile(r"en renta|se renta|de renta|for rent|alquiler|\brental\b|^\s*renta\b|^\s*rent\b")
 _SALE_WORDS = re.compile(r"en venta|for sale|se vende|de venta|\bventa\b|preventa|pre-venta")
 
 
@@ -410,11 +423,14 @@ def hints_from_text(text: str | None, html: str | None = None, title: str | None
     """
     structured = jsonld_hints(html)
     hints: dict[str, Any] = {}
+    body = text or ""
+    heading = re.search(r"^\s*#\s+(\S.*)$", body, re.MULTILINE)   # the page's own H1, when no <title> was passed
     if title:
         hints["title"] = title
     elif "title" in structured:
         hints["title"] = structured["title"]
-    body = text or ""
+    elif heading:
+        hints["title"] = heading.group(1).strip()
     operation, period = detect_operation(body[:1500], str(hints.get("title", "")))
     amount, currency = parse_money(body[:2500])
     built, land = parse_areas(body)
@@ -439,9 +455,27 @@ def hints_from_text(text: str | None, html: str | None = None, title: str | None
     if prop:
         hints["property_type"] = prop
     hints["operation"], hints["price_period"] = operation, period
-    neighborhood, town = detect_neighborhood(str(hints.get("location", "")) + " " + str(hints.get("title", "")) + " " + body[:1200])
+    # Where it is: the title first, then the page's own address, then only the top of the text. Never the whole page: a menu that lists
+    # "Tulum" would otherwise beat a title that says "Playa del Carmen" (it did, in the first real backfill).
+    title_text = str(hints.get("title", ""))
+    if mentions_out_of_area(title_text):
+        hints["out_of_area"] = True
+    neighborhood = town = None
+    for place in (title_text, str(hints.get("location", "")), body[:300]):
+        neighborhood, town = detect_neighborhood(place)
+        if neighborhood or town:
+            break
+    if not town:
+        # Nothing at the top of the page. Use the rest only when it names exactly ONE of our towns: a menu that lists several is not an address.
+        named = {t for t in TOWNS if any(a in fold(body[:2000]) for a in TOWNS[t])}
+        if len(named) == 1:
+            neighborhood, town = detect_neighborhood(body[:2000], next(iter(named)))
     if neighborhood:
         hints["neighborhood"] = neighborhood
     if town:
         hints["town"] = town
+    # Land has no bedrooms: any "1 recamara" on a lot's page is about something else (a nearby plan, a sales pitch).
+    if hints.get("property_type") == "land":
+        hints.pop("bedrooms", None)
+        hints.pop("bathrooms", None)
     return {k: v for k, v in hints.items() if v is not None}

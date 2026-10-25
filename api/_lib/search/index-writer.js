@@ -176,7 +176,6 @@ export async function indexListings(svc, listings, { origin = 'web', verified = 
   return stats;
 }
 
-/** Offers a source stopped showing go inactive; see 011_search_maintenance.sql. */
 /**
  * "Still listed": a source that proves a listing is still up without re-reading it (a sitemap that still names its URL) keeps it
  * from being marked stale. Updates last_seen_at, and re-activates an offer, and its property, that had been retired.
@@ -203,6 +202,7 @@ export async function touchSeen(svc, sourceId, urlKeys) {
   return touched;
 }
 
+/** Offers a source stopped showing go inactive; see 011_search_maintenance.sql. */
 export async function markStale(svc, sourceId, cutoffIso) {
   const { data, error } = await svc.rpc('search_mark_stale', { p_source: sourceId, p_cutoff: cutoffIso });
   if (error) throw error;
@@ -334,25 +334,51 @@ export async function embedTexts(texts) {
     headers: { 'content-type': 'application/json', authorization: 'Bearer ' + key },
     body: JSON.stringify({ inputs: texts })
   });
-  if (!r.ok) throw new Error('embed responded ' + r.status);
+  if (!r.ok) { const err = new Error('embed responded ' + r.status); err.status = r.status; throw err; }
   const data = await r.json();
   return Array.isArray(data.embeddings) ? data.embeddings : null;
 }
 
 /** Embed active properties that have no vector yet, in small batches. */
-export async function embedPending(svc, { limit = 500, batch = 16 } = {}) {
+/* The embed function runs gte-small on the CPU inside Supabase's edge runtime and has a hard time limit per call (it answers 546 when
+   a call runs over). 16 long descriptions in one call is too much: the first scraper_web backfill (242 properties) embedded none.
+   So a call that is refused is split in half and retried, down to one text; only a text that fails alone is given up on for this run
+   (the next run tries it again): its slot comes back as null and the rest of the batch keeps its vectors. */
+const RETRYABLE = (err) => err && (err.status === 546 || err.status === 429 || err.status >= 500);
+
+export async function embedAdaptive(texts, embed = embedTexts) {
+  try {
+    return await embed(texts);
+  } catch (err) {
+    if (!RETRYABLE(err)) throw err;
+    if (texts.length < 2) return [null];   // this one text cannot be embedded right now; the others in its batch are kept
+    const mid = Math.ceil(texts.length / 2);
+    const first = await embedAdaptive(texts.slice(0, mid), embed);
+    const second = await embedAdaptive(texts.slice(mid), embed);
+    return first && second ? [...first, ...second] : null;
+  }
+}
+
+export async function embedPending(svc, { limit = 500, batch = 4, embed = embedTexts } = {}) {
   const { data: rows, error } = await svc.from('search_properties')
     .select('id, title, property_type, neighborhood, town, amenities, description')
     .eq('status', 'active').is('embedding', null).limit(limit);
   if (error) throw error;
-  let done = 0;
+  let done = 0, failed = 0;
   for (let i = 0; i < (rows || []).length; i += batch) {
     const chunk = rows.slice(i, i + batch);
     const texts = chunk.map(embedText);
-    const vectors = await embedTexts(texts);
+    let vectors;
+    try {
+      vectors = await embedAdaptive(texts, embed);
+    } catch (err) {
+      failed += chunk.length;   // left without a vector; the next run tries again. One bad chunk must not stop the rest.
+      console.log(`  embeddings: ${chunk.length} propert${chunk.length === 1 ? 'y' : 'ies'} skipped (${err.message})`);
+      continue;
+    }
     if (!vectors) break; // embedding not configured: search still works on text and filters
     for (let j = 0; j < chunk.length; j++) {
-      if (!Array.isArray(vectors[j]) || vectors[j].length !== 384) continue;
+      if (!Array.isArray(vectors[j]) || vectors[j].length !== 384) { failed++; continue; }
       const { error: e } = await svc.from('search_properties').update({
         embedding: JSON.stringify(vectors[j]),
         embedding_hash: createHash('sha1').update(texts[j]).digest('hex')
@@ -360,5 +386,5 @@ export async function embedPending(svc, { limit = 500, batch = 16 } = {}) {
       if (!e) done++;
     }
   }
-  return { embedded: done, pending: (rows || []).length - done };
+  return { embedded: done, pending: (rows || []).length - done, failed };
 }
