@@ -64,7 +64,7 @@ api/
   _lib/scout-merge.js  pure dedupe/merge + hard brief limits (budget, must-haves, deal-breakers)
 supabase/              schema.sql + numbered migrations 002–009 (applied by hand or Supabase MCP)
 scripts/               operator scripts: onboard-agency, create-invite, scout, health-check, set-supabase-project
-ingest/                crawler: run.mjs + adapters/ (Apify: Inmuebles24, Lamudi); runs daily via .github/workflows/ingest.yml
+ingest/                crawler: run.mjs + adapters/ (Apify: Inmuebles24, Lamudi; scraper_web: our own free scraper via mexico_scout_platform/src/worker.py); runs daily via .github/workflows/ingest.yml
 mexico_scout_platform/ Python sub-project (CrewAI + Scrapling + Crawl4AI + local Qdrant): the architecture to refine Scout and add a financial agent. Own venv, tests and agent.md; not deployed on Vercel (.vercelignore)
 supabase/functions/embed  edge function: gte-small embeddings (free, in Supabase); accepts only service_role JWTs
 test/                  node:test unit tests (`npm test`)

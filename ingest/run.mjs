@@ -27,7 +27,8 @@
 
 import { parseArgs, serviceClient, die } from '../scripts/_lib.mjs';
 import { normalizeListing } from '../api/_lib/search/normalize.js';
-import { indexListings, markStale, syncProplync, embedPending, loadMarkets, fxRate } from '../api/_lib/search/index-writer.js';
+import { normalizeUrl } from '../api/_lib/scout-merge.js';
+import { indexListings, markStale, touchSeen, syncProplync, embedPending, loadMarkets, fxRate } from '../api/_lib/search/index-writer.js';
 import { ADAPTERS } from './adapters/index.js';
 
 const args = parseArgs(process.argv.slice(2), ['dry-run', 'only-proplync']);
@@ -61,17 +62,20 @@ async function runSource(source, markets) {
 
   const fx = fxRate();
   const listings = [];
+  const seen = [];   // URLs a source proved are still listed without re-reading them (see touchSeen)
   for (const market of markets) {
     const urls = ((source.config || {}).urls || {})[market.id] || (adapter.defaultUrls || {})[market.id] || [];
     if (!urls.length) { result.markets.push({ market: market.id, status: 'no_start_urls' }); continue; }
     const max = Number(args.max) || source.max_results_per_run;
     log(`${source.id} × ${market.id}: ${urls.length} start URL(s), up to ${max} listings`);
     try {
-      const { items, costUsd } = await adapter.fetch({ urls, max, config: source.config || {} });
+      const { items, costUsd, seenUrls = [] } = await adapter.fetch({ urls, max, config: source.config || {}, svc, sourceId: source.id });
       const normalized = items
         .map((item) => normalizeListing(adapter.toRaw(item), { sourceId: source.id, fx, markets: [market] }))
         .filter(Boolean);
-      result.items += items.length;
+      // A listing the source confirmed without re-reading it still counts as seen: the health check below compares sightings run to run.
+      result.items += items.length + seenUrls.length;
+      seen.push(...seenUrls);
       result.kept += normalized.length;
       result.cost_usd += costUsd || 0;
       listings.push(...normalized);
@@ -93,6 +97,7 @@ async function runSource(source, markets) {
     const stats = await indexListings(svc, listings);
     result.index = { ...stats, touched: stats.touched.length };
   }
+  if (seen.length) result.still_listed = await touchSeen(svc, source.id, seen.map(normalizeUrl));
 
   const isSuspect = result.status === 'ok' && suspect(source.last_run_stats, result.items);
   if (isSuspect) result.status = 'auto_disabled';

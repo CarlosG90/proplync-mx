@@ -177,6 +177,32 @@ export async function indexListings(svc, listings, { origin = 'web', verified = 
 }
 
 /** Offers a source stopped showing go inactive; see 011_search_maintenance.sql. */
+/**
+ * "Still listed": a source that proves a listing is still up without re-reading it (a sitemap that still names its URL) keeps it
+ * from being marked stale. Updates last_seen_at, and re-activates an offer, and its property, that had been retired.
+ * Returns how many offers were touched.
+ */
+export async function touchSeen(svc, sourceId, urlKeys) {
+  const keys = [...new Set((urlKeys || []).filter(Boolean))];
+  const now = new Date().toISOString();
+  let touched = 0;
+  const propertyIds = new Set();
+  for (let i = 0; i < keys.length; i += 150) {
+    const { data, error } = await svc.from('search_offers')
+      .update({ last_seen_at: now, status: 'active' })
+      .eq('source_id', sourceId).in('url_key', keys.slice(i, i + 150)).select('property_id');
+    if (error) throw error;
+    for (const row of data || []) { touched++; propertyIds.add(row.property_id); }
+  }
+  const ids = [...propertyIds];
+  for (let i = 0; i < ids.length; i += 150) {
+    const { error } = await svc.from('search_properties')
+      .update({ status: 'active', updated_at: now }).in('id', ids.slice(i, i + 150)).eq('origin', 'web').eq('status', 'inactive');
+    if (error) throw error;
+  }
+  return touched;
+}
+
 export async function markStale(svc, sourceId, cutoffIso) {
   const { data, error } = await svc.rpc('search_mark_stale', { p_source: sourceId, p_cutoff: cutoffIso });
   if (error) throw error;

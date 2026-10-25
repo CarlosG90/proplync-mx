@@ -65,6 +65,7 @@ Files: `config.py` settings | `domain.py` Mexican formats, neighbourhoods, JSON-
 ## Merge path into proplync.mx
 - `PropertyListing.to_scout_card()` produces the shape of a Scout candidate (`operation`, `town`, `neighborhood`, `bedrooms`, `bathrooms`,
   `built_m2`, `land_m2`, `sources[{url, site, price, currency}]`). `m2_size` here is `built_m2` there.
+- **The ingest bridge exists:** `src/worker.py` feeds the search index through `ingest/adapters/index.js` (`scraper_web`), see the README. Scout reads the index.
 - Scout (`api/_lib/scout.js`, `scout-merge.js`) runs on Vercel Hobby (10 s per function, 12 functions max), so this Python code does not deploy
   there. The intended seam: run this package as a separate worker, and have it (a) write enriched candidates into `scout_candidates` /
   `search_properties` (Supabase) and (b) expose the financial report for a candidate. Embeddings differ (this uses a multilingual MiniLM, PropLync

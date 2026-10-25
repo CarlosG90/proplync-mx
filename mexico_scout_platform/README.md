@@ -44,6 +44,23 @@ python -m src.pipeline stats
 For comps to be real, the database needs rental listings too: ingest short-term (per night) and long-term (per month) pages for the same
 neighbourhood. With fewer than 3 comps the model says so and uses editable defaults (`MARKET_DEFAULTS` in `src/tools/math_engine.py`).
 
+## Feeding the proplync.mx search index (`src/worker.py`)
+A bridge, not a second database writer. The Node crawler (`ingest/run.mjs`, source `scraper_web`) calls the worker, then sends what it returns through
+the normal index writer (`api/_lib/search/`), so dedupe, merging across sites, currency conversion and embeddings stay in one place.
+```bash
+python -m src.worker sitemap                      # JSON: every listing URL named by the configured sites' sitemaps
+echo '[{"url": "..."}]' | python -m src.worker scrape   # JSON lines: one index record per page that yielded a listing
+node ingest/run.mjs --source scraper_web --dry-run --max 10   # the whole path, writing nothing (needs the source enabled, see below)
+```
+- **Sites** are in `SITES` in `src/worker.py` (sitemap + listing-URL pattern): bestcaribbeanproperty.com, remaxmaya.com, moskito.mx. About 800 listing URLs.
+- **Per run** it reads only what is new, plus one seventh of the known listings (so every price refreshes weekly), up to the source's `max_results_per_run` (80).
+  Every other listing a sitemap still names is marked "still listed" with no request to the site, so nothing goes stale.
+- **Left out on purpose:** nightly/vacation rentals (the index holds monthly rents only, a nightly rate would read as a US$150 rent), prices with no stated
+  currency in an ambiguous band (US$900k or MXN 900k?), pages with no price and no size, and pages with no recognisable town.
+- **Off by default.** `supabase/017_scraper_web_source.sql` adds the source disabled. After a dry run: `update search_sources set enabled = true where id = 'scraper_web';`.
+- Volume reality (2026-10-25): about 800 listings, almost all for sale; only about 8 are long-term rentals. This fills the sales side of the index; rental comps for the
+  return estimate stay thin.
+
 ## What it will and will not do
 - Fetches only hosts in `ALLOWED_DOMAINS`, honours robots.txt, spaces requests with randomised delays, and caps pages per run.
 - Mimics a desktop browser's TLS fingerprint on the HTTP layer. Only a bare JavaScript shell is rendered once in a headless browser. It does **not**
