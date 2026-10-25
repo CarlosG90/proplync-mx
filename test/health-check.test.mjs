@@ -224,17 +224,19 @@ test('with the probe, an accepted real request is ok and recorded', async () => 
   assert.equal(r.scout_request.ok, true);
 });
 
-test('the NVIDIA probe says which models answer for this account and warns when the preferred one does not', async () => {
+test('the NVIDIA probe reports which models passed a real Concierge turn, and says when none did', async () => {
   const probe = async () => [
-    { model: 'nvidia/nemotron-nano-3-30b-a3b', ok: false, status: 404, ms: 120, detail: 'Not found for account' },
-    { model: 'nv-mistralai/mistral-nemo-12b-instruct', ok: true, status: 200, ms: 900 }
+    { model: 'nvidia/nemotron-nano-3-30b-a3b', variant: 'plain', ok: false, status: 404, ms: 120, detail: 'Not found for account' },
+    { model: 'nvidia/nemotron-3.5-lightning-30b-a3b', variant: 'plain', ok: false, status: null, ms: 9000, detail: 'nvidia_timeout' },
+    { model: 'nvidia/nemotron-3.5-lightning-30b-a3b', variant: 'thinking_off', ok: true, status: 200, ms: 1400, detail: 'valid brief JSON' }
   ];
   const r = await collectHealth(base({ probeNvidia: probe }));
-  assert.equal(r.nvidia_probe.length, 2);
-  assert.ok(r.notes.some((n) => /preferred model does not answer.*HTTP 404.*nv-mistralai\/mistral-nemo-12b-instruct/.test(n)));
-  const none = await collectHealth(base({ probeNvidia: async () => [{ model: 'a', ok: false, status: 404, ms: 1, detail: 'x' }] }));
-  assert.ok(none.notes.some((n) => /none of the candidate Concierge models answered/.test(n)));
+  assert.equal(r.nvidia_probe.length, 3);
+  assert.ok(r.notes.some((n) => /passed a real Concierge turn: nvidia\/nemotron-3\.5-lightning-30b-a3b \(thinking_off, 1400 ms\)/.test(n)));
+  const none = await collectHealth(base({ probeNvidia: async () => [{ model: 'a', variant: 'plain', ok: false, status: 404, ms: 1, detail: 'x' }] }));
+  assert.ok(none.notes.some((n) => /no candidate returned a valid Concierge turn/.test(n)));
   const off = await collectHealth(base());
   assert.equal(off.nvidia_probe, null, 'no probe unless the operator asks');
+  assert.ok(off.notes.some((n) => /NVIDIA stays off until a model passes a real turn/.test(n)), 'with no proven model the report says NVIDIA is off on purpose');
   assert.ok(!JSON.stringify(r).includes('nv-secret'));
 });

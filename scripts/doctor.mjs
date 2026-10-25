@@ -70,8 +70,8 @@ if (r.scout_request) {
   line('Accepted by Anthropic', r.scout_request.ok, r.scout_request.ok ? `${r.scout_request.model} · stop: ${r.scout_request.stop_reason}` : r.scout_request.detail);
 }
 if (r.nvidia_probe) {
-  console.log('\n  NVIDIA models, one tiny real request each (which ones this account can call)');
-  r.nvidia_probe.forEach((m) => line(m.model, m.ok, m.ok ? `answered in ${m.ms} ms` : `HTTP ${m.status || '?'} · ${m.detail}`));
+  console.log('\n  NVIDIA models on a REAL Concierge turn (real prompt, 9 s limit, reply must parse into a brief)');
+  r.nvidia_probe.forEach((m) => line(`${m.model} [${m.variant}]`, m.ok, m.ok ? `${m.ms} ms · ${m.detail}` : `${m.ms} ms · ${m.status ? 'HTTP ' + m.status + ' · ' : ''}${m.detail}`));
 }
 if (r.recent_failures && r.recent_failures.length) {
   console.log('\n  Last failed Scout runs (the real error)');
