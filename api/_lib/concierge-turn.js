@@ -25,7 +25,7 @@ import { logDegraded } from './health.js';
 
 /* The Nemotron nano models are reasoning models by default; this switches the thinking off.
    Harmless text for a model that does not know it, and parseReply strips <think> anyway. */
-const NO_THINK = '\n\n/no_think';
+export const NO_THINK = '\n\n/no_think';
 
 /* Whole-turn budget, so a slow first provider cannot eat the fallback's chance. */
 const BUDGET_MS = 26000;

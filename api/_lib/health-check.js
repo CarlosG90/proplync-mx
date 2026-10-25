@@ -16,7 +16,7 @@
  */
 
 import { PRIMARY_MODEL, FALLBACK_MODEL } from './groq.js';
-import { NVIDIA_MODEL } from './nvidia-concierge.js';
+import { NVIDIA_MODEL, conciergeModels } from './nvidia-concierge.js';
 import { SCOUT_MODEL, runsStartedToday, stuckAction } from './scout.js';
 import { monthlyBudgetUsd, runMaxUsd, runHardMaxUsd, spentThisMonth } from './scout-budget.js';
 import { createHash } from 'node:crypto';
@@ -163,14 +163,18 @@ export async function collectHealth(deps) {
     recent_failures = (data || []).map((r) => ({ id: r.id, at: r.created_at, error: r.error }));
   } catch { /* the report is still useful without it */ }
 
-  // Which NVIDIA models this account can really call. The catalog check above only proves a model is listed.
+  // Which NVIDIA models can really run a Concierge turn (the real prompt, the 9 s limit, a parseable brief).
+  // The catalog check above only proves a model is listed; a tiny request proves almost nothing either.
   let nvidia_probe = null;
+  if (nvidia.configured && conciergeModels(env).length === 0) {
+    notes.push('Concierge uses Groq only on purpose: NVIDIA stays off until a model passes a real turn. Run `node scripts/doctor.mjs --probe` to test the candidates.');
+  }
   if (deps.probeNvidia && env.NVIDIA_API_KEY) {
     try {
       nvidia_probe = await deps.probeNvidia();
-      const working = nvidia_probe.filter((m) => m.ok).map((m) => m.model);
-      if (!working.length) notes.push('NVIDIA: none of the candidate Concierge models answered for this account, so Concierge runs on Groq. See the probe table.');
-      else if (!nvidia_probe[0].ok) notes.push(`NVIDIA: the preferred model does not answer for this account (HTTP ${nvidia_probe[0].status}); Concierge skips it and uses ${working[0]}. Reorder the list in nvidia-concierge.js.`);
+      const passed = nvidia_probe.filter((m) => m.ok).sort((x, y) => x.ms - y.ms);
+      if (!passed.length) notes.push('NVIDIA: no candidate returned a valid Concierge turn inside 9 s, so Concierge stays on Groq. See the probe table.');
+      else notes.push(`NVIDIA: passed a real Concierge turn: ${passed.map((m) => `${m.model} (${m.variant}, ${m.ms} ms)`).join('; ')}. Put the fastest in PREFERRED_MODELS in nvidia-concierge.js, with its thinking-off option in MODEL_EXTRA if it needed one.`);
     } catch (err) { notes.push(`NVIDIA probe failed: ${safeDetail(err, 'health')}`); }
   }
 

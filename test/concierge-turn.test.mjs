@@ -162,6 +162,7 @@ test('handler: both providers rate limited answers 503 concierge_busy', async ()
 
 test('handler: a reply with no brief answers null instead of wiping the page', async () => {
   process.env.NVIDIA_API_KEY = 'test'; process.env.GROQ_API_KEY = '';
+  process.env.NVIDIA_CONCIERGE_MODELS = 'test/model';   // NVIDIA is off until a model is named (see nvidia-concierge.js)
   const real = globalThis.fetch;
   globalThis.fetch = async () => respond({ choices: [{ message: { content: '<think>hmm</think>{"say":"¿Y tu presupuesto?","done":false}' } }] });
   try {
@@ -170,5 +171,23 @@ test('handler: a reply with no brief answers null instead of wiping the page', a
     assert.equal(r.status, 200);
     assert.equal(r.body.brief, null);
     assert.equal(r.body.say, '¿Y tu presupuesto?');
+  } finally { globalThis.fetch = real; delete process.env.NVIDIA_CONCIERGE_MODELS; }
+});
+
+test('handler: with no proven NVIDIA model the turn goes straight to Groq and never touches NVIDIA', async () => {
+  process.env.NVIDIA_API_KEY = 'test'; process.env.GROQ_API_KEY = 'g';
+  delete process.env.NVIDIA_CONCIERGE_MODELS;
+  const real = globalThis.fetch;
+  const hosts = [];
+  globalThis.fetch = async (url) => {
+    hosts.push(new URL(String(url)).host);
+    return respond({ choices: [{ message: { content: '{"say":"Hola","done":false}' } }] });
+  };
+  try {
+    const { default: handler } = await import('../api/finder.js');
+    const r = await call(handler, { messages: convo });
+    assert.equal(r.status, 200);
+    assert.equal(r.body.provider, 'groq');
+    assert.ok(!hosts.some((h) => h.includes('nvidia')), 'NVIDIA was not called: ' + hosts.join(', '));
   } finally { globalThis.fetch = real; }
 });

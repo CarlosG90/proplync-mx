@@ -41,8 +41,8 @@ import { waitUntil } from '@vercel/functions';
 import { safeDetail, logDegraded } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { groqChat, messageText } from './_lib/groq.js';
-import { nvidiaChat, probeNvidiaModels } from './_lib/nvidia-concierge.js';
-import { askConcierge, isBusy } from './_lib/concierge-turn.js';
+import { nvidiaChat, chatWithModel, conciergeModels, CANDIDATE_MODELS, THINKING_OFF } from './_lib/nvidia-concierge.js';
+import { askConcierge, isBusy, parseReply, NO_THINK } from './_lib/concierge-turn.js';
 import { getServiceClient } from './_lib/supabase.js';
 import { createRun, runScoutStep, runsStartedToday, scoutConfigured, checkAnthropic, probeScout } from './_lib/scout.js';
 import { watchRun } from './_lib/scout-watch.js';
@@ -114,7 +114,8 @@ const GROQ_MAX_TOKENS = 600;
 async function handleTurn(req, res) {
   /* Check provider availability: NVIDIA (free tier) → Groq fallback.
      Claude is no longer used for Concierge (moved to NVIDIA to reduce cost). */
-  const haveNvidia = Boolean(process.env.NVIDIA_API_KEY);
+  // Off until a model has passed a real turn (see nvidia-concierge.js): a failing NVIDIA attempt costs the buyer 9-18 s.
+  const haveNvidia = Boolean(process.env.NVIDIA_API_KEY) && conciergeModels().length > 0;
   const haveGroq = Boolean(process.env.GROQ_API_KEY);
 
   if (!haveNvidia && !haveGroq) {
@@ -500,6 +501,32 @@ async function handleWallet(req, res) {
   });
 }
 
+/* The real acceptance test for an NVIDIA model: the actual Concierge prompt and a real buyer message, with the turn's
+   9 s limit, and the reply must parse into a valid brief. Each candidate runs twice, plain and with thinking switched
+   off, in parallel. A few thousand tokens in total, sent from inside production so the key never leaves Vercel. */
+async function probeConciergeTurns() {
+  const messages = [
+    { role: 'system', content: SYSTEM + NO_THINK },
+    { role: 'user', content: 'Hola, busco un departamento de 2 recámaras en Tulum, en Aldea Zama, con alberca, hasta 300 mil dólares. Es para vivir parte del año y rentarlo el resto.' }
+  ];
+  const runs = [];
+  for (const model of CANDIDATE_MODELS) {
+    runs.push({ model, variant: 'plain', extra: undefined });
+    if (THINKING_OFF[model]) runs.push({ model, variant: 'thinking_off', extra: THINKING_OFF[model] });
+  }
+  return Promise.all(runs.map(async ({ model, variant, extra }) => {
+    const started = Date.now();
+    try {
+      const raw = await chatWithModel(model, messages, { max_tokens: 1400, temperature: 0.4, timeoutMs: 9000, extra });
+      const reply = parseReply(raw);
+      return { model, variant, ok: true, status: 200, ms: Date.now() - started, detail: `valid brief JSON, say: ${String(reply.say || '').slice(0, 60)}` };
+    } catch (err) {
+      const status = Number((String(err.message).match(/NVIDIA NIM (\d{3})/) || [])[1]) || null;
+      return { model, variant, ok: false, status, ms: Date.now() - started, detail: String(err.code || err.message).replace(/\s+/g, ' ').slice(0, 140) };
+    }
+  }));
+}
+
 /* Is everything the agents need actually in place? Operator-only (the step secret), read-only, spends nothing.
    See api/_lib/health-check.js and scripts/doctor.mjs. */
 async function handleHealth(req, res) {
@@ -515,7 +542,7 @@ async function handleHealth(req, res) {
       svc: getServiceClient(),
       checkAnthropic,
       probeScout: req.query.probe === '1' ? probeScout : undefined,
-      probeNvidia: req.query.probe === '1' ? probeNvidiaModels : undefined,
+      probeNvidia: req.query.probe === '1' ? probeConciergeTurns : undefined,
       scoutCanRun: scoutCanRun(),
       stepOriginSet: Boolean(stepOrigin()),
       dailyCap: Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 5
