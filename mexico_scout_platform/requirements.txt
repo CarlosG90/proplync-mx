@@ -1,0 +1,11 @@
+# Open-source dependencies, pinned to the versions this project was built and tested with (Python 3.12+).
+# Resolved on 2026-10-25 with `uv pip install`; `uv pip freeze` lists the full transitive set.
+crewai==1.6.1
+scrapling[fetchers]==0.5          # the [fetchers] extra adds the HTTP-impersonation and headless-browser fetchers
+crawl4ai==0.9.5
+qdrant-client==1.20.0
+fastembed==0.9.1
+pydantic==2.14.1
+pydantic-settings==2.16.1         # Pydantic Settings lives in its own package since Pydantic 2
+python-dotenv==1.2.4
+loguru==0.7.3
