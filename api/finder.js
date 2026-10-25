@@ -44,7 +44,8 @@ import { groqChat, messageText } from './_lib/groq.js';
 import { nvidiaChat, chatWithModel, conciergeModels, CANDIDATE_MODELS, THINKING_OFF } from './_lib/nvidia-concierge.js';
 import { askConcierge, isBusy, parseReply, NO_THINK } from './_lib/concierge-turn.js';
 import { getServiceClient } from './_lib/supabase.js';
-import { createRun, runScoutStep, runsStartedToday, scoutConfigured, checkAnthropic, probeScout } from './_lib/scout.js';
+import { createRun, runScoutStep, runsStartedToday, scoutConfigured, checkAnthropic, probeScout, fxRate } from './_lib/scout.js';
+import { investorBrief, loadRentComps, financialsFor } from './_lib/candidate-financials.js';
 import { watchRun } from './_lib/scout-watch.js';
 import { collectHealth, doctorToken } from './_lib/health-check.js';
 import { redisGet, redisSet } from './_lib/redis.js';
@@ -441,15 +442,23 @@ async function handleStatus(req, res) {
      stands: not yet verified, verification requested, confirmed by the agent,
      or ruled out. Internal notes and the agent's contact never leave. */
   const { data: rows } = await svc.from('scout_candidates')
-    .select('id, origin, listing_public_id, title, operation, property_type, town, neighborhood, bedrooms, bathrooms, built_m2, land_m2, sources, photos, match, fit_score, verification, verify_requested_at, answers, verified_at')
+    .select('id, origin, listing_public_id, title, operation, property_type, town, neighborhood, bedrooms, bathrooms, built_m2, land_m2, sources, photos, match, fit_score, lowest_price_mxn, verification, verify_requested_at, answers, verified_at')
     .eq('brief_id', brief.id).neq('verification', 'rejected')
     .order('fit_score', { ascending: false, nullsFirst: false });
-  const candidates = (rows || []).map(({ match, answers, ...c }) => ({
+  /* A yield estimate, for investors only and only where it rests on real rental comps (see candidate-financials.js).
+     Optional: if the index cannot be read the page simply has no estimate. */
+  let rentComps = [], fx = 18;
+  if (investorBrief(brief.brief) && (rows || []).some((c) => c.operation === 'sale')) {
+    try { fx = fxRate(); rentComps = await loadRentComps(svc, (rows || []).map((c) => c.town), fx); }
+    catch (err) { logDegraded('finder:financials', err); }
+  }
+  const candidates = (rows || []).map(({ match, answers, lowest_price_mxn, ...c }) => ({
     ...c,
     summary: match && match.summary,
     must_haves: (match && match.must_haves) || [],
     answers: c.verification === 'confirmed' ? answers : null,
-    verify_requested: Boolean(c.verify_requested_at)
+    verify_requested: Boolean(c.verify_requested_at),
+    financials: rentComps.length ? financialsFor({ ...c, lowest_price_mxn }, rentComps, fx) : null
   }));
 
   res.status(200).json({

@@ -226,7 +226,7 @@ export async function checkAnthropic(models = [SCOUT_MODEL]) {
   };
 }
 
-function fxRate() {
+export function fxRate() {
   // MXN per USD, used only to compare prices across currencies. Set it in the
   // environment; the fallback is a round number, not a quote.
   const n = Number(process.env.SCOUT_FX_USD_MXN);
