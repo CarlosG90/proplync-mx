@@ -23,7 +23,7 @@
 
 import { logDegraded } from './health.js';
 
-/* nvidia-nemotron-nano-9b-v2 is a reasoning model by default; this switches the thinking off.
+/* The Nemotron nano models are reasoning models by default; this switches the thinking off.
    Harmless text for a model that does not know it, and parseReply strips <think> anyway. */
 const NO_THINK = '\n\n/no_think';
 
