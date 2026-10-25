@@ -46,6 +46,7 @@ import { askConcierge, isBusy, parseReply, NO_THINK } from './_lib/concierge-tur
 import { getServiceClient } from './_lib/supabase.js';
 import { createRun, runScoutStep, runsStartedToday, scoutConfigured, checkAnthropic, probeScout, fxRate } from './_lib/scout.js';
 import { investorBrief, loadRentComps, financialsFor } from './_lib/candidate-financials.js';
+import { scoutState, sameBrief } from './_lib/scout-state.js';
 import { watchRun } from './_lib/scout-watch.js';
 import { collectHealth, doctorToken } from './_lib/health-check.js';
 import { redisGet, redisSet } from './_lib/redis.js';
@@ -356,12 +357,29 @@ async function handleApprove(req, res) {
   // The buyer's link to this brief: random, shown once, stored only as a hash.
   const token = randomBytes(32).toString('base64url');
   const svc = getServiceClient();
-  const { data: row, error } = await svc.from('buyer_briefs').insert({
-    access_token_hash: sha256(token), lang, brief, user_id: user.id,
-    contact_name: name, contact_email: user.email || '', consent_at: new Date().toISOString()
-  }).select('id').single();
-  if (error) {
-    logDegraded('finder:approve', error);
+
+  /* The same brief approved again by the same buyer within 30 minutes (a reload, a second click: nothing on screen said whether Scout had
+     started) is the same brief. Reuse it with a fresh private link instead of saving a duplicate. A link is only ever stored as a hash,
+     so the old one cannot be shown again; the new one replaces it. */
+  let row = null, error = null;
+  try {
+    const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const { data: recent } = await svc.from('buyer_briefs').select('id, brief').eq('user_id', user.id).gte('created_at', since)
+      .order('created_at', { ascending: false }).limit(5);
+    const same = (recent || []).find((r) => sameBrief(r.brief, brief));
+    if (same) {
+      const { error: rotateError } = await svc.from('buyer_briefs').update({ access_token_hash: sha256(token), lang, updated_at: new Date().toISOString() }).eq('id', same.id);
+      if (!rotateError) row = { id: same.id };
+    }
+  } catch (err) { logDegraded('finder:approve-dedupe', err); }
+  if (!row) {
+    ({ data: row, error } = await svc.from('buyer_briefs').insert({
+      access_token_hash: sha256(token), lang, brief, user_id: user.id,
+      contact_name: name, contact_email: user.email || '', consent_at: new Date().toISOString()
+    }).select('id').single());
+  }
+  if (error || !row) {
+    logDegraded('finder:approve', error || new Error('no row'));
     res.status(503).json({ error: 'approve_failed' }); return;
   }
 
@@ -461,8 +479,23 @@ async function handleStatus(req, res) {
     financials: rentComps.length ? financialsFor({ ...c, lowest_price_mxn }, rentComps, fx) : null
   }));
 
+  /* Where the search stands, and if it never started, why. Derived every time (not remembered from the approve click), so a reload
+     still says it. See scout-state.js. */
+  let scout = null;
+  try {
+    let wallet = null, startedToday = 0;
+    if (!run) {
+      if (brief.user_id) {
+        const { data } = await svc.from('buyer_wallets').select('credits, free_search_used').eq('user_id', brief.user_id).maybeSingle();
+        wallet = data || null;
+      }
+      startedToday = await runsStartedToday(svc);
+    }
+    scout = scoutState({ run, wallet, startedToday, cap: Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 5, canRun: scoutCanRun() });
+  } catch (err) { logDegraded('finder:scout-state', err); }
+
   res.status(200).json({
-    status: brief.status, lang: brief.lang, brief: brief.brief, created_at: brief.created_at,
+    status: brief.status, lang: brief.lang, brief: brief.brief, created_at: brief.created_at, scout,
     run: run ? {
       status: run.status, steps: run.steps, searches: run.web_searches, pages: run.web_fetches,
       progress: Array.isArray(run.progress) ? run.progress.slice(-30) : []

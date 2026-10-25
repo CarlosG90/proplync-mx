@@ -89,6 +89,15 @@
   .bf-verify{width:100%;margin-top:12px;background:var(--gold);color:var(--ink);border:0;border-radius:999px;padding:11px;font-weight:600;cursor:pointer;font-family:var(--body);font-size:.86rem}
   .bf-verify:disabled{opacity:.5;cursor:default}
   .bf-progress{font-family:var(--mono);font-size:.7rem;color:var(--on-ink-dim);margin-top:var(--sp-3)}
+  /* Scout's state, always visible: searching / done / did not finish / not started (and why) */
+  .bf-state{display:inline-flex;align-items:center;gap:8px;margin:0 0 var(--sp-3);padding:6px 12px;border-radius:999px;font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;background:rgba(240,237,232,.08);color:var(--on-ink-dim)}
+  .bf-state[data-state="searching"]{background:rgba(201,169,110,.18);color:var(--gold)}
+  .bf-state[data-state="done"]{background:rgba(94,196,190,.18);color:var(--aqua)}
+  .bf-state[data-state="not_started"],.bf-state[data-state="failed"]{background:rgba(220,120,100,.16);color:#f0c8bd}
+  .bf-notice{margin-top:var(--sp-4);padding:var(--sp-4) var(--sp-5);border:1px solid rgba(220,120,100,.35);border-radius:var(--radius-md);background:rgba(220,120,100,.08)}
+  .bf-notice p{margin:0 0 var(--sp-3);font-size:.9rem;line-height:1.55}
+  .bf-notice p:last-child{margin-bottom:0}
+  .bf-notice a,.bf-notice button{display:inline-block;margin-top:var(--sp-2);padding:10px 18px;border-radius:999px;border:0;background:var(--gold);color:var(--ink);font-weight:600;font-family:var(--body);font-size:.86rem;cursor:pointer;text-decoration:none}
   .bf-fin{margin:var(--sp-3) 0;padding:var(--sp-3) var(--sp-4);border:1px solid rgba(201,169,110,.28);border-radius:var(--radius-md);background:rgba(201,169,110,.05)}
   .bf-fin summary{cursor:pointer;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
   .bf-fin .bf-note{margin-top:var(--sp-3)}
@@ -197,7 +206,9 @@
     <section class="bf-status" id="status-view" hidden>
       <div class="bf-card">
         <h2 data-es="Tu busqueda" data-en="Your search">Your search</h2>
+        <p class="bf-state" id="st-state" role="status" aria-live="polite" hidden></p>
         <p class="bf-status-text" id="st-text"></p>
+        <div class="bf-notice" id="st-notice" hidden></div>
         <div id="st-link"></div>
       </div>
       <div class="bf-live" id="st-live" data-active="true" hidden>
@@ -478,6 +489,7 @@ function statusLine(s) {
   if (run && run.status === 'failed') return t('Esta búsqueda no terminó. Te devolvimos el crédito; puedes buscar de nuevo.', 'This search did not finish. We gave the credit back; you can search again.');
   if (!s.candidates.length && run && run.status === 'done') return t('Scout no encontró propiedades que cumplan todo. Ajusta el resumen o busca de nuevo más tarde.', 'Scout found nothing that meets everything. Adjust the brief or search again later.');
   if (s.candidates.length) return t('Esto encontró Scout. Lo marcado "sin verificar" viene de los anuncios; pide que una persona lo confirme con su agente.', 'This is what Scout found. Anything "not verified" comes from the listings; ask a person to confirm it with its agent.');
+  if (s.scout && s.scout.state === 'not_started') return t('Tu resumen está guardado, pero Scout todavía no empezó a buscar.', 'Your brief is saved, but Scout has not started searching yet.');
   return t('Tu resumen está guardado.', 'Your brief is saved.');
 }
 
@@ -670,6 +682,54 @@ function renderLive(s) {
   }
 }
 
+/* Scout's state, from the server (status.scout), so it is the same after a reload: a buyer must always be able to tell whether the
+   search is running, finished, failed, or never started, and what to do about it. */
+function renderScoutState(s) {
+  var st = s.scout;
+  var pill = document.getElementById('st-state');
+  var box = document.getElementById('st-notice');
+  box.innerHTML = '';
+  if (!st) { pill.hidden = true; box.hidden = true; return; }
+  var label = {
+    searching: t('Scout está buscando', 'Scout is searching'),
+    done: t('Búsqueda terminada', 'Search finished'),
+    failed: t('La búsqueda no terminó', 'The search did not finish'),
+    not_started: t('Scout todavía no empezó', 'Scout has not started yet')
+  }[st.state];
+  pill.hidden = !label; pill.textContent = label || ''; pill.setAttribute('data-state', st.state);
+  var body = null, action = null;
+  if (st.state === 'not_started') {
+    if (st.reason === 'needs_credit') {
+      body = t('Ya usaste tu búsqueda gratis y no tienes créditos, por eso Scout no empezó. Tu resumen está guardado: no hace falta aprobarlo otra vez. Con 1 crédito Scout empieza de inmediato.',
+               'You have used your free search and have no credits, which is why Scout did not start. Your brief is saved: there is no need to approve it again. With 1 credit Scout starts right away.');
+      action = { href: 'mailto:hola@proplync.mx?subject=' + encodeURIComponent(t('Créditos para Scout', 'Credits for Scout')), text: t('Pedir créditos', 'Ask for credits') };
+    } else if (st.reason === 'busy') {
+      body = t('Scout tiene mucha demanda hoy y no pudo empezar. Tu resumen está guardado y no se te cobró; vuelve a intentarlo más tarde.',
+               'Scout is very busy today and could not start. Your brief is saved and you were not charged; try again later.');
+    } else if (st.reason === 'unavailable') {
+      body = t('Scout no está disponible en este momento. Tu resumen está guardado y no se te cobró; vuelve a intentarlo más tarde.',
+               'Scout is not available right now. Your brief is saved and you were not charged; try again later.');
+    } else {
+      body = t('Scout no pudo empezar la búsqueda. Tu resumen está guardado; puedes intentarlo de nuevo.', 'Scout could not start the search. Your brief is saved; you can try again.');
+      action = { run: true, text: t('Iniciar la búsqueda', 'Start the search') };
+    }
+  }
+  if (!body) { box.hidden = true; return; }
+  var p = document.createElement('p'); p.textContent = body; box.appendChild(p);
+  if (action && action.href) {
+    var a = document.createElement('a'); a.href = action.href; a.textContent = action.text; box.appendChild(a);
+  } else if (action && action.run) {
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = action.text;
+    b.addEventListener('click', async function () {
+      b.disabled = true; b.textContent = t('Iniciando…', 'Starting…');
+      document.getElementById('st-state').textContent = t('Iniciando la búsqueda…', 'Starting the search…');
+      await rerun();
+    });
+    box.appendChild(b);
+  }
+  box.hidden = false;
+}
+
 async function loadStatus() {
   try {
     var r = await fetch('/api/finder?action=status&t=' + encodeURIComponent(statusToken));
@@ -682,6 +742,7 @@ async function loadStatus() {
     }
     brief = s.brief || {}; renderBrief();
     document.getElementById('st-text').textContent = statusLine(s);
+    renderScoutState(s);
     renderLive(s);
     document.getElementById('st-results').innerHTML = (s.candidates || []).map(propCard).join('');
     if ((s.candidates || []).length && !resultsTracked) { resultsTracked = true; if (window.plTrack) plTrack('scout_result_viewed'); }
