@@ -5,6 +5,7 @@
 #   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   (required)
 #   APIFY_TOKEN                              (required for portal sources)
 #   SCOUT_FX_USD_MXN, PUBLIC_SITE_URL        (optional)
+# The source `scraper_web` (our own scraper, free) needs no secret beyond the Supabase ones; see supabase/017_scraper_web_source.sql.
 # Which sources and markets run is decided in the database (search_sources,
 # search_markets), not here.
 
@@ -48,6 +49,15 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --omit=dev
+      # The own-scraper source (scraper_web) runs a Python worker from mexico_scout_platform/. It costs nothing and does nothing
+      # unless that source is enabled in search_sources, so installing it here is cheap insurance.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: mexico_scout_platform/requirements-worker.txt
+      - name: Install the scraper worker
+        run: pip install -r mexico_scout_platform/requirements-worker.txt
       - name: Crawl
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -55,6 +65,7 @@ jobs:
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
           SCOUT_FX_USD_MXN: ${{ secrets.SCOUT_FX_USD_MXN }}
           PUBLIC_SITE_URL: ${{ secrets.PUBLIC_SITE_URL }}
+          SCOUT_WORKER_PYTHON: python
           IN_SOURCE: ${{ inputs.source }}
           IN_MARKET: ${{ inputs.market }}
           IN_MAX: ${{ inputs.max }}

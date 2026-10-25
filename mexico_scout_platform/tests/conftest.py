@@ -66,6 +66,10 @@ def build_site() -> dict[str, tuple[int, str]]:
         site[f"/renta/propiedad-{i}"] = (200, listing_html(
             f"Departamento en renta Aldea Zama Tulum {i}", f"${monthly} USD /mes", area=f"{90 + i * 5} m² de construcción"))
     links = "".join(f'<a href="{p}">x</a>' for p in site if p.startswith(("/venta/", "/renta/", "/renta-vacacional/")))
+    site["/sitemap.xml"] = (200, "<urlset>" + "".join(
+        f"<url><loc>http://PORTAL{p}</loc><lastmod>2026-10-2{i % 9}T10:00:00+00:00</lastmod></url>"
+        for i, p in enumerate(sorted(x for x in site if x.startswith(("/venta/", "/renta/", "/renta-vacacional/"))))
+    ) + "<url><loc>http://PORTAL/contacto</loc></url><url><loc>http://PORTAL/blog/post-1</loc></url></urlset>")
     site["/resultados"] = (200, f"<html><body>{links}<a href='/contacto'>Contacto</a><a href='https://otro.com/propiedad-9'>otro</a></body></html>")
     return site
 
@@ -77,7 +81,7 @@ def portal():
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):  # noqa: N802
             status, body = site.get(self.path.split("?")[0], (404, "not found"))
-            data = body.encode()
+            data = body.replace("http://PORTAL", f"http://127.0.0.1:{self.server.server_address[1]}").encode()
             self.send_response(status)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(data)))

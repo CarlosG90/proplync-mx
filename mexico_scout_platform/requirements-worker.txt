@@ -1,0 +1,8 @@
+# Just what src/worker.py needs (used by .github/workflows/ingest.yml): no agents, no vector database, no embeddings.
+# Same pins as requirements.txt.
+scrapling[fetchers]==0.5
+crawl4ai==0.9.5
+pydantic==2.14.1
+pydantic-settings==2.16.1
+python-dotenv==1.2.4
+loguru==0.7.3
