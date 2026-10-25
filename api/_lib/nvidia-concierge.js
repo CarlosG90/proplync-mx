@@ -9,7 +9,12 @@
  */
 
 const NVIDIA_NIM_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
-const MODEL = 'nvidia/nvidia-nemotron-nano-9b-v2';
+/* nvidia/nvidia-nemotron-nano-9b-v2 left NVIDIA's catalog (the readiness check said so on 2026-10-24) and every
+   Concierge turn silently fell through to Groq. This is its successor in the same family and size class: a 30B
+   mixture-of-experts with 3B active parameters, so it answers fast enough for the 9 s turn limit. It was chosen from
+   the live catalog (GET /v1/models, no key needed), not from third-party docs. Check the catalog again before
+   changing it, and run `node scripts/doctor.mjs`: the check turns red the day this ID disappears. */
+const MODEL = 'nvidia/nemotron-nano-3-30b-a3b';
 export const NVIDIA_MODEL = MODEL;   // the readiness check verifies this ID is still in NVIDIA's catalog
 const REQUEST_TIMEOUT_MS = 9000;
 
