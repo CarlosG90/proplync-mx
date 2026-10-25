@@ -223,3 +223,18 @@ test('with the probe, an accepted real request is ok and recorded', async () => 
   assert.equal(r.ok, true);
   assert.equal(r.scout_request.ok, true);
 });
+
+test('the NVIDIA probe says which models answer for this account and warns when the preferred one does not', async () => {
+  const probe = async () => [
+    { model: 'nvidia/nemotron-nano-3-30b-a3b', ok: false, status: 404, ms: 120, detail: 'Not found for account' },
+    { model: 'nv-mistralai/mistral-nemo-12b-instruct', ok: true, status: 200, ms: 900 }
+  ];
+  const r = await collectHealth(base({ probeNvidia: probe }));
+  assert.equal(r.nvidia_probe.length, 2);
+  assert.ok(r.notes.some((n) => /preferred model does not answer.*HTTP 404.*nv-mistralai\/mistral-nemo-12b-instruct/.test(n)));
+  const none = await collectHealth(base({ probeNvidia: async () => [{ model: 'a', ok: false, status: 404, ms: 1, detail: 'x' }] }));
+  assert.ok(none.notes.some((n) => /none of the candidate Concierge models answered/.test(n)));
+  const off = await collectHealth(base());
+  assert.equal(off.nvidia_probe, null, 'no probe unless the operator asks');
+  assert.ok(!JSON.stringify(r).includes('nv-secret'));
+});
