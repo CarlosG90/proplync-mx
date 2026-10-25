@@ -163,6 +163,17 @@ export async function collectHealth(deps) {
     recent_failures = (data || []).map((r) => ({ id: r.id, at: r.created_at, error: r.error }));
   } catch { /* the report is still useful without it */ }
 
+  // Which NVIDIA models this account can really call. The catalog check above only proves a model is listed.
+  let nvidia_probe = null;
+  if (deps.probeNvidia && env.NVIDIA_API_KEY) {
+    try {
+      nvidia_probe = await deps.probeNvidia();
+      const working = nvidia_probe.filter((m) => m.ok).map((m) => m.model);
+      if (!working.length) notes.push('NVIDIA: none of the candidate Concierge models answered for this account, so Concierge runs on Groq. See the probe table.');
+      else if (!nvidia_probe[0].ok) notes.push(`NVIDIA: the preferred model does not answer for this account (HTTP ${nvidia_probe[0].status}); Concierge skips it and uses ${working[0]}. Reorder the list in nvidia-concierge.js.`);
+    } catch (err) { notes.push(`NVIDIA probe failed: ${safeDetail(err, 'health')}`); }
+  }
+
   let scout_request = null;
   if (deps.probeScout) {
     scout_request = await deps.probeScout();
@@ -176,6 +187,6 @@ export async function collectHealth(deps) {
     checked_at: new Date(now).toISOString(),
     problems, notes,
     providers: { anthropic, extractor, nvidia, groq },
-    scout, email, database, recent_failures, scout_request
+    scout, email, database, recent_failures, scout_request, nvidia_probe
   };
 }

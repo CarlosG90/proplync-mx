@@ -41,7 +41,7 @@ import { waitUntil } from '@vercel/functions';
 import { safeDetail, logDegraded } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { groqChat, messageText } from './_lib/groq.js';
-import { nvidiaChat } from './_lib/nvidia-concierge.js';
+import { nvidiaChat, probeNvidiaModels } from './_lib/nvidia-concierge.js';
 import { askConcierge, isBusy } from './_lib/concierge-turn.js';
 import { getServiceClient } from './_lib/supabase.js';
 import { createRun, runScoutStep, runsStartedToday, scoutConfigured, checkAnthropic, probeScout } from './_lib/scout.js';
@@ -515,6 +515,7 @@ async function handleHealth(req, res) {
       svc: getServiceClient(),
       checkAnthropic,
       probeScout: req.query.probe === '1' ? probeScout : undefined,
+      probeNvidia: req.query.probe === '1' ? probeNvidiaModels : undefined,
       scoutCanRun: scoutCanRun(),
       stepOriginSet: Boolean(stepOrigin()),
       dailyCap: Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 5

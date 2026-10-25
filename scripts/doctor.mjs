@@ -8,7 +8,7 @@
  *
  *   node scripts/doctor.mjs                      # production
  *   node scripts/doctor.mjs --url https://<preview>.vercel.app
- *   node scripts/doctor.mjs --probe              # also sends Scout's real request once (a few cents)
+ *   node scripts/doctor.mjs --probe              # also sends Scout's real request once (a few cents) and a tiny request to each NVIDIA candidate
  *
  * Proves who you are by sending a hash of SUPABASE_SERVICE_ROLE_KEY (from .env.local). The key itself is
  * never sent. Exit code 1 when there are problems, so it can gate a deploy.
@@ -68,6 +68,10 @@ line('Resend + from + operator', r.email.resend_key && r.email.from && r.email.o
 if (r.scout_request) {
   console.log('\n  Scout\'s real request, sent once');
   line('Accepted by Anthropic', r.scout_request.ok, r.scout_request.ok ? `${r.scout_request.model} · stop: ${r.scout_request.stop_reason}` : r.scout_request.detail);
+}
+if (r.nvidia_probe) {
+  console.log('\n  NVIDIA models, one tiny real request each (which ones this account can call)');
+  r.nvidia_probe.forEach((m) => line(m.model, m.ok, m.ok ? `answered in ${m.ms} ms` : `HTTP ${m.status || '?'} · ${m.detail}`));
 }
 if (r.recent_failures && r.recent_failures.length) {
   console.log('\n  Last failed Scout runs (the real error)');
