@@ -50,10 +50,15 @@ Files: `config.py` settings | `domain.py` Mexican formats, neighbourhoods, JSON-
 1. **Never invent data.** Missing fact = `null` + a warning. Defaults are labelled `default_assumption` and live in `MARKET_DEFAULTS`/`Assumptions`;
    they are editable starting points, not market data.
 2. **Scraping is polite, not stealthy.** robots.txt respected, allow-listed hosts only, randomised per-host delays, a page budget per run.
-   The scraper never solves CAPTCHAs or Cloudflare challenges and never logs in: a challenge page returns `blocked=True` and the run moves on.
+   The scraper never solves CAPTCHAs or Cloudflare challenges, never logs in, and never escalates to a browser after a refusal or a visitor-check
+   page (propiedades.com serves one with HTTP 200: `classify_page` catches it). It returns `blocked=True` and the run moves on.
    Do not add challenge-solving, credential use or proxy-hiding of identity. Sites that always refuse (Inmuebles24, Lamudi, Vivanuncios,
    MercadoLibre in the PropLync runs) are not in the default allow-list; use the Apify adapters in proplync.mx `ingest/` or a licensed feed.
-3. Parse facts from the **unpruned** text; give the LLM the pruned markdown. (Pruning drops short lines like "2 recámaras".)
+3. Parse facts from the **focused, unpruned** text (`domain.focus_listing_text`: one copy of each line, from the main heading, stopping at "similar
+   properties"); the pruning filter drops short lines like "2 recámaras". VISIBLE text beats JSON-LD (a real page's JSON-LD described other numbers); a
+   disagreement is recorded in `hints["conflicts"]`.
+   Agent modes: `guided` (default) = code drives, one small LLM call per listing and per property, numbers from `math_engine`; `tools` = the agent loops over
+   tools. Guided exists because a 3B model looped on its first tool call and Groq's free tier (7,000 input / 1,000 output tokens per minute) killed the tool loop.
 4. Tools never raise into the agent loop: return `{"error": ...}`. Validate model JSON with Pydantic before it reaches Qdrant.
 5. Tests must run offline (`pytest`): fake embedder + local fake portal in `tests/conftest.py`. Say plainly what was not tested live.
 

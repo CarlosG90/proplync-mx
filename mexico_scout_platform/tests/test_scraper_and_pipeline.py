@@ -4,7 +4,7 @@ from src.agents import definitions as defs
 from src.models import Operation
 from src.pipeline import analyze_url, ingest_urls, listing_from_hints, main, render_report
 from src.tools.math_engine import Assumptions
-from src.tools.scraper import ListingScraper, looks_blocked
+from src.tools.scraper import ListingScraper, classify_page, looks_blocked
 
 
 def scraper(settings, **kw):
@@ -17,6 +17,18 @@ def test_blocked_detection():
     assert looks_blocked(None, "")
     assert not looks_blocked(200, "<html>" + "Departamento en venta " * 50 + "</html>")
     assert not looks_blocked(200, "<html>" + "x" * 90_000 + " captcha </html>")  # a big real page that merely mentions a captcha
+    # the real propiedades.com answer: HTTP 200, but the page is a visitor check
+    assert looks_blocked(200, '<html><head><title>Challenge Validation</title></head><body><div id="sec-if-container"><iframe id="sec-cpt-if"></iframe></div></body></html>')
+
+
+def test_classify_separates_a_refusal_a_challenge_a_js_shell_and_a_real_page():
+    real = "<html><body>" + "Departamento en venta con alberca. " * 30 + "</body></html>"
+    shell = '<html><head><script src="/app.js"></script></head><body><div id="root"></div></body></html>'
+    assert classify_page(200, real) == "ok"
+    assert classify_page(403, "x") == "refused" and classify_page(429, "") == "refused"
+    assert classify_page(200, "<title>Just a moment...</title><body>cf-chl</body>") == "challenge"
+    assert classify_page(200, shell) == "thin" and not looks_blocked(200, shell)
+    assert classify_page(None, "") == "error"
 
 
 def test_scrape_a_listing_end_to_end(settings, portal):
@@ -160,3 +172,95 @@ def test_crew_objects_wire_up_without_calling_a_model(settings, store):
     assert t2.context == [t1]
     for prompt in (sourcing.backstory, analyst.backstory):
         assert "0.1% to 0.5%" in prompt and "fideicomiso" in prompt and "US$500-1,000" in prompt
+
+
+# ---------- guided agent mode (the model is stubbed: these run offline) ----------
+
+def _guided(settings, portal, store, run_task, sleeps=None):
+    from src.agents.crew import ScoutCrew
+    from src.agents.definitions import ToolContext
+    from src.models import SearchBrief
+    ctx = ToolContext(settings=settings, scraper=scraper(settings), store=store)
+    crew = ScoutCrew(settings, ctx, run_task=run_task, sleep=(sleeps.append if sleeps is not None else (lambda s: None)))
+    return crew.run(SearchBrief(town="Tulum", max_price_usd=300000, urls=[portal + "/resultados"]))
+
+
+def test_guided_mode_agent_corrections_win_and_memo_is_appended(settings, portal, store):
+    seen = []
+
+    def run_task(agent, description, expected):
+        seen.append(agent.role)
+        if agent.role.startswith("Property"):
+            return '```json\n{"title": "Depto corregido", "bathrooms": 2.5, "amenities": ["alberca"], "price": null, "summary": "Depto en Aldea Zama."}\n```'
+        return "Short-term looks stronger; occupancy is an assumption."
+
+    out = _guided(settings, portal, store, run_task)
+    assert out["mode"] == "agents-guided" and len(out["saved_urls"]) == 7 and store.count() == 7
+    assert seen.count("Property Sourcing Agent") == 7 and seen.count("Financial Investment Analyst") == 1   # one small call each
+    sale = store.get(portal + "/venta/propiedad-1")
+    assert sale.title == "Depto corregido" and sale.bathrooms == 2.5 and sale.amenities == ["alberca"]
+    assert sale.price == 4_500_000, "a null from the agent never erases what the rules read"
+    assert "**Analyst memo**" in out["dossier_markdown"] and "Short-term looks stronger" in out["dossier_markdown"]
+    assert "Cap rate" in out["dossier_markdown"], "the numbers come from the engine, not the model"
+
+
+def test_guided_mode_keeps_the_rule_based_record_when_the_model_is_useless(settings, portal, store):
+    def run_task(agent, description, expected):
+        raise ConnectionError("model server down") if agent.role.startswith("Property") else "memo"
+
+    out = _guided(settings, portal, store, run_task)
+    assert len(out["saved_urls"]) == 7 and len(out["reports"]) == 1
+    assert store.get(portal + "/venta/propiedad-1").price_usd == 250_000
+    out2 = _guided(settings, portal, store, lambda a, d, e: "no json here at all")
+    assert len(out2["saved_urls"]) >= 7
+
+
+def test_guided_mode_waits_out_a_rate_limit_and_retries(settings, portal, store):
+    class RateLimitError(Exception): pass
+    calls = {"n": 0}
+
+    def run_task(agent, description, expected):
+        calls["n"] += 1
+        if calls["n"] in (1, 2):
+            raise RateLimitError("Rate limit reached for model on tokens per minute")
+        return '{"title": "ok"}' if agent.role.startswith("Property") else "memo"
+
+    sleeps = []
+    out = _guided(settings, portal, store, run_task, sleeps)
+    assert sleeps[:2] == [15, 30], "backs off a little longer each time"
+    assert len(out["saved_urls"]) == 7
+    assert store.get(portal + "/venta/propiedad-1").title == "ok"
+
+
+def test_extract_json_object_is_tolerant():
+    from src.agents.crew import extract_json_object, is_rate_limit
+    assert extract_json_object('<think>hmm {not json}</think>```json\n{"a": 1}\n```') == {"a": 1}
+    assert extract_json_object("sin json") is None and extract_json_object("{broken") is None and extract_json_object("[1,2]") is None
+    assert is_rate_limit(Exception("Rate limit reached")) and not is_rate_limit(ValueError("nope"))
+
+
+def test_a_challenge_served_with_200_is_never_retried_in_a_browser(settings, portal, monkeypatch):
+    import scrapling.fetchers as f
+    from tests import conftest
+    conftest_site = conftest.build_site()   # noqa: F841 - the shared portal fixture serves /bloqueado as 403
+    called = []
+    monkeypatch.setattr(f.StealthyFetcher, "fetch", classmethod(lambda cls, *a, **k: called.append(1)))
+    s = scraper(settings.model_copy(update={"browser_fallback": True}))
+    result = s.fetch(portal + "/bloqueado")
+    assert result.blocked and result.reason == "refused_http_403" and called == [], "a refusal stops the run for that page: no browser, no solving"
+
+
+def test_a_javascript_shell_is_rendered_once_in_a_browser(settings, portal, monkeypatch):
+    import scrapling.fetchers as f
+    real = "<html><body>" + "Departamento en venta en Aldea Zama. " * 30 + "</body></html>"
+    class Rendered:  # what the browser tier returns
+        status, html_content = 200, real
+    calls = []
+    monkeypatch.setattr(f.StealthyFetcher, "fetch", classmethod(lambda cls, url, **k: calls.append(url) or Rendered()))
+    s = scraper(settings.model_copy(update={"browser_fallback": True}))
+    monkeypatch.setattr("src.tools.scraper.classify_page", lambda status, html: "thin" if html == "shell" else "ok")
+    # tier 1 gets a shell, tier 2 gets the page
+    import src.tools.scraper as sc
+    monkeypatch.setattr(f.Fetcher, "get", classmethod(lambda cls, url, **k: type("R", (), {"status": 200, "html_content": "shell" if "propiedad" in url else ""})()))
+    out = s.fetch(portal + "/venta/propiedad-1")
+    assert out.tier == "browser" and not out.blocked and len(calls) == 1

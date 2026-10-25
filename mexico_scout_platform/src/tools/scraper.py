@@ -3,15 +3,16 @@
 WHY THIS EXISTS
 Portals serve the same listing to a person and to a script very differently. Fetching and parsing are separate jobs:
   1. FETCH  (Scrapling): an HTTP request that carries a real desktop browser's TLS/HTTP2 fingerprint and headers
-     (tier "http"), and, only if that is refused, one retry in a headless browser (tier "browser") for pages that
-     need JavaScript.
+     (tier "http"). Only a page that is a bare JavaScript shell (200, almost no text) is rendered once in a headless
+     browser (tier "browser"). A refusal or a visitor-check page is never retried in a browser: we stop.
   2. PARSE  (Crawl4AI): turns the HTML we already hold into compact, LLM-ready markdown (navigation, footers and
      boilerplate pruned), and runs per-site CSS extraction schemas when one is registered. No second download.
 The result is raw markdown plus rule-based hints (price, m2, bedrooms, neighbourhood...) for the Research agent.
 
 WHAT THIS DELIBERATELY DOES NOT DO
-  * It never solves a CAPTCHA or a Cloudflare/Turnstile challenge, and never logs in. A page that still shows a
-    challenge after the browser retry comes back `blocked=True` with a reason, and the run moves on.
+  * It never solves a CAPTCHA or a Cloudflare/Turnstile challenge, never logs in, and never escalates after a refusal. A 403/429,
+    or a 200 that is really a visitor-check page ("Challenge Validation"), comes back `blocked=True` with a reason, and the run
+    moves on.
   * It reads robots.txt (config.respect_robots) and only fetches hosts in config.allowed_domains.
   * It paces itself: randomised, human-scale delays per host and a hard page budget per run. That keeps load on the
     sites low; it is politeness, not a promise of invisibility.
@@ -32,12 +33,13 @@ from loguru import logger
 from pydantic import BaseModel, Field
 
 from src.config import Settings, get_settings
-from src.domain import hints_from_text, parse_money
+from src.domain import focus_listing_text, hints_from_text, parse_money
 from src.models import normalize_url
 
 BLOCK_MARKERS = (
-    "just a moment", "cf-chl", "attention required", "verify you are human", "enable javascript and cookies",
+    "just a moment", "cf-chl", "challenge-platform", "attention required", "verify you are human", "enable javascript and cookies",
     "access denied", "px-captcha", "are you a robot", "unusual traffic", "captcha",
+    "challenge validation", "sec-cpt", "sec-if-container", "challenge content", "datadome", "_incapsula_", "pardon our interruption",
 )
 # Words that make a link look like one listing's page (and carry an id/number), as opposed to a category page.
 LISTING_URL_RE = re.compile(r"/(?:propiedad(?:es)?|inmuebles?|detalle|property|properties|listing|anuncio|departamento|casa|venta|depa)[/-][^?#]*\d", re.IGNORECASE)
@@ -71,13 +73,33 @@ class ScrapedPage(BaseModel):
         return not self.fetch.blocked and bool(self.markdown)
 
 
-def looks_blocked(status: int | None, html: str) -> bool:
-    """A refusal (403/429/503) or a short interstitial page that talks about a challenge."""
+def visible_text_length(html: str) -> int:
+    stripped = re.sub(r"<(script|style|noscript)[\s\S]*?</\1>", " ", html or "", flags=re.IGNORECASE)
+    return len(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", stripped)).strip())
+
+
+def classify_page(status: int | None, html: str) -> Literal["ok", "challenge", "refused", "thin", "error"]:
+    """What came back, judged from the status and the HTML.
+
+    refused    401/403/429/503: the site said no.
+    challenge  a page whose job is to check the visitor (it answers 200 too: propiedades.com did, with "Challenge Validation").
+    thin       200 with almost no text and scripts: a JavaScript app shell that a browser would fill in. Not a refusal.
+    error      no response at all.
+    """
+    if status is None or (not html and status not in (401, 403, 429, 503)):
+        return "error"
     if status in (401, 403, 429, 503):
-        return True
-    if status is None or not html:
-        return True
-    return len(html) < 80_000 and any(marker in html[:6000].lower() for marker in BLOCK_MARKERS)
+        return "refused"
+    if len(html) < 80_000 and any(marker in html[:6000].lower() for marker in BLOCK_MARKERS):
+        return "challenge"
+    if visible_text_length(html) < 300 and "<script" in html.lower():
+        return "thin"
+    return "ok"
+
+
+def looks_blocked(status: int | None, html: str) -> bool:
+    """A refusal, a visitor check or no answer. (A merely thin page is not blocked: see classify_page.)"""
+    return classify_page(status, html) in ("refused", "challenge", "error")
 
 
 def host_of(url: str) -> str:
@@ -170,13 +192,19 @@ class ListingScraper:
             logger.warning("HTTP fetch failed for {}: {}", url, exc)
             status, html = None, ""
 
-        if not looks_blocked(status, html):
+        verdict = classify_page(status, html)
+        if verdict == "ok":
             return FetchResult(url=url, status=status, html=html, tier="http")
-        logger.info("HTTP tier refused {} (status {}).", url, status)
+        if verdict in ("refused", "challenge", "error"):
+            # The site said no, or is checking the visitor. We stop here: no escalation to a browser, no solving.
+            logger.warning("{} was not served to us ({}, status {}); skipping it.", url, verdict, status)
+            reason = {"refused": f"refused_http_{status}", "challenge": "challenge_page", "error": "no_response"}[verdict]
+            return FetchResult(url=url, status=status, html="", tier="http", blocked=True, reason=reason)
 
+        # "thin": a JavaScript shell with no challenge in it. Render it once in a headless browser.
         if not self.settings.browser_fallback:
-            return FetchResult(url=url, status=status, blocked=True, reason=f"refused_http_{status}")
-
+            return FetchResult(url=url, status=status, blocked=True, reason="needs_javascript_rendering")
+        logger.info("{} is a JavaScript shell ({} chars of text); rendering it once in a browser.", url, visible_text_length(html))
         self._pace(host)
         try:
             response = StealthyFetcher.fetch(
@@ -186,9 +214,10 @@ class ListingScraper:
         except Exception as exc:  # noqa: BLE001
             logger.warning("Browser fetch failed for {}: {}", url, exc)
             return FetchResult(url=url, status=status, blocked=True, reason=f"browser_error_{type(exc).__name__}")
-        if looks_blocked(status, html):
-            logger.warning("{} still shows a challenge after the browser retry; skipping it (no challenge solving).", url)
-            return FetchResult(url=url, status=status, html=html, tier="browser", blocked=True, reason="challenge_page")
+        after = classify_page(status, html)
+        if after != "ok":
+            return FetchResult(url=url, status=status, html="", tier="browser", blocked=True,
+                               reason="challenge_page" if after == "challenge" else f"browser_{after}")
         return FetchResult(url=url, status=status, html=html, tier="browser")
 
     # -- parse -----------------------------------------------------------------------------------------------------
@@ -202,17 +231,17 @@ class ListingScraper:
 
         generator = DefaultMarkdownGenerator(content_filter=PruningContentFilter(threshold=0.4, threshold_type="dynamic", min_word_threshold=4))
         result = generator.generate_markdown(input_html=html, base_url=url)
-        markdown = (result.fit_markdown or result.raw_markdown or "").strip()
-        if len(markdown) < 200:  # pruning ate a short page: the unpruned text is better than nothing
-            markdown = (result.raw_markdown or markdown).strip()
+        # Facts and the agent's page both come from the FOCUSED text: this listing's own description, once.
+        focused = focus_listing_text(result.raw_markdown or result.fit_markdown)
+        markdown = (focused if len(focused) >= 200 else (result.fit_markdown or result.raw_markdown or "")).strip()
         markdown = markdown[: self.settings.max_markdown_chars]
 
         title_match = re.search(r"<title[^>]*>(.*?)</title>", html, re.DOTALL | re.IGNORECASE)
         title = re.sub(r"\s+", " ", title_match.group(1)).strip() if title_match else None
 
-        # Facts are read from the UNPRUNED text: the pruning filter keeps what looks like prose and can drop short
-        # bullets such as "2 recámaras", which are exactly the fields we need. The pruned markdown is for the LLM.
-        hints = hints_from_text((result.raw_markdown or markdown)[:20000], html, title)
+        # Facts are read from the UNPRUNED text (focused on the listing itself): the pruning filter keeps what looks like
+        # prose and can drop short bullets such as "2 recámaras", which are exactly the fields we need.
+        hints = hints_from_text(focused or markdown, html, title)
         schema = SITE_SCHEMAS.get(host_of(url))
         if schema:
             try:

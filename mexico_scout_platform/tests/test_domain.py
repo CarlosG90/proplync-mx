@@ -1,6 +1,6 @@
 import pytest
 
-from src.domain import (canonical_neighborhood, detect_neighborhood, detect_operation, detect_property_type, hints_from_text, infer_currency,
+from src.domain import (focus_listing_text, canonical_neighborhood, detect_neighborhood, detect_operation, detect_property_type, hints_from_text, infer_currency,
                         jsonld_hints, parse_areas, parse_bathrooms, parse_bedrooms, parse_money, to_usd)
 
 
@@ -102,3 +102,36 @@ def test_hints_from_text_reads_a_whole_listing():
     hints = hints_from_text("# Departamento en venta en Aldea Zama, Tulum\n$4,500,000 MXN\n* 2 recámaras\n* 2 baños\n* 105 m² de construcción")
     assert (hints["price"], hints["currency"], hints["bedrooms"], hints["bathrooms"], hints["m2_size"]) == (4_500_000, "MXN", 2, 2, 105)
     assert (hints["neighborhood"], hints["town"], hints["operation"], hints["property_type"]) == ("Aldea Zama", "Tulum", "sale", "apartment")
+
+
+def test_number_words_and_hyphenated_bedrooms():
+    assert parse_bedrooms("Departamento de dos habitaciones en venta") == 2
+    assert parse_bedrooms("Penthouse de tres recámaras") == 3
+    assert parse_bedrooms("Artia Condos 2-Bedroom Penthouse") == 2
+    assert parse_bedrooms("un baño") is None and parse_bathrooms("dos baños") == 2
+
+
+def test_focus_keeps_the_listing_and_drops_navigation_repeats_and_neighbours():
+    page = "\n".join([
+        "Menu Inicio Contacto", "[Entrar](x)",
+        "# Depa en Aldea Zama", "$250,000 USD", "2 recámaras", "Depa en Aldea Zama", "Depa en Aldea Zama", "105 m2 de construcción",
+        "## Propiedades similares", "### Otra casa", "$9,999,999 MXN", "5 recámaras",
+    ])
+    out = focus_listing_text(page)
+    assert out.startswith("# Depa en Aldea Zama") and "Menu Inicio" not in out
+    assert out.count("Depa en Aldea Zama") == 1
+    assert "9,999,999" not in out and "5 recámaras" not in out
+    hints = hints_from_text(out)
+    assert (hints["price"], hints["bedrooms"], hints["m2_size"]) == (250_000, 2, 105)
+
+
+def test_visible_text_beats_json_ld_and_a_disagreement_is_recorded():
+    html = '<script type="application/ld+json">{"@type":"Product","offers":{"price":"341152","priceCurrency":"USD"},"numberOfBedrooms":3}</script>'
+    text = "# Departamentos 2 recamaras en venta en Aldea Zama\n$223,684 USD\nDormitorios 2\nBaños 2\nÁrea 710.416 Sq Ft"
+    hints = hints_from_text(text, html)
+    assert (hints["price"], hints["bedrooms"]) == (223_684, 2)
+    assert sorted(hints["conflicts"]) == ["bedrooms", "price"]
+    assert hints["m2_size"] == pytest.approx(66.0, abs=0.01), "710.416 sq ft is about 66 m2, not 710 m2"
+    # JSON-LD still fills what the visible text does not say, and agreement is not a conflict
+    fill = hints_from_text("# Casa en venta en Tulum", '<script type="application/ld+json">{"offers":{"price":"200000","priceCurrency":"USD"}}</script>')
+    assert fill["price"] == 200_000 and "conflicts" not in fill

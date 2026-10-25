@@ -81,7 +81,7 @@ def scrape_listing_page(url: str) -> str:
         page = _ctx().scraper.scrape(url)
         return _json({
             "url": url, "ok": page.ok, "blocked": page.fetch.blocked, "reason": page.fetch.reason,
-            "title": page.title, "hints": page.hints, "markdown": page.markdown,
+            "title": page.title, "hints": page.hints, "markdown": page.markdown[: _ctx().settings.agent_markdown_chars],
         })
     except Exception as exc:  # noqa: BLE001
         logger.exception("scrape failed")
@@ -183,7 +183,7 @@ and you never present a screening model as tax, legal or financial advice.
 
 
 def build_llm(settings: Settings) -> LLM:
-    kwargs: dict[str, Any] = {"model": settings.llm_model, "temperature": settings.llm_temperature}
+    kwargs: dict[str, Any] = {"model": settings.llm_model, "temperature": settings.llm_temperature, "num_retries": settings.llm_num_retries, "max_tokens": settings.llm_max_tokens}
     if settings.llm_base_url:
         kwargs["base_url"] = settings.llm_base_url
     if settings.llm_api_key:
@@ -191,19 +191,20 @@ def build_llm(settings: Settings) -> LLM:
     return LLM(**kwargs)
 
 
-def build_agents(settings: Settings) -> tuple[Agent, Agent]:
+def build_agents(settings: Settings, with_tools: bool = True) -> tuple[Agent, Agent]:
+    """The two agents. `with_tools=False` is the guided mode: the code fetches and calculates, the agents only judge."""
     llm = build_llm(settings)
     sourcing = Agent(
         role="Property Sourcing Agent",
-        goal="Find listings that fit the brief, read them accurately, and store clean records in the vector database.",
-        backstory=SOURCING_BACKSTORY, llm=llm, verbose=settings.agent_verbose, allow_delegation=False, max_iter=14,
-        tools=[discover_listing_urls, scrape_listing_page, save_listing, search_listings],
+        goal="Read listing pages accurately and return clean, truthful records for the vector database.",
+        backstory=SOURCING_BACKSTORY, llm=llm, verbose=settings.agent_verbose, allow_delegation=False, max_iter=14 if with_tools else 3,
+        tools=[discover_listing_urls, scrape_listing_page, save_listing, search_listings] if with_tools else [],
     )
     analyst = Agent(
         role="Financial Investment Analyst",
-        goal="Evaluate each stored listing as a short-term and a long-term rental against local comps and write an honest dossier.",
-        backstory=ANALYST_BACKSTORY, llm=llm, verbose=settings.agent_verbose, allow_delegation=False, max_iter=10,
-        tools=[search_listings, run_financial_model],
+        goal="Explain, honestly and from the numbers given, how each listing performs as a short-term and a long-term rental.",
+        backstory=ANALYST_BACKSTORY, llm=llm, verbose=settings.agent_verbose, allow_delegation=False, max_iter=10 if with_tools else 3,
+        tools=[search_listings, run_financial_model] if with_tools else [],
     )
     return sourcing, analyst
 

@@ -27,20 +27,19 @@ os.environ.setdefault("OTEL_SDK_DISABLED", "true")
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-# Hosts that opened for plain fetches in the PropLync Scout runs (`node scripts/fetch-stats.mjs` in proplync.mx).
-# Inmuebles24, Lamudi, Vivanuncios and MercadoLibre refused every time, so they are left out: add them to
-# ALLOWED_DOMAINS to try, and expect `blocked` results. The platform does not defeat their protection; for those
-# portals use the Apify adapters in proplync.mx's `ingest/` or a licensed feed.
+# Hosts for plain fetches, from real runs on 2026-10-25 (this machine's network):
+#   opened     bestcaribbeanproperty.com, moskito.mx, remaxmaya.com  (rules read price, rooms and m2 correctly)
+#   challenged propiedades.com, hausrealestate.com.mx, luxuryhabitat.com.mx, sienteei.com  (a visitor-check page, served with 200)
+#   refused    Inmuebles24, Lamudi, Vivanuncios, MercadoLibre (in the PropLync Scout runs)
+# Only hosts that opened, plus two not yet tried from here, are allowed by default: asking a site that has just challenged us
+# again is not polite. The platform does not defeat these checks; for those portals use the Apify adapters in proplync.mx's
+# `ingest/` or a licensed feed. Re-test with `python -m src.pipeline ingest <url>` and add hosts via ALLOWED_DOMAINS.
 DEFAULT_ALLOWED_DOMAINS = (
-    "propiedades.com",
-    "mudafy.com.mx",
     "bestcaribbeanproperty.com",
-    "sienteei.com",
-    "hausrealestate.com.mx",
-    "selvacorealty.com",
-    "remaxmaya.com",
-    "luxuryhabitat.com.mx",
     "moskito.mx",
+    "remaxmaya.com",
+    "mudafy.com.mx",      # not yet tried from here
+    "selvacorealty.com",  # not yet tried from here
 )
 
 
@@ -58,6 +57,12 @@ class Settings(BaseSettings):
     llm_base_url: str = "http://localhost:11434"
     llm_api_key: str = ""
     llm_temperature: float = 0.1
+    # Hosted free tiers rate-limit by tokens per minute (Groq: 7,000 input tokens/min on qwen3.8-27b). The agent waits and
+    # retries instead of dying mid-run, and sees a shorter page than the rules do (the rules read the full text).
+    llm_num_retries: int = Field(default=8, ge=0)
+    # Output cap per model call. Groq's free tier allows 1,000 output tokens/min, so one request may not ask for more than that.
+    llm_max_tokens: int = Field(default=4096, gt=0)
+    agent_markdown_chars: int = Field(default=2500, gt=0)
 
     # --- money ----------------------------------------------------------------------------------------------------
     usd_mxn_rate: float = Field(default=18.0, gt=0)  # MXN per USD. No paid FX API: set it, or keep the default.

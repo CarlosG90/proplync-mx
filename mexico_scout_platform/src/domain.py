@@ -193,15 +193,30 @@ def parse_areas(text: str | None) -> tuple[float | None, float | None]:
             if land is None or value != land:
                 built = value
                 break
+    if built is None:
+        # Some portals publish square feet ("Area 710.416 Sq Ft"). Convert, never mistake it for m2.
+        m = re.search(rf"{_AREA_NUM}\s*(?:sq\.? ?ft|sqft|ft2|square feet|pies cuadrados|pies2)\b", folded)
+        if m:
+            built = round(_number(m.group(1)) * 0.092903, 2)
     return built, land
 
 
+_NUMBER_WORDS = {"un": 1, "uno": 1, "una": 1, "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7, "ocho": 8,
+                 "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6}
+_NUMBER_WORD_RE = re.compile(r"\b(" + "|".join(_NUMBER_WORDS) + r")\b(?=\s*(?:-\s*)?(?:recamaras?|habitaciones|habitacion|dormitorios?|bedrooms?|banos?|bathrooms?))")
+
+
+def _digits(folded: str) -> str:
+    """'dos habitaciones' -> '2 habitaciones', so one set of digit patterns reads both."""
+    return _NUMBER_WORD_RE.sub(lambda m: str(_NUMBER_WORDS[m.group(1)]), folded)
+
+
 def parse_bedrooms(text: str | None) -> int | None:
-    folded = fold(text)
+    folded = _digits(fold(text))
     if re.search(r"\b(?:estudio|studio|loft)\b", folded) and not re.search(r"\d\s*(?:recamara|habitacion|bedroom)", folded):
         return 0
     patterns = (
-        r"(\d{1,2})\s*(?:recamaras?|recs?\b|habitaciones|habitacion|dormitorios?|bedrooms?|beds?\b|br\b|bd\b|cuartos|hab\b)",
+        r"(\d{1,2})\s*-?\s*(?:recamaras?|recs?\b|habitaciones|habitacion|dormitorios?|bedrooms?|beds?\b|br\b|bd\b|cuartos|hab\b)",
         r"(?:recamaras?|habitaciones|dormitorios?|bedrooms?|cuartos)\s*[:\-]?\s*(\d{1,2})\b",
     )
     for pattern in patterns:
@@ -214,7 +229,7 @@ def parse_bedrooms(text: str | None) -> int | None:
 
 
 def parse_bathrooms(text: str | None) -> float | None:
-    folded = fold(text)
+    folded = _digits(fold(text))
     m = re.search(r"(\d{1,2}(?:\.\d)?)\s*(?:banos?|bathrooms?|baths?\b)(?:\s*y\s*medio)?", folded)
     if m:
         value = float(m.group(1))
@@ -294,6 +309,43 @@ def detect_operation(text: str | None, title: str | None = None) -> tuple[str, s
     return "sale", "total"
 
 
+# --- reading a real portal page -------------------------------------------------------------------------------------
+
+_RELATED_RE = re.compile(
+    r"^\s*#{1,6}\s*(?:propiedades similares|propiedades relacionadas|inmuebles similares|similar (?:properties|listings)|related (?:properties|listings)|"
+    r"you may also like|te puede interesar|tambien te (?:puede|pueden)|otras propiedades|more properties|ver mas propiedades)",
+    re.IGNORECASE,
+)
+
+
+def focus_listing_text(markdown: str | None, max_chars: int = 20000) -> str:
+    """The part of a portal page that describes THE listing.
+
+    Real pages repeat their title dozens of times, start with navigation, and end with cards of other listings that
+    carry their own prices and room counts. Rules that read "the first price" would happily read a neighbour's. So:
+    keep each distinct line once, start at the first heading, and stop at a "similar properties" section.
+    """
+    lines = str(markdown or "").splitlines()
+    for i, line in enumerate(lines):
+        if re.match(r"^\s*#\s+\S", line):
+            lines = lines[i:]
+            break
+    seen: set[str] = set()
+    kept: list[str] = []
+    for line in lines:
+        if _RELATED_RE.match(fold(line)):
+            break
+        key = re.sub(r"\s+", " ", re.sub(r"^[\s#*\-_>]+", "", fold(line))).strip()
+        if not key:
+            kept.append("")
+            continue
+        if key in seen:
+            continue
+        seen.add(key)
+        kept.append(line.rstrip())
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(kept)).strip()[:max_chars]
+
+
 # --- structured data in the page -------------------------------------------------------------------------------------
 
 _JSONLD_RE = re.compile(r"<script[^>]+type=[\"']application/ld\+json[\"'][^>]*>(.*?)</script>", re.DOTALL | re.IGNORECASE)
@@ -349,29 +401,43 @@ def jsonld_hints(html: str | None) -> dict[str, Any]:
 
 
 def hints_from_text(text: str | None, html: str | None = None, title: str | None = None) -> dict[str, Any]:
-    """Everything the rules can read from a listing page: JSON-LD first, then the Spanish/English text patterns.
+    """Everything the rules can read from a listing page.
 
-    `text` should be the UNPRUNED page text: content filters drop short lines such as "2 recámaras" that are exactly
-    the facts wanted here. `title` is the page <title>, used when the page's structured data has none."""
-    hints = jsonld_hints(html)
-    if title and "title" not in hints:
+    `text` should be the UNPRUNED, focused page text (content filters drop short lines such as "2 recámaras", and
+    related-listing cards carry other properties' numbers). The VISIBLE text wins over the page's JSON-LD: on a real
+    portal (bestcaribbeanproperty.com) the structured data said 3 bedrooms and US$341k while the page showed 2 bedrooms and
+    $223,684. JSON-LD fills what the text does not say, and a disagreement is listed in `conflicts` for the agent to look at.
+    """
+    structured = jsonld_hints(html)
+    hints: dict[str, Any] = {}
+    if title:
         hints["title"] = title
+    elif "title" in structured:
+        hints["title"] = structured["title"]
     body = text or ""
     operation, period = detect_operation(body[:1500], str(hints.get("title", "")))
-    amount, currency = parse_money(body[:2500]) if "price" not in hints else (None, None)
-    if "price" not in hints and amount is not None:
-        hints["price"], hints["currency"] = amount, currency
+    amount, currency = parse_money(body[:2500])
     built, land = parse_areas(body)
-    hints.setdefault("m2_size", built)
+    from_text: dict[str, Any] = {"price": amount, "currency": currency, "m2_size": built, "bedrooms": parse_bedrooms(body),
+                                 "bathrooms": parse_bathrooms(body)}
+    conflicts: list[str] = []
+    for key in ("price", "currency", "m2_size", "bedrooms", "bathrooms"):
+        seen_text, seen_ld = from_text.get(key), structured.get(key)
+        if seen_text is not None:
+            hints[key] = seen_text
+            if seen_ld is not None and seen_ld != seen_text and not (isinstance(seen_ld, (int, float)) and abs(seen_ld - seen_text) <= 0.05 * abs(seen_text)):
+                conflicts.append(key)
+        elif seen_ld is not None:
+            hints[key] = seen_ld
+    if structured.get("location"):
+        hints["location"] = structured["location"]
+    if conflicts:
+        hints["conflicts"] = conflicts
     if land:
         hints["land_m2"] = land
-    for key, value in (
-        ("bedrooms", parse_bedrooms(body)),
-        ("bathrooms", parse_bathrooms(body)),
-        ("property_type", detect_property_type(str(hints.get("title", "")) + " " + body[:800])),
-    ):
-        if value is not None:
-            hints.setdefault(key, value)
+    prop = detect_property_type(str(hints.get("title", "")) + " " + body[:800])
+    if prop:
+        hints["property_type"] = prop
     hints["operation"], hints["price_period"] = operation, period
     neighborhood, town = detect_neighborhood(str(hints.get("location", "")) + " " + str(hints.get("title", "")) + " " + body[:1200])
     if neighborhood:
