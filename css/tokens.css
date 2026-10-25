@@ -50,6 +50,10 @@
   --radius-xl:28px;
   --radius-2xl:36px;
   --maxw:1240px;
+  /* One side margin for every page and the footer, stepping down with the screen. Pages used 14, 20, 24 and 32 px on a phone. */
+  --gutter:var(--sp-8);
+  --lp-gutter:var(--gutter);
+  --ease:cubic-bezier(.22,1,.36,1);   /* used by transitions in invest.css and brief.html, never defined: those transitions did nothing */
 
   /* Spacing scale (8pt) */
   --sp-1:4px;
@@ -58,9 +62,11 @@
   --sp-4:16px;
   --sp-5:20px;
   --sp-6:24px;
+  --sp-7:28px;   /* css/invest.css used --sp-7 and --sp-14 without them being defined: the rule was dropped, so */
   --sp-8:32px;
   --sp-10:40px;
   --sp-12:48px;
+  --sp-14:56px;  /* mobile chapters lost ALL their vertical padding. Defined here so a missing step cannot do that again. */
   --sp-16:64px;
   --sp-20:80px;
   --sp-24:96px;
@@ -141,7 +147,7 @@ button{font-family:inherit}
    one oversized asset reintroducing the drift above. */
 img,svg,video,canvas,iframe{max-width:100%}
 
-.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--sp-8)}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--gutter)}
 
 /* Utility classes */
 .eyebrow{
@@ -238,11 +244,14 @@ footer{
 
 /* Responsive */
 @media (max-width:900px){
+  :root{--gutter:var(--sp-6)}
   section{padding:var(--sp-20) 0}
-  .wrap{padding:0 var(--sp-6)}
   .sec-head{margin-bottom:var(--sp-12)}
 }
 @media (max-width:560px){
-  .wrap{padding:0 var(--sp-5)}
+  :root{--gutter:var(--sp-5)}
   section{padding:var(--sp-16) 0}
+}
+@media (max-width:360px){
+  :root{--gutter:var(--sp-4)}   /* the smallest phones keep a margin, but not at the cost of the text column */
 }

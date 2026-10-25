@@ -18,7 +18,7 @@
   body{background:var(--ink);color:var(--on-ink)}
   /* .bf-chat and .bf-status set display, which would beat the hidden attribute. */
   [hidden]{display:none !important}
-  .bf-wrap{max-width:1080px;margin:0 auto;padding:var(--sp-10) var(--sp-8) var(--sp-16)}
+  .bf-wrap{max-width:1080px;margin:0 auto;padding:var(--sp-10) var(--gutter) var(--sp-16)}
   .bf-head{margin-bottom:var(--sp-8)}
   .bf-eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:var(--sp-3)}
   .bf-h1{font-family:var(--display);font-weight:300;font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.1;letter-spacing:-.025em;margin:0 0 var(--sp-3)}
@@ -122,6 +122,8 @@
   .bf-done-log{margin-top:var(--sp-3)}
   .bf-done-log summary{cursor:pointer;font-family:var(--mono);font-size:.7rem;color:var(--on-ink-dim)}
   @media (max-width:900px){
+    /* Once the recap is on screen the same details would appear a second time below it. */
+    .bf-side:has(#approve-card:not([hidden])) .bf-livebrief{display:none}
     .bf-grid{grid-template-columns:1fr}
     .bf-side{position:static}
     .bf-log{max-height:46vh}
@@ -244,7 +246,7 @@
           <p class="bf-msg-line" id="ap-msg" aria-live="polite"></p>
         </div>
       </div>
-      <div class="bf-card">
+      <div class="bf-card bf-livebrief">
         <h2 data-es="Tu resumen, en vivo" data-en="Your brief, live">Your brief, live</h2>
         <div id="brief"></div>
       </div>

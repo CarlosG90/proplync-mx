@@ -224,7 +224,7 @@ nav{display:flex;align-items:center;gap:var(--sp-8);height:72px}
   .lang button{padding:5px 8px}
 }
 @media (max-width:340px){
-  header .wrap{padding:0 12px}
+  header .wrap{padding:0 var(--gutter)}
   .navtools{gap:4px}
   .navtoggle{padding:6px}
 }

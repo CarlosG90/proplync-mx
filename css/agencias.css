@@ -633,7 +633,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radiu
        min-content re-establishes the floor for every ancestor above it, which
        is how a 64px thumbnail and a short price still added up to a 310px card
        on a 320px screen. */.demo,.demo-card,.listing,.listing-info{min-width:0}
-  .wrap{padding:0 14px}
 }
 @media (max-width:560px){
   .hero .wrap{padding-top:56px;padding-bottom:60px}
