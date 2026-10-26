@@ -190,9 +190,11 @@ def parse_areas(text: str | None) -> tuple[float | None, float | None]:
     folded = fold(text)
     built = land = None
     labelled_built = re.search(rf"(?:construccion|construidos?|const\.?|built|habitable|interior)[^0-9]{{0,25}}{_AREA_NUM}{_UNIT}", folded)
-    labelled_built_after = re.search(rf"{_AREA_NUM}{_UNIT}\s*(?:de\s+)?(?:construccion|construidos?|built)", folded)
+    # "<number> m2 de construccion": the label must follow on the SAME line. "Terreno 1,081 m2\nConstruccion 420 m2" is two facts, and a
+    # \s* that crossed the line break read the plot's 1,081 as built area.
+    labelled_built_after = re.search(rf"{_AREA_NUM}{_UNIT}[ \t]*(?:de[ \t]+)?(?:construccion|construidos?|built)", folded)
     labelled_land = re.search(rf"(?:terreno|lote|land|superficie de terreno)[^0-9]{{0,25}}{_AREA_NUM}{_UNIT}", folded)
-    labelled_land_after = re.search(rf"{_AREA_NUM}{_UNIT}\s*(?:de\s+)?(?:terreno|lote|land)", folded)
+    labelled_land_after = re.search(rf"{_AREA_NUM}{_UNIT}[ \t]*(?:de[ \t]+)?(?:terreno|lote|land)", folded)
     # "105 m2 de construccion" is checked before "construccion: 105 m2": the second form can run on into the next number.
     for m in (labelled_built_after, labelled_built):
         if m:
@@ -437,6 +439,13 @@ def hints_from_text(text: str | None, html: str | None = None, title: str | None
     from_text: dict[str, Any] = {"price": amount, "currency": currency, "m2_size": built, "bedrooms": parse_bedrooms(body),
                                  "bathrooms": parse_bathrooms(body)}
     conflicts: list[str] = []
+    # The title is the listing's own one-line summary ("Casa 7BR en Venta..."); a number found deeper in the text (a floor plan, a
+    # neighbouring unit) is not. In the first real backfill 14 of 165 titles that state a bedroom count disagreed with what was stored.
+    title_bedrooms = parse_bedrooms(str(hints.get("title", "")))
+    if title_bedrooms is not None:
+        if from_text["bedrooms"] not in (None, title_bedrooms):
+            conflicts.append("bedrooms")
+        from_text["bedrooms"] = title_bedrooms
     for key in ("price", "currency", "m2_size", "bedrooms", "bathrooms"):
         seen_text, seen_ld = from_text.get(key), structured.get(key)
         if seen_text is not None:
@@ -451,7 +460,9 @@ def hints_from_text(text: str | None, html: str | None = None, title: str | None
         hints["conflicts"] = conflicts
     if land:
         hints["land_m2"] = land
-    prop = detect_property_type(str(hints.get("title", "")) + " " + body[:800])
+    # The title says what the listing is. A house page that prints "Terreno 1,081 m2" (its plot) is still a house; reading title and body
+    # together let that one word turn it into land, which then lost its bedrooms.
+    prop = detect_property_type(str(hints.get("title", ""))) or detect_property_type(body[:800])
     if prop:
         hints["property_type"] = prop
     hints["operation"], hints["price_period"] = operation, period

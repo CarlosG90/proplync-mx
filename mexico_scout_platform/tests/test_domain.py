@@ -186,3 +186,25 @@ def test_without_a_town_at_the_top_the_text_may_name_one_town_only():
     assert hints_from_text(only_one)["town"] == "Tulum"
     menu = "# Sukha - 111\n" + "Texto. " * 60 + "\nMenú: Tulum | Playa del Carmen | Cancún"
     assert "town" not in hints_from_text(menu), "a menu that lists several towns is not an address"
+
+
+def test_the_title_bedroom_count_beats_a_number_found_in_the_text():
+    # the page's <title> says 7BR; the first bedroom figure in the text is a floor-plan note about something else
+    page = "Plano de la planta alta: 2 recámaras\n# Playacar Fase 2\n$1,590,000 USD\nTerreno 1,081 m2"
+    hints = hints_from_text(page, None, "Casa 7BR en Venta en Playacar Fase 2, Playa del Carmen")
+    assert hints["bedrooms"] == 7
+    assert "bedrooms" in hints["conflicts"], "the disagreement is recorded for whoever reviews it"
+    only_text = hints_from_text("# Casa en Venta en Playacar\n$1,590,000 USD\n3 recámaras")
+    assert only_text["bedrooms"] == 3 and "conflicts" not in only_text, "with nothing in the title, the text still decides"
+    assert hints_from_text("3 recámaras\n# Marsella\n$145,000 USD", None, "Casa de 2 Recámaras en Venta en Marsella")["bedrooms"] == 2
+
+
+def test_a_house_that_prints_its_plot_is_still_a_house():
+    page = "# Casa de 4 recámaras en Venta en Playacar\n$900,000 USD\nTerreno 1,081 m2\nConstrucción 420 m2"
+    hints = hints_from_text(page)
+    assert hints["property_type"] == "house"
+    assert hints["bedrooms"] == 4
+    assert hints["m2_size"] == 420 and hints["land_m2"] == 1081
+    lot = hints_from_text("# Terreno en Venta en Tulum\n$90,000 USD\nLote de 300 m2. 1 recámara en el desarrollo cercano")
+    assert lot["property_type"] == "land" and "bedrooms" not in lot
+    assert hints_from_text("# Propiedad en Venta en Tulum\n$90,000 USD\nLote de 300 m2")["property_type"] == "land", "no help in the title: the text decides"
