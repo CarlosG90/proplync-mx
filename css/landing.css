@@ -35,7 +35,7 @@
   --lp-data:    var(--mono, "Space Mono", ui-monospace, monospace);
 
   --lp-max: var(--maxw, 1240px);
-  --lp-gutter: var(--sp-8, 32px);
+  --lp-gutter: var(--gutter, var(--sp-8, 32px));
   --lp-radius: 14px;
 }
 

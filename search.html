@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   .search-layout{display:grid;grid-template-columns:1fr 400px;gap:0;min-height:calc(100vh - 72px)}
-  .search-main{padding:36px 32px;overflow-y:auto}
+  .search-main{padding:36px var(--gutter);overflow-y:auto}
   .search-map{position:sticky;top:72px;height:calc(100vh - 72px);border-left:1px solid var(--line)}
   .map-note{
     position:absolute;top:12px;right:12px;z-index:450;max-width:230px;
@@ -147,7 +147,7 @@
   @media (max-width:900px){
     .search-layout{grid-template-columns:1fr}
     .search-map{position:relative;top:0;height:280px;border-left:0;border-bottom:1px solid var(--line);order:-1}
-    .search-main{padding:24px}
+    .search-main{padding:24px var(--gutter)}
     .search-grid{grid-template-columns:1fr}
     .filters{padding:12px 16px}
   }

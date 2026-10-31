@@ -27,12 +27,23 @@
     ['timeline',      'Cuándo',         'Timeline']
   ];
 
+  function money(n) { return isFinite(n) ? Number(n).toLocaleString('en-US') : String(n); }
+
+  /* A brief's value as one line for a person. Recursive on purpose: location is {areas: [...], anchors: [...]}, and stringifying a
+     nested list printed "Tulum,Aldea Zama" with no space. Numbers get thousands separators, and a budget reads "USD 300,000" instead of
+     "300000 · USD". */
   function flat(v) {
     if (v === null || v === undefined || v === '') return '';
-    if (Array.isArray(v)) return v.filter(Boolean).join(', ');
+    if (typeof v === 'number') return money(v);
+    if (Array.isArray(v)) return v.map(flat).filter(Boolean).join(', ');
     if (typeof v === 'object') {
-      return Object.keys(v).map(function (k) { return v[k]; })
-        .filter(function (x) { return x !== null && x !== undefined && x !== ''; }).join(' · ');
+      if ('max' in v && 'currency' in v) {
+        var cur = v.currency ? String(v.currency) + ' ' : '';
+        var out = v.max !== null && v.max !== undefined && v.max !== '' ? cur + money(v.max) : '';
+        var more = [v.comfortable ? cur + money(v.comfortable) : '', flat(v.financing)].filter(Boolean);
+        return [out].concat(more).filter(Boolean).join(' · ');
+      }
+      return Object.keys(v).map(function (k) { return flat(v[k]); }).filter(Boolean).join(' · ');
     }
     return String(v);
   }
