@@ -119,6 +119,8 @@
   .src-badge{position:absolute;bottom:12px;left:12px;z-index:2;font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;
     padding:5px 9px;border-radius:999px;background:rgba(10,22,40,.82);color:#fff}
   .src-badge.verified{background:var(--sea);color:#fff}
+  /* Crawled listings have no photo (facts_link shows none). An empty dark 3:2 block took half a phone screen, so the badge sits in the card body instead. */
+  .src-badge.inline{position:static;display:inline-block;margin-bottom:10px}
   .offers{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
   .offer{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:.68rem;color:var(--on-sand-dim);padding:2px 0}
   .offer b{color:var(--ink)}
@@ -373,9 +375,11 @@
     var verified = c.origin === 'proplync';
     var first = c.offers && c.offers[0];
     var photo = cssUrl((c.photos || [])[0]);
+    // listed_by is the agency; source_name is only the crawler's bucket ("Sitios de agencias"), which tells a buyer nothing.
+    var who = function (o) { return (o && (o.listed_by || o.source_name)) || 'web'; };
     var badge = verified
       ? '<span class="src-badge verified">' + escapeHtml(t('PropLync · verificado', 'PropLync · verified')) + '</span>'
-      : '<span class="src-badge">' + escapeHtml(t('En ', 'On ') + (first ? first.source_name : 'web') + t(' · sin verificar', ' · not verified')) + '</span>';
+      : '<span class="src-badge' + (photo ? '' : ' inline') + '">' + escapeHtml(t('En ', 'On ') + who(first) + t(' · sin verificar', ' · not verified')) + '</span>';
     var specs = [
       c.bedrooms ? c.bedrooms + ' ' + t('rec', 'bd') : null,
       c.bathrooms ? c.bathrooms + ' ' + t('baños', 'bath') : null,
@@ -383,7 +387,7 @@
     ].filter(Boolean).map(function (x) { return '<span>' + escapeHtml(x) + '</span>'; }).join('');
     var offers = (c.offers || []).slice(0, 3).map(function (o) {
       var href = o.url ? safeUrl(o.url) : '';
-      var name = escapeHtml(o.source_name || '');
+      var name = escapeHtml(who(o));
       return '<div class="offer">' + (href ? '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + name + '</a>' : '<span>' + name + '</span>') +
         '<b>' + escapeHtml(money(o.price, o.currency)) + '</b></div>';
     }).join('') + ((c.offers || []).length > 3 ? '<div class="offer"><span>+' + ((c.offers || []).length - 3) + ' ' + escapeHtml(t('anuncios más', 'more listings')) + '</span></div>' : '');
@@ -397,8 +401,9 @@
       ? '<a class="pcard-cta" href="' + safeUrl(href) + '">' + escapeHtml(t('Ver propiedad', 'View property')) + '</a>'
       : '<a class="pcard-cta verify" href="' + safeUrl(href) + '">' + escapeHtml(t('Verificar y agendar visita', 'Verify & arrange a visit')) + '</a>';
     return '<article class="pcard">' +
-      '<div class="pcard-photo" style="background-color:#142237;' + (photo ? 'background-image:url(\'' + photo + '\')' : '') + '">' + badge + '</div>' +
+      (photo ? '<div class="pcard-photo" style="background-color:#142237;background-image:url(\'' + photo + '\')">' + badge + '</div>' : '') +
       '<div class="pcard-body">' +
+        (photo ? '' : badge) +
         '<div class="pcard-loc">' + escapeHtml([c.neighborhood, c.town].filter(Boolean).join(' · ')) + '</div>' +
         '<div class="pcard-title">' + escapeHtml(c.title || t('Propiedad', 'Property')) + '</div>' +
         '<div class="pcard-specs">' + specs + '</div>' +
