@@ -408,12 +408,41 @@ async function briefByToken(svc, token) {
   return data;
 }
 
+/* The same brief, found by id for the account that approved it: how a signed-in buyer gets back to a search on a device that
+   never had the private link. The id alone opens nothing; the session must own the brief. */
+async function briefForOwner(svc, id, userId) {
+  if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) return null;
+  const { data, error } = await svc.from('buyer_briefs')
+    .select('id, lang, brief, status, created_at, user_id').eq('id', id).eq('user_id', userId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/* The buyer's own searches, newest first, for the "your searches" list on /brief. No tokens leave: a search is reopened by id
+   while signed in. */
+async function handleMine(req, res) {
+  const user = await requireBuyer(req);
+  if (!user) { res.status(401).json({ error: 'sign_in_required' }); return; }
+  const svc = getServiceClient();
+  const { data: briefs, error } = await svc.from('buyer_briefs')
+    .select('id, brief, status, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20);
+  if (error) { logDegraded('finder:mine', error); res.status(503).json({ error: 'mine_unavailable' }); return; }
+  const ids = (briefs || []).map((b) => b.id);
+  const matches = {};
+  if (ids.length) {
+    const { data: cands } = await svc.from('scout_candidates').select('brief_id').in('brief_id', ids).neq('verification', 'rejected');
+    (cands || []).forEach((c) => { matches[c.brief_id] = (matches[c.brief_id] || 0) + 1; });
+  }
+  res.status(200).json({ items: (briefs || []).map((b) => ({ id: b.id, brief: b.brief, status: b.status, created_at: b.created_at, matches: matches[b.id] || 0 })) });
+}
+
 /* Search this brief again (e.g. after buying credits). Owner only. */
 async function handleRerun(req, res) {
   const user = await requireBuyer(req);
   if (!user) { res.status(401).json({ error: 'sign_in_required' }); return; }
   const svc = getServiceClient();
-  const brief = await briefByToken(svc, String((req.body && req.body.t) || ''));
+  const body = req.body || {};
+  const brief = body.t ? await briefByToken(svc, String(body.t)) : await briefForOwner(svc, body.id, user.id);
   if (!brief || brief.user_id !== user.id) { res.status(404).json({ error: 'not_found' }); return; }
   const { data: active } = await svc.from('scout_runs').select('id').eq('brief_id', brief.id).in('status', ['queued', 'running']).limit(1);
   if (active && active.length) { res.status(200).json({ status: 'searching', scout: { started: false, reason: 'already_running' } }); return; }
@@ -425,7 +454,11 @@ async function handleStatus(req, res) {
   const svc = getServiceClient();
   let brief;
   try {
-    brief = await briefByToken(svc, String(req.query.t || ''));
+    if (req.query.t) brief = await briefByToken(svc, String(req.query.t));
+    else if (req.query.id) {
+      const user = await requireBuyer(req);
+      brief = user ? await briefForOwner(svc, req.query.id, user.id) : null;
+    }
   } catch (err) {
     logDegraded('finder:status', err);
     res.status(503).json({ error: 'status_unavailable' }); return;
@@ -651,6 +684,11 @@ export default async function handler(req, res) {
     if (req.method !== 'GET') { res.status(405).json({ error: 'method_not_allowed' }); return; }
     if (await enforceRateLimit(req, res, { bucket: 'finder-status', limit: 60, windowSec: 60 })) return;
     return handleStatus(req, res);
+  }
+  if (action === 'mine') {
+    if (req.method !== 'GET') { res.status(405).json({ error: 'method_not_allowed' }); return; }
+    if (await enforceRateLimit(req, res, { bucket: 'finder-mine', limit: 30, windowSec: 60 })) return;
+    return handleMine(req, res);
   }
   if (action === 'wallet') {
     if (req.method !== 'GET') { res.status(405).json({ error: 'method_not_allowed' }); return; }

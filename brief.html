@@ -149,6 +149,29 @@
   @keyframes bf-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
   @keyframes bf-pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
   @keyframes bf-tick{50%{transform:scale(1.18)}}
+
+  /* ---------- after Scout finishes: keep the search, and the results as a page ---------- */
+  .bf-save{border:1px solid rgba(201,169,110,.35);border-radius:var(--radius-lg);background:rgba(201,169,110,.07);padding:var(--sp-5)}
+  .bf-save h3{font-family:var(--display);font-weight:400;font-size:1.15rem;margin:0 0 6px}
+  .bf-save p{margin:0 0 var(--sp-3);font-size:.88rem;line-height:1.5;color:var(--on-ink-dim)}
+  .bf-save-actions{display:flex;flex-wrap:wrap;gap:8px}
+  .bf-save-actions a,.bf-save-actions button{display:inline-block;padding:10px 16px;border-radius:999px;border:1px solid rgba(201,169,110,.5);background:none;color:var(--on-ink);font:600 .84rem var(--body);cursor:pointer;text-decoration:none}
+  .bf-save-actions .primary{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+  .bf-save .bf-form{margin-top:var(--sp-3)}
+  .bf-mine-item{display:block;width:100%;text-align:left;margin-top:8px;padding:12px 14px;border-radius:var(--radius-md);border:1px solid rgba(240,237,232,.14);background:rgba(240,237,232,.03);color:var(--on-ink);font:inherit;cursor:pointer}
+  .bf-mine-item:hover{border-color:var(--gold)}
+  .bf-mine-item b{display:block;font-weight:500;font-size:.9rem;line-height:1.35}
+  .bf-mine-item span{display:block;margin-top:3px;font-family:var(--mono);font-size:.64rem;letter-spacing:.05em;text-transform:uppercase;color:var(--on-ink-dim)}
+  .bf-stats.three{grid-template-columns:repeat(3,1fr);margin:0 0 var(--sp-3)}
+  .bf-stats.three b{font-size:.95rem;white-space:nowrap}
+  .bf-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--sp-3)}
+  .bf-chips button{padding:7px 12px;border-radius:999px;border:1px solid rgba(240,237,232,.18);background:none;color:var(--on-ink-dim);font:500 .76rem var(--body);cursor:pointer}
+  .bf-chips button[aria-pressed="true"]{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+  .bf-chips .sep{width:1px;background:rgba(240,237,232,.14);margin:0 4px}
+  #rs-grid{display:grid;gap:var(--sp-4)}
+  @media (min-width:700px){#rs-grid{grid-template-columns:repeat(2,1fr)}}
+  @media (prefers-reduced-motion:no-preference){#rs-grid .bf-prop.in{animation:bf-card .5s ease-out both;animation-delay:calc(var(--i,0) * 70ms)}}
+  @keyframes bf-card{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   .bf-done-log{margin-top:var(--sp-3)}
   .bf-done-log summary{cursor:pointer;font-family:var(--mono);font-size:.7rem;color:var(--on-ink-dim)}
   @media (max-width:900px){
@@ -251,10 +274,12 @@
         <div class="bf-sites" id="st-sites"></div>
         <ol class="bf-feed" id="st-feed" aria-live="off"></ol>
       </div>
+      <div class="bf-save" id="st-save" hidden></div>
       <div class="bf-status" id="st-results"></div>
     </section>
 
     <aside class="bf-side">
+      <div class="bf-card" id="mine-box" hidden></div>
       <div class="bf-card" id="approve-card" hidden>
         <h2 data-es="Esto es lo que entendí" data-en="Here is what I understood">Here is what I understood</h2>
         <p class="bf-recap-lead" data-es="Revisa el resumen. Si falta algo o algo está mal, dímelo y lo corrijo. Si está bien, apruébalo y Scout empieza a buscar." data-en="Check the summary. If something is missing or wrong, tell me and I will fix it. If it looks right, approve it and Scout starts searching.">Check the summary. If something is missing or wrong, tell me and I will fix it. If it looks right, approve it and Scout starts searching.</p>
@@ -479,6 +504,7 @@ document.getElementById('si-verify').addEventListener('click', async function ()
   if (r.error) { msg(siMsg, t('Ese código no es válido o ya venció.', 'That code is not valid or has expired.'), true); return; }
   msg(siMsg, '', false);
   refreshWho();
+  if (statusToken || statusId) loadStatus();   // the "keep this search" card now knows who they are
 });
 
 /* ---------- approve: the hand-off to Scout ---------- */
@@ -512,6 +538,7 @@ document.getElementById('ap-send').addEventListener('click', async function () {
 
 /* ---------- status: Scout's progress and results, on this page ---------- */
 var statusToken = null;
+var statusId = null;   // a signed-in buyer reopening a search from "Tus búsquedas": no private link, the session proves it is theirs
 var statusTimer = null;
 var lastScout = null;
 
@@ -643,7 +670,7 @@ async function renderWallet(s) {
 }
 
 async function rerun() {
-  var r = await authedFetch('/api/finder?action=rerun', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: statusToken }) });
+  var r = await authedFetch('/api/finder?action=rerun', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(statusToken ? { t: statusToken } : { id: statusId }) });
   var data = await r.json().catch(function () { return {}; });
   lastScout = data.scout || null;
   loadStatus();
@@ -662,6 +689,175 @@ function feedLine(ev) {
     case 'skipped': return [t('Omitió', 'Skipped'), host ? host + t(': no se pudo abrir, usa el resumen de la búsqueda', ': could not be opened, using the search summary') : t('una página no se pudo abrir', 'a page could not be opened')];
   }
   return null;
+}
+
+/* ---------- the findings as a page ----------
+   Scout's matches arrive as one list when it finishes. Here they become something to work with: a summary, filters, a sort,
+   and cards that arrive one after another. Everything is done in the browser on the list we already have. */
+var resView = { sort: 'fit', filter: 'all', built: false, sig: '' };
+
+/* A price in MXN to compare listings. USD is converted at a round 18, which is enough for sorting and a range, not for quoting. */
+function approxMxn(c) {
+  var best = null;
+  (c.sources || []).forEach(function (s) {
+    if (s.price == null) return;
+    var v = Number(s.price) * (s.currency === 'USD' ? 18 : 1);
+    if (best === null || v < best) best = v;
+  });
+  return best;
+}
+function compactMxn(v) { return v >= 1e6 ? (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'M' : Math.round(v / 1000) + 'k'; }
+
+function visibleCandidates() {
+  var list = resView.cands.filter(function (c) {
+    if (resView.filter === 'confirmed') return c.verification === 'confirmed';
+    if (resView.filter === 'unverified') return c.verification !== 'confirmed';
+    return true;
+  });
+  if (resView.sort === 'low' || resView.sort === 'high') {
+    var dir = resView.sort === 'low' ? 1 : -1;
+    list.sort(function (a, b) {
+      var pa = approxMxn(a), pb = approxMxn(b);
+      if (pa === null) return 1;
+      if (pb === null) return -1;
+      return (pa - pb) * dir;
+    });
+  }
+  return list;
+}
+
+function chipButton(group, value, label) {
+  var b = document.createElement('button');
+  b.type = 'button'; b.dataset.group = group; b.dataset.value = value; b.textContent = label;
+  b.setAttribute('aria-pressed', String(resView[group] === value));
+  return b;
+}
+
+function renderResults(cands) {
+  var box = document.getElementById('st-results');
+  resView.cands = cands;
+  if (!cands.length) { box.textContent = ''; resView.built = false; resView.sig = ''; return; }
+  if (!resView.built) {
+    box.textContent = '';
+    ['rs-sum', 'rs-chips', 'rs-grid'].forEach(function (id) { var d = document.createElement('div'); d.id = id; box.appendChild(d); });
+    resView.built = true;
+  }
+  var confirmed = cands.filter(function (c) { return c.verification === 'confirmed'; }).length;
+  var prices = cands.map(approxMxn).filter(function (v) { return v !== null; });
+  var sum = document.getElementById('rs-sum');
+  sum.className = 'bf-stats three'; sum.textContent = '';
+  [[String(cands.length), t('propiedades', 'properties')],
+   [String(confirmed), t('confirmadas', 'confirmed')],
+   [prices.length ? '~' + compactMxn(Math.min.apply(null, prices)) + (prices.length > 1 ? '–' + compactMxn(Math.max.apply(null, prices)) : '') : '–', t('MXN, aprox.', 'MXN, approx.')]
+  ].forEach(function (x) {
+    var d = document.createElement('div'); var b = document.createElement('b'); b.textContent = x[0];
+    var sp = document.createElement('span'); sp.textContent = x[1]; d.appendChild(b); d.appendChild(sp); sum.appendChild(d);
+  });
+  var chips = document.getElementById('rs-chips');
+  chips.className = 'bf-chips'; chips.textContent = '';
+  chips.appendChild(chipButton('filter', 'all', t('Todas', 'All')));
+  chips.appendChild(chipButton('filter', 'confirmed', t('Confirmadas', 'Confirmed')));
+  chips.appendChild(chipButton('filter', 'unverified', t('Sin verificar', 'Not verified')));
+  var sep = document.createElement('span'); sep.className = 'sep'; chips.appendChild(sep);
+  chips.appendChild(chipButton('sort', 'fit', t('Mejor ajuste', 'Best fit')));
+  chips.appendChild(chipButton('sort', 'low', t('Precio ↑', 'Price ↑')));
+  chips.appendChild(chipButton('sort', 'high', t('Precio ↓', 'Price ↓')));
+  /* The list is rebuilt only when something changed, so a card the buyer has opened stays open while the page polls. */
+  var sig = cands.map(function (c) { return c.id + c.verification + c.verify_requested; }).join() + resView.sort + resView.filter + document.documentElement.lang;
+  if (sig !== resView.sig) { resView.sig = sig; renderGrid(true); }
+}
+
+function renderGrid(animate) {
+  var grid = document.getElementById('rs-grid');
+  var list = visibleCandidates();
+  grid.innerHTML = list.length ? list.map(propCard).join('') : '<p class="bf-note">' + escapeHtml(t('Ninguna propiedad cumple ese filtro.', 'No property matches that filter.')) + '</p>';
+  grid.querySelectorAll('.bf-prop').forEach(function (el, i) { if (animate) { el.classList.add('in'); el.style.setProperty('--i', Math.min(i, 10)); } });
+}
+
+document.getElementById('st-results').addEventListener('click', function (e) {
+  var b = e.target.closest('.bf-chips button');
+  if (!b) return;
+  resView[b.dataset.group] = b.dataset.value;
+  resView.sig = '';
+  renderResults(resView.cands);
+});
+
+/* ---------- once the research is done: keep it, or take it with you ----------
+   The search is already tied to the account that approved it, so "keep" means signing in with the same email later. Email is a
+   mailto: link: it opens the buyer's own mail app with the private link and the best matches written in, because PropLync cannot
+   send mail until its own domain is verified. */
+function mailtoHref(s, email) {
+  var link = location.origin + '/brief?b=' + statusToken;
+  var lines = (s.candidates || []).slice(0, 5).map(function (c) {
+    var p = approxMxn(c);
+    return '• ' + (c.title || t('Propiedad', 'Property')) + (c.town ? ' · ' + c.town : '') + (p ? ' · ~MXN ' + compactMxn(p) : '');
+  });
+  var body = t('Estos son los resultados de mi búsqueda en PropLync:', 'These are my PropLync search results:') + '\n\n' + lines.join('\n') + '\n\n' +
+    t('Todos los resultados (enlace privado, no lo compartas):', 'All results (private link, do not share it):') + '\n' + link;
+  return 'mailto:' + (email ? encodeURIComponent(email) : '') + '?subject=' + encodeURIComponent(t('Mis resultados en PropLync', 'My PropLync results')) + '&body=' + encodeURIComponent(body);
+}
+
+async function renderSave(s) {
+  var box = document.getElementById('st-save');
+  var sb = document.getElementById('signin-box');
+  if (sb.parentNode === box) document.getElementById('approve-card').insertBefore(sb, document.getElementById('approve-box'));   // give it back before clearing
+  var finished = s.run && s.run.status === 'done';
+  if (!finished) { box.hidden = true; box.textContent = ''; return; }
+  var session = await getSession();
+  box.textContent = '';
+  var h = document.createElement('h3'); h.textContent = t('Guarda esta búsqueda', 'Keep this search');
+  var p = document.createElement('p');
+  p.textContent = session
+    ? t('Quedó guardada en tu cuenta (' + (session.user.email || '') + '). Entra con ese correo desde cualquier dispositivo y la encuentras en “Tus búsquedas”.',
+        'It is saved to your account (' + (session.user.email || '') + '). Sign in with that email from any device and find it under “Your searches”.')
+    : t('Crea una sesión con tu correo para volver a esta búsqueda desde cualquier dispositivo. Usa el mismo correo con el que aprobaste el resumen.',
+        'Create a session with your email to come back to this search from any device. Use the same email you approved the brief with.');
+  var row = document.createElement('div'); row.className = 'bf-save-actions';
+  if (session) {
+    var all = document.createElement('a'); all.className = 'primary'; all.href = '/brief'; all.textContent = t('Ver tus búsquedas', 'Your searches');
+    row.appendChild(all);
+  } else {
+    var mk = document.createElement('button'); mk.type = 'button'; mk.className = 'primary'; mk.textContent = t('Crear mi sesión', 'Create my session');
+    mk.addEventListener('click', function () { box.appendChild(sb); sb.hidden = false; mk.hidden = true; document.getElementById('si-email').focus(); });
+    row.appendChild(mk);
+  }
+  if (statusToken) {
+    var mail = document.createElement('a'); mail.href = mailtoHref(s, session && session.user.email);
+    mail.textContent = t('Enviarme los resultados por correo', 'Email me the results');
+    row.appendChild(mail);
+  }
+  box.appendChild(h); box.appendChild(p); box.appendChild(row);
+  if (statusToken) {
+    var note = document.createElement('p'); note.className = 'bf-note'; note.style.marginTop = 'var(--sp-3)';
+    note.textContent = t('Se abre tu app de correo con el enlace privado y tus mejores resultados ya escritos.', 'This opens your mail app with the private link and your best matches already written.');
+    box.appendChild(note);
+  }
+  box.hidden = false;
+}
+
+/* A signed-in buyer's earlier searches, on /brief with no private link. */
+async function loadMine() {
+  if (!(await getSession())) return;
+  var r = await authedFetch('/api/finder?action=mine').catch(function () { return null; });
+  if (!r || !r.ok) return;
+  var items = ((await r.json()).items || []);
+  var box = document.getElementById('mine-box');
+  if (!items.length) { box.hidden = true; return; }
+  box.textContent = '';
+  var h = document.createElement('h2'); h.textContent = t('Tus búsquedas', 'Your searches'); box.appendChild(h);
+  items.forEach(function (it) {
+    var C = window.PropLyncConcierge;
+    var label = ((C && C.FIELDS) || []).map(function (f) { return C.flat(it.brief && it.brief[f[0]]); }).filter(Boolean).slice(0, 2).join(' · ') || t('Búsqueda', 'Search');
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'bf-mine-item';
+    var title = document.createElement('b'); title.textContent = label.length > 90 ? label.slice(0, 87) + '...' : label;
+    var sub = document.createElement('span');
+    sub.textContent = new Date(it.created_at).toLocaleDateString(document.documentElement.lang === 'en' ? 'en-US' : 'es-MX', { day: 'numeric', month: 'short' }) +
+      ' · ' + it.matches + ' ' + t(it.matches === 1 ? 'propiedad' : 'propiedades', it.matches === 1 ? 'property' : 'properties');
+    b.appendChild(title); b.appendChild(sub);
+    b.addEventListener('click', function () { box.hidden = true; showStatusView(null, false, null, it.id); });
+    box.appendChild(b);
+  });
+  box.hidden = false;
 }
 
 /* Icons are static markup from this table; model text never goes through innerHTML. */
@@ -897,7 +1093,7 @@ function renderScoutState(s) {
 
 async function loadStatus() {
   try {
-    var r = await fetch('/api/finder?action=status&t=' + encodeURIComponent(statusToken));
+    var r = await authedFetch('/api/finder?action=status&' + (statusToken ? 't=' + encodeURIComponent(statusToken) : 'id=' + encodeURIComponent(statusId)));
     var s = await r.json();
     if (!r.ok) {
       document.getElementById('st-text').textContent = r.status === 404
@@ -909,7 +1105,8 @@ async function loadStatus() {
     document.getElementById('st-text').textContent = statusLine(s);
     renderScoutState(s);
     renderLive(s);
-    document.getElementById('st-results').innerHTML = (s.candidates || []).map(propCard).join('');
+    renderResults(s.candidates || []);
+    renderSave(s);
     if ((s.candidates || []).length && !resultsTracked) { resultsTracked = true; if (window.plTrack) plTrack('scout_result_viewed'); }
     renderWallet(s);
     clearTimeout(statusTimer);
@@ -938,8 +1135,10 @@ document.getElementById('st-results').addEventListener('click', async function (
   loadStatus();
 });
 
-function showStatusView(token, justApproved, scout) {
-  statusToken = token;
+function showStatusView(token, justApproved, scout, id) {
+  statusToken = token || null;
+  statusId = id || null;
+  document.getElementById('mine-box').hidden = true;
   lastScout = scout || null;
   document.querySelector('.bf-chat').hidden = true;
   document.getElementById('approve-card').hidden = true;
@@ -964,7 +1163,7 @@ document.addEventListener('langchange', function () {
     el.placeholder = el.getAttribute('data-' + l + '-placeholder');
   });
   renderBrief();
-  if (statusToken) loadStatus();
+  if (statusToken || statusId) loadStatus();
 });
 
 setLang(document.documentElement.lang);
@@ -1006,6 +1205,7 @@ function restoreHandoff(h) {
 }
 
 var handoff = null;
+if (!savedToken) loadMine();
 if (savedToken) { showStatusView(savedToken, false); }
 else if (restorePending()) { /* back from Google: brief restored, approve card open */ }
 else if ((handoff = PropLyncConcierge.takeHandoff())) { restoreHandoff(handoff); }
