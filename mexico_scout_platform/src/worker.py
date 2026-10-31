@@ -58,6 +58,17 @@ SITES: dict[str, dict[str, Any]] = {
         "sitemap": "https://moskito.mx/lcentral_listings-sitemap.xml",
         "include": r"^/es/bienes-raices/[^/]+/?$",
     },
+    # Same listing platform as Moskito (lcentral), two sitemap files. Added for its long-term rentals (about 15 in Spanish on
+    # 2026-10-31, out of ~590): the index had only 15 rental comps, so few investor briefs could get a yield estimate. The English
+    # pages (/real-estate/) repeat the Spanish ones, so only /es/ is read: PropLync's default, and no double fetching.
+    "junglerealtor.com": {
+        "name": "Jungle Realtor",
+        "sitemap": [
+            "https://junglerealtor.com/lcentral_listings-sitemap.xml",
+            "https://junglerealtor.com/lcentral_listings-sitemap2.xml",
+        ],
+        "include": r"^/es/real-estate/[^/]+/?$",
+    },
 }
 
 # A price with no stated currency is ambiguous inside these bands (USD or MXN?) and is skipped.
@@ -98,11 +109,14 @@ def parse_sitemap(xml: str, site: str, sites: dict[str, dict[str, Any]] = SITES)
 def read_sitemaps(scraper: ListingScraper, sites: dict[str, dict[str, Any]] = SITES) -> list[dict[str, str | None]]:
     entries: list[dict[str, str | None]] = []
     for site, cfg in sites.items():
-        fetched = scraper.fetch(cfg["sitemap"])
-        if fetched.blocked or not fetched.html:
-            logger.warning("Sitemap of {} not readable: {}", site, fetched.reason)
-            continue
-        found = parse_sitemap(fetched.html, site, sites)
+        urls = cfg["sitemap"] if isinstance(cfg["sitemap"], list) else [cfg["sitemap"]]
+        found: list[dict[str, str | None]] = []
+        for sitemap_url in urls:
+            fetched = scraper.fetch(sitemap_url)
+            if fetched.blocked or not fetched.html:
+                logger.warning("Sitemap {} of {} not readable: {}", sitemap_url, site, fetched.reason)
+                continue
+            found += parse_sitemap(fetched.html, site, sites)
         logger.info("{}: {} listing URL(s) in the sitemap", site, len(found))
         entries += found
     return entries

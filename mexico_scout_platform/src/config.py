@@ -38,6 +38,7 @@ DEFAULT_ALLOWED_DOMAINS = (
     "bestcaribbeanproperty.com",
     "moskito.mx",
     "remaxmaya.com",
+    "junglerealtor.com",  # opened 2026-10-31 (robots.txt allows crawlers, sitemaps readable); added for its long-term rentals
     "mudafy.com.mx",      # not yet tried from here
     "selvacorealty.com",  # not yet tried from here
 )

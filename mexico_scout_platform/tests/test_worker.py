@@ -26,6 +26,8 @@ def test_the_real_site_configs_match_real_listing_urls():
         "bestcaribbeanproperty.com": ("/es/properties/departamento-de-2-recamaras-en-aldea-zama/", ["/properties/luxury-condo-in-corasol/", "/es/properties/", "/es/location/x/"]),
         "remaxmaya.com": ("/properties/artia-condos-2-bedroom-penthouse-for-sale-in-aldea-zama/", ["/properties/", "/agents/x/"]),
         "moskito.mx": ("/es/bienes-raices/departamento-de-dos-habitaciones-en-venta-en-tulum-164/", ["/real-estate/", "/es/bienes-raices/"]),
+        # Spanish pages only: the English ones repeat them.
+        "junglerealtor.com": ("/es/real-estate/apartamento-de-2-dormitorios-en-alquiler-lorena-ochoa-residences/", ["/real-estate/unfurnished-1-bedroom-apartment-for-rent-in-tulum-private-jacuzzi-oniric-tulum/", "/es/real-estate/", "/es/"]),
     }
     import re
     for site, (good, bad) in cases.items():
