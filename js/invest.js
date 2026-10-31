@@ -49,8 +49,10 @@
   }
 
   function showContinue() {
-    var es = done ? 'Revisa y aprueba tu resumen →' : 'Seguir en pantalla completa →';
-    var en = done ? 'Review and approve your brief →' : 'Continue in full screen →';
+    // Concierge's last question is "shall Scout start searching?", so the button answers it in the same words.
+    // It opens the summary, where the buyer approves; the search itself starts there.
+    var es = done ? 'Empezar la búsqueda →' : 'Seguir en pantalla completa →';
+    var en = done ? 'Start the search →' : 'Continue in full screen →';
     contEl.hidden = false;
     contEl.className = 'btn ' + (done ? 'btn-gold' : 'btn-ghost') + ' vo-continue';
     contEl.setAttribute('data-es', es);
