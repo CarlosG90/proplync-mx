@@ -119,3 +119,11 @@ def test_a_lot_keeps_its_land_area_from_the_title_and_loses_its_rooms():
 
 def test_a_place_outside_the_markets_is_skipped():
     assert rec(out_of_area=True) is None
+
+
+def test_an_area_has_to_fit_the_bedrooms():
+    assert rec(bedrooms=3, m2_size=34, property_type="apartment", price=694_415)["built_m2"] is None, "3 bedrooms in 34 m2"
+    assert rec(bedrooms=3, m2_size=60, property_type="apartment", price=300_000)["built_m2"] == 60
+    assert rec(bedrooms=2, m2_size=36, property_type="apartment", price=250_000)["built_m2"] == 36
+    assert rec(bedrooms=2, m2_size=30, property_type="apartment", price=250_000)["built_m2"] is None
+    assert rec(bedrooms=0, m2_size=20, property_type="apartment", price=120_000)["built_m2"] == 20, "a studio can be small"

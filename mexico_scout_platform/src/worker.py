@@ -71,6 +71,7 @@ RENT_MONTH_USD = (150, 15_000)
 BUILT_M2 = {"apartment": (15, 800), "penthouse": (15, 1_200), "house": (25, 3_500)}
 BUILT_M2_ANY = (10, 10_000)
 SALE_USD_PER_M2 = (250, 25_000)
+MIN_M2_PER_BEDROOM = 18
 
 
 def site_for(url: str, sites: dict[str, dict[str, Any]] = SITES) -> str | None:
@@ -166,6 +167,8 @@ def record_from_page(url: str, page_hints: dict[str, Any], markdown: str, title:
         land, built, bedrooms, bathrooms = _area_in_title(listing.title or title) or land, None, None, None
     elif built is not None:
         low_m2, high_m2 = BUILT_M2.get(listing.property_type or "", BUILT_M2_ANY)
+        if bedrooms:
+            low_m2 = max(low_m2, MIN_M2_PER_BEDROOM * bedrooms)   # a 3-bedroom home of 34 m2 is a misread, not a listing
         per_m2 = (listing.price_usd / built) if (listing.price_usd and listing.operation is Operation.SALE) else None
         if not (low_m2 <= built <= high_m2) or (per_m2 is not None and not (SALE_USD_PER_M2[0] <= per_m2 <= SALE_USD_PER_M2[1])):
             logger.info("Dropped the area of {}: {} m2 does not fit a {} at this price", url, built, listing.property_type)
