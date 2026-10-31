@@ -54,6 +54,8 @@ import { monthlyBudgetUsd, spentThisMonth } from './_lib/scout-budget.js';
 import { notifyOperator } from './_lib/notify.js';
 
 const MODEL = 'claude-opus-5';
+// Free Scout searches per buyer. The same number is free_limit in spend_credit() (migration 013).
+const FREE_SEARCHES = 5;
 const GROQ_STT = 'https://api.groq.com/openai/v1/audio/transcriptions';
 
 /* A voice note long enough to say something useful is still small. This cap is
@@ -87,7 +89,7 @@ LIMITES
 
 CUANDO TERMINA
 Cuando tengas presupuesto, zona, al menos un imprescindible y el proposito, marca done=true y en "say" haz un resumen de una pagina para que la persona lo apruebe o lo corrija.
-Despues del resumen explica lo que sigue, en pocas palabras: al aprobarlo, Scout, el agente de busqueda de PropLync, empieza a buscar en ese momento, aqui mismo, en las agencias de PropLync, los portales y los sitios de agencias. La primera busqueda es gratis. Los resultados aparecen en esta pagina marcados como "sin verificar", y si una propiedad le interesa puede pedir que una persona la confirme con el agente que la tiene, usando un credito.
+Despues del resumen explica lo que sigue, en pocas palabras: al aprobarlo, Scout, el agente de busqueda de PropLync, empieza a buscar en ese momento, aqui mismo, en las agencias de PropLync, los portales y los sitios de agencias. Tiene 5 busquedas gratis. Los resultados aparecen en esta pagina marcados como "sin verificar", y si una propiedad le interesa puede pedir que una persona la confirme con el agente que la tiene, usando un credito.
 No digas que alguien la va a contactar para mostrarle opciones ni que tu no buscas: la busqueda la hace Scout en cuanto apruebe.
 
 FORMATO
@@ -532,13 +534,15 @@ async function handleWallet(req, res) {
   const user = await requireBuyer(req);
   if (!user) { res.status(401).json({ error: 'sign_in_required' }); return; }
   const svc = getServiceClient();
-  const { data: wallet } = await svc.from('buyer_wallets').select('credits, free_search_used').eq('user_id', user.id).maybeSingle();
+  const { data: wallet } = await svc.from('buyer_wallets').select('credits, free_searches_used').eq('user_id', user.id).maybeSingle();
   const { data: ledger } = await svc.from('credit_ledger').select('delta, reason, created_at, balance_after')
     .eq('user_id', user.id).order('created_at', { ascending: false }).limit(10);
+  const freeLeft = Math.max(0, FREE_SEARCHES - (wallet ? wallet.free_searches_used : 0));
   res.status(200).json({
     email: user.email,
     credits: wallet ? wallet.credits : 0,
-    free_search_available: !(wallet && wallet.free_search_used),
+    free_search_available: freeLeft > 0,
+    free_searches_left: freeLeft,
     ledger: ledger || []
   });
 }
