@@ -46,9 +46,9 @@ if (cmd === 'grant') {
   die('unknown command ' + cmd);
 }
 
-const { data: wallet } = await svc.from('buyer_wallets').select('credits, free_search_used').eq('user_id', user.id).maybeSingle();
+const { data: wallet } = await svc.from('buyer_wallets').select('credits, free_searches_used').eq('user_id', user.id).maybeSingle();
 const { data: ledger } = await svc.from('credit_ledger').select('created_at, reason, delta, balance_after, ref')
   .eq('user_id', user.id).order('created_at', { ascending: false }).limit(15);
-console.log(`  ${email}: ${wallet ? wallet.credits : 0} credits, free search ${wallet && wallet.free_search_used ? 'used' : 'available'}`);
+console.log(`  ${email}: ${wallet ? wallet.credits : 0} credits, free searches used: ${wallet ? wallet.free_searches_used : 0}/5`);
 for (const l of ledger || []) console.log(`   ${l.created_at.slice(0, 16)}  ${l.reason.padEnd(11)} ${String(l.delta).padStart(3)} → ${l.balance_after}  ${l.ref || ''}`);
 console.log('');

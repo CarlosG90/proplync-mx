@@ -225,7 +225,7 @@
         <div class="bf-recap" id="recap"></div>
         <button class="bf-edit" id="recap-edit" type="button" data-es="Quiero agregar o cambiar algo" data-en="I want to add or change something">I want to add or change something</button>
         <h2 style="margin-top:var(--sp-6)" data-es="Aprueba y Scout busca" data-en="Approve and Scout searches">Approve and Scout searches</h2>
-        <p class="bf-note" data-es="Al aprobar, Scout busca en este momento en agencias PropLync, portales y sitios de agencias. Tu primera b&uacute;squeda es gratis. Pedir que una persona confirme una propiedad con su agente cuesta 1 cr&eacute;dito." data-en="When you approve, Scout searches right away across PropLync agencies, portals and agency sites. Your first search is free. Asking a person to confirm a property with its agent costs 1 credit.">When you approve, Scout searches right away across PropLync agencies, portals and agency sites. Your first search is free. Asking a person to confirm a property with its agent costs 1 credit.</p>
+        <p class="bf-note" data-es="Al aprobar, Scout busca en este momento en agencias PropLync, portales y sitios de agencias. Tienes 5 b&uacute;squedas gratis. Pedir que una persona confirme una propiedad con su agente cuesta 1 cr&eacute;dito." data-en="When you approve, Scout searches right away across PropLync agencies, portals and agency sites. You get 5 free searches. Asking a person to confirm a property with its agent costs 1 credit.">When you approve, Scout searches right away across PropLync agencies, portals and agency sites. You get 5 free searches. Asking a person to confirm a property with its agent costs 1 credit.</p>
 
         <div class="bf-form" id="signin-box">
           <button class="bf-google" id="google-btn" type="button"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg><span data-es="Continuar con Google" data-en="Continue with Google">Continue with Google</span></button>
@@ -391,7 +391,7 @@ function restorePending() {
 function creditsLabel(w) {
   if (!w) return '';
   var c = w.credits === 1 ? t('1 crédito', '1 credit') : (w.credits + ' ' + t('créditos', 'credits'));
-  return w.free_search_available ? c + ' · ' + t('1 búsqueda gratis', '1 free search') : c;
+  return w.free_search_available ? c + ' · ' + (w.free_searches_left === 1 ? t('1 búsqueda gratis', '1 free search') : w.free_searches_left + ' ' + t('búsquedas gratis', 'free searches')) : c;
 }
 
 async function loadWallet() {
@@ -482,7 +482,7 @@ var lastScout = null;
 function statusLine(s) {
   var run = s.run;
   if (run && (run.status === 'queued' || run.status === 'running')) return t('Scout está buscando en agencias PropLync, portales y sitios de agencias. Esto toma unos minutos; puedes dejar esta página abierta.', 'Scout is searching PropLync agencies, portals and agency sites. This takes a few minutes; you can keep this page open.');
-  if (lastScout && lastScout.reason === 'insufficient_credits') return t('Tu búsqueda gratis ya se usó. Con 1 crédito Scout busca de nuevo.', 'Your free search has been used. With 1 credit Scout searches again.');
+  if (lastScout && lastScout.reason === 'insufficient_credits') return t('Tus 5 búsquedas gratis ya se usaron. Con 1 crédito Scout busca de nuevo.', 'Your 5 free searches have been used. With 1 credit Scout searches again.');
   /* The server declines to start a run for any of these and charges nothing; say so, instead of a bare "saved". */
   if (lastScout && (lastScout.reason === 'daily_capacity' || lastScout.reason === 'monthly_capacity')) return t('Scout tiene mucha demanda hoy. Tu resumen está guardado y no se te cobró; intenta buscar más tarde.', 'Scout is very busy today. Your brief is saved and you were not charged; try searching again later.');
   if (lastScout && lastScout.reason === 'scout_unavailable') return t('Scout no está disponible en este momento. Tu resumen está guardado y no se te cobró; intenta de nuevo más tarde.', 'Scout is not available right now. Your brief is saved and you were not charged; try again later.');
@@ -700,8 +700,8 @@ function renderScoutState(s) {
   var body = null, action = null;
   if (st.state === 'not_started') {
     if (st.reason === 'needs_credit') {
-      body = t('Ya usaste tu búsqueda gratis y no tienes créditos, por eso Scout no empezó. Tu resumen está guardado: no hace falta aprobarlo otra vez. Con 1 crédito Scout empieza de inmediato.',
-               'You have used your free search and have no credits, which is why Scout did not start. Your brief is saved: there is no need to approve it again. With 1 credit Scout starts right away.');
+      body = t('Ya usaste tus 5 búsquedas gratis y no tienes créditos, por eso Scout no empezó. Tu resumen está guardado: no hace falta aprobarlo otra vez. Con 1 crédito Scout empieza de inmediato.',
+               'You have used your 5 free searches and have no credits, which is why Scout did not start. Your brief is saved: there is no need to approve it again. With 1 credit Scout starts right away.');
       action = { href: 'mailto:hola@proplync.mx?subject=' + encodeURIComponent(t('Créditos para Scout', 'Credits for Scout')), text: t('Pedir créditos', 'Ask for credits') };
     } else if (st.reason === 'busy') {
       body = t('Scout tiene mucha demanda hoy y no pudo empezar. Tu resumen está guardado y no se te cobró; vuelve a intentarlo más tarde.',
