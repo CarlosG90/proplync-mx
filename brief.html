@@ -111,14 +111,44 @@
   /* Scout at work: what it is searching and reading right now */
   .bf-live{border:1px solid rgba(201,169,110,.28);border-radius:var(--radius-lg);background:rgba(201,169,110,.05);padding:var(--sp-5)}
   .bf-live-head{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
-  .bf-dot{width:9px;height:9px;border-radius:50%;background:var(--gold);flex:none}
-  @media (prefers-reduced-motion:no-preference){.bf-live[data-active="true"] .bf-dot{animation:pulse 1.2s infinite}}
-  .bf-live-count{margin-left:auto;color:var(--on-ink-dim);text-transform:none;letter-spacing:0}
+  /* A radar sweep says "working" without a number: Scout's real run time is minutes and its steps arrive in bursts. */
+  .bf-radar{position:relative;width:26px;height:26px;border-radius:50%;flex:none;border:1px solid rgba(201,169,110,.55);
+    background:conic-gradient(from 0deg,rgba(201,169,110,.6),rgba(201,169,110,0) 38%)}
+  .bf-radar::after{content:"";position:absolute;inset:10px;border-radius:50%;background:var(--gold)}
+  .bf-scan{height:2px;margin-top:var(--sp-3);border-radius:2px;background:rgba(201,169,110,.14);overflow:hidden;position:relative}
+  .bf-scan::after{content:"";position:absolute;top:0;bottom:0;width:38%;left:-38%;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+  /* what Scout is doing this second; the dots after it are CSS, so the line itself never re-renders */
+  .bf-now{margin:var(--sp-4) 0 0;font-size:1.02rem;line-height:1.4;color:var(--on-ink);min-height:2.8em;overflow-wrap:anywhere}
+  .bf-now::after{content:"…";color:var(--gold)}
+  .bf-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:var(--sp-4)}
+  .bf-stats div{border:1px solid rgba(201,169,110,.2);border-radius:var(--radius-md);padding:10px 8px;text-align:center;background:rgba(201,169,110,.04)}
+  .bf-stats b{display:block;font-family:var(--mono);font-weight:500;font-size:1.25rem;color:var(--gold);font-variant-numeric:tabular-nums}
+  .bf-stats span{display:block;margin-top:2px;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--on-ink-dim)}
+  .bf-sites{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--sp-3)}
+  .bf-sites:empty{display:none}
+  .bf-site{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:4px 10px 4px 4px;border-radius:999px;border:1px solid rgba(240,237,232,.16);font-size:.74rem;color:var(--on-ink)}
+  .bf-site i{flex:none;width:18px;height:18px;border-radius:50%;background:var(--gold);color:var(--ink);font-style:normal;font-weight:700;font-size:.62rem;display:grid;place-items:center;text-transform:uppercase}
+  .bf-site span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bf-feed{list-style:none;margin:var(--sp-4) 0 0;padding:0;display:grid;gap:8px}
-  .bf-feed li{display:grid;grid-template-columns:auto 1fr;gap:10px;font-size:.84rem;line-height:1.45;color:var(--on-ink-dim)}
+  .bf-feed li{display:grid;grid-template-columns:auto auto 1fr;gap:10px;align-items:start;font-size:.84rem;line-height:1.45;color:var(--on-ink-dim);overflow-wrap:anywhere}
   .bf-feed li:first-child{color:var(--on-ink)}
+  .bf-feed svg{width:15px;height:15px;margin-top:2px;stroke:var(--gold);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   .bf-feed b{font-family:var(--mono);font-weight:500;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);padding-top:2px;min-width:5.2em}
-  .bf-feed li.skip b{color:var(--on-ink-dim)}
+  .bf-feed li.skip b,.bf-feed li.skip svg{color:var(--on-ink-dim);stroke:var(--on-ink-dim)}
+  /* the done-log keeps the old two-column rows (no icon) */
+  .bf-done-log .bf-feed li{grid-template-columns:auto 1fr}
+  @media (prefers-reduced-motion:no-preference){
+    .bf-radar{animation:bf-spin 1.8s linear infinite}
+    .bf-scan::after{animation:bf-scan 1.6s ease-in-out infinite}
+    .bf-feed li.in{animation:bf-in .45s ease-out}
+    .bf-site.in{animation:bf-pop .4s cubic-bezier(.2,1.4,.4,1)}
+    .bf-stats b.tick{animation:bf-tick .5s ease-out}
+  }
+  @keyframes bf-spin{to{transform:rotate(360deg)}}
+  @keyframes bf-scan{to{left:100%}}
+  @keyframes bf-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  @keyframes bf-pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+  @keyframes bf-tick{50%{transform:scale(1.18)}}
   .bf-done-log{margin-top:var(--sp-3)}
   .bf-done-log summary{cursor:pointer;font-family:var(--mono);font-size:.7rem;color:var(--on-ink-dim)}
   @media (max-width:900px){
@@ -214,8 +244,12 @@
         <div id="st-link"></div>
       </div>
       <div class="bf-live" id="st-live" data-active="true" hidden>
-        <div class="bf-live-head"><span class="bf-dot" aria-hidden="true"></span><span id="st-live-title"></span><span class="bf-live-count" id="st-live-count"></span></div>
-        <ol class="bf-feed" id="st-feed"></ol>
+        <div class="bf-live-head"><span class="bf-radar" aria-hidden="true"></span><span id="st-live-title"></span></div>
+        <div class="bf-scan" aria-hidden="true"></div>
+        <p class="bf-now" id="st-now"></p>
+        <div class="bf-stats" id="st-stats"></div>
+        <div class="bf-sites" id="st-sites"></div>
+        <ol class="bf-feed" id="st-feed" aria-live="off"></ol>
       </div>
       <div class="bf-status" id="st-results"></div>
     </section>
@@ -630,17 +664,138 @@ function feedLine(ev) {
   return null;
 }
 
+/* Icons are static markup from this table; model text never goes through innerHTML. */
+var FEED_ICONS = {
+  search: '<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.2-4.2"/>',
+  results: '<path d="M5 7h14M5 12h14M5 17h9"/>',
+  read: '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/>',
+  page: '<path d="M5 12l4 4 10-10"/>',
+  skipped: '<circle cx="12" cy="12" r="8"/><path d="M6.5 6.5l11 11"/>'
+};
+
+function feedIcon(k) {
+  var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true');
+  s.innerHTML = FEED_ICONS[k] || '';
+  return s;
+}
+
+function feedItem(ev, withIcon) {
+  var line = feedLine(ev);
+  if (!line) return null;
+  var li = document.createElement('li');
+  if (ev.k === 'skipped') li.className = 'skip';
+  if (withIcon) li.appendChild(feedIcon(ev.k));
+  var b = document.createElement('b'); b.textContent = line[0];
+  var span = document.createElement('span'); span.textContent = line[1];
+  li.appendChild(b); li.appendChild(span);
+  return li;
+}
+
 function fillFeed(list, events, limit) {
   list.innerHTML = '';
   events.slice().reverse().slice(0, limit).forEach(function (ev) {
-    var line = feedLine(ev);
-    if (!line) return;
-    var li = document.createElement('li');
-    if (ev.k === 'skipped') li.className = 'skip';
-    var b = document.createElement('b'); b.textContent = line[0];
-    var span = document.createElement('span'); span.textContent = line[1];
-    li.appendChild(b); li.appendChild(span); list.appendChild(li);
+    var li = feedItem(ev, false);
+    if (li) list.appendChild(li);
   });
+}
+
+/* The headline: what Scout is doing this second. */
+function nowLine(ev) {
+  var host = ev.host || '';
+  switch (ev.k) {
+    case 'search': return t('Buscando ', 'Searching ') + '“' + ev.q + '”';
+    case 'results': return t('Comparando ', 'Comparing ') + ev.n + t(' anuncios', ' listings');
+    case 'read': return t('Abriendo ', 'Opening ') + host;
+    case 'page': return t('Leyendo ', 'Reading ') + (ev.title || host);
+    case 'skipped': return t('Esa página no abrió; probando otra vía', 'That page would not open; trying another route');
+  }
+  return '';
+}
+
+/* ---------- the live view ----------
+   The server only has Scout's steps in bursts (it saves them every few seconds and we poll). So the page plays each new
+   step in one at a time, a beat apart, instead of dropping a block of lines: it reads as Scout working, which it is. */
+var live = { runId: null, seen: {}, queue: [], timer: null, c: { s: 0, p: 0, l: 0 }, sites: {} };
+var LIVE_BEAT_MS = 420;
+var LIVE_KEEP = 8;
+
+function reducedMotion() { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+
+function liveReset(runId) {
+  clearTimeout(live.timer);
+  live = { runId: runId, seen: {}, queue: [], timer: null, c: { s: 0, p: 0, l: 0 }, sites: {} };
+  ['st-feed', 'st-sites', 'st-stats', 'st-now'].forEach(function (id) { document.getElementById(id).textContent = ''; });
+}
+
+function setStat(el, to) {
+  var from = Number(el.dataset.v) || 0;
+  if (from === to) return;
+  el.dataset.v = to;
+  if (reducedMotion()) { el.textContent = to; return; }
+  el.classList.remove('tick'); void el.offsetWidth; el.classList.add('tick');
+  var t0 = performance.now();
+  (function step(now) {
+    var p = Math.min(1, (now - t0) / 500);
+    el.textContent = Math.round(from + (to - from) * p);
+    if (p < 1) requestAnimationFrame(step);
+  })(t0);
+}
+
+function renderStats() {
+  var box = document.getElementById('st-stats');
+  var labels = [['s', t('búsquedas', 'searches')], ['p', t('páginas', 'pages')], ['h', t('sitios', 'sites')], ['l', t('anuncios', 'listings')]];
+  if (!box.children.length) {
+    labels.forEach(function (x) {
+      var d = document.createElement('div');
+      var b = document.createElement('b'); b.id = 'st-n-' + x[0]; b.textContent = '0';
+      var s = document.createElement('span');
+      d.appendChild(b); d.appendChild(s); box.appendChild(d);
+    });
+  }
+  labels.forEach(function (x, i) { box.children[i].lastChild.textContent = x[1]; });
+  var vals = { s: live.c.s, p: live.c.p, h: Object.keys(live.sites).length, l: live.c.l };
+  Object.keys(vals).forEach(function (k) { setStat(document.getElementById('st-n-' + k), vals[k]); });
+}
+
+function addSite(host, animate) {
+  if (!host || live.sites[host]) return;
+  live.sites[host] = true;
+  var box = document.getElementById('st-sites');
+  if (box.children.length >= 12) return;
+  var chip = document.createElement('span');
+  chip.className = 'bf-site' + (animate ? ' in' : '');
+  var i = document.createElement('i'); i.textContent = host.charAt(0);
+  var name = document.createElement('span'); name.textContent = host;
+  chip.appendChild(i); chip.appendChild(name); box.appendChild(chip);
+}
+
+/* One step: count it, note its sites, and (unless silent) put it on screen. */
+function applyEvent(ev, silent) {
+  if (ev.k === 'search') live.c.s++;
+  if (ev.k === 'page') live.c.p++;
+  if (ev.k === 'results') live.c.l += Number(ev.n) || 0;
+  addSite(ev.host, !silent);
+  (ev.sites || []).forEach(function (h) { addSite(h, !silent); });
+  if (!silent) {
+    var feed = document.getElementById('st-feed');
+    var li = feedItem(ev, true);
+    if (li) {
+      li.classList.add('in');
+      feed.insertBefore(li, feed.firstChild);
+      while (feed.children.length > LIVE_KEEP) feed.removeChild(feed.lastChild);
+      document.getElementById('st-now').textContent = nowLine(ev);
+    }
+  }
+  renderStats();
+}
+
+function playQueue() {
+  live.timer = null;
+  var ev = live.queue.shift();
+  if (!ev) return;
+  applyEvent(ev, false);
+  if (live.queue.length) live.timer = setTimeout(playQueue, LIVE_BEAT_MS);
 }
 
 function renderLive(s) {
@@ -651,6 +806,7 @@ function renderLive(s) {
   var old = document.getElementById('st-done-log');
   if (old) old.remove();
   if (!running) {
+    clearTimeout(live.timer); live.timer = null; live.runId = null;
     box.hidden = true;
     /* Once it has finished, the trail stays one click away: it shows the buyer what the results rest on. */
     if (run && events.length) {
@@ -665,23 +821,30 @@ function renderLive(s) {
     }
     return;
   }
-  var searches = Math.max(run.searches || 0, events.filter(function (e) { return e.k === 'search'; }).length);
-  var pages = Math.max(run.pages || 0, events.filter(function (e) { return e.k === 'page'; }).length);
   box.hidden = false;
   document.getElementById('st-live-title').textContent = t('Scout está buscando en el mercado', 'Scout is searching the market');
-  document.getElementById('st-live-count').textContent =
-    searches + (searches === 1 ? t(' búsqueda · ', ' search · ') : t(' búsquedas · ', ' searches · ')) +
-    pages + (pages === 1 ? t(' página leída', ' page read') : t(' páginas leídas', ' pages read'));
-  var feed = document.getElementById('st-feed');
-  if (!events.length) {
-    feed.innerHTML = '';
-    var li = document.createElement('li');
-    var b = document.createElement('b'); b.textContent = t('Preparando', 'Starting');
-    var sp = document.createElement('span'); sp.textContent = t('Scout lee tu resumen y planea las búsquedas…', 'Scout is reading your brief and planning its searches…');
-    li.appendChild(b); li.appendChild(sp); feed.appendChild(li);
-  } else {
-    fillFeed(feed, events, 8);
+  if (live.runId !== run.id) liveReset(run.id);
+  /* Steps are keyed by time + content because the server sends only the latest window of them. */
+  var fresh = events.filter(function (ev) {
+    var key = ev.at + '|' + ev.k + '|' + (ev.host || ev.q || ev.n || '');
+    if (live.seen[key]) return false;
+    live.seen[key] = true;
+    return true;
+  });
+  /* Opening the page mid-run: count what already happened, and only play the last few. */
+  var firstLoad = !live.queue.length && !document.getElementById('st-feed').children.length;
+  var replay = firstLoad ? fresh.slice(-6) : fresh;
+  (firstLoad ? fresh.slice(0, -6) : []).forEach(function (ev) { applyEvent(ev, true); });
+  if (reducedMotion()) replay.forEach(function (ev) { applyEvent(ev, false); });
+  else live.queue = live.queue.concat(replay);
+  /* The run's own totals can be ahead of the window we were sent. */
+  live.c.s = Math.max(live.c.s, run.searches || 0);
+  live.c.p = Math.max(live.c.p, run.pages || 0);
+  renderStats();
+  if (!events.length && !document.getElementById('st-now').textContent) {
+    document.getElementById('st-now').textContent = t('Scout lee tu resumen y planea las búsquedas', 'Scout is reading your brief and planning its searches');
   }
+  if (live.queue.length && !live.timer) playQueue();
 }
 
 /* Scout's state, from the server (status.scout), so it is the same after a reload: a buyer must always be able to tell whether the
@@ -752,7 +915,7 @@ async function loadStatus() {
     clearTimeout(statusTimer);
     var running = s.run && (s.run.status === 'queued' || s.run.status === 'running');
     var waiting = (s.candidates || []).some(function (c) { return c.verify_requested && c.verification === 'pending'; });
-    if (running) statusTimer = setTimeout(loadStatus, 4000);   // the live feed is only as fresh as this poll
+    if (running) statusTimer = setTimeout(loadStatus, 3000);   // the live view is only as fresh as this poll
     else if (waiting) statusTimer = setTimeout(loadStatus, 60000);
   } catch (e) {
     document.getElementById('st-text').textContent = t('Sin conexión.', 'No connection.');
