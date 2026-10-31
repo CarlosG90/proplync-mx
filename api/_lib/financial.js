@@ -23,7 +23,14 @@
 
 export const MIN_COMPS = 3;
 
-/* Editable starting points, NOT data. Same table as math_engine.py. */
+/* Editable starting points, NOT data. Same table as math_engine.py.
+
+   UNSOURCED, AND THE OCCUPANCY LOOKS HIGH (checked 2026-10-31). AirDNA's public Quintana Roo pages showed about 54% occupancy for
+   Cancún and 31-46% for Tulum (two pages disagreed), against 68% and 62% here; Playa del Carmen and Puerto Morelos could not be
+   read (AirDNA answers automated requests with 403). Nothing here reaches a buyer today: showable() needs the nightly rate to come
+   from 3+ real comps, and loadRentComps() passes only long-term rents. Before short-term is ever shown, replace these with a
+   sourced figure (a market-data vendor, or occupancy agencies enter themselves) and keep the card saying the occupancy is assumed.
+   The ADR per bedroom and long-term yields below are equally unsourced. */
 export const MARKET_DEFAULTS = {
   'Cancún': { occupancy: 0.68, adrPerBedroomUsd: 75, ltrGrossYield: 0.075 },
   'Playa del Carmen': { occupancy: 0.66, adrPerBedroomUsd: 80, ltrGrossYield: 0.065 },
