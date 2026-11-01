@@ -77,8 +77,6 @@
   .bf-prop-row a{color:var(--on-ink);text-decoration:underline;text-underline-offset:3px}
   .bf-prop-k{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--on-ink-dim);margin:14px 0 4px}
 
-  .bf-google{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f1f1f;border:0;border-radius:999px;padding:12px 18px;font-weight:600;cursor:pointer;font-family:var(--body);font-size:.9rem}
-  .bf-or{text-align:center;font-family:var(--mono);font-size:.64rem;color:var(--on-ink-dim);letter-spacing:.1em}
   .bf-who{font-size:.84rem;color:var(--on-ink-dim);margin:0}
   .bf-who b{color:var(--on-ink)}
   .bf-credits{display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;padding:5px 10px;border-radius:999px;background:rgba(201,169,110,.15);color:var(--gold)}
@@ -289,8 +287,6 @@
         <p class="bf-note" data-es="Al aprobar, Scout busca en este momento en agencias PropLync, portales y sitios de agencias. Tienes 5 b&uacute;squedas gratis. Pedir que una persona confirme una propiedad con su agente cuesta 1 cr&eacute;dito." data-en="When you approve, Scout searches right away across PropLync agencies, portals and agency sites. You get 5 free searches. Asking a person to confirm a property with its agent costs 1 credit.">When you approve, Scout searches right away across PropLync agencies, portals and agency sites. You get 5 free searches. Asking a person to confirm a property with its agent costs 1 credit.</p>
 
         <div class="bf-form" id="signin-box">
-          <button class="bf-google" id="google-btn" type="button"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg><span data-es="Continuar con Google" data-en="Continue with Google">Continue with Google</span></button>
-          <div class="bf-or" data-es="o con tu correo" data-en="or with your email">or with your email</div>
           <input class="bf-input" id="si-email" type="email" autocomplete="email" maxlength="200" data-es-placeholder="Tu correo" data-en-placeholder="Your email" placeholder="Your email">
           <button class="bf-send" id="si-send" type="button" data-es="Enviarme un c&oacute;digo" data-en="Send me a code">Send me a code</button>
           <input class="bf-input" id="si-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" hidden data-es-placeholder="C&oacute;digo de 6 d&iacute;gitos" data-en-placeholder="6-digit code" placeholder="6-digit code">
@@ -423,7 +419,10 @@ document.getElementById('recap-edit').addEventListener('click', function () {
   sayEl.focus();
 });
 
-/* ---------- sign in (Supabase Auth: Google or a one-time email code) ----------
+/* ---------- sign in (Supabase Auth: a one-time email code)
+   WHY NO GOOGLE BUTTON: Google's consent screen names the Supabase project host (supabase.co) instead of
+   PropLync, which breaks the promise that the buyer stays inside PropLync. Bring it back only with a
+   branded consent screen or a custom auth domain. ----------
    Credits belong to a signed-in buyer, so a new tab cannot reset a wallet.
    The brief waits in localStorage while the buyer signs in: the email link
    usually opens in a new tab, which sessionStorage would not reach. */
@@ -474,11 +473,6 @@ async function refreshWho() {
   return session;
 }
 
-document.getElementById('google-btn').addEventListener('click', async function () {
-  savePending();
-  var r = await initSupabase().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/brief' } });
-  if (r.error) msg(siMsg, t('No pudimos abrir Google. Usa tu correo.', 'Could not open Google. Use your email.'), true);
-});
 
 var siEmail = '';
 document.getElementById('si-send').addEventListener('click', async function () {
@@ -1168,16 +1162,6 @@ document.addEventListener('langchange', function () {
 
 setLang(document.documentElement.lang);
 initSupabase();
-/* Offer Google only when the project has it switched on: a button that fails
-   at the last step of the brief is worse than no button. */
-fetch(SUPABASE_URL + '/auth/v1/settings', { headers: { apikey: SUPABASE_ANON_KEY } })
-  .then(function (r) { return r.json(); })
-  .then(function (st) {
-    var on = !!(st && st.external && st.external.google);
-    document.getElementById('google-btn').hidden = !on;
-    document.querySelector('#signin-box .bf-or').hidden = !on;
-  })
-  .catch(function () { document.getElementById('google-btn').hidden = true; document.querySelector('#signin-box .bf-or').hidden = true; });
 var savedToken = new URLSearchParams(location.search).get('b');
 var SEED = 'Hi, I am Concierge. Tell me: what life do you picture there?';   // what the model is told it already said
 function greeting() {
@@ -1207,7 +1191,7 @@ function restoreHandoff(h) {
 var handoff = null;
 if (!savedToken) loadMine();
 if (savedToken) { showStatusView(savedToken, false); }
-else if (restorePending()) { /* back from Google: brief restored, approve card open */ }
+else if (restorePending()) { /* back from the email link: brief restored, approve card open */ }
 else if ((handoff = PropLyncConcierge.takeHandoff())) { restoreHandoff(handoff); }
 else bubble('a', greeting());
 if (!handoff) messages.push({ role: 'assistant', content: SEED });
