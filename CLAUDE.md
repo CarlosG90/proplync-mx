@@ -29,6 +29,14 @@ Production: https://proplync-mx.vercel.app. The custom domain `proplync.mx` has 
 | Other services | Upstash Redis (rate limits), Resend (lead emails), Meta Graph API (Instagram), Pexels→Pixabay (stock photos), OSM Nominatim/Overpass (geocode, amenities), `sharp` (image processing) |
 | Hosting | Vercel, **Hobby plan**. Git-connected: PR → preview deploy, merge to `main` → production |
 
+## How to work with the user (so they don't repeat themselves)
+
+- **Start from `docs/CONTEXT-MAP.md`** (feature → files → data → tests, plus the loops), then read only what the task needs. Folder rules load on demand from `api/`, `js/`, `scripts/`, `test/` `CLAUDE.md` files. Shipping steps: `ship-pr` skill.
+- Default flow is branch → PR → **wait for "merge #N"** → merge → verify production. Report outcomes plainly, including what wasn't tested.
+- Ask before: real Scout runs, NVIDIA/paid calls, production DB writes, anything outward-facing. Always say which production rows you left behind.
+- Professional tone in product copy (no flattery, no "que bonito"); tutear in Spanish. Phone width (390 px) is the main viewport.
+- Use gstack `/browse` for web checks; never the Chrome MCP.
+
 ## Map of the code
 
 ```
