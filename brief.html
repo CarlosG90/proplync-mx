@@ -198,9 +198,18 @@
   .bf-icon svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .bf-chat .bf-log{max-height:34vh;min-height:110px}
   @media (max-width:900px){.bf-chat .bf-log{max-height:30vh}}
+  /* Review mode: the interview is already done (on /invest or before a sign-in), so the page opens on the
+     summary to approve instead of replaying the orb, the mic and the whole conversation. */
+  .bf-grid.review{grid-template-columns:minmax(0,680px)}
+  .bf-grid.review .bf-chat{display:none}
   /* WHY: on a phone the input shared one row with two round buttons, so its placeholder was cut to
      "O escribe aqui si prefie". The input gets its own full-width row; the buttons sit under it. */
   @media (max-width:480px){
+    /* WHY: a 300px orb plus a 30vh chat left about 230px to read Concierge in, and its closing summary is
+       far longer than that. The orb gives room back; the chat gets the larger share of the screen. */
+    .vo-orb{width:min(190px,46vw)}
+    .bf-stage{padding-bottom:var(--sp-4)}
+    .bf-chat .bf-log{max-height:52vh}
     .bf-compose{flex-wrap:wrap}
     .bf-compose .bf-input{flex:1 1 100%;order:-1}
     .bf-send{margin-left:auto}
@@ -346,7 +355,13 @@ function bubble(role, text) {
   d.className = 'bf-msg ' + role;
   d.textContent = text;
   logEl.appendChild(d);
-  logEl.scrollTop = logEl.scrollHeight;
+  /* A reply taller than the window (Concierge's closing summary) opens at its first line. Scrolling to the
+     bottom, as for a short reply, hid the start and left the buyer to scroll back up inside a small box. */
+  if (role === 'a' && d.offsetHeight > logEl.clientHeight - 24) {
+    logEl.scrollTop = d.getBoundingClientRect().top - logEl.getBoundingClientRect().top + logEl.scrollTop - 12;
+  } else {
+    logEl.scrollTop = logEl.scrollHeight;
+  }
   return d;
 }
 
@@ -408,7 +423,11 @@ var ui = PropLyncConcierge.create({
   },
   onNotice: function (kind, text) { bubble(kind, text); },
   onBusy: function (b) { sendEl.disabled = b; },
-  onFailedText: function (text) { sayEl.value = text; },   // a failed turn: their words come back, ready to send again
+  onFailedText: function (text) {   // a failed turn: their words come back, ready to send again
+    var mine = logEl.querySelectorAll('.bf-msg.u');   // drop the bubble, or sending it again shows the same message twice
+    if (mine.length) mine[mine.length - 1].remove();
+    sayEl.value = text;
+  },
   /* After a voice turn the keyboard stays down: focusing the field would cover the stage on a phone. */
   onTurnEnd: function (viaVoice) { if (!viaVoice) sayEl.focus(); }
 });
@@ -420,6 +439,7 @@ sayEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') turn(say
 /* "Add or change something": the recap steps aside and the conversation picks up where it left off. Concierge
    decides again whether the brief is complete, so the recap comes back by itself when it is. */
 document.getElementById('recap-edit').addEventListener('click', function () {
+  reviewMode(false);   // the conversation comes back, with everything said so far
   document.getElementById('approve-card').hidden = true;
   bubble('sys', t('Dime qué quieres agregar o cambiar y lo actualizo en el resumen.', 'Tell me what you want to add or change and I will update the brief.'));
   sayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -444,6 +464,26 @@ function msg(el, text, isErr) { el.className = 'bf-msg-line' + (isErr ? ' err' :
 function savePending() { try { localStorage.setItem(PENDING_KEY, JSON.stringify({ brief: brief, at: Date.now() })); } catch (e) {} }
 function clearPending() { try { localStorage.removeItem(PENDING_KEY); } catch (e) {} }
 
+/* Step 2 of the page is "review and approve". The heading changes with it, so the buyer is not told to start
+   the interview again. */
+var HEAD_ORIGINAL = null;
+function reviewMode(on) {
+  var head = document.querySelector('.bf-head');
+  var parts = { eb: head.querySelector('.bf-eyebrow'), h1: head.querySelector('.bf-h1'), sub: head.querySelector('.bf-sub') };
+  if (!HEAD_ORIGINAL) {
+    HEAD_ORIGINAL = {};
+    Object.keys(parts).forEach(function (k) { HEAD_ORIGINAL[k] = [parts[k].getAttribute('data-es'), parts[k].getAttribute('data-en')]; });
+  }
+  var texts = on ? {
+    eb: ['Paso 2 de 4', 'Step 2 of 4'],
+    h1: ['Revisa tu resumen y apruébalo.', 'Review your brief and approve it.'],
+    sub: ['Esto es lo que entendí de tu conversación. Al aprobarlo, Scout empieza a buscar en ese momento.', 'This is what I understood from your conversation. When you approve it, Scout starts searching right away.']
+  } : HEAD_ORIGINAL;
+  Object.keys(parts).forEach(function (k) { parts[k].setAttribute('data-es', texts[k][0]); parts[k].setAttribute('data-en', texts[k][1]); });
+  document.querySelector('.bf-grid').classList.toggle('review', !!on);
+  setLang(document.documentElement.lang);
+}
+
 function restorePending() {
   var saved = null;
   try { saved = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null'); } catch (e) {}
@@ -451,6 +491,7 @@ function restorePending() {
   brief = saved.brief; renderBrief();
   bubble('sys', t('Tu resumen sigue aquí. Apruébalo y Scout empieza a buscar.', 'Your brief is still here. Approve it and Scout starts searching.'));
   document.getElementById('approve-card').hidden = false;
+  reviewMode(true);
   refreshWho();
   return true;
 }
@@ -507,6 +548,9 @@ document.getElementById('si-verify').addEventListener('click', async function ()
   refreshWho();
   if (statusToken || statusId) loadStatus();   // the "keep this search" card now knows who they are
 });
+/* Enter sends the code and then confirms it: the fields are not in a form, so the keyboard did nothing. */
+document.getElementById('si-email').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('si-send').click(); } });
+document.getElementById('si-code').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('si-verify').click(); } });
 
 /* ---------- approve: the hand-off to Scout ---------- */
 document.getElementById('ap-send').addEventListener('click', async function () {
@@ -798,13 +842,20 @@ function mailtoHref(s, email) {
   return 'mailto:' + (email ? encodeURIComponent(email) : '') + '?subject=' + encodeURIComponent(t('Mis resultados en PropLync', 'My PropLync results')) + '&body=' + encodeURIComponent(body);
 }
 
+var saveSig = null;
 async function renderSave(s) {
   var box = document.getElementById('st-save');
   var sb = document.getElementById('signin-box');
-  if (sb.parentNode === box) document.getElementById('approve-card').insertBefore(sb, document.getElementById('approve-box'));   // give it back before clearing
   var finished = s.run && s.run.status === 'done';
+  var session = finished ? await getSession() : null;
+  /* WHY: the 60 s poll that waits for verifications calls this again. Rebuilding the card then moved the
+     sign-in form back to a hidden card, so a buyer who had just asked for a code lost the form mid-typing.
+     Rebuild only when what the card shows has changed. */
+  var sig = [!!finished, session ? session.user.email : '', !!statusToken, (s.candidates || []).map(function (c) { return c.id; }).join()].join('|');
+  if (sig === saveSig) return;
+  saveSig = sig;
+  if (sb.parentNode === box) document.getElementById('approve-card').insertBefore(sb, document.getElementById('approve-box'));   // give it back before clearing
   if (!finished) { box.hidden = true; box.textContent = ''; return; }
-  var session = await getSession();
   box.textContent = '';
   var h = document.createElement('h3'); h.textContent = t('Guarda esta búsqueda', 'Keep this search');
   var p = document.createElement('p');
@@ -1188,6 +1239,7 @@ function restoreHandoff(h) {
   if (h.done) {
     bubble('sys', t('Tu resumen está listo. Apruébalo y Scout empieza a buscar.', 'Your brief is ready. Approve it and Scout starts searching.'));
     document.getElementById('approve-card').hidden = false;
+    reviewMode(true);   // they just finished the interview on /invest: open on the summary, not on a second interview
     if (window.PropLyncOrb) PropLyncOrb.setProgress(1);
     refreshWho();
   } else {
