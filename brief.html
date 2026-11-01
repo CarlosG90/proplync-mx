@@ -467,21 +467,40 @@ function clearPending() { try { localStorage.removeItem(PENDING_KEY); } catch (e
 /* Step 2 of the page is "review and approve". The heading changes with it, so the buyer is not told to start
    the interview again. */
 var HEAD_ORIGINAL = null;
-function reviewMode(on) {
+var HEAD_STAGES = {
+  review: {
+    eb: ['Paso 2 de 4', 'Step 2 of 4'],
+    h1: ['Revisa tu resumen y apruébalo.', 'Review your brief and approve it.'],
+    sub: ['Esto es lo que entendí de tu conversación. Al aprobarlo, Scout empieza a buscar en ese momento.', 'This is what I understood from your conversation. When you approve it, Scout starts searching right away.']
+  },
+  /* The page the buyer comes back to by their private link must not greet them with the interview again. */
+  search: {
+    eb: ['Paso 3 de 4', 'Step 3 of 4'],
+    h1: ['Scout busca por ti.', 'Scout is searching for you.'],
+    sub: ['Esta página se actualiza sola. Guarda el enlace de abajo para volver cuando quieras.', 'This page updates by itself. Keep the link below to come back whenever you like.']
+  },
+  results: {
+    eb: ['Paso 4 de 4', 'Step 4 of 4'],
+    h1: ['Lo que encontró Scout.', 'What Scout found.'],
+    sub: ['Todo sale marcado como sin verificar. Si una propiedad te interesa, pide que una persona la confirme con el agente antes de visitarla.', 'Everything is marked unverified. If a property interests you, ask for a person to confirm it with the agent before you visit.']
+  }
+};
+function setHead(stage) {   // 'interview' (the original text), 'review', 'search' or 'results'
   var head = document.querySelector('.bf-head');
   var parts = { eb: head.querySelector('.bf-eyebrow'), h1: head.querySelector('.bf-h1'), sub: head.querySelector('.bf-sub') };
   if (!HEAD_ORIGINAL) {
     HEAD_ORIGINAL = {};
     Object.keys(parts).forEach(function (k) { HEAD_ORIGINAL[k] = [parts[k].getAttribute('data-es'), parts[k].getAttribute('data-en')]; });
   }
-  var texts = on ? {
-    eb: ['Paso 2 de 4', 'Step 2 of 4'],
-    h1: ['Revisa tu resumen y apruébalo.', 'Review your brief and approve it.'],
-    sub: ['Esto es lo que entendí de tu conversación. Al aprobarlo, Scout empieza a buscar en ese momento.', 'This is what I understood from your conversation. When you approve it, Scout starts searching right away.']
-  } : HEAD_ORIGINAL;
+  var texts = HEAD_STAGES[stage] || HEAD_ORIGINAL;
+  if (head.getAttribute('data-stage') === stage) return;   // the 3 s poll must not re-translate the whole page
+  head.setAttribute('data-stage', stage);
   Object.keys(parts).forEach(function (k) { parts[k].setAttribute('data-es', texts[k][0]); parts[k].setAttribute('data-en', texts[k][1]); });
-  document.querySelector('.bf-grid').classList.toggle('review', !!on);
   setLang(document.documentElement.lang);
+}
+function reviewMode(on) {
+  document.querySelector('.bf-grid').classList.toggle('review', !!on);
+  setHead(on ? 'review' : 'interview');
 }
 
 function restorePending() {
@@ -1154,6 +1173,7 @@ async function loadStatus() {
       return;
     }
     brief = s.brief || {}; renderBrief();
+    setHead(s.run && s.run.status === 'done' ? 'results' : 'search');
     document.getElementById('st-text').textContent = statusLine(s);
     renderScoutState(s);
     renderLive(s);
@@ -1192,6 +1212,8 @@ function showStatusView(token, justApproved, scout, id) {
   statusId = id || null;
   document.getElementById('mine-box').hidden = true;
   lastScout = scout || null;
+  document.querySelector('.bf-grid').classList.remove('review');   // the status view keeps its own two-column layout
+  setHead('search');
   document.querySelector('.bf-chat').hidden = true;
   document.getElementById('approve-card').hidden = true;
   document.getElementById('status-view').hidden = false;
