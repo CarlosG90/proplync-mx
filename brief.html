@@ -198,6 +198,13 @@
   .bf-icon svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .bf-chat .bf-log{max-height:34vh;min-height:110px}
   @media (max-width:900px){.bf-chat .bf-log{max-height:30vh}}
+  /* WHY: on a phone the input shared one row with two round buttons, so its placeholder was cut to
+     "O escribe aqui si prefie". The input gets its own full-width row; the buttons sit under it. */
+  @media (max-width:480px){
+    .bf-compose{flex-wrap:wrap}
+    .bf-compose .bf-input{flex:1 1 100%;order:-1}
+    .bf-send{margin-left:auto}
+  }
 </style>
 </head>
 <body data-page="brief">
