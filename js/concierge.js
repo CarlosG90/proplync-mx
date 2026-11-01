@@ -379,7 +379,9 @@
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ messages: messages })
             });
-            out = { r: resp, data: await resp.json() };
+            /* A timeout or gateway error can answer with a page, not JSON. The server did answer, so this is
+               "Concierge did not respond", not "no connection", and it still gets the retry. */
+            out = { r: resp, data: await resp.json().catch(function () { return {}; }) };
           } catch (e) { out = null; }
           var retryable = !out || out.r.status === 429 || out.r.status >= 500;
           if (!retryable) break;
