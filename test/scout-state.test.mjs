@@ -39,3 +39,11 @@ test('briefs compare equal whatever order Postgres stores their keys in, and dif
   assert.ok(!sameBrief(a, { ...a, location: { areas: ['Tulum', 'Playa'] } }), 'array order and length matter');
   assert.ok(sameBrief(null, null) && !sameBrief(a, null));
 });
+
+test('when the research provider has no balance, a failed or unstarted search says unavailable (no retry invitation)', () => {
+  assert.deepEqual(scoutState({ run: { status: 'failed' }, wallet: spent, providerDown: true }), { state: 'failed', reason: 'unavailable' });
+  assert.deepEqual(scoutState({ run: null, wallet: null, providerDown: true }), { state: 'not_started', reason: 'unavailable' });
+  // a finished or running search is never reported as unavailable, whatever the flag says
+  assert.deepEqual(scoutState({ run: { status: 'done' }, wallet: spent, providerDown: true }), { state: 'done' });
+  assert.deepEqual(scoutState({ run: { status: 'running' }, wallet: spent, providerDown: true }), { state: 'searching' });
+});

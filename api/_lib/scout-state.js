@@ -19,16 +19,18 @@
  * @param {number} a.startedToday  runs started today (UTC)
  * @param {number} a.cap           the daily run limit
  * @param {boolean} a.canRun       Scout is configured and not switched off
+ * @param {boolean} [a.providerDown]  the latest run was refused for lack of provider balance (see finder.js, scout:provider_down)
  * @returns {{state:'searching'|'done'|'failed'|'not_started', reason?:'needs_credit'|'busy'|'unavailable'|'unknown'}}
  */
-export function scoutState({ run, wallet, startedToday = 0, cap = 0, canRun = true }) {
+export function scoutState({ run, wallet, startedToday = 0, cap = 0, canRun = true, providerDown = false }) {
   if (run) {
     if (run.status === 'queued' || run.status === 'running') return { state: 'searching' };
-    if (run.status === 'failed') return { state: 'failed' };
+    /* The research provider is out of funds: a new search would fail the same way, so the page must not invite one. */
+    if (run.status === 'failed') return providerDown ? { state: 'failed', reason: 'unavailable' } : { state: 'failed' };
     return { state: 'done' };
   }
   if (wallet && wallet.free_search_used && Number(wallet.credits) < 1) return { state: 'not_started', reason: 'needs_credit' };
-  if (!canRun) return { state: 'not_started', reason: 'unavailable' };
+  if (!canRun || providerDown) return { state: 'not_started', reason: 'unavailable' };
   if (cap > 0 && startedToday >= cap) return { state: 'not_started', reason: 'busy' };
   return { state: 'not_started', reason: 'unknown' };
 }

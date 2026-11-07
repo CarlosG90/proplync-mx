@@ -170,6 +170,17 @@ export function operatorDetail(err) {
   return (status + type + message).slice(0, 400);
 }
 
+/**
+ * Is this the provider refusing because the account has no money left? Anthropic answers that with a plain HTTP 400
+ * ("Your credit balance is too low..."), which looks like a bad request but is not the buyer's search at fault: every
+ * run fails the same way until someone tops the account up. Told apart so the page stops offering "search again" and
+ * the operator is alerted, instead of each retry burning a run and a refund.
+ */
+export function isBillingFailure(errOrDetail) {
+  const text = typeof errOrDetail === 'string' ? errOrDetail : String((errOrDetail && errOrDetail.message) || '');
+  return /credit balance is too low|purchase credits/i.test(text);
+}
+
 /* The one request Scout sends each segment. The doctor's probe sends this same request, so a probe that is
    accepted means a real segment is accepted. */
 function segmentRequest(messages, wrapUp, maxTokens = MAX_TOKENS) {
@@ -625,7 +636,7 @@ export async function runScoutStep(svc, runId, opts = {}) {
     if (permanent) {
       const why = operatorDetail(err);
       await finish(svc, run, { status: 'failed', error: why }, 'review');
-      return { state: 'failed', detail: why };
+      return { state: 'failed', detail: why, ...(isBillingFailure(err) ? { outage: 'billing' } : {}) };
     }
     // Timeout, overload, rate limit: nothing from this segment was saved, so
     // releasing the lease lets the next kick redo it from the same transcript.
