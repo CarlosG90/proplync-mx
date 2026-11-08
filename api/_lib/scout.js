@@ -36,16 +36,20 @@ import { mergeCandidates, dropKnown, normalizeUrl, toMxn, parseMoney } from './s
 import { logDegraded, safeDetail } from './health.js';
 import { monthlyBudgetUsd, runMaxUsd, runHardMaxUsd, spentThisMonth, overRunLimit } from './scout-budget.js';
 
-export const SCOUT_MODEL = 'claude-opus-5-5';
+/* Sonnet, not Opus: the research is search-and-read work, and Opus was most of the cost of a run (see PRICE below).
+   Cheaper models get the same guardrails (URL provenance, range checks, merge limits), so a weaker answer is
+   caught, not sent to a buyer. Switching back is a one-line change, but test it on the QA brief first. */
+export const SCOUT_MODEL = 'claude-sonnet-5-5';
 
-const MAX_STEPS = 5;        // completed segments per run; ~10 server tool calls each
+const MAX_STEPS = 5;        // completed segments per run; ~11 server tool calls each
 const MAX_ATTEMPTS = 12;    // started segments, so timeouts and 5xx cannot loop forever
 const LEASE_SECONDS = 330;  // longer than any one segment can run on Vercel (300 s)
 const MAX_TOKENS = 32000;
 
-/* USD per million tokens for claude-opus-5-5, and per web search. Used only to
-   log what a run cost; check https://www.anthropic.com/pricing before relying
-   on these for billing decisions. */
+/* USD per million tokens, and per web search. Used only to log and cap what a run cost. These are the Opus rates
+   and are kept on purpose while the model is Sonnet: an over-estimate trips the per-run and monthly caps sooner,
+   which is the safe direction. Replace with Sonnet's published rates (https://www.anthropic.com/pricing) once
+   checked; do not use these for billing decisions. */
 const PRICE = { input: 4, output: 20, cacheRead: 0.2, cacheWrite: 5, perSearch: 0.01 };
 
 /* Not where a buyer looks for a home to buy, and pages a fetch cannot read. */
@@ -80,7 +84,7 @@ HOW TO RESEARCH
 - Open promising individual listing pages with web_fetch and read the facts there. A search snippet is only enough for a title and a price.
 - Vary your queries across areas, portals and agencies instead of repeating one. Never run the same query twice and never open the same page twice: every call counts against a small allowance, and a repeat finds nothing new. A first run wasted 3 of 8 searches on one repeated query and 3 of 10 page opens on one page.
 - These sites refuse to be opened: ${FETCH_REFUSED.join(', ')}. Use their search snippet for a title and a price, and never try to open them. Spend your page opens on propiedades.com, agency sites and developer sites that are not listed here.
-- A page you open is cut after about 3,000 tokens, so opening the same address again returns exactly the same part. Never open an address twice. If a fact is missing from the part you got, report it as unknown and put the question in questions_for_agent. A results page on a portal is a list: take the listing addresses from it and open those, once each.
+- A page you open is cut after about 2,000 tokens, so opening the same address again returns exactly the same part. Never open an address twice. If a fact is missing from the part you got, report it as unknown and put the question in questions_for_agent. A results page on a portal is a list: take the listing addresses from it and open those, once each.
 - Aim for about 5 to 10 good candidates, and stop when you have them or your searches run out.
 
 RULES
@@ -142,11 +146,11 @@ export const SUBMIT_SCHEMA = obj({
 
 const TOOLS = [
   {
-    type: 'web_search_20260209', name: 'web_search', max_uses: 10,
+    type: 'web_search_20260209', name: 'web_search', max_uses: 5,
     user_location: { type: 'approximate', country: 'MX', timezone: 'America/Cancun' },
     blocked_domains: BLOCKED
   },
-  { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 14, max_content_tokens: 3000, blocked_domains: BLOCKED.concat(FETCH_REFUSED) },
+  { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 6, max_content_tokens: 2000, blocked_domains: BLOCKED.concat(FETCH_REFUSED) },
   {
     name: 'submit_candidates',
     description: 'Report the properties found for this brief. Call exactly once, at the end of the research.',
@@ -179,7 +183,8 @@ function segmentRequest(messages, wrapUp, maxTokens = MAX_TOKENS) {
     system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }].concat(wrapUp ? [{ type: 'text', text: WRAPUP }] : []),
     tools: TOOLS,
     messages,
-    output_config: { effort: 'high' },
+    // medium, not high: a run's output tokens were most of its cost, and each search is already a small, checked step.
+    output_config: { effort: 'medium' },
     // The transcript grows by whole pages each segment; caching it means the
     // next segment pays a tenth for everything it has already read.
     cache_control: { type: 'ephemeral' },

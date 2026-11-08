@@ -430,12 +430,15 @@ test('Scout may not repeat itself, and its allowances are the ones we planned', 
   const sent = client.calls[0];
   const search = sent.tools.find((t) => t.name === 'web_search');
   const fetch = sent.tools.find((t) => t.name === 'web_fetch');
-  assert.equal(search.max_uses, 10);
-  assert.equal(fetch.max_uses, 14);
+  assert.equal(search.max_uses, 5);
+  assert.equal(fetch.max_uses, 6);
+  assert.equal(fetch.max_content_tokens, 2000);
+  assert.equal(sent.output_config.effort, 'medium');
+  assert.equal(sent.model, 'claude-sonnet-5-5');
   const system = sent.system.map((b) => b.text).join('\n');
   assert.match(system, /Never run the same query twice/);
   assert.match(system, /Never open an address twice/);
-  assert.match(system, /cut after about 3,000 tokens/);
+  assert.match(system, /cut after about 2,000 tokens/);
   for (const site of ['mercadolibre.com.mx', 'lamudi.com.mx', 'vivanuncios.com.mx', 'inmuebles24.com']) {
     assert.ok(fetch.blocked_domains.includes(site), site + ' is refused by fetch, so do not spend an open on it');
     assert.ok(!search.blocked_domains.includes(site), site + ' must stay searchable: its snippets are valid sources');
