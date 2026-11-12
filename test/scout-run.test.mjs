@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import Anthropic from '@anthropic-ai/sdk';
-import { SUBMIT_SCHEMA, fetchOutcomes, progressFromBlock, progressLog, runScoutStep, probeScout, operatorDetail, planAfterSegment, stuckAction, KICK_AFTER_MS, STALL_AFTER_MS } from '../api/_lib/scout.js';
+import { SUBMIT_SCHEMA, fetchOutcomes, progressFromBlock, progressLog, runScoutStep, probeScout, operatorDetail, isBillingFailure, planAfterSegment, stuckAction, KICK_AFTER_MS, STALL_AFTER_MS } from '../api/_lib/scout.js';
 import { runHardMaxUsd, runMaxUsd, DEFAULT_RUN_MAX_USD, DEFAULT_RUN_HARD_MAX_USD } from '../api/_lib/scout-budget.js';
 import { fakeDb } from './_fake-db.mjs';
 
@@ -502,4 +502,34 @@ test('fetchOutcomes tallies, per site, the opens that worked and the ones that f
   assert.deepEqual([lamudi.ok, lamudi.fail], [0, 2]);
   assert.deepEqual([...lamudi.codes].sort(), ['unknown', 'url_not_accessible']);
   assert.equal(fetchOutcomes(null).size, 0, 'a run with no transcript is just empty');
+});
+
+// ---------- the provider has no balance ----------
+test('isBillingFailure recognises Anthropic\'s empty-balance refusal and nothing else', () => {
+  const msg = '400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."}}';
+  assert.equal(isBillingFailure(msg), true);
+  assert.equal(isBillingFailure(new Error(msg)), true);
+  assert.equal(isBillingFailure('HTTP 400 invalid_request_error: output_config.effort: not supported'), false);
+  assert.equal(isBillingFailure('Overloaded: try again'), false);
+  assert.equal(isBillingFailure(undefined), false);
+});
+
+test('an empty provider balance fails the run, keeps the real reason, and is flagged as an outage', async () => {
+  await withEnv(KEY, async () => {
+    const { db, from } = world();
+    const out = await runScoutStep({ from }, 'r1', { client: fakeClient([rejection(400, 'invalid_request_error', 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.')]) });
+    assert.equal(out.state, 'failed');
+    assert.equal(out.outage, 'billing');
+    assert.equal(db.scout_runs[0].status, 'failed');
+    assert.match(db.scout_runs[0].error, /credit balance is too low/);
+  });
+});
+
+test('an ordinary rejected request is a failure but NOT an outage', async () => {
+  await withEnv(KEY, async () => {
+    const { from } = world();
+    const out = await runScoutStep({ from }, 'r1', { client: fakeClient([rejection(400, 'invalid_request_error', 'output_config.effort: not supported for this model')]) });
+    assert.equal(out.state, 'failed');
+    assert.equal(out.outage, undefined);
+  });
 });

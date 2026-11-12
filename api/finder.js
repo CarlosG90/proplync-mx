@@ -44,7 +44,7 @@ import { groqChat, messageText } from './_lib/groq.js';
 import { nvidiaChat, chatWithModel, conciergeModels, CANDIDATE_MODELS, THINKING_OFF } from './_lib/nvidia-concierge.js';
 import { askConcierge, isBusy, parseReply, NO_THINK } from './_lib/concierge-turn.js';
 import { getServiceClient } from './_lib/supabase.js';
-import { createRun, runScoutStep, runsStartedToday, scoutConfigured, checkAnthropic, probeScout, fxRate } from './_lib/scout.js';
+import { createRun, runScoutStep, runsStartedToday, scoutConfigured, checkAnthropic, probeScout, fxRate, isBillingFailure } from './_lib/scout.js';
 import { investorBrief, loadRentComps, financialsFor } from './_lib/candidate-financials.js';
 import { scoutState, sameBrief } from './_lib/scout-state.js';
 import { watchRun } from './_lib/scout-watch.js';
@@ -298,10 +298,17 @@ function scoutCanRun() {
     Boolean(process.env.SCOUT_STEP_SECRET) && Boolean(stepOrigin());
 }
 
+/* Set when the research provider refuses a run for lack of account balance. Every search would fail the same way until
+   someone tops the account up, so while it is set no run is created and nobody is charged. It expires on its own, so the
+   first search after a top-up is let through to find out. */
+const PROVIDER_DOWN_KEY = 'scout:provider_down';
+const PROVIDER_DOWN_SECONDS = 1800;
+
 /* Charge, then start. Charging first (ref = the brief) means an empty wallet
    never creates a run; a run that then fails to start is refunded at once. */
 async function startPaidRun(svc, user, briefId, spendRef = briefId) {
   if (!scoutCanRun()) return { started: false, reason: 'scout_unavailable' };
+  if (await redisGet(PROVIDER_DOWN_KEY)) return { started: false, reason: 'scout_unavailable' };
   const cap = Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 5;
   if (await runsStartedToday(svc) >= cap) {
     logDegraded('finder:scout-daily-cap', new Error(`cap ${cap} reached; brief ${briefId} waits`));
@@ -474,7 +481,7 @@ async function handleStatus(req, res) {
 
   /* `progress` (migration 016) is what Scout is doing right now. If the column is not there yet the page just
      goes without the live feed, instead of losing the whole status. */
-  const runCols = 'id, status, steps, web_searches, web_fetches, created_at, finished_at, lease_until, user_id, charged';
+  const runCols = 'id, status, steps, web_searches, web_fetches, created_at, finished_at, lease_until, user_id, charged, error';
   const latestRun = (cols) => svc.from('scout_runs').select(cols)
     .eq('brief_id', brief.id).order('created_at', { ascending: false }).limit(1);
   let { data: runs, error: runsError } = await latestRun(runCols + ', progress');
@@ -533,7 +540,11 @@ async function handleStatus(req, res) {
       }
       startedToday = await runsStartedToday(svc);
     }
-    scout = scoutState({ run, wallet, startedToday, cap: Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 5, canRun: scoutCanRun() });
+    /* `error` is read only to tell "the provider has no balance" from "this search failed"; it is never sent to the browser. */
+    const recentBillingFailure = Boolean(run && run.status === 'failed' && isBillingFailure(String(run.error || '')) &&
+      Date.now() - Date.parse(run.finished_at || run.created_at) < PROVIDER_DOWN_SECONDS * 1000);   // after that the retry button returns, so a top-up is found out
+    const providerDown = recentBillingFailure || Boolean(await redisGet(PROVIDER_DOWN_KEY));
+    scout = scoutState({ run, wallet, startedToday, cap: Number(process.env.SCOUT_MAX_RUNS_PER_DAY) || 5, canRun: scoutCanRun(), providerDown });
   } catch (err) { logDegraded('finder:scout-state', err); }
 
   res.status(200).json({
@@ -667,10 +678,19 @@ async function handleScoutStep(req, res) {
           const { data: run } = await svc.from('scout_runs').select('id, user_id, charged').eq('id', runId).maybeSingle();
           await refundRun(svc, run);
         }
-        await notifyOperator({
-          subject: `Scout ${out.state}: ${out.candidates || 0} candidatos`,
-          text: `Run ${runId}\nEstado: ${out.state} ${out.detail || ''}\nCosto aprox: US$${out.cost_usd || 0}\n\nRevisar con: node scripts/scout.mjs list`
-        });
+        if (out.state === 'done') await redisSet(PROVIDER_DOWN_KEY, 0, 60);   // a run got through: the provider is funded again
+        if (out.outage === 'billing') {
+          await redisSet(PROVIDER_DOWN_KEY, 1, PROVIDER_DOWN_SECONDS);
+          await notifyOperator({
+            subject: 'Scout detenido: la cuenta de Anthropic no tiene saldo',
+            text: `Run ${runId} fallo porque Anthropic respondio "credit balance is too low".\nNo hay busquedas posibles hasta recargar saldo: console.anthropic.com > Plans & Billing.\nLos compradores ven "Scout no esta disponible" y no se les cobra (se pausa 30 min y se vuelve a probar sola).`
+          });
+        } else {
+          await notifyOperator({
+            subject: `Scout ${out.state}: ${out.candidates || 0} candidatos`,
+            text: `Run ${runId}\nEstado: ${out.state} ${out.detail || ''}\nCosto aprox: US$${out.cost_usd || 0}\n\nRevisar con: node scripts/scout.mjs list`
+          });
+        }
       }
       // 'busy' means another invocation holds this run's lease; it will continue it.
     } catch (err) {
