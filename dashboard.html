@@ -231,6 +231,14 @@
     </div>
   </div>
 
+  <!-- PropLync Mini trial: when it ends and how to keep the page. Activation is a
+       placeholder until Mercado Pago is connected (plan, step 4). -->
+  <div class="wa-nudge" id="mini-trial" hidden style="margin-bottom:18px">
+    <span id="mini-trial-text"></span>
+    <button class="btn btn-gold btn-sm" id="mini-activate" type="button" data-es="Activar mi pagina · MXN 249" data-en="Activate my page · MXN 249">Activar mi pagina · MXN 249</button>
+    <span class="form-hint" id="mini-activate-msg"></span>
+  </div>
+
   <!-- El boton de WhatsApp de la ficha publica solo existe si la agencia
        guardo su numero, y ninguna lo habia guardado: la funcion estaba
        construida y apagada. El aviso vive aqui, en el camino de todos los
@@ -650,7 +658,31 @@
         ? (lang === 'es' ? 'Alcanzaste el limite de tu plan' : 'You have reached your plan limit')
         : '';
     }
+    renderMiniTrial(p.trial);
   }
+
+  /* The mini trial's notice: days left (or paused) and the way to keep the page. */
+  function renderMiniTrial(trial) {
+    const box = document.getElementById('mini-trial');
+    if (!box) return;
+    box.hidden = !trial;
+    if (!trial) return;
+    const ends = new Date(trial.endsAt);
+    const days = Math.max(0, Math.ceil((ends - Date.now()) / 86400000));
+    const when = ends.toLocaleDateString(lang === 'es' ? 'es-MX' : 'en-US', { day: 'numeric', month: 'long' });
+    document.getElementById('mini-trial-text').textContent = trial.expired
+      ? (lang === 'es' ? 'Tu prueba gratis termino y tu pagina esta en pausa (no se borro nada). ' : 'Your free trial has ended and your page is paused (nothing was deleted). ')
+      : (lang === 'es' ? 'Prueba gratis: te quedan ' + days + ' dias (hasta el ' + when + '), hasta 3 propiedades. ' : 'Free trial: ' + days + ' days left (until ' + when + '), up to 3 listings. ');
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('mini-activate');
+    if (btn) btn.addEventListener('click', function () {
+      document.getElementById('mini-activate-msg').textContent = lang === 'es'
+        ? 'Muy pronto podras pagar con Mercado Pago aqui mismo.'
+        : 'Very soon you will be able to pay with Mercado Pago right here.';
+    });
+  });
 
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
   const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;

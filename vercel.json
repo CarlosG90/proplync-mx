@@ -65,6 +65,10 @@
       "destination": "/brief"
     },
     {
+      "source": "/pagina",
+      "destination": "/mini"
+    },
+    {
       "source": "/privacidad",
       "destination": "/privacy"
     },

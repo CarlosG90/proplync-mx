@@ -463,6 +463,11 @@
     document.getElementById('ag-foot-by').textContent =
       '© ' + new Date().getFullYear() + ' ' + (agency.name || '');
 
+    /* A mini page's badge sends other agents to the self-serve page, not the agency SaaS:
+       every page an agent shares is the next agent's ad. */
+    var powered = document.querySelector('.ag-powered');
+    if (powered && agency.plan === 'mini') powered.href = '/mini?ref=badge';
+
     // The page is the agency's, so it is their name in the tab and in search
     // results, not ours.
     document.title = (agency.name || 'Portafolio') +

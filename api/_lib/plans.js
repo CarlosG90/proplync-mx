@@ -56,6 +56,21 @@ export const PLANS = {
 
 export const DEFAULT_PLAN = 'free';
 
+/* The mini free trial: a page with up to 3 properties for 30 days, then paused
+   until the agent pays (MXN 249 once for 10, or monthly with the CRM). A trial is
+   a `mini` row that carries an expiry; paying clears the date. */
+export const MINI_TRIAL_DAYS = 30;
+export const MINI_TRIAL_LISTINGS = 3;
+
+export function isMiniTrial(agency) {
+  return Boolean(agency && String(agency.plan || '').toLowerCase() === 'mini' && agency.plan_expires_at);
+}
+
+/** How many listings this agency may have: the plan's cap, or the trial's while on trial. */
+export function listingLimit(agency) {
+  return isMiniTrial(agency) ? MINI_TRIAL_LISTINGS : planFor(agency).listings;
+}
+
 /** Resolve a plan record from whatever the agency row carries. */
 export function planFor(agency) {
   const key = String((agency && agency.plan) || DEFAULT_PLAN).toLowerCase();
@@ -123,13 +138,16 @@ export function reelAccess(agency, usedThisMonth) {
 export function planStatus(agency, listingCount) {
   const plan = planFor(agency);
   const marketing = marketingAccess(agency);
+  const limit = listingLimit(agency);
   return {
     plan: plan.id,
-    label: plan.label,
+    label: isMiniTrial(agency) ? 'Mini (prueba)' : plan.label,
     listingsUsed: listingCount,
-    listingsLimit: plan.listings === Infinity ? null : plan.listings,
+    listingsLimit: limit === Infinity ? null : limit,
     photosPerListing: plan.photos,
-    atListingLimit: listingCount >= plan.listings,
+    atListingLimit: listingCount >= limit,
+    // The mini trial's end, so the dashboard can say "tu prueba termina el ..." and offer to activate.
+    trial: isMiniTrial(agency) ? { endsAt: agency.plan_expires_at, expired: planExpired(agency) } : null,
     // Drives the lock on the dashboard's Marketing button. The server enforces
     // the same rule in api/generate.js; this only decides what the UI shows.
     marketing: {
