@@ -33,7 +33,12 @@ function reindex(publicId) {
     .catch((err) => logDegraded('search:reindex', err)));
 }
 
-const AGENCY_WRITABLE_FIELDS = ['name', 'logo_url', 'cover_url', 'primary_color', 'whatsapp_number'];
+// The last six are the agent's card on /agencia/:slug (migration 018): call,
+// email, location, services and a line about them.
+const AGENCY_WRITABLE_FIELDS = ['name', 'logo_url', 'cover_url', 'primary_color', 'whatsapp_number',
+  'phone', 'public_email', 'address', 'maps_url', 'services', 'bio'];
+const AGENCY_SELECT = 'id, name, slug, logo_url, cover_url, primary_color, whatsapp_number, ' +
+  'phone, public_email, address, maps_url, services, bio, plan, plan_expires_at';
 
 function pickAgencyWritable(body) {
   const out = {};
@@ -56,7 +61,7 @@ const IMAGE_URL = /^(https?:\/\/|data:image\/(png|jpe?g|webp|gif|avif);base64,)/
 const TEXT_LIMITS = {
   title_es: 300, title_en: 300, town: 120, neighborhood: 120,
   description_es: 10000, description_en: 10000, property_type: 60,
-  name: 120
+  name: 120, address: 200, bio: 600
 };
 const NUMERIC = ['bedrooms', 'bathrooms', 'parking', 'size', 'amount', 'lat', 'lng'];
 
@@ -105,7 +110,12 @@ function validateListingFields(fields) {
   return out;
 }
 
-function validateAgencyFields(fields) {
+const PHONE = /^[0-9+()\-\s]{6,25}$/;
+// Quotes and angle brackets are kept out so a mailto: built from this is one plain address.
+const EMAIL = /^[^\s"'<>@]+@[^\s"'<>@]+\.[^\s"'<>@]+$/;
+
+/** Exported for test/plans.test.mjs: the card fields are the newest buyer-visible text. */
+export function validateAgencyFields(fields) {
   const out = { ...fields };
   if ('name' in out) out.name = checkText('name', out.name);
   if ('logo_url' in out) out.logo_url = checkImageUrl('logo_url', out.logo_url);
@@ -116,10 +126,32 @@ function validateAgencyFields(fields) {
     }
     out.primary_color = out.primary_color.trim();
   }
-  if ('whatsapp_number' in out && out.whatsapp_number != null && out.whatsapp_number !== '') {
-    if (typeof out.whatsapp_number !== 'string' || !/^[0-9+()\-\s]{6,25}$/.test(out.whatsapp_number)) {
-      throw new BadField('invalid_whatsapp_number');
+  for (const key of ['whatsapp_number', 'phone']) {
+    if (key in out && out[key] != null && out[key] !== '') {
+      if (typeof out[key] !== 'string' || !PHONE.test(out[key])) throw new BadField('invalid_' + key);
     }
+  }
+  if ('public_email' in out && out.public_email != null && out.public_email !== '') {
+    if (typeof out.public_email !== 'string' || out.public_email.length > 120 || !EMAIL.test(out.public_email.trim())) {
+      throw new BadField('invalid_public_email');
+    }
+    out.public_email = out.public_email.trim().toLowerCase();
+  }
+  if ('address' in out) out.address = checkText('address', out.address);
+  if ('bio' in out) out.bio = checkText('bio', out.bio);
+  // A page link only: http(s), so the "Ubicacion" button can never run script.
+  if ('maps_url' in out && out.maps_url != null && out.maps_url !== '') {
+    if (typeof out.maps_url !== 'string' || out.maps_url.length > 500 || !/^https?:\/\/\S+$/i.test(out.maps_url.trim())) {
+      throw new BadField('invalid_maps_url');
+    }
+    out.maps_url = out.maps_url.trim();
+  }
+  if ('services' in out && out.services != null) {
+    if (!Array.isArray(out.services) || out.services.length > 8) throw new BadField('invalid_services');
+    out.services = out.services.map((s) => {
+      if (typeof s !== 'string' || s.length > 40) throw new BadField('invalid_services');
+      return s.trim();
+    }).filter(Boolean);
   }
   return out;
 }
@@ -135,7 +167,7 @@ async function handleAgencyResource(req, res, auth) {
     const db = getUserClient(auth.token);
     const { data, error } = await db
       .from('agencies')
-      .select('id, name, slug, logo_url, cover_url, primary_color, whatsapp_number')
+      .select(AGENCY_SELECT)
       .eq('id', auth.agencyId)
       .single();
     if (error) throw error;
@@ -150,7 +182,7 @@ async function handleAgencyResource(req, res, auth) {
       .from('agencies')
       .update(fields)
       .eq('id', auth.agencyId)
-      .select('id, name, slug, logo_url, cover_url, primary_color, whatsapp_number')
+      .select(AGENCY_SELECT)
       .single();
     if (error) throw error;
     res.status(200).json({ agency: data });

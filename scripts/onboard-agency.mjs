@@ -74,7 +74,7 @@ async function main() {
   if (!agencyName) die('--agency cannot be empty.');
 
   const plan = String(args.plan || 'pro').toLowerCase();
-  if (!['free', 'pro', 'vip'].includes(plan)) die('--plan must be free, pro or vip.');
+  if (!['free', 'pro', 'vip', 'mini'].includes(plan)) die('--plan must be free, pro, vip or mini.');
 
   const password = args.password || generatePassword();
   if (password.length < 6) die('Password must be at least 6 characters.');
