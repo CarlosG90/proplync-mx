@@ -47,14 +47,21 @@ export const PLANS = {
   vip:  { id: 'vip',  label: 'VIP',     listings: Infinity, photos: 30, agents: 10, marketing: true,  marketingTrials: Infinity, instagram: true,  reelsPerMonth: 25 },
   // `mini` is the self-serve "all your properties in one link" page sold from
   // ads (docs/CONTEXT-MAP.md, "Mini pages"). It is a page, not the SaaS: no
-  // marketing, no Instagram, no Reels, one agent. The listing cap matches the
-  // offer it competes with (10 properties). Its free trial is the only plan
-  // with an expiry, carried on agencies.plan_expires_at (migration 018) and
-  // read by planExpired() below.
+  // marketing, no Instagram, no Reels, one agent. 10 properties, as in the offer
+  // it competes with. It is PAID before it goes live: MXN 249 buys 3 months
+  // (MINI_PERIOD_DAYS), carried on agencies.plan_expires_at (migration 018) and
+  // read by pageActive() below; renewing adds another period.
   mini: { id: 'mini', label: 'Mini',    listings: 10,       photos: 10, agents: 1,  marketing: false, marketingTrials: 0,        instagram: false, reelsPerMonth: 0  }
 };
 
 export const DEFAULT_PLAN = 'free';
+
+/* What one Mini payment buys, and the prices the pages quote. The monthly plan
+   with the CRM (30 properties) arrives with Mercado Pago; until then both
+   payments are placeholders and an operator activates by hand (scripts/mini.mjs). */
+export const MINI_PERIOD_DAYS = 90;
+export const MINI_PRICE_MXN = 249;
+export const MINI_MONTHLY_PRICE_MXN = 149;
 
 /** Resolve a plan record from whatever the agency row carries. */
 export function planFor(agency) {
@@ -62,18 +69,35 @@ export function planFor(agency) {
   return PLANS[key] || PLANS[DEFAULT_PLAN];
 }
 
+/** How many listings this agency may have. One place, so the dashboard and the API agree. */
+export function listingLimit(agency) {
+  return planFor(agency).listings;
+}
+
+const isMini = (agency) => Boolean(agency && String(agency.plan || '').toLowerCase() === 'mini');
+
 /**
- * Has this agency's plan run out? Only the mini free trial carries a date; every
- * other row has plan_expires_at null and never expires. The public page uses
- * this to pause itself (api/search.js ?agency=); the dashboard keeps working so
- * the agent can pay or upgrade. Nothing is deleted on expiry. A date that does
- * not parse is treated as no expiry: a bad value must not take a page down.
+ * Is this agency's public page live? Every plan except mini: always. A mini page
+ * is live only while it is paid for: plan_expires_at set and in the future. Not
+ * paid yet (null) or the period over: the page shows a paused notice and no
+ * listings (api/search.js ?agency=); nothing is deleted, and the dashboard keeps
+ * working so the agent can pay or renew. An unreadable date counts as not paid:
+ * a mini page is only shown on proof of payment.
  */
-export function planExpired(agency, now = Date.now()) {
-  const until = agency && agency.plan_expires_at;
-  if (!until) return false;
-  const t = Date.parse(until);
-  return Number.isFinite(t) && t <= now;
+export function pageActive(agency, now = Date.now()) {
+  if (!isMini(agency)) return true;
+  const t = Date.parse(agency.plan_expires_at || '');
+  return Number.isFinite(t) && t > now;
+}
+
+/** The Mini page's state for the dashboard: not yet paid, active until a date, or lapsed. */
+export function miniState(agency, now = Date.now()) {
+  if (!isMini(agency)) return null;
+  const until = agency.plan_expires_at || null;
+  return {
+    state: !until ? 'pending' : pageActive(agency, now) ? 'active' : 'expired',
+    activeUntil: until
+  };
 }
 
 /**
@@ -123,13 +147,16 @@ export function reelAccess(agency, usedThisMonth) {
 export function planStatus(agency, listingCount) {
   const plan = planFor(agency);
   const marketing = marketingAccess(agency);
+  const limit = listingLimit(agency);
   return {
     plan: plan.id,
     label: plan.label,
     listingsUsed: listingCount,
-    listingsLimit: plan.listings === Infinity ? null : plan.listings,
+    listingsLimit: limit === Infinity ? null : limit,
     photosPerListing: plan.photos,
-    atListingLimit: listingCount >= plan.listings,
+    atListingLimit: listingCount >= limit,
+    // A Mini page's payment state, so the dashboard can say "activa hasta ..." and offer to pay or renew.
+    mini: miniState(agency),
     // Drives the lock on the dashboard's Marketing button. The server enforces
     // the same rule in api/generate.js; this only decides what the UI shows.
     marketing: {

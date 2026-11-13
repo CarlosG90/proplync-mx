@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="Tus propiedades en un solo link · PropLync Mini" data-en="Your properties in one link · PropLync Mini">Tus propiedades en un solo link · PropLync Mini</title>
+<meta name="description" content="Pega tus propiedades como las mandas por WhatsApp y en minutos tienes una pagina con tu marca para compartir. Gratis 30 dias.">
+<meta property="og:title" content="Tus propiedades en un solo link, con tu marca">
+<meta property="og:description" content="Pega tu inventario de WhatsApp y en minutos tienes tu pagina. Boton Me interesa directo a tu WhatsApp. Gratis 30 dias.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<!--
+  WHY THIS PAGE EXISTS
+  PropLync Mini (docs/CONTEXT-MAP.md, "Mini pages"): the self-serve door for agents
+  who arrive from a social ad. A competitor sells this by hand (MXN 250, 24 hours);
+  here the agent pastes their WhatsApp inventory, checks what the AI read, proves
+  their email with a code, and their /agencia/:slug page is ready in a few minutes.
+  They see exactly how it will look before paying; it goes public once paid
+  (MXN 249 for 3 months, up to 10 properties; plans.js). Until Mercado Pago is
+  connected the payment is collected by hand and the page is released with
+  scripts/mini.mjs activate. Everything the AI read is shown for the agent to
+  correct before it is saved.
+-->
+<style>
+  [hidden]{display:none !important}
+  body{background:var(--sand,#f5f1ea)}
+  .mn-hero{background:var(--ink);color:var(--on-ink);padding:44px 0 36px}
+  .mn-eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+  .mn-hero h1{font-family:var(--display);font-weight:300;font-size:clamp(2rem,6vw,3.2rem);line-height:1.08;margin:12px 0 14px;color:var(--on-ink)}
+  .mn-hero p{color:var(--on-ink-dim);max-width:56ch;line-height:1.55}
+  .mn-points{display:grid;gap:10px;margin-top:22px;max-width:560px;padding:0}
+  .mn-points li{list-style:none;display:flex;gap:10px;color:var(--on-ink);font-size:.95rem}
+  .mn-points li::before{content:"✓";color:var(--gold);font-weight:700}
+  .mn-main{padding:28px 0 80px}
+  .mn-card{background:var(--white);border:1px solid var(--line);border-radius:var(--radius-lg);padding:22px;max-width:720px;margin:0 auto 18px}
+  .mn-card h2{font-family:var(--display);font-weight:400;font-size:1.35rem;color:var(--ink);margin-bottom:6px}
+  .mn-hint{color:var(--on-sand-dim);font-size:.88rem;line-height:1.5}
+  .mn-card textarea{width:100%;min-height:180px;margin-top:12px;font:inherit;font-size:.95rem;padding:12px;border:1px solid var(--line);border-radius:var(--radius);resize:vertical;box-sizing:border-box}
+  .mn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+  .mn-msg{margin-top:10px;font-size:.88rem;color:var(--on-sand-dim)}
+  .mn-msg.err{color:#b4442f}
+  .mn-prop{border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-top:12px}
+  .mn-prop.off{opacity:.5}
+  .mn-prop-head{display:flex;gap:10px;align-items:center;color:var(--ink)}
+  .mn-prop-head input[type=checkbox]{width:20px;height:20px;flex:none}
+  .mn-prop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+  .mn-prop-grid label{font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--on-sand-dim);display:flex;flex-direction:column;gap:4px}
+  .mn-prop-grid .wide{grid-column:1 / -1}
+  .mn-in{font:inherit;font-family:var(--body);font-size:.92rem;padding:9px 10px;border:1px solid var(--line);border-radius:8px;width:100%;box-sizing:border-box;background:var(--white);color:var(--ink);text-transform:none;letter-spacing:0}
+  .mn-missing{margin-top:8px;font-size:.78rem;color:#9a6a1a}
+  .mn-link{font-family:var(--mono);font-size:.82rem;word-break:break-all;background:var(--sand,#f5f1ea);padding:10px 12px;border-radius:8px;margin-top:10px;color:var(--ink)}
+  .mn-tiers{display:grid;gap:12px;max-width:720px;margin:0 auto}
+  .mn-tier{background:var(--white);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px}
+  .mn-tier b{font-family:var(--display);font-weight:400;font-size:1.15rem;color:var(--ink)}
+  .mn-tier .price{font-family:var(--mono);font-weight:700;color:var(--ink);margin:6px 0}
+  .mn-tier p{color:var(--on-sand-dim);font-size:.88rem;line-height:1.5}
+  .mn-tier.best{border-color:var(--gold)}
+  .mn-section-title{font-family:var(--display);font-weight:400;font-size:1.5rem;color:var(--ink);text-align:center;margin:30px 0 14px}
+  /* The preview: the agent's own page in miniature, from what they pasted. */
+  .mn-sub{font-family:var(--display);font-weight:400;font-size:1.1rem;color:var(--ink);margin:22px 0 4px}
+  .mn-preview{margin-top:14px;border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;background:var(--sand,#f5f1ea);position:relative}
+  .mn-pv-ribbon{position:absolute;top:10px;right:10px;z-index:2;font-family:var(--mono);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;background:var(--gold);color:var(--ink);padding:4px 9px;border-radius:999px}
+  .mn-pv-head{background:var(--ink);color:var(--on-ink);padding:22px 18px}
+  .mn-pv-head .eyebrow{font-family:var(--mono);font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+  .mn-pv-head .name{font-family:var(--display);font-weight:300;font-size:1.6rem;line-height:1.15;margin:6px 0 12px}
+  .mn-pv-wa{display:inline-block;background:var(--gold);color:var(--ink);font-weight:600;font-size:.8rem;padding:9px 16px;border-radius:999px}
+  .mn-pv-grid{display:grid;gap:12px;padding:14px}
+  .mn-pv-grid .pcard{cursor:default}
+  .mn-pv-grid .pcard:hover{transform:none;box-shadow:none}
+  .mn-pv-grid .pcard-photo{aspect-ratio:5/2;background:#142237}
+  .mn-pv-cta{font-weight:600;font-size:.74rem;padding:8px 14px;border-radius:999px;background:var(--gold);color:var(--ink);white-space:nowrap}
+  @media (min-width:760px){ .mn-tiers{grid-template-columns:repeat(2,1fr)} .mn-pv-grid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:480px){ .mn-prop-grid{grid-template-columns:minmax(0,1fr)} .mn-card{padding:18px} }
+</style>
+</head>
+<body data-page="mini">
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/" aria-label="PropLync.mx">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 23.4h10.8" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" opacity=".45"/></svg>
+      <span class="wordmark">PropLync<span class="accent">.mx</span></span>
+    </a>
+    <div class="navtools">
+      <div class="lang" role="group" aria-label="Language">
+        <button id="es" class="on" onclick="setLang('es')">ES</button>
+        <button id="en" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<section class="mn-hero">
+  <div class="wrap">
+    <div class="mn-eyebrow" data-es="PropLync Mini · para asesores" data-en="PropLync Mini · for agents">PropLync Mini · para asesores</div>
+    <h1 data-es="Tus propiedades en un solo link, con tu marca." data-en="All your properties in one link, with your brand.">Tus propiedades en un solo link, con tu marca.</h1>
+    <p data-es="Pega tus propiedades como las mandas por WhatsApp. En unos minutos tienes tu pagina lista para compartir: precio, ficha y un boton Me interesa directo a tu WhatsApp." data-en="Paste your properties the way you send them on WhatsApp. In a few minutes your page is ready to share: price, details and an I'm interested button straight to your WhatsApp.">Pega tus propiedades como las mandas por WhatsApp. En unos minutos tienes tu pagina lista para compartir: precio, ficha y un boton Me interesa directo a tu WhatsApp.</p>
+    <ul class="mn-points">
+      <li data-es="Lista en minutos, no en 24 horas" data-en="Ready in minutes, not in 24 hours">Lista en minutos, no en 24 horas</li>
+      <li data-es="Tu la actualizas cuando quieras" data-en="You update it whenever you want">Tu la actualizas cuando quieras</li>
+      <li data-es="Ve como queda antes de pagar · MXN 249 por 3 meses" data-en="See how it looks before you pay · MXN 249 for 3 months">Ve como queda antes de pagar · MXN 249 por 3 meses</li>
+    </ul>
+  </div>
+</section>
+
+<main class="mn-main">
+  <div class="wrap">
+    <div class="mn-card" id="mn-closed" hidden>
+      <h2 data-es="Abrimos muy pronto" data-en="Opening very soon">Abrimos muy pronto</h2>
+      <p class="mn-hint" data-es="Estamos preparando las primeras paginas. Vuelve en unos dias." data-en="We are preparing the first pages. Come back in a few days.">Estamos preparando las primeras paginas. Vuelve en unos dias.</p>
+    </div>
+
+    <!-- 1. Paste -->
+    <section class="mn-card" id="step-paste">
+      <h2 data-es="1. Pega tus propiedades" data-en="1. Paste your properties">1. Pega tus propiedades</h2>
+      <p class="mn-hint" data-es="Copia el mensaje de WhatsApp con tu inventario (una o varias propiedades). La IA lo ordena y tu revisas todo antes de publicar." data-en="Copy the WhatsApp message with your inventory (one or several properties). The AI sorts it out and you check everything before publishing.">Copia el mensaje de WhatsApp con tu inventario (una o varias propiedades). La IA lo ordena y tu revisas todo antes de publicar.</p>
+      <textarea id="mn-text" maxlength="12000" placeholder="Casa en Jardines del Moral, 3 rec, 2 baños, 180 m², $3,450,000&#10;Depa en Centro, 2 rec, renta $12,500 al mes, amueblado"></textarea>
+      <div class="mn-row">
+        <button class="btn btn-gold" id="mn-read" data-es="Crear mi pagina" data-en="Create my page">Crear mi pagina</button>
+      </div>
+      <div class="mn-msg" id="mn-read-msg" aria-live="polite"></div>
+    </section>
+
+    <!-- 2. Review -->
+    <section class="mn-card" id="step-review" hidden>
+      <h2 data-es="2. Asi se vera tu pagina" data-en="2. This is how your page will look">2. Asi se vera tu pagina</h2>
+      <p class="mn-hint" data-es="Esta es una vista previa con tus propiedades. Abajo puedes corregir lo que haga falta (hasta 10 propiedades)." data-en="This is a preview with your properties. Below you can fix anything that needs it (up to 10 properties).">Esta es una vista previa con tus propiedades. Abajo puedes corregir lo que haga falta (hasta 10 propiedades).</p>
+      <div class="mn-preview" id="mn-preview" aria-label="Vista previa"></div>
+      <h3 class="mn-sub" data-es="Revisa los datos" data-en="Check the details">Revisa los datos</h3>
+      <div id="mn-props"></div>
+      <div class="mn-prop-grid" style="margin-top:18px">
+        <label class="wide"><span data-es="Tu nombre o el de tu inmobiliaria" data-en="Your name or your agency's">Tu nombre o el de tu inmobiliaria</span>
+          <input class="mn-in" id="mn-name" maxlength="120" autocomplete="organization"></label>
+        <label class="wide"><span data-es="Tu WhatsApp (con lada, ej. +52 998 123 4567)" data-en="Your WhatsApp (with country code, e.g. +52 998 123 4567)">Tu WhatsApp (con lada, ej. +52 998 123 4567)</span>
+          <input class="mn-in" id="mn-wa" type="tel" maxlength="25" autocomplete="tel" placeholder="+52 998 123 4567"></label>
+      </div>
+      <div class="mn-row">
+        <button class="btn btn-gold" id="mn-next" data-es="Pagar y publicar · MXN 249" data-en="Pay and publish · MXN 249">Pagar y publicar · MXN 249</button>
+        <button class="btn btn-outline" id="mn-back" data-es="Volver a pegar" data-en="Paste again">Volver a pegar</button>
+      </div>
+      <div class="mn-msg" id="mn-review-msg" aria-live="polite"></div>
+    </section>
+
+    <!-- 3. Email code -->
+    <section class="mn-card" id="step-signin" hidden>
+      <h2 data-es="3. Confirma tu correo" data-en="3. Confirm your email">3. Confirma tu correo</h2>
+      <p class="mn-hint" data-es="Te mandamos un codigo para guardar tu pagina a tu nombre. Con ese mismo correo entras despues a editarla; no necesitas contrasena." data-en="We'll send you a code to save the page under your name. You use the same email later to edit it; no password needed.">Te mandamos un codigo para guardar tu pagina a tu nombre. Con ese mismo correo entras despues a editarla; no necesitas contrasena.</p>
+      <div class="mn-row">
+        <input class="mn-in" id="mn-email" type="email" autocomplete="email" placeholder="tu@correo.com" style="flex:1 1 220px;width:auto">
+        <button class="btn btn-gold" id="mn-send" data-es="Enviar codigo" data-en="Send code">Enviar codigo</button>
+      </div>
+      <div class="mn-row" id="mn-code-row" hidden>
+        <input class="mn-in" id="mn-code" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" style="flex:1 1 160px;width:auto">
+        <button class="btn btn-gold" id="mn-verify" data-es="Confirmar" data-en="Confirm">Confirmar</button>
+      </div>
+      <div class="mn-msg" id="mn-signin-msg" aria-live="polite"></div>
+    </section>
+
+    <!-- 4. Done -->
+    <section class="mn-card" id="step-done" hidden>
+      <h2 data-es="Tu pagina esta lista y guardada" data-en="Your page is ready and saved">Tu pagina esta lista y guardada</h2>
+      <p class="mn-hint" data-es="Te contactamos por WhatsApp para el pago (MXN 249 por 3 meses). En cuanto se confirme, tu pagina se publica de inmediato en este link:" data-en="We will contact you on WhatsApp for the payment (MXN 249 for 3 months). As soon as it is confirmed, your page goes live at this link:">Te contactamos por WhatsApp para el pago (MXN 249 por 3 meses). En cuanto se confirme, tu pagina se publica de inmediato en este link:</p>
+      <div class="mn-link" id="mn-url"></div>
+      <div class="mn-row">
+        <button class="btn btn-outline" id="mn-copy" data-es="Copiar link" data-en="Copy link">Copiar link</button>
+        <a class="btn btn-gold" href="/dashboard" data-es="Agregar fotos y editar" data-en="Add photos and edit">Agregar fotos y editar</a>
+      </div>
+      <p class="mn-hint" style="margin-top:14px" data-es="Mientras tanto puedes agregar fotos y ajustar tus datos desde tu panel." data-en="Meanwhile you can add photos and adjust your details from your dashboard.">Mientras tanto puedes agregar fotos y ajustar tus datos desde tu panel.</p>
+    </section>
+
+    <h2 class="mn-section-title" data-es="Precios" data-en="Pricing">Precios</h2>
+    <div class="mn-tiers">
+      <div class="mn-tier best">
+        <b data-es="3 meses" data-en="3 months">3 meses</b>
+        <div class="price">MXN $249</div>
+        <p data-es="Hasta 10 propiedades con boton Me interesa a tu WhatsApp. Se publica en cuanto pagas y la editas cuando quieras. Sin mensualidad: renuevas cada 3 meses si quieres seguir." data-en="Up to 10 properties with an I'm interested button to your WhatsApp. Goes live as soon as you pay and you edit it whenever you want. No monthly fee: renew every 3 months if you want to keep it.">Hasta 10 propiedades con boton Me interesa a tu WhatsApp. Se publica en cuanto pagas y la editas cuando quieras. Sin mensualidad: renuevas cada 3 meses si quieres seguir.</p>
+        <a class="btn btn-gold" href="#step-paste" style="margin-top:10px" data-es="Empezar" data-en="Start">Empezar</a>
+      </div>
+      <div class="mn-tier">
+        <b data-es="Mensual + CRM" data-en="Monthly + CRM">Mensual + CRM</b>
+        <div class="price" data-es="MXN $149 / mes" data-en="MXN $149 / month">MXN $149 / mes</div>
+        <p data-es="Hasta 30 propiedades, sin marca de PropLync, y cada Me interesa queda como prospecto en tu CRM con notas y seguimientos." data-en="Up to 30 properties, no PropLync badge, and every I'm interested becomes a lead in your CRM with notes and follow-ups.">Hasta 30 propiedades, sin marca de PropLync, y cada Me interesa queda como prospecto en tu CRM con notas y seguimientos.</p>
+        <a class="btn btn-outline" href="#step-paste" style="margin-top:10px" data-es="Empezar" data-en="Start">Empezar</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/js/escape.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/supabase-client.js"></script>
+<script>
+(function () {
+  'use strict';
+  var MAX = 10;   // plans.js: the Mini page holds up to 10 properties
+  function $(id) { return document.getElementById(id); }
+  function t(es, en) { return document.documentElement.lang === 'en' ? en : es; }
+  function msg(el, text, isErr) { el.textContent = text || ''; el.classList.toggle('err', !!isErr); }
+  function show(id) {
+    ['step-paste', 'step-review', 'step-signin', 'step-done'].forEach(function (s) { $(s).hidden = s !== id; });
+    $(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  var props = [];     // what the AI read, as the agent corrects it
+  var email = '';
+
+  /* The door can be closed with one setting (MINI_SIGNUP); say so up front instead of after the work. */
+  fetch('/api/onboard?action=mini-status').then(function (r) { return r.json(); }).then(function (d) {
+    if (d && d.open) return;
+    $('mn-closed').hidden = false;
+    $('mn-read').disabled = true;
+  }).catch(function () { /* unknown: let them try; the publish answer will say */ });
+
+  /* ---------- 1. read the pasted inventory ---------- */
+  $('mn-read').addEventListener('click', async function () {
+    var btn = this;
+    var text = $('mn-text').value.trim();
+    if (text.length < 20) { msg($('mn-read-msg'), t('Pega al menos una propiedad con su precio.', 'Paste at least one property with its price.'), true); return; }
+    btn.disabled = true;
+    msg($('mn-read-msg'), t('Leyendo tus propiedades…', 'Reading your properties…'), false);
+    try {
+      var r = await fetch('/api/extract?action=batch', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: text }) });
+      var d = await r.json().catch(function () { return {}; });
+      if (r.status === 429) { msg($('mn-read-msg'), t('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.'), true); return; }
+      if (!r.ok) { msg($('mn-read-msg'), t('No pudimos leerlo. Intenta de nuevo en un momento.', 'We could not read it. Try again in a moment.'), true); return; }
+      if (!d.properties || !d.properties.length) { msg($('mn-read-msg'), t('No encontramos propiedades en ese texto. Incluye al menos tipo, zona y precio.', 'We found no properties in that text. Include at least type, area and price.'), true); return; }
+      props = d.properties.map(function (x, i) { return Object.assign({ include: i < MAX, missing: x.missing || [] }, x.property); });
+      msg($('mn-read-msg'), '', false);
+      renderProps();
+      renderPreview();
+      show('step-review');
+    } catch (e) {
+      msg($('mn-read-msg'), t('Sin conexion. Intenta de nuevo.', 'No connection. Try again.'), true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  /* ---------- 2. review: every field the AI read is editable ---------- */
+  var MISSING_LBL = { town: ['ciudad', 'town'], amount: ['precio', 'price'], currency: ['moneda', 'currency'], bedrooms: ['recamaras', 'bedrooms'], size: ['m²', 'm²'] };
+
+  function field(i, key, label, numeric) {
+    var v = props[i][key];
+    var shown = v == null || (numeric && !v) ? '' : v;   // 0 means "not given", so show an empty box, not a fact
+    return '<label' + (key === 'title' ? ' class="wide"' : '') + '><span>' + escapeHtml(label) + '</span>' +
+      '<input class="mn-in" data-i="' + i + '" data-k="' + key + '"' + (numeric ? ' type="number" min="0" inputmode="numeric"' : '') +
+      ' value="' + escapeHtml(String(shown)) + '"></label>';
+  }
+
+  function select(i, key, options, label) {
+    return '<label><span>' + escapeHtml(label) + '</span><select class="mn-in" data-i="' + i + '" data-k="' + key + '">' +
+      options.map(function (o) { return '<option value="' + o[0] + '"' + (props[i][key] === o[0] ? ' selected' : '') + '>' + escapeHtml(o[1]) + '</option>'; }).join('') +
+      '</select></label>';
+  }
+
+  function renderProps() {
+    var en = document.documentElement.lang === 'en';
+    $('mn-props').innerHTML = props.map(function (p, i) {
+      var miss = (p.missing || []).filter(function (m) { return MISSING_LBL[m]; }).map(function (m) { return MISSING_LBL[m][en ? 1 : 0]; });
+      return '<div class="mn-prop' + (p.include ? '' : ' off') + '">' +
+        '<div class="mn-prop-head"><input type="checkbox" data-inc="' + i + '"' + (p.include ? ' checked' : '') + ' aria-label="' + escapeHtml(t('Publicar esta propiedad', 'Publish this property')) + '">' +
+        '<strong>' + escapeHtml(p.title || t('Propiedad', 'Property')) + '</strong></div>' +
+        '<div class="mn-prop-grid">' +
+          field(i, 'title', t('Titulo', 'Title')) +
+          field(i, 'amount', t('Precio', 'Price'), true) +
+          select(i, 'currency', [['', t('Moneda…', 'Currency…')], ['MXN', 'MXN'], ['USD', 'USD']], t('Moneda', 'Currency')) +
+          select(i, 'operation', [['sale', t('Venta', 'Sale')], ['rental', t('Renta', 'Rent')]], t('Operacion', 'Operation')) +
+          field(i, 'town', t('Ciudad', 'Town')) +
+          field(i, 'neighborhood', t('Colonia', 'Neighbourhood')) +
+          field(i, 'bedrooms', t('Recamaras', 'Bedrooms'), true) +
+          field(i, 'bathrooms', t('Baños', 'Bathrooms'), true) +
+          field(i, 'size', 'm²', true) +
+        '</div>' +
+        (miss.length ? '<div class="mn-missing">' + escapeHtml(t('No venia en tu mensaje: ', 'Not in your message: ') + miss.join(', ')) + '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  /* The agent's page in miniature: their name, their WhatsApp button, their cards with
+     "Me interesa". Built from what they typed, so everything is escaped. */
+  function money(p) {
+    if (!p.amount) return '';
+    return (p.currency ? p.currency + ' ' : '') + '$' + Number(p.amount).toLocaleString('en-US') +
+      (p.operation === 'rental' ? (document.documentElement.lang === 'en' ? ' /mo' : ' /mes') : '');
+  }
+
+  function renderPreview() {
+    var name = $('mn-name').value.trim() || t('Tu nombre aqui', 'Your name here');
+    var cards = props.filter(function (p) { return p.include; }).map(function (p) {
+      var specs = [p.bedrooms ? p.bedrooms + ' ' + t('rec', 'bd') : '', p.bathrooms ? p.bathrooms + ' ' + t('baños', 'bath') : '', p.size ? p.size + ' m²' : '']
+        .filter(Boolean).map(function (s) { return '<span>' + escapeHtml(s) + '</span>'; }).join('');
+      return '<article class="pcard"><div class="pcard-photo"><span class="pcard-badge ' + (p.operation === 'rental' ? 'badge-rental">' + escapeHtml(t('Renta', 'Rent')) : 'badge-sale">' + escapeHtml(t('Venta', 'Sale'))) + '</span></div>' +
+        '<div class="pcard-body"><div class="pcard-loc">' + escapeHtml([p.neighborhood, p.town].filter(Boolean).join(' · ')) + '</div>' +
+        '<div class="pcard-title">' + escapeHtml(p.title || t('Propiedad', 'Property')) + '</div>' +
+        (specs ? '<div class="pcard-specs">' + specs + '</div>' : '') +
+        '<div class="pcard-foot"><span class="pcard-price">' + escapeHtml(money(p)) + '</span><span class="mn-pv-cta">' + escapeHtml(t('Me interesa', 'I am interested')) + '</span></div>' +
+        '</div></article>';
+    }).join('');
+    $('mn-preview').innerHTML =
+      '<span class="mn-pv-ribbon">' + escapeHtml(t('Vista previa', 'Preview')) + '</span>' +
+      '<div class="mn-pv-head"><div class="eyebrow">' + escapeHtml(t('Portafolio de propiedades', 'Property portfolio')) + '</div>' +
+      '<div class="name">' + escapeHtml(name) + '</div><span class="mn-pv-wa">' + escapeHtml(t('Escribir por WhatsApp', 'Message on WhatsApp')) + '</span></div>' +
+      '<div class="mn-pv-grid">' + (cards || '<p class="mn-hint">' + escapeHtml(t('Elige al menos una propiedad.', 'Pick at least one property.')) + '</p>') + '</div>';
+  }
+
+  $('mn-props').addEventListener('input', function (e) {
+    var el = e.target;
+    if (el.dataset.k) props[Number(el.dataset.i)][el.dataset.k] = el.type === 'number' ? Number(el.value || 0) : el.value;
+    renderPreview();
+  });
+  $('mn-name').addEventListener('input', renderPreview);
+  $('mn-props').addEventListener('change', function (e) {
+    var el = e.target;
+    if (el.dataset.inc != null) {
+      var i = Number(el.dataset.inc);
+      var chosen = props.filter(function (p) { return p.include; }).length;
+      if (el.checked && chosen >= MAX) {
+        el.checked = false;
+        msg($('mn-review-msg'), t('Tu pagina tiene espacio para 10 propiedades.', 'Your page has room for 10 properties.'), true);
+        return;
+      }
+      props[i].include = el.checked;
+      msg($('mn-review-msg'), '', false);
+      renderProps();
+      renderPreview();
+    } else if (el.dataset.k) {
+      props[Number(el.dataset.i)][el.dataset.k] = el.value;
+      renderPreview();
+    }
+  });
+
+  $('mn-back').addEventListener('click', function () { show('step-paste'); });
+
+  function chosenProps() { return props.filter(function (p) { return p.include; }); }
+
+  function reviewProblem() {
+    var chosen = chosenProps();
+    if (!chosen.length) return t('Elige al menos una propiedad.', 'Pick at least one property.');
+    for (var i = 0; i < chosen.length; i++) {
+      if (!String(chosen[i].title || '').trim()) return t('Cada propiedad necesita un titulo.', 'Each property needs a title.');
+      if (!chosen[i].currency) return t('Elige la moneda de cada precio (MXN o USD).', 'Pick the currency of each price (MXN or USD).');
+    }
+    if (!$('mn-name').value.trim()) return t('Escribe tu nombre o el de tu inmobiliaria.', 'Write your name or your agency\'s.');
+    if (!/^[0-9+()\-\s]{6,25}$/.test($('mn-wa').value.trim())) return t('Revisa tu WhatsApp: solo numeros, con lada.', 'Check your WhatsApp: numbers only, with country code.');
+    return '';
+  }
+
+  $('mn-next').addEventListener('click', async function () {
+    var problem = reviewProblem();
+    if (problem) { msg($('mn-review-msg'), problem, true); return; }
+    msg($('mn-review-msg'), '', false);
+    // Already signed in on this device (a reload, or a second try): publish straight away.
+    if (await getSession()) { publish($('mn-review-msg')); return; }
+    show('step-signin');
+  });
+
+  /* ---------- 3. email code (the same Supabase sign-in as /brief) ---------- */
+  $('mn-send').addEventListener('click', async function () {
+    var btn = this;
+    email = $('mn-email').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg($('mn-signin-msg'), t('Revisa tu correo.', 'Check your email.'), true); return; }
+    btn.disabled = true;
+    var r = await initSupabase().auth.signInWithOtp({ email: email, options: { emailRedirectTo: location.origin + '/mini' } });
+    btn.disabled = false;
+    if (r.error) {
+      msg($('mn-signin-msg'), /rate|seconds/i.test(r.error.message) ? t('Espera un momento antes de pedir otro codigo.', 'Wait a moment before asking for another code.') : t('No pudimos enviar el codigo. Intenta de nuevo.', 'Could not send the code. Try again.'), true);
+      return;
+    }
+    $('mn-code-row').hidden = false;
+    $('mn-code').focus();
+    msg($('mn-signin-msg'), t('Te enviamos un correo con el codigo.', 'We sent you an email with the code.'), false);
+  });
+
+  $('mn-verify').addEventListener('click', async function () {
+    var btn = this;
+    var code = $('mn-code').value.replace(/\s/g, '');
+    if (!code) return;
+    btn.disabled = true;
+    var r = await initSupabase().auth.verifyOtp({ email: email, token: code, type: 'email' });
+    btn.disabled = false;
+    if (r.error) { msg($('mn-signin-msg'), t('Ese codigo no es valido o ya vencio.', 'That code is not valid or has expired.'), true); return; }
+    msg($('mn-signin-msg'), '', false);
+    publish($('mn-signin-msg'));
+  });
+  $('mn-email').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('mn-send').click(); } });
+  $('mn-code').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('mn-verify').click(); } });
+
+  /* ---------- 4. publish ---------- */
+  var ERRORS = {
+    already_has_agency: ['Este correo ya tiene una pagina. Entra a tu panel para editarla.', 'This email already has a page. Open your dashboard to edit it.'],
+    mini_closed: ['Abrimos muy pronto. Vuelve en unos dias.', 'Opening very soon. Come back in a few days.'],
+    sign_in_required: ['Tu sesion vencio. Confirma tu correo de nuevo.', 'Your session expired. Confirm your email again.'],
+    rate_limited: ['Demasiados intentos. Espera un momento.', 'Too many attempts. Wait a moment.'],
+    invalid_whatsapp_number: ['Revisa tu WhatsApp.', 'Check your WhatsApp.']
+  };
+
+  /* Saves the page under the agent's account, not yet public: it goes live once the payment is
+     confirmed (by hand today, Mercado Pago later). */
+  async function publish(out) {
+    msg(out, t('Guardando tu pagina…', 'Saving your page…'), false);
+    try {
+      var r = await authedFetch('/api/onboard?action=mini', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          agencyName: $('mn-name').value.trim(),
+          whatsapp_number: $('mn-wa').value.trim(),
+          listings: chosenProps().map(function (p) {
+            return { title: p.title, town: p.town, neighborhood: p.neighborhood, bedrooms: p.bedrooms, bathrooms: p.bathrooms,
+                     size: p.size, parking: p.parking, operation: p.operation, currency: p.currency, amount: p.amount, features: p.features };
+          })
+        })
+      });
+      var d = await r.json().catch(function () { return {}; });
+      if (!r.ok) {
+        var e = ERRORS[d.error] || ['No pudimos publicar. Intenta de nuevo.', 'We could not publish. Try again.'];
+        msg(out, t(e[0], e[1]), true);
+        if (d.error === 'already_has_agency') {
+          var a = document.createElement('a');
+          a.href = '/dashboard'; a.className = 'btn btn-outline'; a.style.display = 'inline-block'; a.style.marginTop = '10px';
+          a.textContent = t('Ir a mi panel', 'Go to my dashboard');
+          out.appendChild(document.createElement('br')); out.appendChild(a);
+        }
+        if (d.error === 'sign_in_required') show('step-signin');
+        return;
+      }
+      $('mn-url').textContent = location.origin + '/agencia/' + encodeURIComponent(d.slug);
+      show('step-done');
+    } catch (err) {
+      msg(out, t('Sin conexion. Intenta de nuevo.', 'No connection. Try again.'), true);
+    }
+  }
+
+  $('mn-copy').addEventListener('click', function () {
+    var btn = this;
+    navigator.clipboard.writeText($('mn-url').textContent).then(function () {
+      btn.textContent = t('Copiado ✓', 'Copied ✓');
+      setTimeout(function () { btn.textContent = t('Copiar link', 'Copy link'); }, 2000);
+    }).catch(function () {});
+  });
+
+  document.addEventListener('langchange', function () { if (props.length && !$('step-review').hidden) { renderProps(); renderPreview(); } });
+})();
+</script>
+</body>
+</html>

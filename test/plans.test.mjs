@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { planFor, planExpired, marketingAccess, reelAccess } from '../api/_lib/plans.js';
+import { planFor, pageActive, miniState, marketingAccess, reelAccess } from '../api/_lib/plans.js';
+import { extendUntil } from '../scripts/mini.mjs';
 import { validateAgencyFields } from '../api/my-listings.js';
 
 // ---------- the mini plan (migration 018) ----------
@@ -21,14 +22,32 @@ test('an unknown or missing plan still falls back to free', () => {
   assert.equal(planFor(null).id, 'free');
 });
 
-test('only a row with a past plan_expires_at is expired; existing agencies never are', () => {
+test('every plan except mini is always live; a mini page only while paid for', () => {
   const now = Date.parse('2026-11-13T12:00:00Z');
-  assert.equal(planExpired({ plan: 'pro' }, now), false, 'no date: never expires');
-  assert.equal(planExpired({ plan: 'mini', plan_expires_at: null }, now), false);
-  assert.equal(planExpired({ plan: 'mini', plan_expires_at: '2026-12-13T12:00:00Z' }, now), false);
-  assert.equal(planExpired({ plan: 'mini', plan_expires_at: '2026-11-13T11:59:59Z' }, now), true);
-  assert.equal(planExpired({ plan: 'mini', plan_expires_at: 'not a date' }, now), false, 'garbage must not take a page down');
-  assert.equal(planExpired(null, now), false);
+  assert.equal(pageActive({ plan: 'pro' }, now), true);
+  assert.equal(pageActive({ plan: 'free', plan_expires_at: '2020-01-01T00:00:00Z' }, now), true, 'only mini expires');
+  assert.equal(pageActive(null, now), true);
+  assert.equal(pageActive({ plan: 'mini', plan_expires_at: null }, now), false, 'not paid yet');
+  assert.equal(pageActive({ plan: 'mini', plan_expires_at: '2027-02-11T12:00:00Z' }, now), true);
+  assert.equal(pageActive({ plan: 'mini', plan_expires_at: '2026-11-13T11:59:59Z' }, now), false, 'period over');
+  assert.equal(pageActive({ plan: 'mini', plan_expires_at: 'not a date' }, now), false, 'shown only on proof of payment');
+});
+
+test('the dashboard gets the Mini state: pending, active or expired', () => {
+  const now = Date.parse('2026-11-13T12:00:00Z');
+  assert.equal(miniState({ plan: 'pro' }, now), null);
+  assert.equal(miniState({ plan: 'mini', plan_expires_at: null }, now).state, 'pending');
+  assert.equal(miniState({ plan: 'mini', plan_expires_at: '2027-01-01T00:00:00Z' }, now).state, 'active');
+  assert.equal(miniState({ plan: 'mini', plan_expires_at: '2026-01-01T00:00:00Z' }, now).state, 'expired');
+});
+
+test('a payment adds 3 months from today, or from the current end while still running', () => {
+  const now = Date.parse('2026-11-13T00:00:00Z');
+  const day = 86400000;
+  assert.equal(Date.parse(extendUntil(null, 1, now)), now + 90 * day, 'first payment');
+  assert.equal(Date.parse(extendUntil('2026-01-01T00:00:00Z', 1, now)), now + 90 * day, 'lapsed: from today');
+  assert.equal(Date.parse(extendUntil('2026-12-13T00:00:00Z', 1, now)), Date.parse('2026-12-13T00:00:00Z') + 90 * day, 'early renewal keeps the days left');
+  assert.equal(Date.parse(extendUntil(null, 2, now)), now + 180 * day);
 });
 
 // ---------- the agent's card fields ----------

@@ -17,7 +17,7 @@ import { redisGet, redisSet } from './_lib/redis.js';
 import { logDegraded, safeDetail } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { handleSearchQuery } from './_lib/search/api.js';
-import { planExpired } from './_lib/plans.js';
+import { pageActive } from './_lib/plans.js';
 
 const EB_URL = 'https://api.easybroker.com/v1';
 const PAGE_LIMIT = 50;
@@ -445,10 +445,11 @@ export default async function handler(req, res) {
         res.status(404).json({ error: 'agency_not_found' });
         return;
       }
-      /* A mini page whose free trial ran out is paused, not deleted: the card still
-         shows (the contacts are the agent's own), the listings do not, and the page
-         says why. Decided here, not in the browser: the client secures nothing. */
-      const paused = planExpired(agency);
+      /* A Mini page not paid yet, or whose paid period is over, is paused, not
+         deleted: the card still shows (the contacts are the agent's own), the
+         listings do not, and the page says so. Decided here, not in the browser:
+         the client secures nothing. Every other plan is always live. */
+      const paused = !pageActive(agency);
       let owned = [];
       if (!paused) {
         const { data: rows, error: rowsErr } = await svc
