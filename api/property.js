@@ -12,6 +12,7 @@ import { join } from 'node:path';
 import { getServiceClient } from './_lib/supabase.js';
 import { redisGet, redisSet } from './_lib/redis.js';
 import { logDegraded, safeDetail } from './_lib/health.js';
+import { pageActive } from './_lib/plans.js';
 
 const EB_URL = 'https://api.easybroker.com/v1';
 
@@ -202,11 +203,20 @@ export default async function handler(req, res) {
       if (row) {
         // Join the owning agency so the mini-site can show its brand and a
         // WhatsApp click-to-chat CTA instead of generic Proplync branding.
-        const { data: agencyRow } = await svc
+        let { data: agencyRow } = await svc
           .from('agencies')
-          .select('name, slug, logo_url, primary_color, whatsapp_number')
+          .select('name, slug, logo_url, primary_color, whatsapp_number, plan, plan_expires_at')
           .eq('id', row.agency_id)
           .maybeSingle();
+        /* A Mini page not paid for (or lapsed) does not show its properties anywhere, this page included. */
+        if (agencyRow && !pageActive(agencyRow)) {
+          respond(404, { error: 'property_not_available' });
+          return;
+        }
+        if (agencyRow) {
+          const { plan, plan_expires_at, ...publicAgency } = agencyRow;   // the plan stays internal
+          agencyRow = publicAgency;
+        }
         respond(200, {
           property: {
             public_id: row.public_id,

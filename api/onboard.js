@@ -33,8 +33,10 @@ import { getServiceClient } from './_lib/supabase.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { safeDetail, logDegraded } from './_lib/health.js';
 import { provisionAgency } from './_lib/agency.js';
-import { MINI_TRIAL_DAYS, MINI_TRIAL_LISTINGS } from './_lib/plans.js';
+import { PLANS, MINI_PRICE_MXN, MINI_PERIOD_DAYS } from './_lib/plans.js';
 import { validateListingFields } from './my-listings.js';
+import { notifyOperator } from './_lib/notify.js';
+import { waitUntil } from '@vercel/functions';
 
 /* ── PropLync Mini: self-serve signup (?action=mini, ?action=mini-status) ──────
    WHY A SECOND DOOR: the Mini page is sold from social ads to agents who have
@@ -44,8 +46,11 @@ import { validateListingFields } from './my-listings.js';
        does signInWithOtp/verifyOtp), so the request carries a real session;
      - one agency per account: an account that already belongs to an agency is
        sent to its dashboard instead of getting a second one;
-     - the result is a 30-day trial with at most 3 published properties and no
-       paid modules (plans.js: mini);
+     - nothing goes public before payment: the agency is created with plan
+       `mini` and no paid period (plans.js pageActive), its listings are
+       saved as drafts, and the operator is told there is a page to collect
+       for. Paying (Mercado Pago later; by hand today with scripts/mini.mjs
+       activate) publishes them for MINI_PERIOD_DAYS;
      - MINI_SIGNUP must be "on" in the environment, so the door can be closed
        in one setting without touching code or existing pages.
    The full SaaS stays invite-only through the handler below. */
@@ -70,7 +75,8 @@ export function miniListingFields(p) {
   });
   if (!fields.title_es) throw new Error('missing_title');
   if (!fields.currency) throw new Error('invalid_currency');
-  return { ...fields, operation: x.operation === 'rental' ? 'rental' : 'sale', status: 'published' };
+  // A draft until paid: drafts never reach the agency page or the search index.
+  return { ...fields, operation: x.operation === 'rental' ? 'rental' : 'sale', status: 'draft' };
 }
 
 async function signedInUser(req, svc) {
@@ -88,8 +94,8 @@ async function signedInUser(req, svc) {
 
 /**
  * POST ?action=mini { agencyName, whatsapp_number, listings: [...] } with the agent's session.
- * Creates the agency on a mini trial and publishes up to 3 listings; answers { slug }.
- * `deps` lets the tests replace the environment and the database.
+ * Creates the agency on plan mini, not yet paid, and saves up to 10 listings as drafts; answers { slug }.
+ * `deps` lets the tests replace the environment, the database and the operator alert.
  */
 export async function handleMiniSignup(req, res, deps = {}) {
   if (!miniSignupOpen(deps.env || process.env)) { res.status(403).json({ error: 'mini_closed' }); return; }
@@ -104,7 +110,7 @@ export async function handleMiniSignup(req, res, deps = {}) {
   if (!name || name.length > 120) { res.status(400).json({ error: 'missing_agency_name' }); return; }
   const whatsapp = String(wa || '').trim();
   if (!PHONE.test(whatsapp)) { res.status(400).json({ error: 'invalid_whatsapp_number' }); return; }
-  const list = Array.isArray(listings) ? listings.slice(0, MINI_TRIAL_LISTINGS) : [];
+  const list = Array.isArray(listings) ? listings.slice(0, PLANS.mini.listings) : [];
   if (!list.length) { res.status(400).json({ error: 'no_listings' }); return; }
 
   let rows;
@@ -118,9 +124,9 @@ export async function handleMiniSignup(req, res, deps = {}) {
   let agency;
   try {
     agency = await (deps.provisionAgency || provisionAgency)(svc, { userId: user.id, agencyName: name, plan: 'mini' });
-    const endsAt = new Date(Date.now() + MINI_TRIAL_DAYS * 86400000).toISOString();
+    // plan_expires_at stays null: not paid yet, so the page is not live (plans.js pageActive).
     const { error: upErr } = await svc.from('agencies')
-      .update({ whatsapp_number: whatsapp, plan_expires_at: endsAt }).eq('id', agency.id);
+      .update({ whatsapp_number: whatsapp, plan_expires_at: null }).eq('id', agency.id);
     if (upErr) throw upErr;
     const { error: insErr } = await svc.from('listings').insert(rows.map((r) => ({ ...r, agency_id: agency.id })));
     if (insErr) throw insErr;
@@ -129,7 +135,17 @@ export async function handleMiniSignup(req, res, deps = {}) {
     res.status(500).json({ error: 'mini_signup_failed', detail: safeDetail(err) });
     return;
   }
-  res.status(200).json({ slug: agency.slug, trial_days: MINI_TRIAL_DAYS, published: rows.length });
+
+  /* Until Mercado Pago is connected, a person collects the payment, so tell them now. */
+  const alert = (deps.notifyOperator || notifyOperator)({
+    subject: `Mini: pagina lista para cobrar (${name})`,
+    text: `${name} preparo su pagina con ${rows.length} propiedades y espera el pago (MXN ${MINI_PRICE_MXN}, ${MINI_PERIOD_DAYS} dias).\n` +
+      `Correo: ${user.email || '-'}\nWhatsApp: ${whatsapp}\nSlug: ${agency.slug}\n\n` +
+      `Cuando pague: node scripts/mini.mjs activate ${agency.slug}`
+  }).catch((err) => logDegraded('onboard:mini-notify', err));
+  if (deps.notifyOperator) await alert; else waitUntil(alert);
+
+  res.status(200).json({ slug: agency.slug, status: 'pending_payment', saved: rows.length, price_mxn: MINI_PRICE_MXN, period_days: MINI_PERIOD_DAYS });
 }
 
 /** sha256 hex — what signup_invites stores instead of the code itself. */

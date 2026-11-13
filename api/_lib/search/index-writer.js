@@ -19,6 +19,7 @@ import { normalizeUrl, sameProperty, toMxn } from '../scout-merge.js';
 import { amenitiesFrom } from './amenities.js';
 import { resolveMarket } from './normalize.js';
 import { logDegraded } from '../health.js';
+import { pageActive } from '../plans.js';
 
 const PAGE = 1000;
 const MAX_PHOTOS = 8;
@@ -218,13 +219,15 @@ export async function syncProplync(svc, { publicIds = null, siteOrigin = process
   const fx = fxRate();
   const markets = await loadMarkets(svc, { enabledOnly: false });
   let q = svc.from('listings')
-    .select('public_id, title_es, title_en, town, neighborhood, bedrooms, bathrooms, parking, size, operation, property_type, currency, amount, image, images, features, description_es, description_en, lat, lng, status, agencies(name)');
+    .select('public_id, title_es, title_en, town, neighborhood, bedrooms, bathrooms, parking, size, operation, property_type, currency, amount, image, images, features, description_es, description_en, lat, lng, status, agencies(name, plan, plan_expires_at)');
   if (publicIds) q = q.in('public_id', publicIds);
   const { data: rows, error } = await q;
   if (error) throw error;
 
   const listings = [];
-  for (const r of (rows || []).filter((x) => x.status === 'published')) {
+  // A Mini page not paid for (or lapsed) keeps its listings out of the marketplace too (plans.js pageActive);
+  // left out here, the daily run retires them like any unpublished listing.
+  for (const r of (rows || []).filter((x) => x.status === 'published' && pageActive(x.agencies))) {
     // Markets limit what we crawl, never what our own agencies can list: a
     // listing in a town no market covers yet (Puebla, today) is indexed with
     // no market and still found by town, text and filters.

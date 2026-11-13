@@ -231,11 +231,13 @@
     </div>
   </div>
 
-  <!-- PropLync Mini trial: when it ends and how to keep the page. Activation is a
-       placeholder until Mercado Pago is connected (plan, step 4). -->
+  <!-- PropLync Mini: is the page paid (live until a date), waiting for payment, or
+       lapsed, and the way to pay or renew. The buttons are placeholders until
+       Mercado Pago is connected; meanwhile we collect by hand (scripts/mini.mjs). -->
   <div class="wa-nudge" id="mini-trial" hidden style="margin-bottom:18px">
     <span id="mini-trial-text"></span>
-    <button class="btn btn-gold btn-sm" id="mini-activate" type="button" data-es="Activar mi pagina · MXN 249" data-en="Activate my page · MXN 249">Activar mi pagina · MXN 249</button>
+    <button class="btn btn-gold btn-sm" id="mini-activate" type="button"></button>
+    <button class="btn btn-outline btn-sm" id="mini-monthly" type="button" data-es="Mensual + CRM · MXN 149/mes" data-en="Monthly + CRM · MXN 149/mo">Mensual + CRM · MXN 149/mes</button>
     <span class="form-hint" id="mini-activate-msg"></span>
   </div>
 
@@ -658,29 +660,40 @@
         ? (lang === 'es' ? 'Alcanzaste el limite de tu plan' : 'You have reached your plan limit')
         : '';
     }
-    renderMiniTrial(p.trial);
+    renderMini(p.mini);
   }
 
-  /* The mini trial's notice: days left (or paused) and the way to keep the page. */
-  function renderMiniTrial(trial) {
+  /* The Mini page's notice: waiting for payment, live until a date, or lapsed (plans.js miniState). */
+  function renderMini(mini) {
     const box = document.getElementById('mini-trial');
     if (!box) return;
-    box.hidden = !trial;
-    if (!trial) return;
-    const ends = new Date(trial.endsAt);
-    const days = Math.max(0, Math.ceil((ends - Date.now()) / 86400000));
-    const when = ends.toLocaleDateString(lang === 'es' ? 'es-MX' : 'en-US', { day: 'numeric', month: 'long' });
-    document.getElementById('mini-trial-text').textContent = trial.expired
-      ? (lang === 'es' ? 'Tu prueba gratis termino y tu pagina esta en pausa (no se borro nada). ' : 'Your free trial has ended and your page is paused (nothing was deleted). ')
-      : (lang === 'es' ? 'Prueba gratis: te quedan ' + days + ' dias (hasta el ' + when + '), hasta 3 propiedades. ' : 'Free trial: ' + days + ' days left (until ' + when + '), up to 3 listings. ');
+    box.hidden = !mini;
+    if (!mini) return;
+    const es = lang === 'es';
+    const until = mini.activeUntil ? new Date(mini.activeUntil) : null;
+    const when = until ? until.toLocaleDateString(es ? 'es-MX' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+    const text = {
+      pending: es ? 'Tu pagina esta lista, pero todavia no es publica. Al confirmar tu pago se publica de inmediato por 3 meses. '
+                  : 'Your page is ready but not public yet. Once your payment is confirmed it goes live right away for 3 months. ',
+      active: es ? 'Tu pagina esta activa hasta el ' + when + '. ' : 'Your page is live until ' + when + '. ',
+      expired: es ? 'Tu periodo termino el ' + when + ' y tu pagina esta en pausa (no se borro nada). Renueva para publicarla otra vez. '
+                  : 'Your period ended on ' + when + ' and your page is paused (nothing was deleted). Renew to publish it again. '
+    }[mini.state];
+    document.getElementById('mini-trial-text').textContent = text || '';
+    document.getElementById('mini-activate').textContent = mini.state === 'pending'
+      ? (es ? 'Pagar y publicar · MXN 249' : 'Pay and publish · MXN 249')
+      : (es ? 'Renovar 3 meses · MXN 249' : 'Renew 3 months · MXN 249');
   }
 
+  /* Placeholders until Mercado Pago (plan, step 4): we collect by hand and activate with scripts/mini.mjs. */
   document.addEventListener('DOMContentLoaded', function () {
-    const btn = document.getElementById('mini-activate');
-    if (btn) btn.addEventListener('click', function () {
-      document.getElementById('mini-activate-msg').textContent = lang === 'es'
-        ? 'Muy pronto podras pagar con Mercado Pago aqui mismo.'
-        : 'Very soon you will be able to pay with Mercado Pago right here.';
+    ['mini-activate', 'mini-monthly'].forEach(function (id) {
+      const btn = document.getElementById(id);
+      if (btn) btn.addEventListener('click', function () {
+        document.getElementById('mini-activate-msg').textContent = lang === 'es'
+          ? 'Te contactamos por WhatsApp para el pago. Muy pronto podras pagar con Mercado Pago aqui mismo.'
+          : 'We will contact you on WhatsApp for the payment. Very soon you will be able to pay with Mercado Pago right here.';
+      });
     });
   });
 

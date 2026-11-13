@@ -286,7 +286,7 @@ export default async function handler(req, res) {
         svc.from('listings').select('id', { count: 'exact', head: true }).eq('agency_id', auth.agencyId)
       ]);
       const plan = planFor(agencyRes.data);
-      const limit = listingLimit(agencyRes.data);   // the mini trial allows 3, its plan 10
+      const limit = listingLimit(agencyRes.data);
       const used = countRes.count || 0;
       if (used >= limit) {
         res.status(409).json({

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { handleMiniSignup, miniSignupOpen, miniListingFields } from '../api/onboard.js';
-import { listingLimit, isMiniTrial, planStatus } from '../api/_lib/plans.js';
+import { listingLimit, planStatus } from '../api/_lib/plans.js';
 
 const OPEN = { MINI_SIGNUP: 'on' };
 
@@ -35,6 +35,7 @@ const req = (body, token = 'good') => ({
 const listing = (over = {}) => ({ title: 'Casa en Centro', town: 'Leon', amount: 3450000, currency: 'MXN', operation: 'sale', bedrooms: 3, ...over });
 const body = (over = {}) => ({ agencyName: 'Nadia Dominguez', whatsapp_number: '+52 998 123 4567', listings: [listing()], ...over });
 const provision = async () => ({ id: 'a1', slug: 'nadia-dominguez', plan: 'mini' });
+const quiet = async () => ({ sent: false });   // the operator alert, stubbed
 
 test('closed by default: MINI_SIGNUP must be "on"', () => {
   assert.equal(miniSignupOpen({}), false);
@@ -79,25 +80,36 @@ test('one agency per account: an existing member goes to their dashboard', async
   assert.equal(res.body.error, 'already_has_agency');
 });
 
-test('success: a mini trial that expires in 30 days, with at most 3 published listings', async () => {
+test('success: nothing public before payment — page not paid, up to 10 listings saved as drafts, operator told', async () => {
   const svc = fakeSvc(); const res = fakeRes();
-  let provisioned = null;
-  const many = Array.from({ length: 5 }, (_, i) => listing({ title: 'Casa ' + i }));
+  let provisioned = null; let alert = null;
+  const many = Array.from({ length: 12 }, (_, i) => listing({ title: 'Casa ' + i }));
   await handleMiniSignup(req(body({ listings: many })), res, {
-    env: OPEN, svc, provisionAgency: async (_svc, args) => { provisioned = args; return provision(); }
+    env: OPEN, svc,
+    provisionAgency: async (_svc, args) => { provisioned = args; return provision(); },
+    notifyOperator: async (m) => { alert = m; return { sent: true }; }
   });
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.slug, 'nadia-dominguez');
-  assert.equal(res.body.published, 3);
+  assert.equal(res.body.status, 'pending_payment');
+  assert.equal(res.body.saved, 10);
+  assert.equal(res.body.price_mxn, 249);
   assert.equal(provisioned.plan, 'mini');
   assert.equal(provisioned.userId, 'u1');
   const up = svc.writes.updates.find((w) => w.table === 'agencies').v;
-  const days = (Date.parse(up.plan_expires_at) - Date.now()) / 86400000;
-  assert.ok(days > 29.9 && days <= 30, 'about 30 days');
+  assert.equal(up.plan_expires_at, null, 'not paid: no live period');
   assert.equal(up.whatsapp_number, '+52 998 123 4567');
   const rows = svc.writes.inserts.find((w) => w.table === 'listings').rows;
-  assert.equal(rows.length, 3);
-  assert.ok(rows.every((r) => r.agency_id === 'a1' && r.status === 'published'));
+  assert.equal(rows.length, 10);
+  assert.ok(rows.every((r) => r.agency_id === 'a1' && r.status === 'draft'));
+  assert.match(alert.subject, /cobrar/);
+  assert.match(alert.text, /scripts\/mini\.mjs activate nadia-dominguez/);
+});
+
+test('a failed operator alert never fails the signup', async () => {
+  const res = fakeRes();
+  await handleMiniSignup(req(body()), res, { env: OPEN, svc: fakeSvc(), provisionAgency: provision, notifyOperator: async () => { throw new Error('resend down'); } });
+  assert.equal(res.statusCode, 200);
 });
 
 test('listing fields go through the dashboard rules', () => {
@@ -109,18 +121,14 @@ test('listing fields go through the dashboard rules', () => {
   assert.throws(() => miniListingFields(listing({ amount: 'mucho' })), /invalid_amount/);
 });
 
-// ---------- the trial cap (plans.js) ----------
+// ---------- the Mini cap and state (plans.js) ----------
 
-test('a mini trial allows 3 listings; a paid mini 10; other plans unchanged', () => {
-  const trial = { plan: 'mini', plan_expires_at: '2026-12-13T00:00:00Z' };
-  assert.equal(isMiniTrial(trial), true);
-  assert.equal(listingLimit(trial), 3);
+test('a Mini page holds 10 listings, paid or not; other plans unchanged', () => {
   assert.equal(listingLimit({ plan: 'mini', plan_expires_at: null }), 10);
-  assert.equal(listingLimit({ plan: 'free' }), 10);
-  assert.equal(listingLimit({ plan: 'pro', plan_expires_at: '2026-12-13T00:00:00Z' }), Infinity, 'only mini has a trial');
-  const s = planStatus(trial, 3);
-  assert.equal(s.listingsLimit, 3);
-  assert.equal(s.atListingLimit, true);
-  assert.equal(s.trial.endsAt, trial.plan_expires_at);
-  assert.equal(planStatus({ plan: 'pro' }, 1).trial, null);
+  assert.equal(listingLimit({ plan: 'mini', plan_expires_at: '2027-01-01T00:00:00Z' }), 10);
+  assert.equal(listingLimit({ plan: 'pro' }), Infinity);
+  const s = planStatus({ plan: 'mini', plan_expires_at: null }, 4);
+  assert.equal(s.listingsLimit, 10);
+  assert.equal(s.mini.state, 'pending');
+  assert.equal(planStatus({ plan: 'pro' }, 1).mini, null);
 });

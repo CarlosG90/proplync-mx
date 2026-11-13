@@ -19,10 +19,12 @@
   PropLync Mini (docs/CONTEXT-MAP.md, "Mini pages"): the self-serve door for agents
   who arrive from a social ad. A competitor sells this by hand (MXN 250, 24 hours);
   here the agent pastes their WhatsApp inventory, checks what the AI read, proves
-  their email with a code, and has a live /agencia/:slug page in a few minutes.
-  Free for 30 days with up to 3 properties; activating (MXN 249) comes later,
-  through Mercado Pago, and is a placeholder button for now.
-  Everything the AI read is shown for the agent to correct before it is published.
+  their email with a code, and their /agencia/:slug page is ready in a few minutes.
+  They see exactly how it will look before paying; it goes public once paid
+  (MXN 249 for 3 months, up to 10 properties; plans.js). Until Mercado Pago is
+  connected the payment is collected by hand and the page is released with
+  scripts/mini.mjs activate. Everything the AI read is shown for the agent to
+  correct before it is saved.
 -->
 <style>
   [hidden]{display:none !important}
@@ -59,7 +61,20 @@
   .mn-tier p{color:var(--on-sand-dim);font-size:.88rem;line-height:1.5}
   .mn-tier.best{border-color:var(--gold)}
   .mn-section-title{font-family:var(--display);font-weight:400;font-size:1.5rem;color:var(--ink);text-align:center;margin:30px 0 14px}
-  @media (min-width:760px){ .mn-tiers{grid-template-columns:repeat(3,1fr)} }
+  /* The preview: the agent's own page in miniature, from what they pasted. */
+  .mn-sub{font-family:var(--display);font-weight:400;font-size:1.1rem;color:var(--ink);margin:22px 0 4px}
+  .mn-preview{margin-top:14px;border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;background:var(--sand,#f5f1ea);position:relative}
+  .mn-pv-ribbon{position:absolute;top:10px;right:10px;z-index:2;font-family:var(--mono);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;background:var(--gold);color:var(--ink);padding:4px 9px;border-radius:999px}
+  .mn-pv-head{background:var(--ink);color:var(--on-ink);padding:22px 18px}
+  .mn-pv-head .eyebrow{font-family:var(--mono);font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+  .mn-pv-head .name{font-family:var(--display);font-weight:300;font-size:1.6rem;line-height:1.15;margin:6px 0 12px}
+  .mn-pv-wa{display:inline-block;background:var(--gold);color:var(--ink);font-weight:600;font-size:.8rem;padding:9px 16px;border-radius:999px}
+  .mn-pv-grid{display:grid;gap:12px;padding:14px}
+  .mn-pv-grid .pcard{cursor:default}
+  .mn-pv-grid .pcard:hover{transform:none;box-shadow:none}
+  .mn-pv-grid .pcard-photo{aspect-ratio:5/2;background:#142237}
+  .mn-pv-cta{font-weight:600;font-size:.74rem;padding:8px 14px;border-radius:999px;background:var(--gold);color:var(--ink);white-space:nowrap}
+  @media (min-width:760px){ .mn-tiers{grid-template-columns:repeat(2,1fr)} .mn-pv-grid{grid-template-columns:repeat(2,1fr)} }
   @media (max-width:480px){ .mn-prop-grid{grid-template-columns:minmax(0,1fr)} .mn-card{padding:18px} }
 </style>
 </head>
@@ -88,7 +103,7 @@
     <ul class="mn-points">
       <li data-es="Lista en minutos, no en 24 horas" data-en="Ready in minutes, not in 24 hours">Lista en minutos, no en 24 horas</li>
       <li data-es="Tu la actualizas cuando quieras" data-en="You update it whenever you want">Tu la actualizas cuando quieras</li>
-      <li data-es="Gratis 30 dias, sin tarjeta" data-en="Free for 30 days, no card">Gratis 30 dias, sin tarjeta</li>
+      <li data-es="Ve como queda antes de pagar · MXN 249 por 3 meses" data-en="See how it looks before you pay · MXN 249 for 3 months">Ve como queda antes de pagar · MXN 249 por 3 meses</li>
     </ul>
   </div>
 </section>
@@ -113,8 +128,10 @@
 
     <!-- 2. Review -->
     <section class="mn-card" id="step-review" hidden>
-      <h2 data-es="2. Revisa lo que leimos" data-en="2. Check what we read">2. Revisa lo que leimos</h2>
-      <p class="mn-hint" data-es="Corrige lo que haga falta. Con la prueba gratis publicas hasta 3; al activar tu pagina, hasta 10." data-en="Fix anything that needs it. The free trial publishes up to 3; once you activate your page, up to 10.">Corrige lo que haga falta. Con la prueba gratis publicas hasta 3; al activar tu pagina, hasta 10.</p>
+      <h2 data-es="2. Asi se vera tu pagina" data-en="2. This is how your page will look">2. Asi se vera tu pagina</h2>
+      <p class="mn-hint" data-es="Esta es una vista previa con tus propiedades. Abajo puedes corregir lo que haga falta (hasta 10 propiedades)." data-en="This is a preview with your properties. Below you can fix anything that needs it (up to 10 properties).">Esta es una vista previa con tus propiedades. Abajo puedes corregir lo que haga falta (hasta 10 propiedades).</p>
+      <div class="mn-preview" id="mn-preview" aria-label="Vista previa"></div>
+      <h3 class="mn-sub" data-es="Revisa los datos" data-en="Check the details">Revisa los datos</h3>
       <div id="mn-props"></div>
       <div class="mn-prop-grid" style="margin-top:18px">
         <label class="wide"><span data-es="Tu nombre o el de tu inmobiliaria" data-en="Your name or your agency's">Tu nombre o el de tu inmobiliaria</span>
@@ -123,7 +140,7 @@
           <input class="mn-in" id="mn-wa" type="tel" maxlength="25" autocomplete="tel" placeholder="+52 998 123 4567"></label>
       </div>
       <div class="mn-row">
-        <button class="btn btn-gold" id="mn-next" data-es="Publicar mi pagina" data-en="Publish my page">Publicar mi pagina</button>
+        <button class="btn btn-gold" id="mn-next" data-es="Pagar y publicar · MXN 249" data-en="Pay and publish · MXN 249">Pagar y publicar · MXN 249</button>
         <button class="btn btn-outline" id="mn-back" data-es="Volver a pegar" data-en="Paste again">Volver a pegar</button>
       </div>
       <div class="mn-msg" id="mn-review-msg" aria-live="polite"></div>
@@ -132,53 +149,45 @@
     <!-- 3. Email code -->
     <section class="mn-card" id="step-signin" hidden>
       <h2 data-es="3. Confirma tu correo" data-en="3. Confirm your email">3. Confirma tu correo</h2>
-      <p class="mn-hint" data-es="Te mandamos un codigo. Con ese mismo correo entras despues a editar tu pagina; no necesitas contrasena." data-en="We'll send you a code. You use the same email later to edit your page; no password needed.">Te mandamos un codigo. Con ese mismo correo entras despues a editar tu pagina; no necesitas contrasena.</p>
+      <p class="mn-hint" data-es="Te mandamos un codigo para guardar tu pagina a tu nombre. Con ese mismo correo entras despues a editarla; no necesitas contrasena." data-en="We'll send you a code to save the page under your name. You use the same email later to edit it; no password needed.">Te mandamos un codigo para guardar tu pagina a tu nombre. Con ese mismo correo entras despues a editarla; no necesitas contrasena.</p>
       <div class="mn-row">
         <input class="mn-in" id="mn-email" type="email" autocomplete="email" placeholder="tu@correo.com" style="flex:1 1 220px;width:auto">
         <button class="btn btn-gold" id="mn-send" data-es="Enviar codigo" data-en="Send code">Enviar codigo</button>
       </div>
       <div class="mn-row" id="mn-code-row" hidden>
         <input class="mn-in" id="mn-code" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" style="flex:1 1 160px;width:auto">
-        <button class="btn btn-gold" id="mn-verify" data-es="Confirmar y publicar" data-en="Confirm and publish">Confirmar y publicar</button>
+        <button class="btn btn-gold" id="mn-verify" data-es="Confirmar" data-en="Confirm">Confirmar</button>
       </div>
       <div class="mn-msg" id="mn-signin-msg" aria-live="polite"></div>
     </section>
 
     <!-- 4. Done -->
     <section class="mn-card" id="step-done" hidden>
-      <h2 data-es="Tu pagina ya esta en linea" data-en="Your page is live">Tu pagina ya esta en linea</h2>
-      <p class="mn-hint" data-es="Comparte este link con tus clientes en lugar de mandar fotos una por una." data-en="Share this link with your clients instead of sending photos one by one.">Comparte este link con tus clientes en lugar de mandar fotos una por una.</p>
+      <h2 data-es="Tu pagina esta lista y guardada" data-en="Your page is ready and saved">Tu pagina esta lista y guardada</h2>
+      <p class="mn-hint" data-es="Te contactamos por WhatsApp para el pago (MXN 249 por 3 meses). En cuanto se confirme, tu pagina se publica de inmediato en este link:" data-en="We will contact you on WhatsApp for the payment (MXN 249 for 3 months). As soon as it is confirmed, your page goes live at this link:">Te contactamos por WhatsApp para el pago (MXN 249 por 3 meses). En cuanto se confirme, tu pagina se publica de inmediato en este link:</p>
       <div class="mn-link" id="mn-url"></div>
       <div class="mn-row">
-        <a class="btn btn-gold" id="mn-open" target="_blank" rel="noopener" data-es="Ver mi pagina" data-en="See my page">Ver mi pagina</a>
         <button class="btn btn-outline" id="mn-copy" data-es="Copiar link" data-en="Copy link">Copiar link</button>
-        <a class="btn btn-outline" id="mn-share" target="_blank" rel="noopener" data-es="Compartir por WhatsApp" data-en="Share on WhatsApp">Compartir por WhatsApp</a>
+        <a class="btn btn-gold" href="/dashboard" data-es="Agregar fotos y editar" data-en="Add photos and edit">Agregar fotos y editar</a>
       </div>
-      <p class="mn-hint" style="margin-top:14px" id="mn-trial-note"></p>
-      <div class="mn-row"><a class="btn btn-outline" href="/dashboard" data-es="Agregar fotos y editar" data-en="Add photos and edit">Agregar fotos y editar</a></div>
+      <p class="mn-hint" style="margin-top:14px" data-es="Mientras tanto puedes agregar fotos y ajustar tus datos desde tu panel." data-en="Meanwhile you can add photos and adjust your details from your dashboard.">Mientras tanto puedes agregar fotos y ajustar tus datos desde tu panel.</p>
     </section>
 
-    <h2 class="mn-section-title" data-es="Cuando quieras mas" data-en="When you want more">Cuando quieras mas</h2>
+    <h2 class="mn-section-title" data-es="Precios" data-en="Pricing">Precios</h2>
     <div class="mn-tiers">
-      <div class="mn-tier">
-        <b data-es="Prueba" data-en="Trial">Prueba</b>
-        <div class="price" data-es="Gratis · 30 dias" data-en="Free · 30 days">Gratis · 30 dias</div>
-        <p data-es="Hasta 3 propiedades. Despues la pagina se pausa (no se borra nada) hasta que la actives." data-en="Up to 3 properties. Then the page pauses (nothing is deleted) until you activate it.">Hasta 3 propiedades. Despues la pagina se pausa (no se borra nada) hasta que la actives.</p>
-      </div>
       <div class="mn-tier best">
-        <b data-es="Pago unico" data-en="One-time">Pago unico</b>
+        <b data-es="3 meses" data-en="3 months">3 meses</b>
         <div class="price">MXN $249</div>
-        <p data-es="Hasta 10 propiedades, tu pagina sin fecha de vencimiento, la editas cuando quieras. Sin mensualidad." data-en="Up to 10 properties, a page that never expires, edit it whenever you want. No monthly fee.">Hasta 10 propiedades, tu pagina sin fecha de vencimiento, la editas cuando quieras. Sin mensualidad.</p>
-        <button class="btn btn-gold" data-activate="one_time" style="margin-top:10px" data-es="Activar" data-en="Activate">Activar</button>
+        <p data-es="Hasta 10 propiedades con boton Me interesa a tu WhatsApp. Se publica en cuanto pagas y la editas cuando quieras. Sin mensualidad: renuevas cada 3 meses si quieres seguir." data-en="Up to 10 properties with an I'm interested button to your WhatsApp. Goes live as soon as you pay and you edit it whenever you want. No monthly fee: renew every 3 months if you want to keep it.">Hasta 10 propiedades con boton Me interesa a tu WhatsApp. Se publica en cuanto pagas y la editas cuando quieras. Sin mensualidad: renuevas cada 3 meses si quieres seguir.</p>
+        <a class="btn btn-gold" href="#step-paste" style="margin-top:10px" data-es="Empezar" data-en="Start">Empezar</a>
       </div>
       <div class="mn-tier">
         <b data-es="Mensual + CRM" data-en="Monthly + CRM">Mensual + CRM</b>
-        <div class="price" data-es="MXN $249 / mes" data-en="MXN $249 / month">MXN $249 / mes</div>
+        <div class="price" data-es="MXN $149 / mes" data-en="MXN $149 / month">MXN $149 / mes</div>
         <p data-es="Hasta 30 propiedades, sin marca de PropLync, y cada Me interesa queda como prospecto en tu CRM con notas y seguimientos." data-en="Up to 30 properties, no PropLync badge, and every I'm interested becomes a lead in your CRM with notes and follow-ups.">Hasta 30 propiedades, sin marca de PropLync, y cada Me interesa queda como prospecto en tu CRM con notas y seguimientos.</p>
-        <button class="btn btn-outline" data-activate="monthly" style="margin-top:10px" data-es="Activar" data-en="Activate">Activar</button>
+        <a class="btn btn-outline" href="#step-paste" style="margin-top:10px" data-es="Empezar" data-en="Start">Empezar</a>
       </div>
     </div>
-    <div class="mn-msg" id="mn-activate-msg" style="text-align:center" aria-live="polite"></div>
   </div>
 </main>
 
@@ -189,7 +198,7 @@
 <script>
 (function () {
   'use strict';
-  var TRIAL_MAX = 3;
+  var MAX = 10;   // plans.js: the Mini page holds up to 10 properties
   function $(id) { return document.getElementById(id); }
   function t(es, en) { return document.documentElement.lang === 'en' ? en : es; }
   function msg(el, text, isErr) { el.textContent = text || ''; el.classList.toggle('err', !!isErr); }
@@ -221,9 +230,10 @@
       if (r.status === 429) { msg($('mn-read-msg'), t('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.'), true); return; }
       if (!r.ok) { msg($('mn-read-msg'), t('No pudimos leerlo. Intenta de nuevo en un momento.', 'We could not read it. Try again in a moment.'), true); return; }
       if (!d.properties || !d.properties.length) { msg($('mn-read-msg'), t('No encontramos propiedades en ese texto. Incluye al menos tipo, zona y precio.', 'We found no properties in that text. Include at least type, area and price.'), true); return; }
-      props = d.properties.map(function (x, i) { return Object.assign({ include: i < TRIAL_MAX, missing: x.missing || [] }, x.property); });
+      props = d.properties.map(function (x, i) { return Object.assign({ include: i < MAX, missing: x.missing || [] }, x.property); });
       msg($('mn-read-msg'), '', false);
       renderProps();
+      renderPreview();
       show('step-review');
     } catch (e) {
       msg($('mn-read-msg'), t('Sin conexion. Intenta de nuevo.', 'No connection. Try again.'), true);
@@ -272,25 +282,56 @@
     }).join('');
   }
 
+  /* The agent's page in miniature: their name, their WhatsApp button, their cards with
+     "Me interesa". Built from what they typed, so everything is escaped. */
+  function money(p) {
+    if (!p.amount) return '';
+    return (p.currency ? p.currency + ' ' : '') + '$' + Number(p.amount).toLocaleString('en-US') +
+      (p.operation === 'rental' ? (document.documentElement.lang === 'en' ? ' /mo' : ' /mes') : '');
+  }
+
+  function renderPreview() {
+    var name = $('mn-name').value.trim() || t('Tu nombre aqui', 'Your name here');
+    var cards = props.filter(function (p) { return p.include; }).map(function (p) {
+      var specs = [p.bedrooms ? p.bedrooms + ' ' + t('rec', 'bd') : '', p.bathrooms ? p.bathrooms + ' ' + t('baños', 'bath') : '', p.size ? p.size + ' m²' : '']
+        .filter(Boolean).map(function (s) { return '<span>' + escapeHtml(s) + '</span>'; }).join('');
+      return '<article class="pcard"><div class="pcard-photo"><span class="pcard-badge ' + (p.operation === 'rental' ? 'badge-rental">' + escapeHtml(t('Renta', 'Rent')) : 'badge-sale">' + escapeHtml(t('Venta', 'Sale'))) + '</span></div>' +
+        '<div class="pcard-body"><div class="pcard-loc">' + escapeHtml([p.neighborhood, p.town].filter(Boolean).join(' · ')) + '</div>' +
+        '<div class="pcard-title">' + escapeHtml(p.title || t('Propiedad', 'Property')) + '</div>' +
+        (specs ? '<div class="pcard-specs">' + specs + '</div>' : '') +
+        '<div class="pcard-foot"><span class="pcard-price">' + escapeHtml(money(p)) + '</span><span class="mn-pv-cta">' + escapeHtml(t('Me interesa', 'I am interested')) + '</span></div>' +
+        '</div></article>';
+    }).join('');
+    $('mn-preview').innerHTML =
+      '<span class="mn-pv-ribbon">' + escapeHtml(t('Vista previa', 'Preview')) + '</span>' +
+      '<div class="mn-pv-head"><div class="eyebrow">' + escapeHtml(t('Portafolio de propiedades', 'Property portfolio')) + '</div>' +
+      '<div class="name">' + escapeHtml(name) + '</div><span class="mn-pv-wa">' + escapeHtml(t('Escribir por WhatsApp', 'Message on WhatsApp')) + '</span></div>' +
+      '<div class="mn-pv-grid">' + (cards || '<p class="mn-hint">' + escapeHtml(t('Elige al menos una propiedad.', 'Pick at least one property.')) + '</p>') + '</div>';
+  }
+
   $('mn-props').addEventListener('input', function (e) {
     var el = e.target;
     if (el.dataset.k) props[Number(el.dataset.i)][el.dataset.k] = el.type === 'number' ? Number(el.value || 0) : el.value;
+    renderPreview();
   });
+  $('mn-name').addEventListener('input', renderPreview);
   $('mn-props').addEventListener('change', function (e) {
     var el = e.target;
     if (el.dataset.inc != null) {
       var i = Number(el.dataset.inc);
       var chosen = props.filter(function (p) { return p.include; }).length;
-      if (el.checked && chosen >= TRIAL_MAX) {
+      if (el.checked && chosen >= MAX) {
         el.checked = false;
-        msg($('mn-review-msg'), t('La prueba gratis publica hasta 3. Al activar tu pagina puedes agregar hasta 10.', 'The free trial publishes up to 3. Once you activate your page you can add up to 10.'), true);
+        msg($('mn-review-msg'), t('Tu pagina tiene espacio para 10 propiedades.', 'Your page has room for 10 properties.'), true);
         return;
       }
       props[i].include = el.checked;
       msg($('mn-review-msg'), '', false);
       renderProps();
+      renderPreview();
     } else if (el.dataset.k) {
       props[Number(el.dataset.i)][el.dataset.k] = el.value;
+      renderPreview();
     }
   });
 
@@ -359,8 +400,10 @@
     invalid_whatsapp_number: ['Revisa tu WhatsApp.', 'Check your WhatsApp.']
   };
 
+  /* Saves the page under the agent's account, not yet public: it goes live once the payment is
+     confirmed (by hand today, Mercado Pago later). */
   async function publish(out) {
-    msg(out, t('Publicando tu pagina…', 'Publishing your page…'), false);
+    msg(out, t('Guardando tu pagina…', 'Saving your page…'), false);
     try {
       var r = await authedFetch('/api/onboard?action=mini', {
         method: 'POST', headers: { 'content-type': 'application/json' },
@@ -386,12 +429,7 @@
         if (d.error === 'sign_in_required') show('step-signin');
         return;
       }
-      var url = location.origin + '/agencia/' + encodeURIComponent(d.slug);
-      $('mn-url').textContent = url;
-      $('mn-open').href = url;
-      $('mn-share').href = 'https://wa.me/?text=' + encodeURIComponent(t('Te comparto mis propiedades: ', 'Here are my properties: ') + url);
-      $('mn-trial-note').textContent = t('Tu prueba gratis dura ' + (d.trial_days || 30) + ' dias. Para seguir despues, activa tu pagina (MXN 249).',
-        'Your free trial lasts ' + (d.trial_days || 30) + ' days. To keep it after that, activate your page (MXN 249).');
+      $('mn-url').textContent = location.origin + '/agencia/' + encodeURIComponent(d.slug);
       show('step-done');
     } catch (err) {
       msg(out, t('Sin conexion. Intenta de nuevo.', 'No connection. Try again.'), true);
@@ -406,14 +444,7 @@
     }).catch(function () {});
   });
 
-  /* Activation is a placeholder until Mercado Pago is connected (plan, step 4). */
-  document.querySelectorAll('[data-activate]').forEach(function (b) {
-    b.addEventListener('click', function () {
-      msg($('mn-activate-msg'), t('Muy pronto podras activar tu pagina con Mercado Pago. Mientras, empieza gratis arriba.', 'Very soon you will be able to activate your page with Mercado Pago. Meanwhile, start free above.'), false);
-    });
-  });
-
-  document.addEventListener('langchange', function () { if (props.length && !$('step-review').hidden) renderProps(); });
+  document.addEventListener('langchange', function () { if (props.length && !$('step-review').hidden) { renderProps(); renderPreview(); } });
 })();
 </script>
 </body>
