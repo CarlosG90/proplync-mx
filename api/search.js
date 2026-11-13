@@ -17,6 +17,7 @@ import { redisGet, redisSet } from './_lib/redis.js';
 import { logDegraded, safeDetail } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
 import { handleSearchQuery } from './_lib/search/api.js';
+import { planExpired } from './_lib/plans.js';
 
 const EB_URL = 'https://api.easybroker.com/v1';
 const PAGE_LIMIT = 50;
@@ -427,11 +428,14 @@ export default async function handler(req, res) {
        ──────────────────────────────────────────────────────────────────── */
     if (req.query.agency) {
       const svc = getServiceClient();
-      const { data: agency, error: agencyErr } = await svc
-        .from('agencies')
-        .select('id, name, slug, logo_url, cover_url, primary_color, whatsapp_number')
-        .eq('slug', String(req.query.agency).toLowerCase())
-        .maybeSingle();
+      const slug = String(req.query.agency).toLowerCase();
+      const BASE = 'id, name, slug, logo_url, cover_url, primary_color, whatsapp_number';
+      // The agent's card (migration 018): every way to reach them, and whether the page is paused.
+      const CARD = 'phone, public_email, address, maps_url, services, bio, plan, plan_expires_at';
+      const bySlug = (cols) => svc.from('agencies').select(cols).eq('slug', slug).maybeSingle();
+      let { data: agency, error: agencyErr } = await bySlug(BASE + ', ' + CARD);
+      // Until 018 is applied the card columns do not exist; the page then renders as it did before.
+      if (agencyErr) ({ data: agency, error: agencyErr } = await bySlug(BASE));
       if (agencyErr) {
         logDegraded('supabase:agencies.bySlug', agencyErr);
         res.status(503).json({ error: 'agency_lookup_unavailable' });
@@ -441,24 +445,36 @@ export default async function handler(req, res) {
         res.status(404).json({ error: 'agency_not_found' });
         return;
       }
-      const { data: rows, error: rowsErr } = await svc
-        .from('listings')
-        .select('*')
-        .eq('agency_id', agency.id)
-        .eq('status', 'published')
-        .order('created_at', { ascending: false });
-      if (rowsErr) {
-        logDegraded('supabase:listings.byAgency', rowsErr);
-        res.status(503).json({ error: 'agency_listings_unavailable' });
-        return;
+      /* A mini page whose free trial ran out is paused, not deleted: the card still
+         shows (the contacts are the agent's own), the listings do not, and the page
+         says why. Decided here, not in the browser: the client secures nothing. */
+      const paused = planExpired(agency);
+      let owned = [];
+      if (!paused) {
+        const { data: rows, error: rowsErr } = await svc
+          .from('listings')
+          .select('*')
+          .eq('agency_id', agency.id)
+          .eq('status', 'published')
+          .order('created_at', { ascending: false });
+        if (rowsErr) {
+          logDegraded('supabase:listings.byAgency', rowsErr);
+          res.status(503).json({ error: 'agency_listings_unavailable' });
+          return;
+        }
+        owned = (rows || []).map(mapAgencyRow);
       }
-      const owned = (rows || []).map(mapAgencyRow);
       // exclude lets a property page show "others from this agency"
       const exclude = req.query.exclude;
       res.status(200).json({
         agency: { name: agency.name, slug: agency.slug, logo_url: agency.logo_url,
                   cover_url: agency.cover_url, primary_color: agency.primary_color,
-                  whatsapp_number: agency.whatsapp_number },
+                  whatsapp_number: agency.whatsapp_number,
+                  phone: agency.phone || null, public_email: agency.public_email || null,
+                  address: agency.address || null, maps_url: agency.maps_url || null,
+                  services: Array.isArray(agency.services) ? agency.services : [],
+                  bio: agency.bio || null, plan: agency.plan || 'free' },
+        paused,
         listings: exclude ? owned.filter(p => p.public_id !== exclude) : owned,
         total: owned.length
       });

@@ -379,6 +379,33 @@
         <input class="form-input" id="s-whatsapp" type="tel" placeholder="+529981234567">
         <div class="form-hint" data-es="Los compradores podran escribirte directo por WhatsApp desde tus propiedades." data-en="Buyers will be able to message you directly on WhatsApp from your listings.">Los compradores podran escribirte directo por WhatsApp desde tus propiedades.</div>
       </div>
+      <!-- The rest of the agent's card on /agencia/:slug: call, email, location,
+           services and a line about them. All optional; empty ones do not show. -->
+      <div class="field field-full">
+        <label class="form-label" data-es="Telefono para llamadas (opcional)" data-en="Phone for calls (optional)">Telefono para llamadas (opcional)</label>
+        <input class="form-input" id="s-phone" type="tel" placeholder="+529981234567">
+      </div>
+      <div class="field field-full">
+        <label class="form-label" data-es="Correo publico (opcional)" data-en="Public email (optional)">Correo publico (opcional)</label>
+        <input class="form-input" id="s-email" type="email" placeholder="hola@tuagencia.mx" maxlength="120">
+      </div>
+      <div class="field field-full">
+        <label class="form-label" data-es="Direccion u oficina (opcional)" data-en="Address or office (optional)">Direccion u oficina (opcional)</label>
+        <input class="form-input" id="s-address" maxlength="200">
+      </div>
+      <div class="field field-full">
+        <label class="form-label" data-es="Enlace de Google Maps (opcional)" data-en="Google Maps link (optional)">Enlace de Google Maps (opcional)</label>
+        <input class="form-input" id="s-maps" type="url" placeholder="https://maps.app.goo.gl/..." maxlength="500">
+        <div class="form-hint" data-es="Sin enlace, el boton Ubicacion busca tu direccion en Maps." data-en="Without a link, the Location button searches Maps for your address.">Sin enlace, el boton Ubicacion busca tu direccion en Maps.</div>
+      </div>
+      <div class="field field-full">
+        <label class="form-label" data-es="Servicios, separados por coma (hasta 8)" data-en="Services, comma separated (up to 8)">Servicios, separados por coma (hasta 8)</label>
+        <input class="form-input" id="s-services" placeholder="Venta, Renta, Avaluos">
+      </div>
+      <div class="field field-full">
+        <label class="form-label" data-es="Sobre ti (opcional, hasta 600 caracteres)" data-en="About you (optional, up to 600 characters)">Sobre ti (opcional, hasta 600 caracteres)</label>
+        <textarea class="form-input" id="s-bio" rows="3" maxlength="600"></textarea>
+      </div>
       <div class="modal-actions">
         <button type="submit" class="btn btn-gold" id="save-settings-btn" data-es="Guardar" data-en="Save">Guardar</button>
         <button type="button" class="btn btn-outline" onclick="closeSettingsModal()" data-es="Cerrar" data-en="Close">Cerrar</button>
@@ -1174,6 +1201,12 @@
       document.getElementById('s-name').value = a.name || '';
       document.getElementById('s-whatsapp').value = a.whatsapp_number || '';
       toggleWhatsappNudge(a.whatsapp_number);
+      document.getElementById('s-phone').value = a.phone || '';
+      document.getElementById('s-email').value = a.public_email || '';
+      document.getElementById('s-address').value = a.address || '';
+      document.getElementById('s-maps').value = a.maps_url || '';
+      document.getElementById('s-services').value = (a.services || []).join(', ');
+      document.getElementById('s-bio').value = a.bio || '';
       document.getElementById('s-logo-url').value = a.logo_url || '';
       document.getElementById('s-logo-preview').style.backgroundImage = a.logo_url ? "url('" + a.logo_url + "')" : '';
       setCoverPreview(a.cover_url || '');
@@ -1290,6 +1323,12 @@
       const payload = {
         name: document.getElementById('s-name').value.trim(),
         whatsapp_number: document.getElementById('s-whatsapp').value.trim(),
+        phone: document.getElementById('s-phone').value.trim(),
+        public_email: document.getElementById('s-email').value.trim(),
+        address: document.getElementById('s-address').value.trim(),
+        maps_url: document.getElementById('s-maps').value.trim(),
+        services: document.getElementById('s-services').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean),
+        bio: document.getElementById('s-bio').value.trim(),
         logo_url: document.getElementById('s-logo-url').value || undefined,
         cover_url: document.getElementById('s-cover-url').value,
         primary_color: color.toLowerCase() === DEFAULT_BRAND_COLOR ? null : color
