@@ -44,7 +44,14 @@ export const PLANS = {
   // has always produced.
   free: { id: 'free', label: 'Gratis',  listings: 10,       photos: 10, agents: 1,  marketing: false, marketingTrials: 1,        instagram: false, reelsPerMonth: 0  },
   pro:  { id: 'pro',  label: 'Pro',     listings: Infinity, photos: 30, agents: 4,  marketing: true,  marketingTrials: Infinity, instagram: true,  reelsPerMonth: 8  },
-  vip:  { id: 'vip',  label: 'VIP',     listings: Infinity, photos: 30, agents: 10, marketing: true,  marketingTrials: Infinity, instagram: true,  reelsPerMonth: 25 }
+  vip:  { id: 'vip',  label: 'VIP',     listings: Infinity, photos: 30, agents: 10, marketing: true,  marketingTrials: Infinity, instagram: true,  reelsPerMonth: 25 },
+  // `mini` is the self-serve "all your properties in one link" page sold from
+  // ads (docs/CONTEXT-MAP.md, "Mini pages"). It is a page, not the SaaS: no
+  // marketing, no Instagram, no Reels, one agent. The listing cap matches the
+  // offer it competes with (10 properties). Its free trial is the only plan
+  // with an expiry, carried on agencies.plan_expires_at (migration 018) and
+  // read by planExpired() below.
+  mini: { id: 'mini', label: 'Mini',    listings: 10,       photos: 10, agents: 1,  marketing: false, marketingTrials: 0,        instagram: false, reelsPerMonth: 0  }
 };
 
 export const DEFAULT_PLAN = 'free';
@@ -53,6 +60,20 @@ export const DEFAULT_PLAN = 'free';
 export function planFor(agency) {
   const key = String((agency && agency.plan) || DEFAULT_PLAN).toLowerCase();
   return PLANS[key] || PLANS[DEFAULT_PLAN];
+}
+
+/**
+ * Has this agency's plan run out? Only the mini free trial carries a date; every
+ * other row has plan_expires_at null and never expires. The public page uses
+ * this to pause itself (api/search.js ?agency=); the dashboard keeps working so
+ * the agent can pay or upgrade. Nothing is deleted on expiry. A date that does
+ * not parse is treated as no expiry: a bad value must not take a page down.
+ */
+export function planExpired(agency, now = Date.now()) {
+  const until = agency && agency.plan_expires_at;
+  if (!until) return false;
+  const t = Date.parse(until);
+  return Number.isFinite(t) && t <= now;
 }
 
 /**

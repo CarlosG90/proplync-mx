@@ -102,7 +102,7 @@ async function main() {
   if (!Number.isFinite(days) || days < 1 || days > 365) die('--days must be between 1 and 365.');
 
   const plan = String(args.plan || 'pro').toLowerCase();
-  if (!['free', 'pro', 'vip'].includes(plan)) die('--plan must be free, pro or vip.');
+  if (!['free', 'pro', 'vip', 'mini'].includes(plan)) die('--plan must be free, pro, vip or mini.');
 
   const code = newCode();
   const expiresAt = new Date(Date.now() + days * 86400_000).toISOString();
