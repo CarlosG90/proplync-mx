@@ -14,11 +14,11 @@
  * -----------------------------------------------------------------------------
  */
 
-import { handleMiniSignup, miniSignupOpen } from '../../api/onboard.js';
-import { buildEventRow } from '../../api/_lib/events.js';
-import { enforceRateLimit } from '../../api/_lib/ratelimit.js';
-import { getServiceClient } from '../../api/_lib/supabase.js';
-import { safeDetail } from '../../api/_lib/health.js';
+import { handleMiniSignup, miniSignupOpen } from './_proplync/onboard.js';
+import { buildEventRow } from './_proplync/_lib/events.js';
+import { enforceRateLimit } from './_proplync/_lib/ratelimit.js';
+import { getServiceClient } from './_proplync/_lib/supabase.js';
+import { safeDetail } from './_proplync/_lib/health.js';
 
 /* The Mini funnel (scripts/funnel.mjs, "Mini"): a fixed list, so the events table can't be filled with
    arbitrary names. Anonymous tab ids only (api/_lib/events.js). mini_paid_notice and mini_activated are

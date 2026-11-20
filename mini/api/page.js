@@ -21,9 +21,9 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { getServiceClient } from '../../api/_lib/supabase.js';
-import { pageActive } from '../../api/_lib/plans.js';
-import { logDegraded } from '../../api/_lib/health.js';
+import { getServiceClient } from './_proplync/_lib/supabase.js';
+import { pageActive } from './_proplync/_lib/plans.js';
+import { logDegraded } from './_proplync/_lib/health.js';
 
 const TEMPLATE = readFileSync(new URL('../p.html', import.meta.url), 'utf8');
 const PROPLYNC_SITE = (process.env.PROPLYNC_SITE_URL || 'https://proplync-mx.vercel.app').replace(/\/$/, '');

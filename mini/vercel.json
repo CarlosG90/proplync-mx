@@ -1,36 +1,76 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "cd .. && npm ci",
   "buildCommand": "",
   "cleanUrls": true,
   "trailingSlash": false,
   "functions": {
-    "api/page.js": { "maxDuration": 10, "includeFiles": "p.html" },
-    "api/signup.js": { "maxDuration": 15 },
-    "api/import.js": { "maxDuration": 30 },
-    "api/panel.js": { "maxDuration": 15 }
+    "api/page.js": {
+      "maxDuration": 10,
+      "includeFiles": "p.html"
+    },
+    "api/signup.js": {
+      "maxDuration": 15
+    },
+    "api/import.js": {
+      "maxDuration": 30
+    },
+    "api/panel.js": {
+      "maxDuration": 15
+    }
   },
   "redirects": [
-    { "source": "/pago", "destination": "/panel?pay=1", "permanent": false },
-    { "source": "/pagina", "destination": "/", "permanent": true },
-    { "source": "/mini", "destination": "/", "permanent": true }
+    {
+      "source": "/pago",
+      "destination": "/panel?pay=1",
+      "permanent": false
+    },
+    {
+      "source": "/pagina",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/mini",
+      "destination": "/",
+      "permanent": true
+    }
   ],
   "rewrites": [
-    { "source": "/:slug([a-z0-9][a-z0-9-]{0,79})", "destination": "/api/page?slug=:slug" }
+    {
+      "source": "/:slug([a-z0-9][a-z0-9-]{0,79})",
+      "destination": "/api/page?slug=:slug"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
       ]
     },
     {
       "source": "/(css|js)/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=86400" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, stale-while-revalidate=86400"
+        }
+      ]
     }
   ]
 }
