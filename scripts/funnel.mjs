@@ -16,7 +16,7 @@
  */
 
 import { parseArgs, serviceClient, die } from './_lib.mjs';
-import { buildFunnel, BUYER_STAGES, AGENT_STAGES } from '../api/_lib/funnel.js';
+import { buildFunnel, BUYER_STAGES, AGENT_STAGES, MINI_STAGES } from '../api/_lib/funnel.js';
 
 const args = parseArgs(process.argv.slice(2), ['by-source']);
 const svc = serviceClient();
@@ -43,5 +43,6 @@ if (args.flags.has('by-source')) {
   console.log('\n  Last 30 days, distinct visitors (browser-tab sessions)');
   print('Buyers', buildFunnel(data, BUYER_STAGES));
   print('Agents', buildFunnel(data, AGENT_STAGES));
+  print('PropLync Mini', buildFunnel(data, MINI_STAGES));
 }
 console.log('');

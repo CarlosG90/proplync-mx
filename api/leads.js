@@ -17,6 +17,7 @@
  */
 
 import { requireAgencyUser } from './_lib/auth.js';
+import { buildEventRow } from './_lib/events.js';
 import { getUserClient, getServiceClient } from './_lib/supabase.js';
 import { safeDetail } from './_lib/health.js';
 import { enforceRateLimit } from './_lib/ratelimit.js';
@@ -30,27 +31,6 @@ const EVENT_NAMES = new Set([
   'scout_result_viewed', 'verification_requested', 'agent_signup_start', 'agent_signup_complete', 'agent_request_sent'
 ]);
 
-/** A short, plain label (campaign tags): letters, digits and a few separators. Anything else is dropped, not repaired. */
-function cleanLabel(v, max) {
-  const s = String(v == null ? '' : v).trim();
-  return s && s.length <= max && /^[\w .:/+~-]+$/.test(s) ? s : null;
-}
-
-/** Event properties: a few short, plain values. Anything that looks like contact data is dropped. */
-function cleanProps(p) {
-  const out = {};
-  if (!p || typeof p !== 'object' || Array.isArray(p)) return out;
-  for (const [k, v] of Object.entries(p).slice(0, 8)) {
-    if (!/^[a-z_]{1,30}$/.test(k) || k === 'page') continue;
-    if (typeof v === 'number' && Number.isFinite(v)) out[k] = v;
-    else if (typeof v === 'boolean') out[k] = v;
-    else if (typeof v === 'string') {
-      const s = v.trim().slice(0, 100);
-      if (s && !/@|\d{7,}/.test(s)) out[k] = s;   // no emails, no phone numbers
-    }
-  }
-  return out;
-}
 
 /**
  * True when a write failed because the row is not this agency's (or does not
@@ -284,21 +264,8 @@ export default async function handler(req, res) {
   if (req.method === 'POST' && action === 'event') {
     if (await enforceRateLimit(req, res, { bucket: 'event', limit: 240, windowSec: 3600 })) return;
     const b = req.body || {};
-    if (!EVENT_NAMES.has(b.name)) { res.status(400).json({ error: 'unknown_event' }); return; }
-    const session = String(b.session || '');
-    if (!/^[a-z0-9-]{8,40}$/.test(session)) { res.status(400).json({ error: 'invalid_session' }); return; }
-    const host = String(b.ref_host || '').toLowerCase();
-    const row = {
-      name: b.name,
-      page: /^[a-z0-9_-]{1,40}$/.test(String(b.page || '')) ? b.page : 'unknown',
-      session,
-      lang: b.lang === 'en' ? 'en' : b.lang === 'es' ? 'es' : null,
-      utm_source: cleanLabel(b.utm_source, 80),
-      utm_medium: cleanLabel(b.utm_medium, 80),
-      utm_campaign: cleanLabel(b.utm_campaign, 80),
-      ref_host: /^[a-z0-9.-]{1,100}$/.test(host) ? host : null,
-      props: cleanProps(b.props)
-    };
+    const { row, error: badEvent } = buildEventRow(b, EVENT_NAMES);
+    if (badEvent) { res.status(400).json({ error: badEvent }); return; }
     const { error } = await getServiceClient().from('events').insert(row);
     if (error) {
       res.status(500).json({ error: 'event_failed', detail: safeDetail(error) });

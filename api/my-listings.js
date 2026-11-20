@@ -153,7 +153,9 @@ export default async function handler(req, res) {
       }
       fields = capPhotos(fields, plan);
 
-      fields = await fillMissingPhoto(fields);
+      // A Mini page is one agent showing their own inventory to buyers; a stock photo of some
+      // other house on it would read as that property. Mini cards show a "no photo yet" tile instead.
+      if (plan.id !== 'mini') fields = await fillMissingPhoto(fields);
       const { data, error } = await db
         .from('listings')
         .insert({ ...fields, agency_id: auth.agencyId })

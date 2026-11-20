@@ -72,6 +72,7 @@ api/
   _lib/scout-merge.js  pure dedupe/merge + hard brief limits (budget, must-haves, deal-breakers)
 supabase/              schema.sql + numbered migrations 002–009 (applied by hand or Supabase MCP)
 mini.html              PropLync Mini (/mini, /pagina): self-serve "all your properties in one link" page sold from ads; paste → preview → photos → email code → saved unpaid
+mini/                  PropLync Mini as its OWN Vercel project (Root Directory mini): landing, /panel, public /:slug, 4 functions that import ../api (see mini/README.md)
 scripts/mini.mjs       Mini operator script: `list` pages waiting/active/lapsed, `activate <slug>` after a payment (MXN 249 = 90 days; publishes the drafts)
 scripts/               operator scripts: onboard-agency, create-invite, scout, mini, health-check, set-supabase-project
 ingest/                crawler: run.mjs + adapters/ (Apify: Inmuebles24, Lamudi; scraper_web: our own free scraper via mexico_scout_platform/src/worker.py); runs daily via .github/workflows/ingest.yml
