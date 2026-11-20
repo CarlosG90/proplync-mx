@@ -17,7 +17,13 @@ function fakeSvc({ user = { id: 'u1' }, member = null } = {}) {
       select() { return q; }, eq() { return q; }, limit() { return q; },
       maybeSingle: async () => ({ data: table === 'agency_members' ? member : null }),
       update(v) { writes.updates.push({ table, v }); return { eq: async () => ({ error: null }) }; },
-      insert: async (rows) => { writes.inserts.push({ table, rows }); return { error: null }; }
+      // insert(...).select(...) as supabase-js does: the handler reads the new listing ids back
+      insert(rows) {
+        writes.inserts.push({ table, rows });
+        const p = Promise.resolve({ data: rows.map((r, i) => ({ id: 'l' + i, public_id: 'PL-' + i })), error: null });
+        p.select = () => p;
+        return p;
+      }
     };
     return q;
   };
@@ -94,6 +100,9 @@ test('success: nothing public before payment — page not paid, up to 10 listing
   assert.equal(res.body.status, 'pending_payment');
   assert.equal(res.body.saved, 10);
   assert.equal(res.body.price_mxn, 249);
+  assert.equal(res.body.agency_id, 'a1');
+  assert.equal(res.body.listings.length, 10, 'ids come back so the page can attach photos');
+  assert.equal(res.body.listings[0].id, 'l0');
   assert.equal(provisioned.plan, 'mini');
   assert.equal(provisioned.userId, 'u1');
   const up = svc.writes.updates.find((w) => w.table === 'agencies').v;

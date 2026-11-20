@@ -50,6 +50,15 @@ Agencies (SaaS)
   pages   dashboard.html, dashboard-leads.html, generate.html, agency.html
   api     my-listings.js, generate.js, leads.js, onboard.js, extract.js, instagram-publish.js
   lib     auth.js, plans.js, agency.js, ratelimit.js, redis.js, runway.js, reel.js
+
+PropLync Mini (self-serve "all your properties in one link"; pay to publish, MXN 249 = 90 days; plan file ~/.claude/plans/glittery-tinkering-bengio.md)
+  page    mini.html (/mini, /pagina): paste → batch import → preview → photos → email code → saved as drafts, not public
+  api     extract.js ?action=batch (Groq first, Claude for files) · onboard.js ?action=mini | mini-status (needs MINI_SIGNUP=on)
+          search.js ?agency= (card fields, `paused`) · property.js (404 while unpaid) · my-listings.js ?resource=agency
+  plan    plans.js: mini (10 listings), pageActive(), miniState(); an unpaid/lapsed page hides its listings everywhere, incl. the search mirror
+  ops     scripts/mini.mjs list | activate <slug> [--periods n]; the operator is emailed when a page waits for payment (notifyOperator)
+  tests   mini-signup, plans, extract-batch
+  later   Mercado Pago (step 4), CRM for monthly (step 5): leads.js ?action=interest, plans.js crm flag
 ```
 
 ## Loops

@@ -467,6 +467,8 @@ export default async function handler(req, res) {
       }
       // exclude lets a property page show "others from this agency"
       const exclude = req.query.exclude;
+      // A paused page is never cached, so activation shows at once instead of after the CDN's minute.
+      if (paused) res.setHeader('Cache-Control', 'no-store');
       res.status(200).json({
         agency: { name: agency.name, slug: agency.slug, logo_url: agency.logo_url,
                   cover_url: agency.cover_url, primary_color: agency.primary_color,
