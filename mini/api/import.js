@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------------------
  */
 
-import { handleBatch } from '../../api/extract.js';
+import { handleBatch } from './_proplync/extract.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }

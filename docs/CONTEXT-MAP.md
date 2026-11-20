@@ -54,6 +54,7 @@ Agencies (SaaS)
 PropLync Mini (self-serve "all your properties in one link"; its OWN Vercel project, Root Directory mini/; mini/README.md)
   pages   mini/index.html (landing + paste → preview → email code → saved unpaid), mini/panel.html (account: status,
           pay/renew, link+QR, properties, card), mini/p.html (public page /:slug, rendered by mini/api/page.js), legal drafts
+  shared  mini/api/_proplync/ = generated copy of the api/ files Mini uses (scripts/sync-mini-shared.mjs; test/mini-shared fails on drift)
   api     mini/api/signup.js → api/onboard.js handleMiniSignup · mini/api/import.js → api/extract.js handleBatch
           mini/api/panel.js → api/my-listings.js (+ paid-notice → events row + operator email) · mini/api/page.js
   rules   api/_lib/listing-fields.js (shared validation), plans.js mini / pageActive / miniState; unpaid or lapsed pages

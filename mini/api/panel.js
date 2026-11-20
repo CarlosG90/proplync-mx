@@ -23,13 +23,13 @@
  * -----------------------------------------------------------------------------
  */
 
-import listingsHandler from '../../api/my-listings.js';
-import { requireAgencyUser } from '../../api/_lib/auth.js';
-import { getServiceClient } from '../../api/_lib/supabase.js';
-import { enforceRateLimit } from '../../api/_lib/ratelimit.js';
-import { safeDetail, logDegraded } from '../../api/_lib/health.js';
-import { miniState, MINI_PRICE_MXN } from '../../api/_lib/plans.js';
-import { notifyOperator } from '../../api/_lib/notify.js';
+import listingsHandler from './_proplync/my-listings.js';
+import { requireAgencyUser } from './_proplync/_lib/auth.js';
+import { getServiceClient } from './_proplync/_lib/supabase.js';
+import { enforceRateLimit } from './_proplync/_lib/ratelimit.js';
+import { safeDetail, logDegraded } from './_proplync/_lib/health.js';
+import { miniState, MINI_PRICE_MXN } from './_proplync/_lib/plans.js';
+import { notifyOperator } from './_proplync/_lib/notify.js';
 
 export const PAY_METHODS = ['transfer', 'deposit', 'oxxo', 'other'];
 
