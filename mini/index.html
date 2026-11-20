@@ -40,69 +40,62 @@
   body{background:var(--paper)}
   .mn-wrap{max-width:var(--mn-max);margin:0 auto;padding:0 var(--gutter)}
 
-  /* ── Light header on this page: the landing is warm and bright, like the ads that bring people here ── */
-  body{background:#f6f1e9}
+  /* ── Hero: PropLync's own look. The visual is what the product really does: one link that previews itself in a chat ── */
   header nav{justify-content:space-between}
-  header{background:rgba(246,241,233,.9);color:var(--ink);border-bottom:1px solid rgba(10,22,40,.08)}
-  header .brand .wordmark{color:var(--ink)}
-  header .lang{border-color:rgba(10,22,40,.14)}
-  header .lang button{color:var(--on-sand)}
-  header .lang button.on{background:var(--ink);color:#fff}
-  header .navtools .btn-ghost{color:var(--ink);border-color:rgba(10,22,40,.2)}
+  .mn-hero{background:var(--ink);color:var(--on-ink);padding:var(--sp-14) 0 var(--sp-16);position:relative;overflow:hidden}
+  .mn-hero::before{content:"";position:absolute;inset:0;background:
+    radial-gradient(45% 55% at 82% 30%,rgba(201,169,110,.20),transparent 70%),
+    radial-gradient(35% 40% at 10% 95%,rgba(45,138,133,.18),transparent 70%);pointer-events:none}
+  .mn-hero::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(240,237,232,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(240,237,232,.035) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(70% 70% at 70% 40%,#000,transparent);pointer-events:none}
+  .mn-hero-grid{display:grid;gap:var(--sp-12);align-items:center;position:relative;z-index:1}
+  .mn-eyebrow{font-family:var(--mono);font-size:var(--text-xs);letter-spacing:.18em;text-transform:uppercase;color:var(--gold);display:inline-flex;align-items:center;gap:12px}
+  .mn-eyebrow::before{content:"";width:28px;height:1px;background:var(--gold)}
+  .mn-hero h1{font-family:var(--display);font-weight:300;font-size:clamp(2.5rem,7vw,4.4rem);line-height:1.02;letter-spacing:-.02em;color:var(--on-ink);margin:var(--sp-5) 0}
+  .mn-hero h1 em{font-style:italic;color:var(--gold);font-weight:400}
+  .mn-hero .lede{color:var(--on-ink-dim);font-size:var(--text-md);line-height:1.65;max-width:46ch}
+  .mn-cta-row{display:flex;gap:var(--sp-4);flex-wrap:wrap;align-items:center;margin-top:var(--sp-8)}
+  .mn-hero .btn-gold{padding:15px 28px;font-size:var(--text-base)}
+  .mn-price-line{color:var(--on-ink-dim);font-size:var(--text-sm);line-height:1.4}
+  .mn-price-line b{color:var(--on-ink);font-weight:600}
+  .mn-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4);margin-top:var(--sp-10);padding-top:var(--sp-6);border-top:1px solid rgba(240,237,232,.1);max-width:520px}
+  .mn-stats b{display:block;font-family:var(--display);font-weight:300;font-size:clamp(1.6rem,4.4vw,2.2rem);color:var(--gold);line-height:1}
+  .mn-stats span{display:block;font-size:var(--text-xs);color:var(--on-ink-dim);margin-top:6px;line-height:1.4}
 
-  /* ── Hero: one question the agent recognises, the answer in a phone, and the price ── */
-  .mn-hero{padding:var(--sp-12) 0 var(--sp-14);position:relative;overflow:hidden;
-    background:radial-gradient(60% 50% at 85% 10%,rgba(201,169,110,.22),transparent 70%),radial-gradient(50% 40% at 0% 80%,rgba(201,169,110,.16),transparent 70%),#f6f1e9}
-  .mn-hero-top{text-align:center;max-width:860px;margin:0 auto}
-  .mn-eyebrow{font-family:var(--mono);font-size:var(--text-xs);letter-spacing:.18em;text-transform:uppercase;color:#8a6a2f;display:inline-flex;align-items:center;gap:12px}
-  .mn-hero h1{font-family:var(--body);font-weight:800;font-size:clamp(2.1rem,7.2vw,4.1rem);line-height:1.02;letter-spacing:-.025em;text-transform:uppercase;color:#2b2318;margin:var(--sp-4) 0 var(--sp-4)}
-  .mn-hero h1 span{display:block}
-  .mn-hero .lede{color:#4a4032;font-size:clamp(1.05rem,2.6vw,1.35rem);line-height:1.5;max-width:46ch;margin:0 auto}
-  .mn-hero .lede b{color:#2b2318;font-weight:600}
-  .mn-hero-grid{display:grid;gap:var(--sp-10);align-items:center;margin-top:var(--sp-10)}
-
-  /* the phone: an example page, light, the way agents share it */
-  .mn-phone{justify-self:center;width:min(330px,86vw);background:#14100b;border-radius:44px;padding:11px;box-shadow:0 30px 60px -20px rgba(43,35,24,.45),0 0 0 1px rgba(43,35,24,.1);position:relative}
-  .mn-phone::before{content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);width:92px;height:22px;background:#14100b;border-radius:0 0 14px 14px;z-index:3}
-  .mn-screen{background:#faf7f1;border-radius:34px;overflow:hidden;height:610px;overflow-y:auto;scrollbar-width:none}
-  .mn-screen::-webkit-scrollbar{display:none}
-  .mn-phone-note{text-align:center;color:#8a7a62;font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;margin-top:var(--sp-4)}
-  .dm{padding:42px 16px 22px;color:#1d1810;font-family:var(--body)}
-  .dm-kicker{text-align:center;font-family:var(--mono);font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:#6b604f}
-  .dm-name{text-align:center;font-weight:700;font-size:1.32rem;margin-top:14px}
-  .dm-role{text-align:center;font-size:.54rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:4px;color:#3a3226}
-  .dm-pills{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
-  .dm-pills span{display:flex;align-items:center;gap:8px;border:1px solid #e3dccf;border-radius:999px;padding:8px 12px;font-size:.72rem;font-weight:500;background:#fff}
-  .dm-pills i{width:8px;height:8px;border-radius:50%;background:#1d1810}
-  .dm-pills i.wa{background:#25d366}
-  .dm-sec{text-align:center;font-family:var(--mono);font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:#6b604f;margin:18px 0 8px}
-  .dm-sec.gold{color:#a8873f}
-  .dm-svc{list-style:none;padding:0;margin:0 auto;width:max-content;font-size:.72rem;display:grid;gap:4px}
-  .dm-svc li::before{content:"•";margin-right:8px}
-  .dm-row{display:flex;gap:10px;background:#fff;border:1px solid #ebe5da;border-radius:12px;padding:8px;margin-top:8px;align-items:stretch}
-  .dm-row img{width:92px;height:72px;object-fit:cover;border-radius:7px;flex:none;background:#e9e2d6}
-  .dm-row div{flex:1;min-width:0;display:flex;flex-direction:column}
-  .dm-row b{font-size:.68rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .dm-row strong{font-size:.86rem;font-weight:800;margin-top:2px}
-  .dm-row small{font-size:.6rem;color:#6b604f;margin-top:2px}
-  .dm-row em{font-style:normal;font-size:.58rem;font-weight:700;align-self:flex-end;margin-top:auto}
-
-  /* benefits and price, beside the phone */
-  .mn-bens{list-style:none;padding:0;margin:0;display:grid;gap:var(--sp-6)}
-  .mn-bens li{display:flex;gap:16px;align-items:flex-start}
-  .mn-bens .ck{flex:none;width:34px;height:34px;border-radius:50%;background:#3fae6a;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(63,174,106,.3)}
-  .mn-bens .ck svg{width:18px;height:18px}
-  .mn-bens h3{font-family:var(--body);font-weight:800;font-size:clamp(1.2rem,2.6vw,1.55rem);line-height:1.15;color:#2b2318;margin:2px 0 4px}
-  .mn-bens p{color:#4a4032;font-size:1rem;line-height:1.45;margin:0}
-  .mn-price-card{margin-top:var(--sp-8);background:rgba(255,255,255,.72);border:1px solid rgba(43,35,24,.08);border-radius:22px;padding:var(--sp-6);text-align:center;box-shadow:0 18px 40px -24px rgba(43,35,24,.35);backdrop-filter:blur(6px)}
-  .mn-price-card .amt{font-family:var(--body);font-weight:800;font-size:clamp(3rem,9vw,4.2rem);line-height:1;color:#2b2318;letter-spacing:-.03em}
-  .mn-price-card .amt small{font-size:.32em;font-weight:700;letter-spacing:0;margin-left:6px}
-  .mn-price-card .terms{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.86rem;color:#2b2318;margin-top:10px}
-  .mn-price-card p{color:#4a4032;font-size:.9rem;margin:8px 0 0;line-height:1.5}
-  .mn-cta-row{display:flex;gap:var(--sp-3);flex-wrap:wrap;justify-content:center;margin-top:var(--sp-5)}
-  .btn-dark{background:#2b2318;color:#fff;border:0;border-radius:999px;padding:15px 28px;font-weight:700;font-size:1rem;display:inline-flex;align-items:center;gap:10px;text-decoration:none;box-shadow:0 10px 24px -10px rgba(43,35,24,.55)}
-  .btn-dark:hover{background:#1a140c;color:#fff}
-  .mn-link-quiet{color:#2b2318;font-weight:600;font-size:.95rem;align-self:center;text-decoration:underline;text-underline-offset:3px}
+  /* the composition: the page in a phone, and the chat where that page is shared as one link */
+  .mn-visual{position:relative;justify-self:center;width:min(420px,100%);min-height:560px}
+  .mn-phone{position:absolute;right:0;top:0;width:min(290px,76vw);background:#060d18;border-radius:42px;padding:10px;box-shadow:0 40px 80px -30px rgba(0,0,0,.7),0 0 0 1px rgba(240,237,232,.08);transform:rotate(3deg)}
+  .mn-phone::before{content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);width:84px;height:20px;background:#060d18;border-radius:0 0 13px 13px;z-index:3}
+  .mn-screen{background:var(--paper);border-radius:33px;overflow:hidden;height:540px}
+  .dm-head{background:var(--ink);color:var(--on-ink);padding:38px 16px 18px}
+  .dm-logo{width:40px;height:40px;border-radius:11px;background:var(--gold);color:var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:1.2rem}
+  .dm-eye{font-family:var(--mono);font-size:.48rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-top:12px}
+  .dm-name{font-family:var(--display);font-weight:300;font-size:1.35rem;line-height:1.1;margin-top:4px}
+  .dm-acts{display:flex;gap:6px;margin-top:12px}
+  .dm-acts span{font-size:.6rem;font-weight:600;padding:6px 10px;border-radius:999px;border:1px solid rgba(240,237,232,.18)}
+  .dm-acts span:first-child{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+  .dm-list{padding:10px;display:grid;gap:10px}
+  .dm-card{background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .dm-card img{display:block;width:100%;height:112px;object-fit:cover}
+  .dm-card div{padding:9px 11px 11px}
+  .dm-card small{font-family:var(--mono);font-size:.45rem;letter-spacing:.12em;text-transform:uppercase;color:var(--on-sand-light)}
+  .dm-card b{display:block;font-family:var(--display);font-weight:400;font-size:.86rem;color:var(--ink);margin-top:2px}
+  .dm-card p{display:flex;justify-content:space-between;align-items:center;margin:6px 0 0;font-family:var(--mono);font-weight:700;font-size:.7rem;color:var(--ink)}
+  .dm-card p i{font-style:normal;font-family:var(--body);font-size:.56rem;font-weight:600;background:var(--gold);color:var(--ink);padding:4px 8px;border-radius:999px}
+  .mn-chat{position:absolute;left:0;bottom:6px;width:min(268px,72vw);background:#efe9df;border-radius:20px;padding:12px;box-shadow:0 30px 60px -25px rgba(0,0,0,.65);transform:rotate(-2.5deg);z-index:2}
+  .mn-chat-top{display:flex;align-items:center;gap:8px;font-size:.66rem;color:#5d5446;margin:0 2px 8px}
+  .mn-chat-top i{width:22px;height:22px;border-radius:50%;background:var(--sea);display:inline-block}
+  .mn-bub{background:#d9f2d0;border-radius:12px 12px 4px 12px;padding:6px;margin-left:18px;color:#1d1810}
+  .mn-prev{background:#fff;border-radius:8px;overflow:hidden}
+  .mn-prev img{display:block;width:100%;height:84px;object-fit:cover}
+  .mn-prev div{padding:7px 9px}
+  .mn-prev b{display:block;font-size:.68rem;line-height:1.25}
+  .mn-prev span{display:block;font-size:.58rem;color:#6b604f;margin-top:2px}
+  .mn-prev em{display:block;font-style:normal;font-size:.54rem;color:#8a7a62;margin-top:3px}
+  .mn-bub p{font-size:.66rem;margin:6px 4px 2px;line-height:1.35}
+  .mn-bub small{display:block;text-align:right;font-size:.5rem;color:#6b7b62}
+  .mn-reply{background:#fff;border-radius:12px 12px 12px 4px;padding:7px 10px;font-size:.66rem;margin:8px 30px 0 0;color:#1d1810}
+  .mn-reply small{display:block;text-align:right;font-size:.5rem;color:#8a7a62;margin-top:2px}
+  .mn-visual-note{position:absolute;right:6px;bottom:-26px;font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--on-ink-faint)}
 
   /* start: paste a message, or upload photos */
   .mn-modes{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--sand);border-radius:999px;padding:5px;margin:var(--sp-5) 0 var(--sp-2)}
@@ -249,14 +242,16 @@
   .mn-foot a:hover{color:var(--gold)}
 
   @media (min-width:900px){
-    .mn-hero-grid{grid-template-columns:.95fr 1.05fr;gap:var(--sp-14)}
+    .mn-hero-grid{grid-template-columns:1.05fr .95fr;gap:var(--sp-12)}
     .mn-how-grid{grid-template-columns:repeat(3,1fr)}
     .mn-tiers{grid-template-columns:repeat(2,1fr)}
     .mn-pv-grid{grid-template-columns:repeat(2,1fr)}
   }
   @media (max-width:560px){
-    .mn-hero{padding:var(--sp-8) 0 var(--sp-12)}
-    .mn-hero-grid{margin-top:var(--sp-8)}
+    .mn-hero{padding:var(--sp-10) 0 var(--sp-14)}
+    .mn-visual{min-height:520px}
+    .mn-phone{right:2%}
+    .mn-stats{gap:var(--sp-3)}
     .mn-card{padding:var(--sp-5)}
     .mn-prop-grid{grid-template-columns:minmax(0,1fr)}
     .mn-screen{height:520px}
@@ -299,33 +294,25 @@
 </svg>
 
 <section class="mn-hero">
-  <div class="mn-wrap">
-    <div class="mn-hero-top">
+  <div class="mn-wrap mn-hero-grid">
+    <div>
       <div class="mn-eyebrow" data-es="PropLync Mini · para asesores inmobiliarios" data-en="PropLync Mini · for real-estate agents">PropLync Mini · para asesores inmobiliarios</div>
-      <h1 data-es="¿Mandas fotos de casas <span>una por una?</span>" data-en="Still sending house photos <span>one by one?</span>">¿Mandas fotos de casas <span>una por una?</span></h1>
-      <p class="lede" data-es="<b>Tus propiedades en un solo link, con tu marca.</b> Pega tu inventario o sube tus fotos y en minutos tienes tu página." data-en="<b>All your properties in one link, with your brand.</b> Paste your inventory or upload your photos and have your page in minutes."><b>Tus propiedades en un solo link, con tu marca.</b> Pega tu inventario o sube tus fotos y en minutos tienes tu página.</p>
+      <h1 data-es="Un link. <em>Todas</em> tus propiedades." data-en="One link. <em>All</em> your properties.">Un link. <em>Todas</em> tus propiedades.</h1>
+      <p class="lede" data-es="Deja de reenviar fotos y fichas por separado. Arma tu página en minutos con tu marca, y cada cliente que la abra te escribe directo por WhatsApp desde la propiedad que le gustó." data-en="Stop forwarding photos and listings one by one. Build your branded page in minutes, and every client who opens it messages you on WhatsApp straight from the property they liked.">Deja de reenviar fotos y fichas por separado. Arma tu página en minutos con tu marca, y cada cliente que la abra te escribe directo por WhatsApp desde la propiedad que le gustó.</p>
+      <div class="mn-cta-row">
+        <a class="btn btn-gold" href="#app" data-es="Crear mi página" data-en="Create my page">Crear mi página</a>
+        <div class="mn-price-line" data-es="<b>MXN 249 por 3 meses.</b><br>Ves tu página antes de pagar." data-en="<b>MXN 249 for 3 months.</b><br>See your page before you pay."><b>MXN 249 por 3 meses.</b><br>Ves tu página antes de pagar.</div>
+      </div>
+      <div class="mn-stats">
+        <div><b>10</b><span data-es="propiedades con fotos y ficha" data-en="properties with photos and details">propiedades con fotos y ficha</span></div>
+        <div><b data-es="5 min" data-en="5 min">5 min</b><span data-es="de tu inventario a tu página" data-en="from your inventory to your page">de tu inventario a tu página</span></div>
+        <div><b>1</b><span data-es="link para compartir en todos lados" data-en="link to share everywhere">link para compartir en todos lados</span></div>
+      </div>
     </div>
-    <div class="mn-hero-grid">
-      <div>
-        <div class="mn-phone" aria-hidden="true"><div class="mn-screen" id="mn-demo"></div></div>
-        <div class="mn-phone-note" data-es="Ejemplo de página" data-en="Example page">Ejemplo de página</div>
-      </div>
-      <div>
-        <ul class="mn-bens">
-          <li><span class="ck"><svg><use href="#i-check"/></svg></span><div><h3 data-es="Todo en un solo link" data-en="Everything in one link">Todo en un solo link</h3><p data-es="Compartes 1 link en vez de mandar fotos una por una." data-en="Share 1 link instead of sending photos one by one.">Compartes 1 link en vez de mandar fotos una por una.</p></div></li>
-          <li><span class="ck"><svg><use href="#i-check"/></svg></span><div><h3 data-es="Ficha completa lista para compartir" data-en="A complete listing, ready to share">Ficha completa lista para compartir</h3><p data-es="Fotos, precio, datos y botón «Me interesa» que llega a tu WhatsApp." data-en="Photos, price, details and an “I'm interested” button that reaches your WhatsApp.">Fotos, precio, datos y botón «Me interesa» que llega a tu WhatsApp.</p></div></li>
-          <li><span class="ck"><svg><use href="#i-check"/></svg></span><div><h3 data-es="Tú la actualizas cuando quieras" data-en="You update it whenever you want">Tú la actualizas cuando quieras</h3><p data-es="Sin volver a pagar diseño ni esperar a nadie." data-en="No paying for design again, no waiting on anyone.">Sin volver a pagar diseño ni esperar a nadie.</p></div></li>
-        </ul>
-        <div class="mn-price-card">
-          <div class="amt">$249<small>MXN</small></div>
-          <div class="terms" data-es="Por 3 meses · Lista en minutos" data-en="For 3 months · Ready in minutes">Por 3 meses · Lista en minutos</div>
-          <p data-es="Ves tu página terminada antes de pagar. Sin contratos ni cobros automáticos." data-en="See your finished page before you pay. No contracts, no automatic charges.">Ves tu página terminada antes de pagar. Sin contratos ni cobros automáticos.</p>
-          <div class="mn-cta-row">
-            <a class="btn-dark" href="#app" data-es="Crear mi página" data-en="Create my page">Crear mi página</a>
-            <a class="mn-link-quiet" href="#como" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a>
-          </div>
-        </div>
-      </div>
+    <div class="mn-visual" aria-hidden="true">
+      <div class="mn-phone"><div class="mn-screen" id="mn-demo"></div></div>
+      <div class="mn-chat" id="mn-chat"></div>
+      <div class="mn-visual-note" data-es="Ejemplo" data-en="Example">Ejemplo</div>
     </div>
   </div>
 </section>
@@ -604,19 +591,20 @@
   ];
   var DEMO_IMG = ['/img/demo-1.jpg', '/img/demo-2.jpg', '/img/demo-3.jpg'];
   function renderDemo() {
-    var rows = DEMO.map(function (p, i) {
-      var specs = [p.bedrooms + ' ' + t('rec', 'bd'), p.bathrooms + ' ' + t(p.bathrooms === 1 ? 'baño' : 'baños', 'bath'), p.size + ' m²'].join(' · ');
-      return '<div class="dm-row"><img src="' + DEMO_IMG[i] + '" alt="" loading="lazy"><div><b>' + escapeHtml(p.title) + '</b><strong>' + escapeHtml(money(p)) + '</strong>' +
-        '<small>' + escapeHtml(specs) + '</small><em>' + escapeHtml(t('Ver ficha →', 'View details →')) + '</em></div></div>';
+    var cards = DEMO.slice(0, 2).map(function (p, i) {
+      return '<div class="dm-card"><img src="' + DEMO_IMG[i] + '" alt="" loading="lazy"><div><small>' + escapeHtml(p.neighborhood + ' · ' + p.town) + '</small>' +
+        '<b>' + escapeHtml(p.title) + '</b><p>' + escapeHtml(money(p)) + '<i>' + escapeHtml(t('Me interesa', 'I\'m interested')) + '</i></p></div></div>';
     }).join('');
-    $('mn-demo').innerHTML = '<div class="dm">' +
-      '<div class="dm-kicker">' + escapeHtml(t('Tarjeta inmobiliaria', 'Real-estate card')) + '</div>' +
+    $('mn-demo').innerHTML = '<div class="dm-head"><div class="dm-logo">N</div>' +
+      '<div class="dm-eye">' + escapeHtml(t('Portafolio de propiedades', 'Property portfolio')) + '</div>' +
       '<div class="dm-name">Nadia Domínguez</div>' +
-      '<div class="dm-role">' + escapeHtml(t('Asesora · Negocios inmobiliarios', 'Agent · Real-estate business')) + '</div>' +
-      '<div class="dm-pills"><span><i class="wa"></i>WhatsApp</span><span><i></i>' + escapeHtml(t('Llamar', 'Call')) + '</span><span><i></i>' + escapeHtml(t('Correo', 'Email')) + '</span><span><i></i>' + escapeHtml(t('Ubicación', 'Location')) + '</span></div>' +
-      '<div class="dm-sec">' + escapeHtml(t('Servicios', 'Services')) + '</div>' +
-      '<ul class="dm-svc"><li>' + escapeHtml(t('Venta', 'Sale')) + '</li><li>' + escapeHtml(t('Renta', 'Rent')) + '</li><li>' + escapeHtml(t('Avalúos', 'Valuations')) + '</li></ul>' +
-      '<div class="dm-sec gold">' + escapeHtml(t('Propiedades', 'Properties')) + '</div>' + rows + '</div>';
+      '<div class="dm-acts"><span>WhatsApp</span><span>' + escapeHtml(t('Llamar', 'Call')) + '</span><span>' + escapeHtml(t('Ubicación', 'Location')) + '</span></div></div>' +
+      '<div class="dm-list">' + cards + '</div>';
+    $('mn-chat').innerHTML = '<div class="mn-chat-top"><i></i>' + escapeHtml(t('Cliente · hoy', 'Client · today')) + '</div>' +
+      '<div class="mn-bub"><div class="mn-prev"><img src="' + DEMO_IMG[0] + '" alt=""><div><b>Nadia Domínguez · ' + escapeHtml(t('Propiedades', 'Properties')) + '</b>' +
+      '<span>' + escapeHtml(t('8 propiedades en León', '8 properties in León')) + '</span><em>proplync-mini.vercel.app/nadia</em></div></div>' +
+      '<p>' + escapeHtml(t('Te comparto todo lo que tengo disponible 👇', 'Here is everything I have available 👇')) + '</p><small>10:24 ✓✓</small></div>' +
+      '<div class="mn-reply">' + escapeHtml(t('¡Me interesa la casa de Jardines del Moral!', 'I\'m interested in the Jardines del Moral house!')) + '<small>10:31</small></div>';
   }
   renderDemo();
   miniTrack('mini_view');
