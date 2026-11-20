@@ -40,35 +40,79 @@
   body{background:var(--paper)}
   .mn-wrap{max-width:var(--mn-max);margin:0 auto;padding:0 var(--gutter)}
 
-  /* ── Hero: the promise, and the product itself in a phone ── */
-  .mn-hero{background:var(--ink);color:var(--on-ink);padding:var(--sp-16) 0 var(--sp-14);position:relative;overflow:hidden}
-  .mn-hero::after{content:"";position:absolute;right:-20%;top:-30%;width:70%;height:160%;background:radial-gradient(closest-side,rgba(201,169,110,.14),transparent 70%);pointer-events:none}
+  /* ── Hero: PropLync's own look. The visual is what the product really does: one link that previews itself in a chat ── */
+  header nav{justify-content:space-between}
+  .mn-hero{background:var(--ink);color:var(--on-ink);padding:var(--sp-14) 0 var(--sp-16);position:relative;overflow:hidden}
+  .mn-hero::before{content:"";position:absolute;inset:0;background:
+    radial-gradient(45% 55% at 82% 30%,rgba(201,169,110,.20),transparent 70%),
+    radial-gradient(35% 40% at 10% 95%,rgba(45,138,133,.18),transparent 70%);pointer-events:none}
+  .mn-hero::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(240,237,232,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(240,237,232,.035) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(70% 70% at 70% 40%,#000,transparent);pointer-events:none}
   .mn-hero-grid{display:grid;gap:var(--sp-12);align-items:center;position:relative;z-index:1}
   .mn-eyebrow{font-family:var(--mono);font-size:var(--text-xs);letter-spacing:.18em;text-transform:uppercase;color:var(--gold);display:inline-flex;align-items:center;gap:12px}
   .mn-eyebrow::before{content:"";width:28px;height:1px;background:var(--gold)}
-  .mn-hero h1{font-size:var(--text-4xl);color:var(--on-ink);margin:var(--sp-5) 0 var(--sp-5);max-width:16ch}
-  .mn-hero .lede{color:var(--on-ink-dim);font-size:var(--text-md);line-height:1.7;max-width:52ch}
-  .mn-cta-row{display:flex;gap:var(--sp-3);flex-wrap:wrap;margin-top:var(--sp-8)}
-  .mn-hero .btn{padding:14px 26px;font-size:var(--text-base)}
-  .btn-ghost-light{background:transparent;color:var(--on-ink);border:1px solid rgba(240,237,232,.25)}
-  .btn-ghost-light:hover{border-color:var(--gold);color:var(--on-ink)}
-  .mn-proof{display:flex;gap:var(--sp-6);flex-wrap:wrap;margin-top:var(--sp-8);color:var(--on-ink-dim);font-size:var(--text-sm)}
-  .mn-proof span{display:inline-flex;align-items:center;gap:8px}
-  .mn-proof em{font-style:normal}
-  .mn-proof svg{width:16px;height:16px;color:var(--gold)}
+  .mn-hero h1{font-family:var(--display);font-weight:300;font-size:clamp(2.5rem,7vw,4.4rem);line-height:1.02;letter-spacing:-.02em;color:var(--on-ink);margin:var(--sp-5) 0}
+  .mn-hero h1 em{font-style:italic;color:var(--gold);font-weight:400}
+  .mn-hero .lede{color:var(--on-ink-dim);font-size:var(--text-md);line-height:1.65;max-width:46ch}
+  .mn-cta-row{display:flex;gap:var(--sp-4);flex-wrap:wrap;align-items:center;margin-top:var(--sp-8)}
+  .mn-hero .btn-gold{padding:15px 28px;font-size:var(--text-base)}
+  .mn-price-line{color:var(--on-ink-dim);font-size:var(--text-sm);line-height:1.4}
+  .mn-price-line b{color:var(--on-ink);font-weight:600}
+  .mn-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4);margin-top:var(--sp-10);padding-top:var(--sp-6);border-top:1px solid rgba(240,237,232,.1);max-width:520px}
+  .mn-stats b{display:block;font-family:var(--display);font-weight:300;font-size:clamp(1.6rem,4.4vw,2.2rem);color:var(--gold);line-height:1}
+  .mn-stats span{display:block;font-size:var(--text-xs);color:var(--on-ink-dim);margin-top:6px;line-height:1.4}
 
-  /* the phone: a real render of the page, from sample data, so the promise is literal */
-  .mn-phone{justify-self:center;width:min(320px,86vw);background:#0b1220;border-radius:40px;padding:12px;box-shadow:var(--shadow-2xl),0 0 0 1px rgba(240,237,232,.08);position:relative}
-  .mn-phone::before{content:"";position:absolute;top:12px;left:50%;transform:translateX(-50%);width:96px;height:24px;background:#0b1220;border-radius:0 0 16px 16px;z-index:3}
-  .mn-screen{background:var(--paper);border-radius:30px;overflow:hidden;height:600px;overflow-y:auto;scrollbar-width:none}
-  .mn-screen::-webkit-scrollbar{display:none}
-  .mn-phone-note{text-align:center;color:var(--on-ink-faint);font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;margin-top:var(--sp-4)}
+  /* the composition: the page in a phone, and the chat where that page is shared as one link */
+  .mn-visual{position:relative;justify-self:center;width:min(420px,100%);min-height:560px}
+  .mn-phone{position:absolute;right:0;top:0;width:min(290px,76vw);background:#060d18;border-radius:42px;padding:10px;box-shadow:0 40px 80px -30px rgba(0,0,0,.7),0 0 0 1px rgba(240,237,232,.08);transform:rotate(3deg)}
+  .mn-phone::before{content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);width:84px;height:20px;background:#060d18;border-radius:0 0 13px 13px;z-index:3}
+  .mn-screen{background:var(--paper);border-radius:33px;overflow:hidden;height:540px}
+  .dm-head{background:var(--ink);color:var(--on-ink);padding:38px 16px 18px}
+  .dm-logo{width:40px;height:40px;border-radius:11px;background:var(--gold);color:var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:1.2rem}
+  .dm-eye{font-family:var(--mono);font-size:.48rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-top:12px}
+  .dm-name{font-family:var(--display);font-weight:300;font-size:1.35rem;line-height:1.1;margin-top:4px}
+  .dm-acts{display:flex;gap:6px;margin-top:12px}
+  .dm-acts span{font-size:.6rem;font-weight:600;padding:6px 10px;border-radius:999px;border:1px solid rgba(240,237,232,.18)}
+  .dm-acts span:first-child{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+  .dm-list{padding:10px;display:grid;gap:10px}
+  .dm-card{background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .dm-card img{display:block;width:100%;height:112px;object-fit:cover}
+  .dm-card div{padding:9px 11px 11px}
+  .dm-card small{font-family:var(--mono);font-size:.45rem;letter-spacing:.12em;text-transform:uppercase;color:var(--on-sand-light)}
+  .dm-card b{display:block;font-family:var(--display);font-weight:400;font-size:.86rem;color:var(--ink);margin-top:2px}
+  .dm-card p{display:flex;justify-content:space-between;align-items:center;margin:6px 0 0;font-family:var(--mono);font-weight:700;font-size:.7rem;color:var(--ink)}
+  .dm-card p i{font-style:normal;font-family:var(--body);font-size:.56rem;font-weight:600;background:var(--gold);color:var(--ink);padding:4px 8px;border-radius:999px}
+  .mn-chat{position:absolute;left:0;bottom:6px;width:min(268px,72vw);background:#efe9df;border-radius:20px;padding:12px;box-shadow:0 30px 60px -25px rgba(0,0,0,.65);transform:rotate(-2.5deg);z-index:2}
+  .mn-chat-top{display:flex;align-items:center;gap:8px;font-size:.66rem;color:#5d5446;margin:0 2px 8px}
+  .mn-chat-top i{width:22px;height:22px;border-radius:50%;background:var(--sea);display:inline-block}
+  .mn-bub{background:#d9f2d0;border-radius:12px 12px 4px 12px;padding:6px;margin-left:18px;color:#1d1810}
+  .mn-prev{background:#fff;border-radius:8px;overflow:hidden}
+  .mn-prev img{display:block;width:100%;height:84px;object-fit:cover}
+  .mn-prev div{padding:7px 9px}
+  .mn-prev b{display:block;font-size:.68rem;line-height:1.25}
+  .mn-prev span{display:block;font-size:.58rem;color:#6b604f;margin-top:2px}
+  .mn-prev em{display:block;font-style:normal;font-size:.54rem;color:#8a7a62;margin-top:3px}
+  .mn-bub p{font-size:.66rem;margin:6px 4px 2px;line-height:1.35}
+  .mn-bub small{display:block;text-align:right;font-size:.5rem;color:#6b7b62}
+  .mn-reply{background:#fff;border-radius:12px 12px 12px 4px;padding:7px 10px;font-size:.66rem;margin:8px 30px 0 0;color:#1d1810}
+  .mn-reply small{display:block;text-align:right;font-size:.5rem;color:#8a7a62;margin-top:2px}
+  .mn-visual-note{position:absolute;right:6px;bottom:-26px;font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--on-ink-faint)}
 
-  /* ── Trust strip ── */
-  .mn-trust{background:var(--white);border-bottom:1px solid var(--line)}
-  .mn-trust .mn-wrap{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-4);padding-top:var(--sp-5);padding-bottom:var(--sp-5)}
-  .mn-trust div{display:flex;align-items:center;gap:10px;font-size:var(--text-sm);color:var(--on-sand)}
-  .mn-trust svg{width:18px;height:18px;color:var(--sea);flex:none}
+  /* start: paste a message, or upload photos */
+  .mn-modes{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--sand);border-radius:999px;padding:5px;margin:var(--sp-5) 0 var(--sp-2)}
+  .mn-modes button{border:0;background:none;border-radius:999px;padding:11px 10px;font:600 .9rem var(--body);color:var(--on-sand);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+  .mn-modes button svg{width:17px;height:17px}
+  .mn-modes button.on{background:var(--white);color:var(--ink);box-shadow:var(--shadow-sm)}
+  .mn-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;border:1.5px dashed var(--sand-3);border-radius:var(--radius);padding:var(--sp-7) var(--sp-4);background:var(--paper);cursor:pointer;color:var(--on-sand)}
+  .mn-drop:hover,.mn-drop.over{border-color:var(--sea);background:#f2f8f7}
+  .mn-drop svg{width:30px;height:30px;color:var(--sea-deep)}
+  .mn-drop b{color:var(--ink);font-size:1rem}
+  .mn-drop small{color:var(--on-sand-light);font-size:var(--text-xs)}
+  .mn-drop input{display:none}
+  .mn-pp{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:var(--radius);padding:10px;margin-top:10px;background:var(--white)}
+  .mn-pp-thumbs{display:flex;gap:4px;flex:1;min-width:0;overflow:hidden}
+  .mn-pp-thumbs img{width:54px;height:54px;object-fit:cover;border-radius:8px;flex:none}
+  .mn-pp b{font-size:var(--text-sm);white-space:nowrap}
+  .mn-pp button{border:0;background:none;color:var(--on-sand-light);font-size:1.3rem;cursor:pointer;padding:4px 8px}
 
   /* ── The application: stepper + cards ── */
   .mn-app{padding:var(--sp-14) 0 var(--sp-12)}
@@ -198,14 +242,16 @@
   .mn-foot a:hover{color:var(--gold)}
 
   @media (min-width:900px){
-    .mn-hero-grid{grid-template-columns:1.1fr .9fr}
-    .mn-trust .mn-wrap{grid-template-columns:repeat(4,1fr)}
+    .mn-hero-grid{grid-template-columns:1.05fr .95fr;gap:var(--sp-12)}
     .mn-how-grid{grid-template-columns:repeat(3,1fr)}
     .mn-tiers{grid-template-columns:repeat(2,1fr)}
     .mn-pv-grid{grid-template-columns:repeat(2,1fr)}
   }
   @media (max-width:560px){
-    .mn-hero{padding:var(--sp-12) 0 var(--sp-10)}
+    .mn-hero{padding:var(--sp-10) 0 var(--sp-14)}
+    .mn-visual{min-height:520px}
+    .mn-phone{right:2%}
+    .mn-stats{gap:var(--sp-3)}
     .mn-card{padding:var(--sp-5)}
     .mn-prop-grid{grid-template-columns:minmax(0,1fr)}
     .mn-screen{height:520px}
@@ -241,6 +287,9 @@
   <symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-7.7 13.6L3 21l4.5-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.2 8.4c.2-.4.5-.4.8-.4h.6c.2 0 .4.1.5.4l.8 1.9c.1.2 0 .4-.1.6l-.5.6c-.1.2-.1.3 0 .5a6 6 0 0 0 2.9 2.6c.2.1.4 0 .5-.1l.7-.8c.2-.2.4-.2.6-.1l1.8.9c.3.1.4.3.4.5 0 .9-.6 1.9-1.6 2.2-.8.3-1.9.2-3.5-.6a9.6 9.6 0 0 1-4-4c-.7-1.4-.6-2.6.1-3.6z" fill="currentColor"/></symbol>
   <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-images" viewBox="0 0 24 24"><rect x="3" y="5" width="15" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m3 15 4-4 4 4 3-3 4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 3h12a2 2 0 0 1 2 2v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 9.5h8M8 12.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9.5V20h12V9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
 </svg>
 
@@ -248,38 +297,30 @@
   <div class="mn-wrap mn-hero-grid">
     <div>
       <div class="mn-eyebrow" data-es="PropLync Mini · para asesores inmobiliarios" data-en="PropLync Mini · for real-estate agents">PropLync Mini · para asesores inmobiliarios</div>
-      <h1 data-es="Tus propiedades en un solo link, con tu marca." data-en="All your properties in one link, with your brand.">Tus propiedades en un solo link, con tu marca.</h1>
-      <p class="lede" data-es="Pega tu inventario tal como lo mandas por WhatsApp. En unos minutos tienes una página profesional con fotos, precios, ficha de cada propiedad y un botón «Me interesa» que lleva directo a tu WhatsApp." data-en="Paste your inventory the way you send it on WhatsApp. In a few minutes you have a professional page with photos, prices, details for each property and an “I'm interested” button straight to your WhatsApp.">Pega tu inventario tal como lo mandas por WhatsApp. En unos minutos tienes una página profesional con fotos, precios, ficha de cada propiedad y un botón «Me interesa» que lleva directo a tu WhatsApp.</p>
+      <h1 data-es="Un link. <em>Todas</em> tus propiedades." data-en="One link. <em>All</em> your properties.">Un link. <em>Todas</em> tus propiedades.</h1>
+      <p class="lede" data-es="Deja de reenviar fotos y fichas por separado. Arma tu página en minutos con tu marca, y cada cliente que la abra te escribe directo por WhatsApp desde la propiedad que le gustó." data-en="Stop forwarding photos and listings one by one. Build your branded page in minutes, and every client who opens it messages you on WhatsApp straight from the property they liked.">Deja de reenviar fotos y fichas por separado. Arma tu página en minutos con tu marca, y cada cliente que la abra te escribe directo por WhatsApp desde la propiedad que le gustó.</p>
       <div class="mn-cta-row">
         <a class="btn btn-gold" href="#app" data-es="Crear mi página" data-en="Create my page">Crear mi página</a>
-        <a class="btn btn-ghost-light" href="#precios" data-es="Ver precios" data-en="See pricing">Ver precios</a>
+        <div class="mn-price-line" data-es="<b>MXN 249 por 3 meses.</b><br>Ves tu página antes de pagar." data-en="<b>MXN 249 for 3 months.</b><br>See your page before you pay."><b>MXN 249 por 3 meses.</b><br>Ves tu página antes de pagar.</div>
       </div>
-      <div class="mn-proof">
-        <span><svg><use href="#i-clock"/></svg><em data-es="Lista en minutos, no en 24 horas" data-en="Ready in minutes, not in 24 hours">Lista en minutos, no en 24 horas</em></span>
-        <span><svg><use href="#i-edit"/></svg><em data-es="Tú la actualizas cuando quieras" data-en="You update it whenever you want">Tú la actualizas cuando quieras</em></span>
-        <span><svg><use href="#i-shield"/></svg><em data-es="Ves cómo queda antes de pagar" data-en="See how it looks before you pay">Ves cómo queda antes de pagar</em></span>
+      <div class="mn-stats">
+        <div><b>10</b><span data-es="propiedades con fotos y ficha" data-en="properties with photos and details">propiedades con fotos y ficha</span></div>
+        <div><b data-es="5 min" data-en="5 min">5 min</b><span data-es="de tu inventario a tu página" data-en="from your inventory to your page">de tu inventario a tu página</span></div>
+        <div><b>1</b><span data-es="link para compartir en todos lados" data-en="link to share everywhere">link para compartir en todos lados</span></div>
       </div>
     </div>
-    <div>
-      <div class="mn-phone" aria-hidden="true"><div class="mn-screen" id="mn-demo"></div></div>
-      <div class="mn-phone-note" data-es="Así se ve una página real" data-en="This is what a real page looks like">Así se ve una página real</div>
+    <div class="mn-visual" aria-hidden="true">
+      <div class="mn-phone"><div class="mn-screen" id="mn-demo"></div></div>
+      <div class="mn-chat" id="mn-chat"></div>
+      <div class="mn-visual-note" data-es="Ejemplo" data-en="Example">Ejemplo</div>
     </div>
   </div>
 </section>
 
-<div class="mn-trust">
-  <div class="mn-wrap">
-    <div><svg><use href="#i-wa"/></svg><span data-es="Botón «Me interesa» a tu WhatsApp" data-en="“I'm interested” button to your WhatsApp">Botón «Me interesa» a tu WhatsApp</span></div>
-    <div><svg><use href="#i-camera"/></svg><span data-es="Fotos, precio y ficha por propiedad" data-en="Photos, price and details per property">Fotos, precio y ficha por propiedad</span></div>
-    <div><svg><use href="#i-lock"/></svg><span data-es="Tus datos no se comparten" data-en="Your data is never shared">Tus datos no se comparten</span></div>
-    <div><svg><use href="#i-check"/></svg><span data-es="Sin contratos ni mensualidad forzosa" data-en="No contracts, no forced monthly fee">Sin contratos ni mensualidad forzosa</span></div>
-  </div>
-</div>
-
 <main class="mn-app" id="app">
   <div class="mn-wrap">
     <div class="mn-steps" aria-hidden="true">
-      <div class="mn-step on" data-step="paste"><i></i><span data-es="Pega" data-en="Paste">Pega</span></div>
+      <div class="mn-step on" data-step="paste"><i></i><span data-es="Empieza" data-en="Start">Empieza</span></div>
       <div class="mn-step" data-step="review"><i></i><span data-es="Revisa" data-en="Review">Revisa</span></div>
       <div class="mn-step" data-step="signin"><i></i><span data-es="Correo" data-en="Email">Correo</span></div>
       <div class="mn-step" data-step="done"><i></i><span data-es="Lista" data-en="Ready">Lista</span></div>
@@ -290,15 +331,31 @@
       <p class="mn-hint" data-es="Estamos preparando las primeras páginas. Vuelve en unos días." data-en="We are preparing the first pages. Come back in a few days.">Estamos preparando las primeras páginas. Vuelve en unos días.</p>
     </div>
 
-    <!-- 1. Paste -->
+    <!-- 1. Start: paste a message or upload photos -->
     <section class="mn-card" id="step-paste">
       <div class="mn-card-head"><span class="mn-num">1</span>
-        <div><h2 data-es="Pega tus propiedades" data-en="Paste your properties">Pega tus propiedades</h2>
-        <p class="mn-hint" data-es="Copia el mensaje de WhatsApp con tu inventario, una o varias propiedades. Nuestra IA lo ordena y tú revisas todo antes de publicar." data-en="Copy the WhatsApp message with your inventory, one or several properties. Our AI sorts it out and you check everything before publishing.">Copia el mensaje de WhatsApp con tu inventario, una o varias propiedades. Nuestra IA lo ordena y tú revisas todo antes de publicar.</p></div>
+        <div><h2 data-es="Agrega tus propiedades" data-en="Add your properties">Agrega tus propiedades</h2>
+        <p class="mn-hint" data-es="Pega el mensaje de WhatsApp con tu inventario, o sube las fotos de cada propiedad. Tú revisas todo antes de publicar." data-en="Paste the WhatsApp message with your inventory, or upload each property's photos. You check everything before publishing.">Pega el mensaje de WhatsApp con tu inventario, o sube las fotos de cada propiedad. Tú revisas todo antes de publicar.</p></div>
       </div>
-      <div class="mn-field">
-        <textarea class="mn-in" id="mn-text" maxlength="12000" placeholder="Casa en Jardines del Moral, 3 rec, 2 baños, 180 m², $3,450,000&#10;Depa en Centro, 2 rec, 1 baño, 95 m², renta $12,500 al mes, amueblado"></textarea>
-        <div class="mn-example"><span data-es="¿Quieres probar? " data-en="Want to try? ">¿Quieres probar? </span><button type="button" id="mn-sample" data-es="Usar un ejemplo" data-en="Use an example">Usar un ejemplo</button></div>
+      <div class="mn-modes" role="tablist">
+        <button type="button" role="tab" class="on" id="mn-mode-text" aria-selected="true"><svg><use href="#i-chat"/></svg><span data-es="Pegar mensaje" data-en="Paste message">Pegar mensaje</span></button>
+        <button type="button" role="tab" id="mn-mode-photos" aria-selected="false"><svg><use href="#i-images"/></svg><span data-es="Subir fotos" data-en="Upload photos">Subir fotos</span></button>
+      </div>
+      <div id="mn-pane-text">
+        <div class="mn-field">
+          <textarea class="mn-in" id="mn-text" maxlength="12000" placeholder="Casa en Jardines del Moral, 3 rec, 2 baños, 180 m², $3,450,000&#10;Depa en Centro, 2 rec, 1 baño, 95 m², renta $12,500 al mes, amueblado"></textarea>
+          <div class="mn-example"><span data-es="¿Quieres probar? " data-en="Want to try? ">¿Quieres probar? </span><button type="button" id="mn-sample" data-es="Usar un ejemplo" data-en="Use an example">Usar un ejemplo</button></div>
+        </div>
+      </div>
+      <div id="mn-pane-photos" hidden>
+        <label class="mn-drop" id="mn-drop">
+          <svg><use href="#i-images"/></svg>
+          <b data-es="Elige las fotos de una propiedad" data-en="Choose one property's photos">Elige las fotos de una propiedad</b>
+          <span data-es="Una propiedad a la vez, hasta 6 fotos. La primera es la portada." data-en="One property at a time, up to 6 photos. The first is the cover.">Una propiedad a la vez, hasta 6 fotos. La primera es la portada.</span>
+          <small data-es="Después escribes título, precio y zona." data-en="Then you add title, price and area.">Después escribes título, precio y zona.</small>
+          <input type="file" accept="image/*" multiple id="mn-photo-files">
+        </label>
+        <div id="mn-photo-props"></div>
       </div>
       <div class="mn-row">
         <button class="btn btn-gold" id="mn-read" data-es="Crear mi página" data-en="Create my page">Crear mi página</button>
@@ -325,10 +382,11 @@
       <h3 class="mn-sub" data-es="Revisa cada propiedad" data-en="Check each property">Revisa cada propiedad</h3>
       <p class="mn-hint" data-es="Agrega hasta 6 fotos por propiedad; la primera es la portada. También puedes hacerlo después desde tu panel." data-en="Add up to 6 photos per property; the first one is the cover. You can also do it later from your panel.">Agrega hasta 6 fotos por propiedad; la primera es la portada. También puedes hacerlo después desde tu panel.</p>
       <div id="mn-props"></div>
+      <button class="btn btn-outline" id="mn-add-prop" type="button" style="margin-top:12px"><span data-es="+ Agregar otra propiedad" data-en="+ Add another property">+ Agregar otra propiedad</span></button>
 
       <div class="mn-row">
         <button class="btn btn-gold" id="mn-next" data-es="Pagar y publicar · MXN 249" data-en="Pay and publish · MXN 249">Pagar y publicar · MXN 249</button>
-        <button class="btn btn-outline" id="mn-back" data-es="Volver a pegar" data-en="Paste again">Volver a pegar</button>
+        <button class="btn btn-outline" id="mn-back" data-es="Volver" data-en="Back">Volver</button>
       </div>
       <div class="mn-msg" id="mn-review-msg" aria-live="polite"></div>
     </section>
@@ -377,14 +435,14 @@
   </div>
 </main>
 
-<section class="mn-how">
+<section class="mn-how" id="como">
   <div class="mn-wrap">
     <div class="mn-sec-head">
       <h2 data-es="Cómo funciona" data-en="How it works">Cómo funciona</h2>
       <p data-es="Lo que hoy tardas en mandar fotos una por una, aquí se hace una vez." data-en="What takes you ages sending photos one by one is done once here.">Lo que hoy tardas en mandar fotos una por una, aquí se hace una vez.</p>
     </div>
     <div class="mn-how-grid">
-      <div class="mn-how-item"><div class="k">01</div><h3 data-es="Pega tu inventario" data-en="Paste your inventory">Pega tu inventario</h3><p data-es="El mismo texto que mandas por WhatsApp. La IA separa cada propiedad y saca precio, recámaras, metros y zona." data-en="The same text you send on WhatsApp. The AI separates each property and pulls price, bedrooms, size and area.">El mismo texto que mandas por WhatsApp. La IA separa cada propiedad y saca precio, recámaras, metros y zona.</p></div>
+      <div class="mn-how-item"><div class="k">01</div><h3 data-es="Pega tu inventario o sube fotos" data-en="Paste your inventory or upload photos">Pega tu inventario o sube fotos</h3><p data-es="El mismo texto que mandas por WhatsApp (la IA separa cada propiedad y saca precio, recámaras, metros y zona), o directo las fotos de cada propiedad." data-en="The same text you send on WhatsApp (the AI separates each property and pulls price, bedrooms, size and area), or each property's photos directly.">El mismo texto que mandas por WhatsApp (la IA separa cada propiedad y saca precio, recámaras, metros y zona), o directo las fotos de cada propiedad.</p></div>
       <div class="mn-how-item"><div class="k">02</div><h3 data-es="Revisa y agrega fotos" data-en="Check and add photos">Revisa y agrega fotos</h3><p data-es="Ves tu página tal como quedará. Corriges lo que haga falta y subes las fotos de cada propiedad." data-en="You see your page exactly as it will look. Fix what needs fixing and upload each property's photos.">Ves tu página tal como quedará. Corriges lo que haga falta y subes las fotos de cada propiedad.</p></div>
       <div class="mn-how-item"><div class="k">03</div><h3 data-es="Paga y comparte" data-en="Pay and share">Paga y comparte</h3><p data-es="Confirmas tu correo con un código y tu página queda guardada. Al pagar se publica al instante y compartes un solo link." data-en="You confirm your email with a code and your page is saved. Once paid it goes live instantly and you share a single link.">Confirmas tu correo con un código y tu página queda guardada. Al pagar se publica al instante y compartes un solo link.</p></div>
     </div>
@@ -431,8 +489,8 @@
   <div class="mn-wrap">
     <div class="mn-sec-head"><h2 data-es="Preguntas frecuentes" data-en="Frequently asked questions">Preguntas frecuentes</h2></div>
     <div class="mn-faq-list">
-      <details><summary data-es="¿Cuándo pago?" data-en="When do I pay?">¿Cuándo pago?</summary><p data-es="Después de ver tu página lista. Guardas la página con tu correo y te contactamos por WhatsApp para confirmar el pago; en cuanto se confirma, se publica. Muy pronto podrás pagar en línea con Mercado Pago." data-en="After seeing your page ready. You save it with your email and we contact you on WhatsApp to confirm the payment; as soon as it is confirmed, it goes live. Very soon you will be able to pay online with Mercado Pago.">Después de ver tu página lista. Guardas la página con tu correo y te contactamos por WhatsApp para confirmar el pago; en cuanto se confirma, se publica. Muy pronto podrás pagar en línea con Mercado Pago.</p></details>
-      <details><summary data-es="¿Qué pasa cuando terminan los 3 meses?" data-en="What happens when the 3 months end?">¿Qué pasa cuando terminan los 3 meses?</summary><p data-es="Tu página se pausa: tus datos de contacto siguen visibles y tus propiedades se ocultan hasta que renueves. No se borra nada." data-en="Your page pauses: your contact details stay visible and your properties are hidden until you renew. Nothing is deleted.">Tu página se pausa: tus datos de contacto siguen visibles y tus propiedades se ocultan hasta que renueves. No se borra nada.</p></details>
+      <details><summary data-es="¿Cuándo pago?" data-en="When do I pay?">¿Cuándo pago?</summary><p data-es="Después de ver tu página lista. La guardas con tu correo y desde tu panel nos pides los datos de pago; en cuanto confirmamos el pago, se publica." data-en="After seeing your page ready. You save it with your email and request the payment details from your panel; as soon as we confirm the payment, it goes live.">Después de ver tu página lista. La guardas con tu correo y desde tu panel nos pides los datos de pago; en cuanto confirmamos el pago, se publica.</p></details>
+      <details><summary data-es="¿Qué pasa cuando terminan los 3 meses?" data-en="What happens when the 3 months end?">¿Qué pasa cuando terminan los 3 meses?</summary><p data-es="Tu página se pausa: deja de mostrarse hasta que renueves. No se borra nada." data-en="Your page pauses: it stops showing until you renew. Nothing is deleted.">Tu página se pausa: deja de mostrarse hasta que renueves. No se borra nada.</p></details>
       <details><summary data-es="¿Puedo cambiar propiedades después?" data-en="Can I change properties later?">¿Puedo cambiar propiedades después?</summary><p data-es="Sí. Entras a tu panel con tu correo (te mandamos un código) y agregas, editas o quitas propiedades y fotos cuando quieras, sin costo adicional." data-en="Yes. You sign in to your dashboard with your email (we send you a code) and add, edit or remove properties and photos whenever you want, at no extra cost.">Sí. Entras a tu panel con tu correo (te mandamos un código) y agregas, editas o quitas propiedades y fotos cuando quieras, sin costo adicional.</p></details>
       <details><summary data-es="¿Mis clientes ven otras agencias?" data-en="Do my clients see other agencies?">¿Mis clientes ven otras agencias?</summary><p data-es="No. Tu página muestra solo tus propiedades y tu marca. El botón «Me interesa» abre WhatsApp contigo, nadie más." data-en="No. Your page shows only your properties and your brand. The “I'm interested” button opens WhatsApp with you, nobody else.">No. Tu página muestra solo tus propiedades y tu marca. El botón «Me interesa» abre WhatsApp contigo, nadie más.</p></details>
     </div>
@@ -488,6 +546,7 @@
     if (d && d.open) return;
     $('mn-closed').hidden = false;
     $('mn-read').disabled = true;
+    $('mn-photo-files').disabled = true;
   }).catch(function () { /* unknown: let them try; the publish answer will say */ });
 
   var SAMPLE = 'Buen día, les comparto mi inventario:\n🏡 Casa en Jardines del Moral, 3 rec, 2.5 baños, 180 m² de construcción, cochera para 2. $3,450,000\n🏢 Departamento en el Centro, 2 rec, 1 baño, 95 m², amueblado. Renta $12,500 al mes\n✨ Departamento con balcón en Col. Del Valle, 2 rec, 2 baños, 110 m², alberca y gym. 2.15 mdp';
@@ -520,16 +579,33 @@
       '<div class="mn-pv-head"><div class="eyebrow">' + escapeHtml(t('Portafolio de propiedades', 'Property portfolio')) + '</div>' +
       '<div class="name' + (placeholder ? ' is-placeholder' : '') + '">' + escapeHtml(name) + '</div><span class="mn-pv-wa"><svg><use href="#i-wa"/></svg>' + escapeHtml(t('Escribir por WhatsApp', 'Message on WhatsApp')) + '</span></div>' +
       '<div class="mn-pv-grid">' + (cards || '<p class="mn-hint" style="padding:8px">' + escapeHtml(t('Elige al menos una propiedad.', 'Pick at least one property.')) + '</p>') + '</div>' +
-      '<div class="mn-pv-foot">' + escapeHtml(t('Hecho con PropLync.mx', 'Made with PropLync.mx')) + '</div>';
+      '<div class="mn-pv-foot">' + escapeHtml(t('Hecho con PropLync Mini', 'Made with PropLync Mini')) + '</div>';
   }
 
-  /* The hero phone: a real page from sample data, so the promise is literal. Photo tiles are gradients, not stock photos. */
+  /* The hero phone: an example page from sample data (labelled "Ejemplo"). Its photos are bundled stock images
+     (mini/img, Unsplash licence), used only here; a customer's page only ever shows the customer's own photos. */
   var DEMO = [
     { title: 'Casa en Jardines del Moral', town: 'León', neighborhood: 'Jardines del Moral', bedrooms: 3, bathrooms: 2, size: 180, operation: 'sale', currency: 'MXN', amount: 3450000, cover: '', demo: true },
-    { title: 'Departamento en el Centro', town: 'León', neighborhood: 'Centro', bedrooms: 2, bathrooms: 1, size: 95, operation: 'rental', currency: 'MXN', amount: 12500, cover: '', demo: true },
+    { title: 'Departamento en el Centro', town: 'León', neighborhood: 'Centro', bedrooms: 2, bathrooms: 1, size: 95, operation: 'sale', currency: 'MXN', amount: 1980000, cover: '', demo: true },
     { title: 'Departamento con balcón', town: 'León', neighborhood: 'Del Valle', bedrooms: 2, bathrooms: 2, size: 110, operation: 'sale', currency: 'MXN', amount: 2150000, cover: '', demo: true }
   ];
-  function renderDemo() { $('mn-demo').innerHTML = pageHTML(t('Nadia Domínguez · Asesora', 'Nadia Domínguez · Agent'), DEMO, ''); }
+  var DEMO_IMG = ['/img/demo-1.jpg', '/img/demo-2.jpg', '/img/demo-3.jpg'];
+  function renderDemo() {
+    var cards = DEMO.slice(0, 2).map(function (p, i) {
+      return '<div class="dm-card"><img src="' + DEMO_IMG[i] + '" alt="" loading="lazy"><div><small>' + escapeHtml(p.neighborhood + ' · ' + p.town) + '</small>' +
+        '<b>' + escapeHtml(p.title) + '</b><p>' + escapeHtml(money(p)) + '<i>' + escapeHtml(t('Me interesa', 'I\'m interested')) + '</i></p></div></div>';
+    }).join('');
+    $('mn-demo').innerHTML = '<div class="dm-head"><div class="dm-logo">N</div>' +
+      '<div class="dm-eye">' + escapeHtml(t('Portafolio de propiedades', 'Property portfolio')) + '</div>' +
+      '<div class="dm-name">Nadia Domínguez</div>' +
+      '<div class="dm-acts"><span>WhatsApp</span><span>' + escapeHtml(t('Llamar', 'Call')) + '</span><span>' + escapeHtml(t('Ubicación', 'Location')) + '</span></div></div>' +
+      '<div class="dm-list">' + cards + '</div>';
+    $('mn-chat').innerHTML = '<div class="mn-chat-top"><i></i>' + escapeHtml(t('Cliente · hoy', 'Client · today')) + '</div>' +
+      '<div class="mn-bub"><div class="mn-prev"><img src="' + DEMO_IMG[0] + '" alt=""><div><b>Nadia Domínguez · ' + escapeHtml(t('Propiedades', 'Properties')) + '</b>' +
+      '<span>' + escapeHtml(t('8 propiedades en León', '8 properties in León')) + '</span><em>proplync-mini.vercel.app/nadia</em></div></div>' +
+      '<p>' + escapeHtml(t('Te comparto todo lo que tengo disponible 👇', 'Here is everything I have available 👇')) + '</p><small>10:24 ✓✓</small></div>' +
+      '<div class="mn-reply">' + escapeHtml(t('¡Me interesa la casa de Jardines del Moral!', 'I\'m interested in the Jardines del Moral house!')) + '<small>10:31</small></div>';
+  }
   renderDemo();
   miniTrack('mini_view');
 
@@ -538,9 +614,77 @@
     $('mn-preview').innerHTML = pageHTML(typed || t('Tu nombre o tu inmobiliaria', 'Your name or agency'), props.filter(function (p) { return p.include; }), t('Vista previa', 'Preview'), !typed);
   }
 
-  /* ---------- 1. read the pasted inventory ---------- */
+  /* ---------- 1a. start from photos: each selection becomes one property the agent then describes ---------- */
+  var mode = 'text';
+  var photoProps = [];   // [{ photos: [{blob, url}] }]
+  function setMode(m) {
+    mode = m;
+    $('mn-mode-text').classList.toggle('on', m === 'text'); $('mn-mode-text').setAttribute('aria-selected', String(m === 'text'));
+    $('mn-mode-photos').classList.toggle('on', m === 'photos'); $('mn-mode-photos').setAttribute('aria-selected', String(m === 'photos'));
+    $('mn-pane-text').hidden = m !== 'text';
+    $('mn-pane-photos').hidden = m !== 'photos';
+    msg($('mn-read-msg'), '');
+  }
+  $('mn-mode-text').addEventListener('click', function () { setMode('text'); });
+  $('mn-mode-photos').addEventListener('click', function () { setMode('photos'); });
+
+  function renderPhotoProps() {
+    $('mn-photo-props').innerHTML = photoProps.map(function (pp, i) {
+      return '<div class="mn-pp"><div class="mn-pp-thumbs">' + pp.photos.map(function (ph) { return '<img src="' + escapeHtml(ph.url) + '" alt="">'; }).join('') + '</div>' +
+        '<b>' + escapeHtml(t('Propiedad ' + (i + 1), 'Property ' + (i + 1))) + ' · ' + pp.photos.length + ' ' + escapeHtml(pp.photos.length === 1 ? t('foto', 'photo') : t('fotos', 'photos')) + '</b>' +
+        '<button type="button" data-pprm="' + i + '" aria-label="' + escapeHtml(t('Quitar', 'Remove')) + '">×</button></div>';
+    }).join('');
+    $('mn-drop').querySelector('b').textContent = photoProps.length
+      ? t('Agregar otra propiedad con sus fotos', 'Add another property with its photos')
+      : t('Elige las fotos de una propiedad', 'Choose one property\'s photos');
+    $('mn-drop').hidden = photoProps.length >= MAX;
+  }
+  async function takePhotos(files) {
+    if (photoProps.length >= MAX) return;
+    var list = Array.from(files || []).filter(function (f) { return /^image\//.test(f.type) && f.size <= 25 * 1024 * 1024; });
+    if (!list.length) { msg($('mn-read-msg'), t('Elige fotos (JPG, PNG o HEIC exportado).', 'Choose photos (JPG, PNG or exported HEIC).'), 'err'); return; }
+    msg($('mn-read-msg'), t('Preparando fotos…', 'Preparing photos…'));
+    var photos = [];
+    for (var f of list.slice(0, MAX_PHOTOS)) {
+      var blob = await shrink(f);
+      if (blob) photos.push({ blob: blob, url: URL.createObjectURL(blob) });
+    }
+    if (!photos.length) { msg($('mn-read-msg'), t('No pudimos leer esas fotos.', 'We could not read those photos.'), 'err'); return; }
+    photoProps.push({ photos: photos });
+    renderPhotoProps();
+    msg($('mn-read-msg'), list.length > MAX_PHOTOS ? t('Usamos las primeras 6 fotos de esa propiedad.', 'We used the first 6 photos of that property.') : '', list.length > MAX_PHOTOS ? 'err' : '');
+  }
+  $('mn-photo-files').addEventListener('change', function () { takePhotos(this.files); this.value = ''; });
+  ['dragenter', 'dragover'].forEach(function (ev) { $('mn-drop').addEventListener(ev, function (e) { e.preventDefault(); this.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { $('mn-drop').addEventListener(ev, function (e) { e.preventDefault(); this.classList.remove('over'); }); });
+  $('mn-drop').addEventListener('drop', function (e) { takePhotos(e.dataTransfer && e.dataTransfer.files); });
+  $('mn-photo-props').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pprm]');
+    if (!b) return;
+    var gone = photoProps.splice(Number(b.dataset.pprm), 1)[0];
+    if (gone) gone.photos.forEach(function (ph) { URL.revokeObjectURL(ph.url); });
+    renderPhotoProps();
+  });
+  function blankProp(photos) {
+    return { title: '', town: '', neighborhood: '', bedrooms: 0, bathrooms: 0, size: 0, operation: 'sale', currency: 'MXN', amount: 0,
+             include: true, missing: [], photos: photos || [] };
+  }
+
+  /* ---------- 1b. read the pasted inventory ---------- */
   $('mn-read').addEventListener('click', async function () {
     var btn = this;
+    if (mode === 'photos') {
+      if (!photoProps.length) { msg($('mn-read-msg'), t('Sube las fotos de al menos una propiedad.', 'Upload the photos of at least one property.'), 'err'); return; }
+      props = photoProps.map(function (pp) { return blankProp(pp.photos); });
+      msg($('mn-read-msg'), '');
+      renderProps();
+      renderPreview();
+      show('step-review');
+      miniTrack('mini_preview', { count: props.length, from: 'photos' });
+      var first = document.querySelector('#mn-props [data-k="title"]');
+      if (first) setTimeout(function () { first.focus(); }, 400);
+      return;
+    }
     var text = $('mn-text').value.trim();
     if (text.length < 20) { msg($('mn-read-msg'), t('Pega al menos una propiedad con su precio.', 'Paste at least one property with its price.'), 'err'); return; }
     btn.disabled = true;
@@ -556,7 +700,7 @@
       renderProps();
       renderPreview();
       show('step-review');
-      miniTrack('mini_preview', { count: props.length });
+      miniTrack('mini_preview', { count: props.length, from: 'text' });
     } catch (e) {
       msg($('mn-read-msg'), t('Sin conexión. Intenta de nuevo.', 'No connection. Try again.'), 'err');
     } finally {
@@ -679,6 +823,13 @@
     renderProps(); renderPreview();
   });
   $('mn-name').addEventListener('input', renderPreview);
+  $('mn-add-prop').addEventListener('click', function () {
+    if (chosenProps().length >= MAX) { msg($('mn-review-msg'), t('Tu página tiene espacio para 10 propiedades.', 'Your page has room for 10 properties.'), 'err'); return; }
+    props.push(blankProp());
+    renderProps(); renderPreview();
+    var inputs = document.querySelectorAll('#mn-props [data-k="title"]');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
   $('mn-back').addEventListener('click', function () { show('step-paste'); });
 
   function chosenProps() { return props.filter(function (p) { return p.include; }); }
@@ -825,6 +976,7 @@
 
   document.addEventListener('langchange', function () {
     renderDemo();
+    renderPhotoProps();
     if (props.length && !$('step-review').hidden) { renderProps(); renderPreview(); }
   });
 })();

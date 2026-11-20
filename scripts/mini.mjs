@@ -12,6 +12,11 @@
  *   node scripts/mini.mjs list                      pages waiting, active and lapsed
  *   node scripts/mini.mjs activate <slug>           one paid period (3 months)
  *   node scripts/mini.mjs activate <slug> --periods 2
+ *   node scripts/mini.mjs login-link <email>        one-time sign-in link to that customer's panel
+ *
+ * login-link exists because the project still sends auth email through Supabase's
+ * built-in mailer (only team addresses, 2 an hour). For a demo or a customer who
+ * never got their email, the operator generates the link and hands it over.
  *
  * It writes to the PRODUCTION database. Activate only after the payment is in.
  * -----------------------------------------------------------------------------
@@ -87,11 +92,18 @@ async function activate(svc, slug, periods) {
   console.log('    Tell the customer: their page is live, and the date it runs until.\n');
 }
 
+async function loginLink(svc, email) {
+  const site = (process.env.MINI_SITE_URL || 'https://proplync-mini.vercel.app').replace(/\/$/, '');
+  const { data, error } = await svc.auth.admin.generateLink({ type: 'magiclink', email, options: { redirectTo: site + '/panel' } });
+  if (error) die(`Could not create a sign-in link for ${email}: ${error.message}`);
+  console.log(`\n  One-time sign-in link for ${email} (works once, expires in about an hour):\n\n  ${data.properties.action_link}\n`);
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2), ['help']);
   const [cmd, slug] = args._;
   if (!cmd || args.flags.has('help')) {
-    console.log('\n  node scripts/mini.mjs list\n  node scripts/mini.mjs activate <slug> [--periods n]\n');
+    console.log('\n  node scripts/mini.mjs list\n  node scripts/mini.mjs activate <slug> [--periods n]\n  node scripts/mini.mjs login-link <email>\n');
     return;
   }
   const svc = serviceClient();
@@ -102,7 +114,11 @@ async function main() {
     if (!Number.isInteger(periods) || periods < 1 || periods > 8) die('--periods must be a whole number from 1 to 8.');
     return activate(svc, slug, periods);
   }
-  die(`Unknown command "${cmd}". Use list or activate.`);
+  if (cmd === 'login-link') {
+    if (!slug || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(slug)) die('Which email? node scripts/mini.mjs login-link <email>');
+    return loginLink(svc, slug.toLowerCase());
+  }
+  die(`Unknown command "${cmd}". Use list, activate or login-link.`);
 }
 
 // Run only from the command line, so the tests can import extendUntil.
