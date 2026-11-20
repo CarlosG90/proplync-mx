@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="Mi página · PropLync Mini" data-en="My page · PropLync Mini">Mi página · PropLync Mini</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<!--
+  WHY THIS PAGE EXISTS
+  A PropLync Mini customer's whole account: sign in with an email code, see whether
+  the page is live, pay or renew, share the link, edit up to 10 properties with
+  photos, and edit the card buyers see. It replaces the PropLync dashboard for Mini
+  customers, which is built for agencies (marketing, Reels, leads) and confused them.
+
+  HOW IT TALKS TO THE SERVER
+  mini/api/panel.js, which runs PropLync's own listings handler (api/my-listings.js):
+  the same plan caps, field rules and row-level security. Photos go from the browser
+  straight to Supabase Storage under the agency's folder (storage policy
+  listing_photos_agency_write), then their URLs are saved on the listing.
+  Everything shown from the server is escaped (js/escape.js).
+-->
+<style>
+  body{background:var(--paper);color:var(--ink);font-family:var(--body);margin:0}
+  section{padding:0}
+  [hidden]{display:none !important}
+  .pn-wrap{max-width:760px;margin:0 auto;padding:0 var(--gutter)}
+
+  .pn-bar{position:sticky;top:0;z-index:20;background:var(--ink);color:var(--on-ink)}
+  .pn-bar .pn-wrap{display:flex;align-items:center;justify-content:space-between;height:58px;gap:10px}
+  .pn-brand{display:flex;align-items:center;gap:9px;color:var(--on-ink);text-decoration:none;font-weight:600;font-size:.95rem}
+  .pn-brand svg{width:26px;height:26px}
+  .pn-brand em{font-style:normal;color:var(--gold)}
+  .pn-tools{display:flex;align-items:center;gap:8px}
+  .pn-lang{display:flex;border:1px solid rgba(255,255,255,.16);border-radius:999px;overflow:hidden}
+  .pn-lang button{background:none;border:0;color:var(--on-ink-dim);font:600 .66rem var(--mono);letter-spacing:.08em;padding:7px 10px;cursor:pointer}
+  .pn-lang button.on{background:var(--gold);color:var(--ink)}
+  .pn-out{background:none;border:1px solid rgba(255,255,255,.16);color:var(--on-ink-dim);border-radius:999px;padding:7px 12px;font:500 .74rem var(--body);cursor:pointer}
+
+  main{padding:22px 0 64px}
+  .pn-card{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow-sm)}
+  .pn-card h1,.pn-card h2{font-family:var(--display);font-weight:400;margin:0;line-height:1.2}
+  .pn-card h1{font-size:1.6rem}
+  .pn-card h2{font-size:1.25rem}
+  .pn-sub{color:var(--on-sand);font-size:.92rem;line-height:1.55;margin:6px 0 0}
+  .pn-eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--on-sand-light);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+  .pn-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;font:600 .86rem var(--body);text-decoration:none;cursor:pointer;border:1px solid transparent;background:var(--white);color:var(--ink)}
+  .pn-btn svg{width:16px;height:16px;flex:none}
+  .pn-btn:disabled{opacity:.5;cursor:default}
+  .pn-gold{background:var(--gold);color:var(--ink)}
+  .pn-ink{background:var(--ink);color:var(--on-ink)}
+  .pn-line{border-color:var(--line)}
+  .pn-danger{color:#a23a24;border-color:rgba(162,58,36,.3)}
+  .pn-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .pn-row .pn-btn{flex:1 1 auto}
+
+  /* status banner */
+  .pn-status{display:flex;gap:14px;align-items:flex-start}
+  .pn-dot{width:12px;height:12px;border-radius:50%;margin-top:7px;flex:none;background:var(--gold)}
+  .pn-status.active .pn-dot{background:#2f9e6e;box-shadow:0 0 0 4px rgba(47,158,110,.16)}
+  .pn-status.pending .pn-dot{background:var(--gold);box-shadow:0 0 0 4px rgba(201,169,110,.2)}
+  .pn-status.expired .pn-dot{background:#c2553b;box-shadow:0 0 0 4px rgba(194,85,59,.16)}
+
+  .pn-link{display:flex;align-items:center;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:12px}
+  .pn-link code{flex:1;font-family:var(--mono);font-size:.78rem;word-break:break-all;color:var(--ink)}
+  .pn-qr{display:flex;gap:14px;align-items:center;margin-top:14px}
+  .pn-qr img{width:96px;height:96px;border-radius:10px;border:1px solid var(--line);background:#fff}
+  .pn-qr p{margin:0;font-size:.84rem;color:var(--on-sand);line-height:1.5}
+
+  /* properties */
+  .pn-list{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+  .pn-item{min-width:0}
+  .pn-item{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--paper)}
+  .pn-thumb{width:64px;height:64px;border-radius:10px;flex:none;background:var(--sand-2) center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:var(--on-sand-light)}
+  .pn-thumb svg{width:24px;height:24px;opacity:.6}
+  .pn-item-main{flex:1;min-width:0}
+  .pn-item-title{font-weight:600;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pn-item-meta{font-size:.78rem;color:var(--on-sand);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .pn-pill{font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:3px 8px;background:var(--sand-2);color:var(--on-sand)}
+  .pn-pill.warn{background:rgba(201,169,110,.22);color:#7a5a1c}
+  .pn-edit{flex:none}
+  .pn-count{font-family:var(--mono);font-size:.7rem;color:var(--on-sand-light)}
+
+  /* forms */
+  .pn-form{display:grid;gap:12px;margin-top:14px}
+  .pn-grid2{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+  .pn-form label{display:grid;gap:5px;font-size:.78rem;font-weight:600;color:var(--on-sand)}
+  .pn-form label small{font-weight:400;color:var(--on-sand-light)}
+  .pn-in{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:400 .95rem var(--body);background:var(--white);color:var(--ink);min-height:44px}
+  textarea.pn-in{min-height:96px;resize:vertical;line-height:1.5}
+  .pn-in:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--gold)}
+  .pn-msg{font-size:.84rem;margin-top:10px;min-height:1em}
+  .pn-msg.err{color:#a23a24}
+  .pn-msg.ok{color:#23704f}
+  .pn-color{display:flex;gap:10px;align-items:center}
+  .pn-color input[type=color]{width:48px;height:44px;border:1px solid var(--line);border-radius:10px;padding:2px;background:#fff}
+  .pn-imgpick{display:flex;gap:12px;align-items:center}
+  .pn-imgpick .pn-thumb{width:56px;height:56px}
+
+  /* photos in the editor */
+  .pn-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .pn-ph{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--sand-2)}
+  .pn-ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .pn-ph small{position:absolute;left:6px;bottom:6px;font:700 .54rem var(--mono);letter-spacing:.1em;text-transform:uppercase;background:rgba(10,22,40,.75);color:#fff;padding:3px 6px;border-radius:5px}
+  .pn-ph button{position:absolute;top:5px;right:5px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(10,22,40,.75);color:#fff;cursor:pointer;font-size:1rem;line-height:1}
+  .pn-ph button.cover{left:5px;right:auto;font-size:.7rem}
+  .pn-add{aspect-ratio:1;border:1.5px dashed var(--line);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--on-sand);font-size:.74rem;background:var(--paper)}
+  .pn-add svg{width:22px;height:22px}
+  .pn-add input{display:none}
+
+  /* sheets */
+  .pn-sheet{border:0;padding:0;margin:auto 0 0;width:100%;max-width:100%;max-height:94vh;border-radius:22px 22px 0 0;background:var(--paper);color:var(--ink)}
+  .pn-sheet::backdrop{background:rgba(10,22,40,.55)}
+  @media (min-width:760px){.pn-sheet{margin:auto;max-width:640px;border-radius:22px;max-height:90vh}}
+  .pn-sheet-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper);z-index:2}
+  .pn-sheet-head h2{font-family:var(--display);font-weight:400;font-size:1.2rem;margin:0}
+  .pn-x{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--white);cursor:pointer;font-size:1.1rem}
+  .pn-sheet-body{padding:4px 18px 18px}
+  .pn-sheet-foot{display:flex;gap:10px;padding:12px 18px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--white);position:sticky;bottom:0}
+  .pn-sheet-foot .pn-btn{flex:1}
+
+  .pn-pay{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px;display:grid;gap:8px}
+  .pn-pay div{display:flex;justify-content:space-between;gap:12px;font-size:.88rem}
+  .pn-pay span{color:var(--on-sand-light)}
+  .pn-pay b{font-family:var(--mono);text-align:right;word-break:break-all}
+
+  .pn-center{text-align:center;padding:40px 8px}
+  .pn-spin{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:pnspin .8s linear infinite;margin:40px auto}
+  @keyframes pnspin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9.5V20h12V9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-7.7 13.6L3 21l4.5-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.2 8.4c.2-.4.5-.4.8-.4h.6c.2 0 .4.1.5.4l.8 1.9c.1.2 0 .4-.1.6l-.5.6c-.1.2-.1.3 0 .5a6 6 0 0 0 2.9 2.6c.2.1.4 0 .5-.1l.7-.8c.2-.2.4-.2.6-.1l1.8.9c.3.1.4.3.4.5 0 .9-.6 1.9-1.6 2.2-.8.3-1.9.2-3.5-.6a9.6 9.6 0 0 1-4-4c-.7-1.4-.6-2.6.1-3.6z" fill="currentColor"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-paste" viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 4h6v3H9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+</svg>
+
+<header class="pn-bar">
+  <div class="pn-wrap">
+    <a class="pn-brand" href="/" aria-label="PropLync Mini">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 23.4h10.8" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" opacity=".45"/></svg>
+      <span>PropLync <em>Mini</em></span>
+    </a>
+    <div class="pn-tools">
+      <div class="pn-lang" role="group" aria-label="Language">
+        <button id="es" class="on" type="button" onclick="setLang('es')">ES</button>
+        <button id="en" type="button" onclick="setLang('en')">EN</button>
+      </div>
+      <button class="pn-out" id="pn-out" type="button" hidden data-es="Salir" data-en="Sign out">Salir</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="pn-wrap">
+    <div class="pn-spin" id="pn-loading" role="status" aria-label="Cargando"></div>
+
+    <!-- signed out: email code -->
+    <section class="pn-card" id="pn-signin" hidden>
+      <div class="pn-eyebrow" data-es="Tu cuenta" data-en="Your account">Tu cuenta</div>
+      <h1 data-es="Entra a tu página" data-en="Sign in to your page">Entra a tu página</h1>
+      <p class="pn-sub" data-es="Escribe el correo con el que creaste tu página. Te mandamos un código de 6 dígitos; no necesitas contraseña." data-en="Enter the email you created your page with. We send you a 6-digit code; no password needed.">Escribe el correo con el que creaste tu página. Te mandamos un código de 6 dígitos; no necesitas contraseña.</p>
+      <div class="pn-form" id="pn-email-form">
+        <label><span data-es="Correo electrónico" data-en="Email">Correo electrónico</span><input class="pn-in" id="pn-email" type="email" autocomplete="email" inputmode="email" placeholder="tu@correo.com"></label>
+        <button class="pn-btn pn-gold" id="pn-send" type="button" data-es="Enviar código" data-en="Send code">Enviar código</button>
+      </div>
+      <div class="pn-form" id="pn-code-form" hidden>
+        <label><span data-es="Código de 6 dígitos" data-en="6-digit code">Código de 6 dígitos</span><input class="pn-in" id="pn-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"></label>
+        <button class="pn-btn pn-gold" id="pn-verify" type="button" data-es="Entrar" data-en="Sign in">Entrar</button>
+        <button class="pn-btn pn-line" id="pn-back" type="button" data-es="Usar otro correo" data-en="Use another email">Usar otro correo</button>
+      </div>
+      <div class="pn-msg" id="pn-signin-msg" aria-live="polite"></div>
+    </section>
+
+    <!-- signed in, but no Mini page on this account -->
+    <section class="pn-card pn-center" id="pn-none" hidden>
+      <h1 data-es="Aún no tienes una página" data-en="You don't have a page yet">Aún no tienes una página</h1>
+      <p class="pn-sub" data-es="Este correo no tiene una página de PropLync Mini. Crea la tuya en minutos." data-en="This email has no PropLync Mini page. Make yours in minutes.">Este correo no tiene una página de PropLync Mini. Crea la tuya en minutos.</p>
+      <div class="pn-row" style="justify-content:center"><a class="pn-btn pn-gold" href="/#app" data-es="Crear mi página" data-en="Create my page">Crear mi página</a></div>
+    </section>
+
+    <!-- signed in -->
+    <div id="pn-app" hidden>
+      <section class="pn-card">
+        <div class="pn-status" id="pn-status">
+          <span class="pn-dot" aria-hidden="true"></span>
+          <div style="flex:1">
+            <h1 id="pn-status-title"></h1>
+            <p class="pn-sub" id="pn-status-text"></p>
+          </div>
+        </div>
+        <div class="pn-row" id="pn-status-actions"></div>
+      </section>
+
+      <section class="pn-card">
+        <div class="pn-eyebrow"><span data-es="Tu link" data-en="Your link">Tu link</span></div>
+        <div class="pn-link"><code id="pn-url"></code></div>
+        <div class="pn-row">
+          <a class="pn-btn pn-ink" id="pn-view" target="_blank" rel="noopener"><svg><use href="#i-eye"/></svg><span data-es="Ver mi página" data-en="View my page">Ver mi página</span></a>
+          <button class="pn-btn pn-line" id="pn-copy" type="button" data-es="Copiar link" data-en="Copy link">Copiar link</button>
+          <a class="pn-btn pn-line" id="pn-wa-share" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg><span data-es="Compartir" data-en="Share">Compartir</span></a>
+        </div>
+        <div class="pn-qr"><img id="pn-qr" alt="QR"><p data-es="Ponlo en tu tarjeta, tus lonas o tus estados de WhatsApp. Lleva a tu página." data-en="Put it on your card, signs or WhatsApp status. It opens your page.">Ponlo en tu tarjeta, tus lonas o tus estados de WhatsApp. Lleva a tu página.</p></div>
+      </section>
+
+      <section class="pn-card">
+        <div class="pn-eyebrow"><span data-es="Propiedades" data-en="Properties">Propiedades</span><span class="pn-count" id="pn-used"></span></div>
+        <h2 data-es="Lo que ven tus clientes" data-en="What your clients see">Lo que ven tus clientes</h2>
+        <ul class="pn-list" id="pn-list"></ul>
+        <div class="pn-row">
+          <button class="pn-btn pn-gold" id="pn-new" type="button"><svg><use href="#i-plus"/></svg><span data-es="Agregar propiedad" data-en="Add property">Agregar propiedad</span></button>
+          <button class="pn-btn pn-line" id="pn-paste-open" type="button"><svg><use href="#i-paste"/></svg><span data-es="Pegar de WhatsApp" data-en="Paste from WhatsApp">Pegar de WhatsApp</span></button>
+        </div>
+        <div class="pn-msg" id="pn-list-msg" aria-live="polite"></div>
+      </section>
+
+      <section class="pn-card">
+        <div class="pn-eyebrow" data-es="Tu tarjeta" data-en="Your card">Tu tarjeta</div>
+        <h2 data-es="Cómo te presentas" data-en="How you introduce yourself">Cómo te presentas</h2>
+        <div class="pn-form" id="pn-card-form">
+          <label><span data-es="Tu nombre o el de tu inmobiliaria" data-en="Your name or your agency's">Tu nombre o el de tu inmobiliaria</span><input class="pn-in" id="c-name" maxlength="120"></label>
+          <div class="pn-grid2">
+            <label><span>WhatsApp</span><input class="pn-in" id="c-wa" inputmode="tel" placeholder="+52 998 123 4567"></label>
+            <label><span data-es="Teléfono" data-en="Phone">Teléfono</span><input class="pn-in" id="c-phone" inputmode="tel"></label>
+          </div>
+          <label><span data-es="Correo público" data-en="Public email">Correo público</span><input class="pn-in" id="c-email" type="email"></label>
+          <label><span data-es="Sobre ti" data-en="About you">Sobre ti</span> <small data-es="Una o dos frases. Máximo 600 caracteres." data-en="One or two sentences. 600 characters max.">Una o dos frases. Máximo 600 caracteres.</small><textarea class="pn-in" id="c-bio" maxlength="600"></textarea></label>
+          <label><span data-es="Servicios" data-en="Services">Servicios</span> <small data-es="Separados por comas, hasta 8. Ej.: Venta, Renta, Preventa" data-en="Comma separated, up to 8. E.g. Sale, Rent, Pre-sale">Separados por comas, hasta 8. Ej.: Venta, Renta, Preventa</small><input class="pn-in" id="c-services"></label>
+          <label><span data-es="Dirección u oficina" data-en="Address or office">Dirección u oficina</span><input class="pn-in" id="c-address" maxlength="200"></label>
+          <div class="pn-grid2">
+            <div class="pn-imgpick"><div class="pn-thumb" id="c-logo-prev"><svg><use href="#i-cam"/></svg></div><label class="pn-btn pn-line" style="min-height:40px"><span data-es="Logo o foto" data-en="Logo or photo">Logo o foto</span><input type="file" accept="image/*" id="c-logo" hidden></label></div>
+            <div class="pn-imgpick"><div class="pn-thumb" id="c-cover-prev"><svg><use href="#i-cam"/></svg></div><label class="pn-btn pn-line" style="min-height:40px"><span data-es="Portada" data-en="Cover">Portada</span><input type="file" accept="image/*" id="c-cover" hidden></label></div>
+          </div>
+          <label><span data-es="Color de tu marca" data-en="Brand colour">Color de tu marca</span>
+            <span class="pn-color"><input type="color" id="c-color" value="#c9a96e"><button class="pn-btn pn-line" type="button" id="c-color-reset" style="min-height:40px" data-es="Usar dorado" data-en="Use gold">Usar dorado</button></span></label>
+          <button class="pn-btn pn-gold" id="c-save" type="button" data-es="Guardar tarjeta" data-en="Save card">Guardar tarjeta</button>
+          <div class="pn-msg" id="c-msg" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <p class="pn-sub" style="text-align:center;font-size:.8rem"><a href="/terminos" data-es="Términos" data-en="Terms">Términos</a> · <a href="/privacidad" data-es="Aviso de privacidad" data-en="Privacy notice">Aviso de privacidad</a></p>
+    </div>
+  </div>
+</main>
+
+<!-- property editor -->
+<dialog class="pn-sheet" id="ed" aria-labelledby="ed-title">
+  <div class="pn-sheet-head"><h2 id="ed-title"></h2><button class="pn-x" type="button" data-close="ed" aria-label="Cerrar">×</button></div>
+  <div class="pn-sheet-body">
+    <div class="pn-form">
+      <label><span data-es="Fotos" data-en="Photos">Fotos</span> <small data-es="Hasta 6. La primera es la portada." data-en="Up to 6. The first one is the cover.">Hasta 6. La primera es la portada.</small></label>
+      <div class="pn-photos" id="ed-photos"></div>
+      <label><span data-es="Título" data-en="Title">Título</span><input class="pn-in" id="e-title" maxlength="300"></label>
+      <div class="pn-grid2">
+        <label><span data-es="Operación" data-en="Type">Operación</span><select class="pn-in" id="e-op"><option value="sale" data-es="Venta" data-en="Sale">Venta</option><option value="rental" data-es="Renta" data-en="Rent">Renta</option></select></label>
+        <label><span data-es="Moneda" data-en="Currency">Moneda</span><select class="pn-in" id="e-cur"><option>MXN</option><option>USD</option></select></label>
+      </div>
+      <label><span data-es="Precio" data-en="Price">Precio</span> <small data-es="En renta, el precio por mes." data-en="For rent, the monthly price.">En renta, el precio por mes.</small><input class="pn-in" id="e-amount" type="number" min="0" inputmode="numeric"></label>
+      <div class="pn-grid2">
+        <label><span data-es="Ciudad" data-en="Town">Ciudad</span><input class="pn-in" id="e-town" maxlength="120"></label>
+        <label><span data-es="Colonia o zona" data-en="Neighbourhood">Colonia o zona</span><input class="pn-in" id="e-hood" maxlength="120"></label>
+      </div>
+      <div class="pn-grid2">
+        <label><span data-es="Recámaras" data-en="Bedrooms">Recámaras</span><input class="pn-in" id="e-beds" type="number" min="0" inputmode="numeric"></label>
+        <label><span data-es="Baños" data-en="Bathrooms">Baños</span><input class="pn-in" id="e-baths" type="number" min="0" step="0.5" inputmode="decimal"></label>
+        <label><span>m²</span><input class="pn-in" id="e-size" type="number" min="0" inputmode="numeric"></label>
+        <label><span data-es="Estacionamiento" data-en="Parking">Estacionamiento</span><input class="pn-in" id="e-park" type="number" min="0" inputmode="numeric"></label>
+      </div>
+      <label><span data-es="Amenidades" data-en="Features">Amenidades</span> <small data-es="Separadas por comas" data-en="Comma separated">Separadas por comas</small><input class="pn-in" id="e-feats"></label>
+      <label><span data-es="Descripción" data-en="Description">Descripción</span><textarea class="pn-in" id="e-desc" maxlength="4000"></textarea></label>
+      <button class="pn-btn pn-line pn-danger" id="e-del" type="button" data-es="Eliminar propiedad" data-en="Delete property">Eliminar propiedad</button>
+      <div class="pn-msg" id="e-msg" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="pn-sheet-foot">
+    <button class="pn-btn pn-line" type="button" data-close="ed" data-es="Cancelar" data-en="Cancel">Cancelar</button>
+    <button class="pn-btn pn-gold" id="e-save" type="button" data-es="Guardar" data-en="Save">Guardar</button>
+  </div>
+</dialog>
+
+<!-- paste import -->
+<dialog class="pn-sheet" id="ps" aria-labelledby="ps-title">
+  <div class="pn-sheet-head"><h2 id="ps-title" data-es="Pegar de WhatsApp" data-en="Paste from WhatsApp">Pegar de WhatsApp</h2><button class="pn-x" type="button" data-close="ps" aria-label="Cerrar">×</button></div>
+  <div class="pn-sheet-body">
+    <p class="pn-sub" data-es="Pega el mensaje con una o varias propiedades. Las agregamos a tu página y luego puedes corregirlas y ponerles fotos." data-en="Paste the message with one or more properties. We add them to your page and you can then fix them and add photos.">Pega el mensaje con una o varias propiedades. Las agregamos a tu página y luego puedes corregirlas y ponerles fotos.</p>
+    <div class="pn-form"><textarea class="pn-in" id="ps-text" style="min-height:160px"></textarea></div>
+    <div class="pn-msg" id="ps-msg" aria-live="polite"></div>
+  </div>
+  <div class="pn-sheet-foot">
+    <button class="pn-btn pn-line" type="button" data-close="ps" data-es="Cancelar" data-en="Cancel">Cancelar</button>
+    <button class="pn-btn pn-gold" id="ps-go" type="button" data-es="Agregar" data-en="Add">Agregar</button>
+  </div>
+</dialog>
+
+<!-- payment -->
+<dialog class="pn-sheet" id="pay" aria-labelledby="pay-title">
+  <div class="pn-sheet-head"><h2 id="pay-title"></h2><button class="pn-x" type="button" data-close="pay" aria-label="Cerrar">×</button></div>
+  <div class="pn-sheet-body">
+    <p class="pn-sub" id="pay-lede"></p>
+    <div class="pn-pay" id="pay-details"></div>
+    <div class="pn-form">
+      <label id="pay-method-wrap"><span data-es="¿Cómo pagaste?" data-en="How did you pay?">¿Cómo pagaste?</span>
+        <select class="pn-in" id="pay-method">
+          <option value="transfer" data-es="Transferencia (SPEI)" data-en="Bank transfer (SPEI)">Transferencia (SPEI)</option>
+          <option value="deposit" data-es="Depósito en banco" data-en="Bank deposit">Depósito en banco</option>
+          <option value="oxxo" data-es="OXXO" data-en="OXXO">OXXO</option>
+          <option value="other" data-es="Otro" data-en="Other">Otro</option>
+        </select></label>
+      <label id="pay-ref-wrap"><span data-es="Referencia o folio" data-en="Reference or receipt number">Referencia o folio</span> <small data-es="Opcional, nos ayuda a encontrar tu pago." data-en="Optional, helps us find your payment.">Opcional, nos ayuda a encontrar tu pago.</small><input class="pn-in" id="pay-ref" maxlength="80"></label>
+      <label><span data-es="Nota" data-en="Note">Nota</span><input class="pn-in" id="pay-note" maxlength="250"></label>
+    </div>
+    <div class="pn-msg" id="pay-msg" aria-live="polite"></div>
+  </div>
+  <div class="pn-sheet-foot">
+    <button class="pn-btn pn-line" type="button" data-close="pay" data-es="Cerrar" data-en="Close">Cerrar</button>
+    <button class="pn-btn pn-gold" id="pay-send" type="button"></button>
+  </div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="/js/escape.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/supabase-client.js"></script>
+<script src="/js/pay-config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var MAX_PHOTOS = 6, PHOTO_PX = 1600, GOLD = '#c9a96e';
+  var S = { agency: null, listings: [], plan: null, editing: null, photos: [], color: null };
+  function $(id) { return document.getElementById(id); }
+  function isEn() { return document.documentElement.lang === 'en'; }
+  function t(es, en) { return isEn() ? en : es; }
+  function msg(el, text, kind) { el.textContent = text || ''; el.className = 'pn-msg' + (kind ? ' ' + kind : ''); }
+  function show(id) { ['pn-loading', 'pn-signin', 'pn-none', 'pn-app'].forEach(function (x) { $(x).hidden = x !== id; }); }
+  function pageUrl() { return location.origin + '/' + encodeURIComponent((S.agency && S.agency.slug) || ''); }
+  function fmtDate(iso) {
+    try { return new Date(iso).toLocaleDateString(isEn() ? 'en-US' : 'es-MX', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return ''; }
+  }
+  function money(p) { return p.amount ? (p.currency || 'MXN') + ' $' + Number(p.amount).toLocaleString('en-US') + (p.operation === 'rental' ? t(' /mes', ' /mo') : '') : t('Sin precio', 'No price'); }
+  var ERR = {
+    unauthorized: ['Tu sesión terminó. Vuelve a entrar.', 'Your session ended. Sign in again.'],
+    listing_limit_reached: ['Ya tienes el máximo de propiedades de tu plan (10). Elimina una para agregar otra.', 'You already have the most properties your plan allows (10). Delete one to add another.'],
+    missing_operation: ['Elige venta o renta.', 'Choose sale or rent.'],
+    invalid_whatsapp_number: ['Revisa tu WhatsApp: solo números, espacios y +.', 'Check your WhatsApp: digits, spaces and + only.'],
+    invalid_phone: ['Revisa el teléfono.', 'Check the phone number.'],
+    invalid_public_email: ['Revisa el correo público.', 'Check the public email.'],
+    invalid_services: ['Hasta 8 servicios, de 40 letras cada uno.', 'Up to 8 services, 40 characters each.'],
+    bio_too_long: ['El texto sobre ti es muy largo (máximo 600).', 'The about text is too long (600 max).'],
+    rate_limited: ['Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.']
+  };
+  function errText(code) { var e = ERR[code]; return e ? t(e[0], e[1]) : t('No se pudo guardar. Intenta de nuevo.', 'Could not save. Try again.'); }
+
+  async function api(path, opts) {
+    var r = await authedFetch(path, opts || {});
+    var d = await r.json().catch(function () { return {}; });
+    if (r.status === 429) d.error = d.error || 'rate_limited';
+    return { ok: r.ok, status: r.status, data: d };
+  }
+  function jsonOpts(method, body) { return { method: method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }; }
+
+  /* ---------- sign in ---------- */
+  var pendingEmail = '';
+  $('pn-send').onclick = async function () {
+    var email = $('pn-email').value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg($('pn-signin-msg'), t('Escribe un correo válido.', 'Enter a valid email.'), 'err'); return; }
+    this.disabled = true;
+    // shouldCreateUser:false: the panel never creates accounts; pages are created on the landing page.
+    var r = await initSupabase().auth.signInWithOtp({ email: email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + '/panel' } });
+    this.disabled = false;
+    if (r.error) {
+      var noUser = /signups not allowed|not found|otp_disabled/i.test(r.error.message || '');
+      msg($('pn-signin-msg'), noUser ? t('Ese correo no tiene una página. Crea la tuya desde el inicio.', 'That email has no page. Create yours from the home page.')
+        : t('No pudimos enviar el código. Intenta en un minuto.', 'We could not send the code. Try again in a minute.'), 'err');
+      return;
+    }
+    pendingEmail = email;
+    $('pn-email-form').hidden = true; $('pn-code-form').hidden = false; $('pn-code').focus();
+    msg($('pn-signin-msg'), t('Te enviamos un código a ' + email + '.', 'We sent a code to ' + email + '.'), 'ok');
+  };
+  $('pn-verify').onclick = async function () {
+    var code = $('pn-code').value.replace(/\D/g, '');
+    if (code.length !== 6) { msg($('pn-signin-msg'), t('El código tiene 6 dígitos.', 'The code has 6 digits.'), 'err'); return; }
+    this.disabled = true;
+    var r = await initSupabase().auth.verifyOtp({ email: pendingEmail, token: code, type: 'email' });
+    this.disabled = false;
+    if (r.error) { msg($('pn-signin-msg'), t('Código incorrecto o vencido.', 'Wrong or expired code.'), 'err'); return; }
+    msg($('pn-signin-msg'), '');
+    load();
+  };
+  $('pn-back').onclick = function () { $('pn-email-form').hidden = false; $('pn-code-form').hidden = true; msg($('pn-signin-msg'), ''); };
+  $('pn-out').onclick = async function () { await initSupabase().auth.signOut(); location.href = '/panel'; };
+
+  /* ---------- load ---------- */
+  async function load() {
+    show('pn-loading');
+    var session = await getSession();
+    if (!session) { $('pn-out').hidden = true; show('pn-signin'); return; }
+    $('pn-out').hidden = false;
+    var both = await Promise.all([api('/api/panel?resource=agency'), api('/api/panel')]);
+    var ag = both[0], ls = both[1];
+    if (ag.status === 401 || ls.status === 401) { show('pn-none'); return; }
+    if (!ag.ok || !ls.ok) { show('pn-signin'); msg($('pn-signin-msg'), t('No pudimos cargar tu página. Intenta de nuevo.', 'We could not load your page. Try again.'), 'err'); return; }
+    S.agency = ag.data.agency; S.listings = ls.data.listings || []; S.plan = ls.data.plan || {};
+    renderAll();
+    show('pn-app');
+    if (new URLSearchParams(location.search).get('pay')) openPay();
+  }
+
+  function renderAll() { renderStatus(); renderLink(); renderList(); fillCard(); }
+
+  function miniState() { return (S.plan && S.plan.mini) || { state: 'active', activeUntil: null }; }
+  function renderStatus() {
+    var m = miniState(), acts = [];
+    $('pn-status').className = 'pn-status ' + m.state;
+    if (m.state === 'pending') {
+      $('pn-status-title').textContent = t('Tu página está lista, falta publicarla', 'Your page is ready to publish');
+      $('pn-status-text').textContent = t('Paga MXN ' + MINI_PAY.amount + ' por ' + MINI_PAY.periodEs + ' y la publicamos en cuanto confirmemos el pago. Mientras tanto puedes editarla.',
+        'Pay MXN ' + MINI_PAY.amount + ' for ' + MINI_PAY.periodEn + ' and we publish it as soon as the payment is confirmed. You can edit it meanwhile.');
+      acts.push('<button class="pn-btn pn-gold" type="button" data-pay>' + escapeHtml(t('Pagar y publicar', 'Pay and publish')) + '</button>');
+    } else if (m.state === 'expired') {
+      $('pn-status-title').textContent = t('Tu página está en pausa', 'Your page is paused');
+      $('pn-status-text').textContent = t('Venció el ' + fmtDate(m.activeUntil) + '. No se borró nada: renueva y vuelve a estar en línea.', 'It expired on ' + fmtDate(m.activeUntil) + '. Nothing was deleted: renew and it is back online.');
+      acts.push('<button class="pn-btn pn-gold" type="button" data-pay>' + escapeHtml(t('Renovar ' + MINI_PAY.periodEs, 'Renew ' + MINI_PAY.periodEn)) + '</button>');
+    } else {
+      var days = m.activeUntil ? Math.ceil((Date.parse(m.activeUntil) - Date.now()) / 864e5) : null;
+      $('pn-status-title').textContent = t('Tu página está publicada', 'Your page is live');
+      $('pn-status-text').textContent = m.activeUntil ? t('Activa hasta el ' + fmtDate(m.activeUntil) + '.', 'Active until ' + fmtDate(m.activeUntil) + '.') : '';
+      if (days !== null && days <= 14) acts.push('<button class="pn-btn pn-gold" type="button" data-pay>' + escapeHtml(t('Renovar ahora', 'Renew now')) + '</button>');
+    }
+    $('pn-status-actions').innerHTML = acts.join('');
+    $('pn-status-actions').hidden = !acts.length;
+  }
+
+  function renderLink() {
+    var url = pageUrl();
+    $('pn-url').textContent = url.replace(/^https?:\/\//, '');
+    $('pn-view').href = url;
+    $('pn-wa-share').href = 'https://wa.me/?text=' + encodeURIComponent(t('Te comparto mis propiedades: ', 'Here are my properties: ') + url);
+    try { var qr = qrcode(0, 'M'); qr.addData(url); qr.make(); $('pn-qr').src = qr.createDataURL(4, 2); } catch (e) { $('pn-qr').hidden = true; }
+  }
+  $('pn-copy').onclick = function () {
+    var b = this;
+    navigator.clipboard.writeText(pageUrl()).then(function () { b.textContent = t('Copiado ✓', 'Copied ✓'); setTimeout(function () { b.textContent = t('Copiar link', 'Copy link'); }, 1800); });
+  };
+
+  function photosOf(p) {
+    var list = Array.isArray(p.images) ? p.images.slice() : [];
+    if (p.image && list.indexOf(p.image) === -1) list.unshift(p.image);
+    return list;
+  }
+  function renderList() {
+    var limit = (S.plan && S.plan.listingsLimit) || 10;
+    $('pn-used').textContent = S.listings.length + ' / ' + limit;
+    $('pn-new').disabled = S.listings.length >= limit;
+    $('pn-paste-open').disabled = S.listings.length >= limit;
+    if (!S.listings.length) {
+      $('pn-list').innerHTML = '<li class="pn-sub" style="padding:8px 2px">' + escapeHtml(t('Todavía no tienes propiedades. Agrega una o pega tu inventario.', 'No properties yet. Add one or paste your inventory.')) + '</li>';
+      return;
+    }
+    $('pn-list').innerHTML = S.listings.map(function (p) {
+      var ph = photosOf(p), cover = ph.length ? cssUrl(ph[0]) : '';
+      var title = p.title_es || p.title_en || t('Propiedad', 'Property');
+      var pills = [];
+      if (!ph.length) pills.push('<span class="pn-pill warn">' + escapeHtml(t('Sin fotos', 'No photos')) + '</span>');
+      if (!p.amount) pills.push('<span class="pn-pill warn">' + escapeHtml(t('Sin precio', 'No price')) + '</span>');
+      return '<li class="pn-item"><div class="pn-thumb"' + (cover ? ' style="background-image:url(\'' + cover + '\')"' : '') + '>' + (cover ? '' : '<svg><use href="#i-home"/></svg>') + '</div>' +
+        '<div class="pn-item-main"><div class="pn-item-title">' + escapeHtml(title) + '</div>' +
+        '<div class="pn-item-meta"><span>' + escapeHtml(money(p)) + '</span>' + pills.join('') + '</div></div>' +
+        '<button class="pn-btn pn-line pn-edit" type="button" data-edit="' + escapeHtml(p.id) + '">' + escapeHtml(t('Editar', 'Edit')) + '</button></li>';
+    }).join('');
+  }
+  $('pn-list').addEventListener('click', function (e) { var b = e.target.closest('[data-edit]'); if (b) openEditor(b.getAttribute('data-edit')); });
+  $('pn-status-actions').addEventListener('click', function (e) { if (e.target.closest('[data-pay]')) openPay(); });
+
+  /* ---------- photos: shrink in the browser, upload under the agency's folder ---------- */
+  function shrink(file) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, PHOTO_PX / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(img.src);
+        c.toBlob(function (b) { resolve(b); }, 'image/jpeg', 0.85);
+      };
+      img.onerror = function () { URL.revokeObjectURL(img.src); resolve(null); };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  function rid() { return (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)); }
+  async function upload(file, prefix) {
+    if (!file || !/^image\//.test(file.type) || file.size > 25 * 1024 * 1024) return null;
+    var blob = await shrink(file);
+    if (!blob) return null;
+    var sb = initSupabase();
+    var path = S.agency.id + '/' + prefix + '-' + rid() + '.jpg';
+    var up = await sb.storage.from('listing-photos').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+    if (up.error) return null;
+    return sb.storage.from('listing-photos').getPublicUrl(path).data.publicUrl;
+  }
+
+  /* ---------- property editor ---------- */
+  function sheet(id) { var d = $(id); if (!d.open) { if (d.showModal) d.showModal(); else d.setAttribute('open', ''); } }
+  function close(id) { var d = $(id); if (d.open) { if (d.close) d.close(); else d.removeAttribute('open'); } }
+  document.addEventListener('click', function (e) { var c = e.target.closest('[data-close]'); if (c) close(c.getAttribute('data-close')); });
+
+  function openEditor(id) {
+    var p = id ? S.listings.filter(function (x) { return x.id === id; })[0] : null;
+    S.editing = p ? p.id : null;
+    S.photos = p ? photosOf(p) : [];
+    $('ed-title').textContent = p ? t('Editar propiedad', 'Edit property') : t('Nueva propiedad', 'New property');
+    $('e-title').value = p ? (p.title_es || p.title_en || '') : '';
+    $('e-op').value = p && p.operation === 'rental' ? 'rental' : 'sale';
+    $('e-cur').value = p && p.currency === 'USD' ? 'USD' : 'MXN';
+    $('e-amount').value = p && p.amount ? p.amount : '';
+    $('e-town').value = p ? p.town || '' : '';
+    $('e-hood').value = p ? p.neighborhood || '' : '';
+    $('e-beds').value = p && p.bedrooms ? p.bedrooms : '';
+    $('e-baths').value = p && p.bathrooms ? p.bathrooms : '';
+    $('e-size').value = p && p.size ? p.size : '';
+    $('e-park').value = p && p.parking ? p.parking : '';
+    $('e-feats').value = p && Array.isArray(p.features) ? p.features.join(', ') : '';
+    $('e-desc').value = p ? p.description_es || '' : '';
+    $('e-del').hidden = !p;
+    $('e-del').dataset.confirm = ''; $('e-del').textContent = t('Eliminar propiedad', 'Delete property');
+    msg($('e-msg'), '');
+    renderPhotos();
+    sheet('ed');
+  }
+  function renderPhotos() {
+    var tiles = S.photos.map(function (u, i) {
+      return '<div class="pn-ph"><img src="' + safeUrl(u) + '" alt="">' + (i === 0 ? '<small>' + escapeHtml(t('Portada', 'Cover')) + '</small>'
+        : '<button type="button" class="cover" data-cover="' + i + '" aria-label="' + escapeHtml(t('Usar como portada', 'Use as cover')) + '">★</button>') +
+        '<button type="button" data-rm="' + i + '" aria-label="' + escapeHtml(t('Quitar foto', 'Remove photo')) + '">×</button></div>';
+    }).join('');
+    var add = S.photos.length < MAX_PHOTOS ? '<label class="pn-add"><svg><use href="#i-cam"/></svg><span>' + escapeHtml(t('Agregar', 'Add')) + '</span><input type="file" accept="image/*" multiple id="e-files"></label>' : '';
+    $('ed-photos').innerHTML = tiles + add;
+    var f = $('e-files');
+    if (f) f.onchange = async function () {
+      var files = Array.prototype.slice.call(this.files, 0, MAX_PHOTOS - S.photos.length), failed = 0;
+      $('e-save').disabled = true;
+      for (var i = 0; i < files.length; i++) {
+        msg($('e-msg'), t('Subiendo foto ', 'Uploading photo ') + (i + 1) + '/' + files.length + '…');
+        var url = await upload(files[i], 'p');
+        if (url) S.photos.push(url); else failed++;
+        renderPhotos();
+      }
+      $('e-save').disabled = false;
+      msg($('e-msg'), failed ? t(failed + ' foto(s) no se pudieron subir.', failed + ' photo(s) could not be uploaded.') : '', failed ? 'err' : '');
+    };
+  }
+  $('ed-photos').addEventListener('click', function (e) {
+    var rm = e.target.closest('[data-rm]'), cv = e.target.closest('[data-cover]');
+    if (rm) { S.photos.splice(+rm.getAttribute('data-rm'), 1); renderPhotos(); }
+    if (cv) { var i = +cv.getAttribute('data-cover'); S.photos.unshift(S.photos.splice(i, 1)[0]); renderPhotos(); }
+  });
+  function num(id) { var v = $(id).value.trim(); return v === '' ? 0 : Number(v); }
+  $('e-save').onclick = async function () {
+    var title = $('e-title').value.trim();
+    if (!title) { msg($('e-msg'), t('Ponle un título.', 'Give it a title.'), 'err'); return; }
+    var body = {
+      title_es: title, operation: $('e-op').value, currency: $('e-cur').value, amount: num('e-amount'),
+      town: $('e-town').value.trim(), neighborhood: $('e-hood').value.trim(),
+      bedrooms: num('e-beds'), bathrooms: num('e-baths'), size: num('e-size'), parking: num('e-park'),
+      features: $('e-feats').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 30),
+      description_es: $('e-desc').value.trim(),
+      image: S.photos[0] || null, images: S.photos
+    };
+    // A new property is public right away on a live page; on an unpaid page it waits as a draft and is published on activation.
+    if (!S.editing) body.status = miniState().state === 'active' ? 'published' : 'draft';
+    this.disabled = true;
+    var r = S.editing ? await api('/api/panel?id=' + encodeURIComponent(S.editing), jsonOpts('PUT', body)) : await api('/api/panel', jsonOpts('POST', body));
+    this.disabled = false;
+    if (!r.ok) { msg($('e-msg'), errText(r.data.error), 'err'); return; }
+    close('ed');
+    await refreshListings();
+    msg($('pn-list-msg'), t('Guardado.', 'Saved.'), 'ok');
+  };
+  $('e-del').onclick = async function () {
+    if (!S.editing) return;
+    if (this.dataset.confirm !== '1') { this.dataset.confirm = '1'; this.textContent = t('Toca otra vez para eliminar', 'Tap again to delete'); return; }
+    var r = await api('/api/panel?id=' + encodeURIComponent(S.editing), { method: 'DELETE' });
+    if (!r.ok) { msg($('e-msg'), errText(r.data.error), 'err'); return; }
+    close('ed');
+    await refreshListings();
+    msg($('pn-list-msg'), t('Propiedad eliminada.', 'Property deleted.'), 'ok');
+  };
+  async function refreshListings() {
+    var ls = await api('/api/panel');
+    if (ls.ok) { S.listings = ls.data.listings || []; S.plan = ls.data.plan || S.plan; renderList(); renderStatus(); }
+  }
+  $('pn-new').onclick = function () { openEditor(null); };
+
+  /* ---------- paste import: same reader as the landing page ---------- */
+  $('pn-paste-open').onclick = function () { $('ps-text').value = ''; msg($('ps-msg'), ''); sheet('ps'); };
+  $('ps-go').onclick = async function () {
+    var btn = this, text = $('ps-text').value.trim();
+    if (text.length < 20) { msg($('ps-msg'), t('Pega al menos una propiedad con su precio.', 'Paste at least one property with its price.'), 'err'); return; }
+    var free = ((S.plan && S.plan.listingsLimit) || 10) - S.listings.length;
+    btn.disabled = true;
+    msg($('ps-msg'), t('Leyendo tus propiedades…', 'Reading your properties…'));
+    try {
+      var r = await fetch('/api/import', jsonOpts('POST', { text: text }));
+      var d = await r.json().catch(function () { return {}; });
+      if (!r.ok || !d.properties || !d.properties.length) {
+        msg($('ps-msg'), r.status === 429 ? t('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.') : t('No encontramos propiedades en ese texto.', 'We found no properties in that text.'), 'err');
+        return;
+      }
+      var list = d.properties.slice(0, free), added = 0;
+      for (var i = 0; i < list.length; i++) {
+        var x = list[i].property || {};
+        var res = await api('/api/panel', jsonOpts('POST', {
+          title_es: x.title, town: x.town, neighborhood: x.neighborhood, bedrooms: x.bedrooms || 0, bathrooms: x.bathrooms || 0,
+          size: x.size || 0, parking: x.parking || 0, operation: x.operation === 'rental' ? 'rental' : 'sale',
+          currency: x.currency || 'MXN', amount: x.amount || 0,
+          features: String(x.features || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 30),
+          status: miniState().state === 'active' ? 'published' : 'draft'
+        }));
+        if (res.ok) added++;
+      }
+      close('ps');
+      await refreshListings();
+      var skipped = d.properties.length - list.length;
+      msg($('pn-list-msg'), t('Agregamos ' + added + ' propiedad(es). Revisa cada una y ponles fotos.', 'Added ' + added + ' property(ies). Check each one and add photos.') +
+        (skipped > 0 ? t(' ' + skipped + ' no cupieron en tu plan.', ' ' + skipped + ' did not fit your plan.') : ''), 'ok');
+    } catch (e) {
+      msg($('ps-msg'), t('Sin conexión. Intenta de nuevo.', 'No connection. Try again.'), 'err');
+    } finally { btn.disabled = false; }
+  };
+
+  /* ---------- the agent's card ---------- */
+  function fillCard() {
+    var a = S.agency || {};
+    $('c-name').value = a.name || ''; $('c-wa').value = a.whatsapp_number || ''; $('c-phone').value = a.phone || '';
+    $('c-email').value = a.public_email || ''; $('c-bio').value = a.bio || ''; $('c-address').value = a.address || '';
+    $('c-services').value = (a.services || []).join(', ');
+    S.color = a.primary_color || null;
+    $('c-color').value = a.primary_color && /^#[0-9a-f]{6}$/i.test(a.primary_color) ? a.primary_color : GOLD;
+    setPrev('c-logo-prev', a.logo_url); setPrev('c-cover-prev', a.cover_url);
+  }
+  function setPrev(id, url) {
+    var el = $(id), u = cssUrl(url);
+    el.style.backgroundImage = u ? "url('" + u + "')" : '';
+    el.innerHTML = u ? '' : '<svg><use href="#i-cam"/></svg>';
+  }
+  $('c-color').oninput = function () { S.color = this.value; };
+  $('c-color-reset').onclick = function () { S.color = null; $('c-color').value = GOLD; };
+  function picker(inputId, prevId, field, prefix) {
+    $(inputId).onchange = async function () {
+      var f = this.files[0];
+      if (!f) return;
+      msg($('c-msg'), t('Subiendo imagen…', 'Uploading image…'));
+      var url = await upload(f, prefix);
+      if (!url) { msg($('c-msg'), t('No se pudo subir la imagen.', 'The image could not be uploaded.'), 'err'); return; }
+      var body = {}; body[field] = url;
+      var r = await api('/api/panel?resource=agency', jsonOpts('PATCH', body));
+      if (!r.ok) { msg($('c-msg'), errText(r.data.error), 'err'); return; }
+      S.agency = r.data.agency; setPrev(prevId, url);
+      msg($('c-msg'), t('Imagen guardada.', 'Image saved.'), 'ok');
+    };
+  }
+  picker('c-logo', 'c-logo-prev', 'logo_url', 'logo');
+  picker('c-cover', 'c-cover-prev', 'cover_url', 'cover');
+  $('c-save').onclick = async function () {
+    var name = $('c-name').value.trim();
+    if (!name) { msg($('c-msg'), t('Escribe tu nombre.', 'Enter your name.'), 'err'); return; }
+    var body = {
+      name: name, whatsapp_number: $('c-wa').value.trim() || null, phone: $('c-phone').value.trim() || null,
+      public_email: $('c-email').value.trim() || null, bio: $('c-bio').value.trim() || null, address: $('c-address').value.trim() || null,
+      services: $('c-services').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 8),
+      primary_color: S.color && S.color.toLowerCase() !== GOLD ? S.color : null
+    };
+    this.disabled = true;
+    var r = await api('/api/panel?resource=agency', jsonOpts('PATCH', body));
+    this.disabled = false;
+    if (!r.ok) { msg($('c-msg'), errText(r.data.error), 'err'); return; }
+    S.agency = r.data.agency;
+    msg($('c-msg'), t('Tarjeta guardada.', 'Card saved.'), 'ok');
+  };
+
+  /* ---------- payment (manual until Mercado Pago) ---------- */
+  function hasBank() { return !!(MINI_PAY.clabe && MINI_PAY.bank); }
+  function openPay() {
+    var m = miniState();
+    $('pay-title').textContent = m.state === 'pending' ? t('Publicar tu página', 'Publish your page') : t('Renovar tu página', 'Renew your page');
+    var ref = (S.agency && S.agency.slug) || '';
+    var bank = hasBank();
+    if (bank) {
+      $('pay-lede').textContent = t('Transfiere MXN ' + MINI_PAY.amount + ' y avísanos aquí. Publicamos tu página en cuanto confirmemos el pago, normalmente el mismo día.',
+        'Transfer MXN ' + MINI_PAY.amount + ' and let us know here. We publish your page as soon as the payment is confirmed, usually the same day.');
+      $('pay-details').innerHTML = [
+        [t('Monto', 'Amount'), 'MXN ' + MINI_PAY.amount + ' · ' + t(MINI_PAY.periodEs, MINI_PAY.periodEn)],
+        [t('Banco', 'Bank'), MINI_PAY.bank], ['CLABE', MINI_PAY.clabe], [t('Titular', 'Holder'), MINI_PAY.holder],
+        [t('Concepto', 'Reference'), ref]
+      ].filter(function (r) { return r[1]; }).map(function (r) { return '<div><span>' + escapeHtml(r[0]) + '</span><b>' + escapeHtml(r[1]) + '</b></div>'; }).join('');
+    } else {
+      $('pay-lede').textContent = t('Te mandamos los datos de pago (MXN ' + MINI_PAY.amount + ' por ' + MINI_PAY.periodEs + ') por correo y WhatsApp. Cuando pagues, vuelve aquí y avísanos.',
+        'We send you the payment details (MXN ' + MINI_PAY.amount + ' for ' + MINI_PAY.periodEn + ') by email and WhatsApp. Once you pay, come back here and let us know.');
+    }
+    $('pay-details').hidden = !bank;
+    $('pay-method-wrap').hidden = !bank; $('pay-ref-wrap').hidden = !bank;
+    $('pay-send').textContent = bank ? t('Ya pagué', 'I have paid') : t('Pedir datos de pago', 'Request payment details');
+    $('pay-send').dataset.kind = bank ? 'paid' : 'request';
+    $('pay-send').disabled = false;
+    msg($('pay-msg'), '');
+    sheet('pay');
+  }
+  $('pay-send').onclick = async function () {
+    var request = this.dataset.kind === 'request';
+    var note = $('pay-note').value.trim();
+    var body = request ? { method: 'other', reference: '', note: ('Pide datos de pago. ' + note).trim() }
+      : { method: $('pay-method').value, reference: $('pay-ref').value.trim(), note: note };
+    this.disabled = true;
+    var r = await api('/api/panel?action=paid-notice', jsonOpts('POST', body));
+    if (!r.ok) { this.disabled = false; msg($('pay-msg'), errText(r.data.error), 'err'); return; }
+    msg($('pay-msg'), request ? t('Listo. Te contactamos hoy con los datos de pago.', 'Done. We will contact you today with the payment details.')
+      : t('Gracias. Revisamos tu pago y publicamos tu página; te avisamos por correo.', 'Thanks. We check your payment and publish your page; we will email you.'), 'ok');
+  };
+
+  document.addEventListener('langchange', function () { if (S.agency) renderAll(); });
+  load();
+})();
+</script>
+</body>
+</html>

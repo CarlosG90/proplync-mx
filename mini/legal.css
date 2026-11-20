@@ -1,0 +1,16 @@
+/* PropLync Mini · legal pages (privacidad, terminos). Self-contained on top of tokens.css. */
+body{background:var(--paper);color:var(--ink);font-family:var(--body);margin:0}
+section{padding:0}
+.lg-bar{background:var(--ink)}
+.lg-bar a{display:flex;align-items:center;gap:9px;max-width:760px;margin:0 auto;height:58px;padding:0 var(--gutter);color:var(--on-ink);text-decoration:none;font-weight:600}
+.lg-bar svg{width:26px;height:26px}
+.lg-bar em{font-style:normal;color:var(--gold)}
+.lg-wrap{max-width:760px;margin:0 auto;padding:28px var(--gutter) 64px}
+.lg-draft{background:rgba(201,169,110,.18);border:1px solid rgba(201,169,110,.5);border-radius:12px;padding:12px 14px;font-size:.84rem;color:#6b4e16;margin-bottom:22px}
+.lg-wrap h1{font-family:var(--display);font-weight:300;font-size:clamp(1.8rem,6vw,2.4rem);margin:0 0 6px}
+.lg-date{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--on-sand-light)}
+.lg-wrap h2{font-family:var(--display);font-weight:400;font-size:1.2rem;margin:30px 0 8px}
+.lg-wrap p,.lg-wrap li{line-height:1.7;color:var(--on-sand);font-size:.95rem}
+.lg-wrap ul{padding-left:20px}
+.lg-wrap a{color:var(--ink)}
+.lg-foot{border-top:1px solid var(--line);margin-top:36px;padding-top:18px;font-size:.84rem}

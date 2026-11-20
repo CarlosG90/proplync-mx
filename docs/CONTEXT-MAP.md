@@ -51,14 +51,17 @@ Agencies (SaaS)
   api     my-listings.js, generate.js, leads.js, onboard.js, extract.js, instagram-publish.js
   lib     auth.js, plans.js, agency.js, ratelimit.js, redis.js, runway.js, reel.js
 
-PropLync Mini (self-serve "all your properties in one link"; pay to publish, MXN 249 = 90 days; plan file ~/.claude/plans/glittery-tinkering-bengio.md)
-  page    mini.html (/mini, /pagina): paste → batch import → preview → photos → email code → saved as drafts, not public
-  api     extract.js ?action=batch (Groq first, Claude for files) · onboard.js ?action=mini | mini-status (needs MINI_SIGNUP=on)
-          search.js ?agency= (card fields, `paused`) · property.js (404 while unpaid) · my-listings.js ?resource=agency
-  plan    plans.js: mini (10 listings), pageActive(), miniState(); an unpaid/lapsed page hides its listings everywhere, incl. the search mirror
-  ops     scripts/mini.mjs list | activate <slug> [--periods n]; the operator is emailed when a page waits for payment (notifyOperator)
-  tests   mini-signup, plans, extract-batch
-  later   Mercado Pago (step 4), CRM for monthly (step 5): leads.js ?action=interest, plans.js crm flag
+PropLync Mini (self-serve "all your properties in one link"; its OWN Vercel project, Root Directory mini/; mini/README.md)
+  pages   mini/index.html (landing + paste → preview → email code → saved unpaid), mini/panel.html (account: status,
+          pay/renew, link+QR, properties, card), mini/p.html (public page /:slug, rendered by mini/api/page.js), legal drafts
+  api     mini/api/signup.js → api/onboard.js handleMiniSignup · mini/api/import.js → api/extract.js handleBatch
+          mini/api/panel.js → api/my-listings.js (+ paid-notice → events row + operator email) · mini/api/page.js
+  rules   api/_lib/listing-fields.js (shared validation), plans.js mini / pageActive / miniState; unpaid or lapsed pages
+          hide listings everywhere (Mini page, PropLync search, /propiedad); Mini listings never get stock photos
+  ops     scripts/mini.mjs list (shows payment notices) | activate <slug> [--periods n]; payment details: mini/js/pay-config.js
+  tests   mini-signup, mini-project, plans, extract-batch
+  main app /mini (mini.html) still live until the cutover PR redirects it to the Mini domain
+  later   Mercado Pago, CRM for monthly, funnel events from the Mini pages
 ```
 
 ## Loops

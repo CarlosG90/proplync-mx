@@ -1,0 +1,6 @@
+{
+  "name": "proplync-mini",
+  "private": true,
+  "type": "module",
+  "description": "PropLync Mini: the self-serve 'all your properties in one link' product, deployed as its own Vercel project (Root Directory mini). Dependencies come from the repo root (see vercel.json installCommand)."
+}

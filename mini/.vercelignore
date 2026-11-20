@@ -1,0 +1,4 @@
+# The Mini project (Root Directory mini) imports ../api/_lib and ../api/*.js; those come along
+# through Vercel's "include files outside the root directory" setting. Nothing here to hide yet
+# beyond notes.
+*.md

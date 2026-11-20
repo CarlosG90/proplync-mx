@@ -35,12 +35,31 @@ async function list(svc) {
     .eq('plan', 'mini').order('created_at', { ascending: false }).limit(100);
   if (error) die(`Could not read Mini pages: ${error.message}`);
   if (!data.length) { console.log('\n  No Mini pages yet.\n'); return; }
+  // "Ya pagué" / "Pedir datos de pago" from the Mini panel (mini/api/panel.js) are events rows,
+  // so a notice is never lost to a failed email. Show each page's latest one.
+  const { data: notices } = await svc.from('events')
+    .select('session, created_at, props').eq('name', 'mini_paid_notice')
+    .gt('created_at', new Date(Date.now() - 120 * 864e5).toISOString())
+    .order('created_at', { ascending: false }).limit(500);
+  const lastNotice = latestNoticeByAgency(notices || []);
   console.log('\n  Mini pages (newest first)\n');
   for (const a of data) {
     const state = !a.plan_expires_at ? 'PENDING' : pageActive({ plan: 'mini', plan_expires_at: a.plan_expires_at }) ? 'active' : 'lapsed';
     console.log(`    ${state.padEnd(8)} until ${day(a.plan_expires_at)}  ${String(a.slug).padEnd(28)} ${a.whatsapp_number || '-'}  ${a.name}`);
+    const n = lastNotice.get(a.id);
+    if (n && (!a.plan_expires_at || Date.parse(n.created_at) > Date.parse(a.plan_expires_at) - MINI_PERIOD_DAYS * 864e5)) {
+      const p = n.props || {};
+      console.log(`             ↳ payment notice ${day(n.created_at)}: ${p.method || '-'}${p.reference ? ' · ref ' + p.reference : ''}`);
+    }
   }
   console.log(`\n  Activate a paid page: node scripts/mini.mjs activate <slug>   (MXN ${MINI_PRICE_MXN} = ${MINI_PERIOD_DAYS} days)\n`);
+}
+
+/** Latest payment notice per agency id, from events rows ordered newest first. Pure, for tests. */
+export function latestNoticeByAgency(rows) {
+  const out = new Map();
+  for (const r of rows) if (r && r.session && !out.has(r.session)) out.set(r.session, r);
+  return out;
 }
 
 async function activate(svc, slug, periods) {
@@ -57,8 +76,15 @@ async function activate(svc, slug, periods) {
     .update({ status: 'published' }).eq('agency_id', agency.id).eq('status', 'draft').select('public_id');
   if (pubErr) die(`Period extended to ${day(until)}, but publishing the drafts failed: ${pubErr.message}`);
 
+  // For the funnel (scripts/funnel.mjs): an activation is the paid step.
+  const { error: evErr } = await svc.from('events').insert({
+    name: 'mini_activated', page: 'operator', session: agency.id, props: { slug: agency.slug, periods, until }
+  });
+  const site = (process.env.MINI_SITE_URL || '').replace(/\/$/, '');
   console.log(`\n  ✓ ${agency.name} is live until ${day(until)}`);
-  console.log(`    Published ${published.length} draft(s). Page: /agencia/${agency.slug}\n`);
+  console.log(`    Published ${published.length} draft(s). Page: ${site}/${agency.slug}`);
+  if (evErr) console.log(`    (the funnel event was not recorded: ${evErr.message})`);
+  console.log('    Tell the customer: their page is live, and the date it runs until.\n');
 }
 
 async function main() {

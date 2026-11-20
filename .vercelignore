@@ -13,3 +13,6 @@ test
 skills-lock.json
 api/_lib/_deprecated
 mexico_scout_platform
+# PropLync Mini is its own Vercel project (Root Directory mini). Served here, mini/index.html
+# would shadow this app's own /mini page and expose an unrendered p.html.
+mini

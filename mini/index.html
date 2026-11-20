@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title data-es="Tus propiedades en un solo link · PropLync Mini" data-en="Your properties in one link · PropLync Mini">Tus propiedades en un solo link · PropLync Mini</title>
+<meta name="description" content="Pega tus propiedades como las mandas por WhatsApp y en minutos tienes una página con tu marca, fotos y botón Me interesa. MXN 249 por 3 meses.">
+<meta property="og:title" content="Tus propiedades en un solo link, con tu marca">
+<meta property="og:description" content="Pega tu inventario de WhatsApp y en minutos tienes tu página con fotos y botón Me interesa directo a tu WhatsApp. MXN 249 por 3 meses.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/nav.css">
+<link rel="stylesheet" href="/css/components.css">
+<!--
+  WHY THIS PAGE EXISTS
+  PropLync Mini runs as its own Vercel project (mini/, Root Directory "mini") so the
+  self-serve business has its own domain, deploys and function budget, while it
+  shares PropLync's Supabase database and field rules (api/_lib). This is its front
+  door for agents
+  who arrive from a social ad. A competitor sells this by hand (MXN 250, 24 hours);
+  here the agent pastes their WhatsApp inventory, sees their page exactly as it will
+  look, adds photos, proves their email with a code, and the page is saved under their
+  name. It goes public once paid (MXN 249 for 3 months, up to 10 properties; plans.js).
+  Until Mercado Pago is connected the payment is collected by hand and the page is
+  released with scripts/mini.mjs activate after the agent reports it on /pago.
+
+  WHY PHOTOS GO UP AFTER THE EMAIL CODE
+  Storage only lets a member of an agency write under that agency's folder
+  (schema.sql, listing_photos_agency_write), and the agency does not exist until the
+  code is confirmed. So photos are held in the browser (downscaled to 1600px JPEG),
+  uploaded right after the page is saved, and attached through the same listing
+  endpoint the dashboard uses. A failed photo never fails the page.
+-->
+<style>
+  :root{--mn-max:1120px}
+  body{background:var(--paper)}
+  .mn-wrap{max-width:var(--mn-max);margin:0 auto;padding:0 var(--gutter)}
+
+  /* ── Hero: the promise, and the product itself in a phone ── */
+  .mn-hero{background:var(--ink);color:var(--on-ink);padding:var(--sp-16) 0 var(--sp-14);position:relative;overflow:hidden}
+  .mn-hero::after{content:"";position:absolute;right:-20%;top:-30%;width:70%;height:160%;background:radial-gradient(closest-side,rgba(201,169,110,.14),transparent 70%);pointer-events:none}
+  .mn-hero-grid{display:grid;gap:var(--sp-12);align-items:center;position:relative;z-index:1}
+  .mn-eyebrow{font-family:var(--mono);font-size:var(--text-xs);letter-spacing:.18em;text-transform:uppercase;color:var(--gold);display:inline-flex;align-items:center;gap:12px}
+  .mn-eyebrow::before{content:"";width:28px;height:1px;background:var(--gold)}
+  .mn-hero h1{font-size:var(--text-4xl);color:var(--on-ink);margin:var(--sp-5) 0 var(--sp-5);max-width:16ch}
+  .mn-hero .lede{color:var(--on-ink-dim);font-size:var(--text-md);line-height:1.7;max-width:52ch}
+  .mn-cta-row{display:flex;gap:var(--sp-3);flex-wrap:wrap;margin-top:var(--sp-8)}
+  .mn-hero .btn{padding:14px 26px;font-size:var(--text-base)}
+  .btn-ghost-light{background:transparent;color:var(--on-ink);border:1px solid rgba(240,237,232,.25)}
+  .btn-ghost-light:hover{border-color:var(--gold);color:var(--on-ink)}
+  .mn-proof{display:flex;gap:var(--sp-6);flex-wrap:wrap;margin-top:var(--sp-8);color:var(--on-ink-dim);font-size:var(--text-sm)}
+  .mn-proof span{display:inline-flex;align-items:center;gap:8px}
+  .mn-proof em{font-style:normal}
+  .mn-proof svg{width:16px;height:16px;color:var(--gold)}
+
+  /* the phone: a real render of the page, from sample data, so the promise is literal */
+  .mn-phone{justify-self:center;width:min(320px,86vw);background:#0b1220;border-radius:40px;padding:12px;box-shadow:var(--shadow-2xl),0 0 0 1px rgba(240,237,232,.08);position:relative}
+  .mn-phone::before{content:"";position:absolute;top:12px;left:50%;transform:translateX(-50%);width:96px;height:24px;background:#0b1220;border-radius:0 0 16px 16px;z-index:3}
+  .mn-screen{background:var(--paper);border-radius:30px;overflow:hidden;height:600px;overflow-y:auto;scrollbar-width:none}
+  .mn-screen::-webkit-scrollbar{display:none}
+  .mn-phone-note{text-align:center;color:var(--on-ink-faint);font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;margin-top:var(--sp-4)}
+
+  /* ── Trust strip ── */
+  .mn-trust{background:var(--white);border-bottom:1px solid var(--line)}
+  .mn-trust .mn-wrap{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-4);padding-top:var(--sp-5);padding-bottom:var(--sp-5)}
+  .mn-trust div{display:flex;align-items:center;gap:10px;font-size:var(--text-sm);color:var(--on-sand)}
+  .mn-trust svg{width:18px;height:18px;color:var(--sea);flex:none}
+
+  /* ── The application: stepper + cards ── */
+  .mn-app{padding:var(--sp-14) 0 var(--sp-12)}
+  .mn-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-width:720px;margin:0 auto var(--sp-8)}
+  .mn-step{display:flex;flex-direction:column;align-items:center;gap:8px;font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--on-sand-light);text-align:center}
+  .mn-step i{width:100%;height:3px;border-radius:3px;background:var(--sand-2)}
+  .mn-step.on{color:var(--ink)}
+  .mn-step.on i{background:var(--gold)}
+  .mn-step.done i{background:var(--sea)}
+  .mn-card{background:var(--white);border:1px solid var(--line);border-radius:var(--radius-lg);padding:var(--sp-7);max-width:720px;margin:0 auto var(--sp-5);box-shadow:var(--shadow-card)}
+  .mn-card-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:var(--sp-2)}
+  .mn-num{flex:none;width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--gold);font-family:var(--mono);font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .mn-card h2{font-size:var(--text-xl);color:var(--ink);font-weight:400}
+  .mn-hint{color:var(--on-sand-dim);font-size:var(--text-sm);line-height:1.6}
+  .mn-sub{font-size:var(--text-lg);color:var(--ink);font-weight:400;margin:var(--sp-7) 0 var(--sp-2)}
+  textarea.mn-in{min-height:190px;resize:vertical;line-height:1.55}
+  .mn-in{font-family:var(--body);font-size:var(--text-base);padding:12px 14px;border:1px solid var(--sand-3);border-radius:var(--radius-sm);width:100%;background:var(--white);color:var(--ink);text-transform:none;letter-spacing:0;transition:border-color var(--duration) ease,box-shadow var(--duration) ease;min-height:46px}
+  .mn-in:focus{outline:none;border-color:var(--sea);box-shadow:0 0 0 3px rgba(45,138,133,.15)}
+  .mn-in::placeholder{color:var(--on-sand-light)}
+  .mn-field{display:flex;flex-direction:column;gap:6px;margin-top:var(--sp-4)}
+  .mn-label{font-size:var(--text-sm);font-weight:600;color:var(--on-sand)}
+  .mn-row{display:flex;gap:var(--sp-3);flex-wrap:wrap;margin-top:var(--sp-5);align-items:center}
+  .mn-row .btn{padding:13px 22px}
+  .mn-msg{margin-top:var(--sp-3);font-size:var(--text-sm);color:var(--on-sand-dim);line-height:1.5}
+  .mn-msg.err{color:#b4442f}
+  .mn-msg.ok{color:var(--sea-deep)}
+  .mn-example{margin-top:var(--sp-3);font-size:var(--text-xs);color:var(--on-sand-light)}
+  .mn-example button{background:none;border:0;padding:0;color:var(--sea-deep);font:inherit;font-weight:600;cursor:pointer;text-decoration:underline}
+
+  /* a property to check */
+  .mn-prop{border:1px solid var(--line);border-radius:var(--radius);padding:var(--sp-4);margin-top:var(--sp-3);background:var(--paper)}
+  .mn-prop.off{opacity:.45}
+  .mn-prop-head{display:flex;gap:12px;align-items:center;color:var(--ink);font-weight:600}
+  .mn-prop-head input[type=checkbox]{width:20px;height:20px;flex:none;accent-color:var(--sea)}
+  .mn-prop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:var(--sp-3)}
+  .mn-prop-grid label{display:flex;flex-direction:column;gap:5px;font-size:var(--text-xs);font-weight:600;color:var(--on-sand-dim)}
+  .mn-prop-grid .wide{grid-column:1 / -1}
+  .mn-prop-grid .mn-in{min-height:42px;padding:9px 12px;font-size:var(--text-sm)}
+  .mn-missing{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:var(--text-xs);color:var(--on-sand-dim)}
+  .mn-missing b{font-weight:600;color:#9a6a1a;background:rgba(201,169,110,.14);padding:3px 8px;border-radius:999px}
+  /* photos: thumbnails and an add button, the first photo is the cover */
+  .mn-photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:var(--sp-3)}
+  .mn-ph{position:relative;width:72px;height:72px;border-radius:var(--radius-sm);overflow:hidden;background:var(--sand-2)}
+  .mn-ph img{width:100%;height:100%;object-fit:cover}
+  .mn-ph button{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(10,22,40,.75);color:#fff;font-size:14px;line-height:22px;cursor:pointer;padding:0}
+  .mn-ph small{position:absolute;left:0;right:0;bottom:0;background:rgba(10,22,40,.7);color:#fff;font-family:var(--mono);font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;text-align:center;padding:2px 0}
+  .mn-add{width:72px;height:72px;border-radius:var(--radius-sm);border:1.5px dashed var(--sand-3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--on-sand-dim);font-size:.62rem;font-weight:600;background:var(--white)}
+  .mn-add:hover{border-color:var(--sea);color:var(--sea-deep)}
+  .mn-add svg{width:18px;height:18px}
+  .mn-add input{display:none}
+
+  /* preview frame inside the review card */
+  .mn-preview{margin-top:var(--sp-4);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;background:var(--paper);position:relative;box-shadow:var(--shadow-md)}
+  .mn-pv-ribbon{position:absolute;top:12px;right:12px;z-index:2;font-family:var(--mono);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;background:var(--gold);color:var(--ink);padding:4px 10px;border-radius:999px}
+  .mn-pv-head{background:var(--ink);color:var(--on-ink);padding:22px 18px 20px}
+  .mn-pv-head .eyebrow{font-family:var(--mono);font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+  .mn-pv-head .name{font-family:var(--display);font-weight:300;font-size:1.6rem;line-height:1.15;margin:6px 0 12px}
+  .mn-pv-wa{display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--ink);font-weight:600;font-size:.8rem;padding:9px 16px;border-radius:999px}
+  .mn-pv-wa svg{width:14px;height:14px}
+  .mn-pv-grid{display:grid;gap:12px;padding:14px}
+  .mn-pv-grid .pcard{cursor:default;box-shadow:none}
+  .mn-pv-grid .pcard:hover{transform:none;box-shadow:none}
+  .mn-pv-grid .pcard-photo{aspect-ratio:5/3;background:linear-gradient(135deg,#142237,#243750);background-size:cover;background-position:center;position:relative}
+  /* No photo yet: a short, light tile with a house mark, not a big dark slab that reads as broken. */
+  .mn-pv-grid .pcard-photo.is-empty{aspect-ratio:5/2;background:linear-gradient(135deg,var(--sand),var(--sand-2));display:flex;align-items:center;justify-content:center}
+  .mn-pv-grid .pcard-photo.is-empty::after{display:none}
+  /* phone header: brand, Mi página and ES/EN must all fit in 390px */
+  @media (max-width:420px){header nav{gap:10px} header .wordmark{font-size:1.02rem} header .navtools{gap:8px} header .navtools .btn{padding:8px 11px !important}}
+  .mn-nophoto{width:34px;height:34px;color:var(--on-sand-light);opacity:.55}
+  .mn-pv-grid .pcard-foot{gap:10px}
+  .mn-pv-grid .pcard-price{white-space:nowrap;font-size:1rem}
+  .mn-pv-head .name.is-placeholder{opacity:.45;font-style:italic}
+  .mn-pv-grid .pcard-body{padding:16px 18px}
+  .mn-pv-grid .pcard-title{font-size:1.05rem}
+  .mn-pv-cta{font-weight:600;font-size:.74rem;padding:8px 14px;border-radius:999px;background:var(--gold);color:var(--ink);white-space:nowrap}
+  .mn-pv-foot{padding:14px;text-align:center;font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--on-sand-light);border-top:1px solid var(--line)}
+
+  /* the done state */
+  .mn-link{font-family:var(--mono);font-size:var(--text-sm);word-break:break-all;background:var(--paper);border:1px solid var(--line);padding:12px 14px;border-radius:var(--radius-sm);margin-top:var(--sp-3);color:var(--ink)}
+  .mn-next{list-style:none;padding:0;margin:var(--sp-5) 0 0;display:grid;gap:10px}
+  .mn-next li{display:flex;gap:12px;align-items:flex-start;font-size:var(--text-sm);color:var(--on-sand)}
+  .mn-next li svg{width:18px;height:18px;flex:none;color:var(--sea);margin-top:2px}
+  .mn-ok-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(45,138,133,.1);color:var(--sea-deep);font-size:var(--text-xs);font-weight:600;padding:6px 12px;border-radius:999px;margin-bottom:var(--sp-3)}
+
+  /* ── How it works ── */
+  .mn-how{background:var(--white);padding:var(--sp-16) 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .mn-sec-head{text-align:center;max-width:46rem;margin:0 auto var(--sp-10)}
+  .mn-sec-head h2{font-size:var(--text-3xl);color:var(--ink)}
+  .mn-sec-head p{margin-top:var(--sp-4);color:var(--on-sand-dim);font-size:var(--text-md);line-height:1.7}
+  .mn-how-grid{display:grid;gap:var(--sp-5)}
+  .mn-how-item{padding:var(--sp-6);border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--paper)}
+  .mn-how-item .k{font-family:var(--mono);font-size:var(--text-xs);letter-spacing:.14em;color:var(--gold);text-transform:uppercase}
+  .mn-how-item h3{font-size:var(--text-lg);color:var(--ink);margin:var(--sp-3) 0 var(--sp-2)}
+  .mn-how-item p{color:var(--on-sand-dim);font-size:var(--text-sm);line-height:1.65}
+
+  /* ── Pricing ── */
+  .mn-pricing{padding:var(--sp-16) 0}
+  .mn-tiers{display:grid;gap:var(--sp-5);max-width:860px;margin:0 auto}
+  .mn-tier{background:var(--white);border:1px solid var(--line);border-radius:var(--radius-lg);padding:var(--sp-7);box-shadow:var(--shadow-card);position:relative;display:flex;flex-direction:column}
+  .mn-tier.best{border-color:var(--gold);box-shadow:var(--shadow-gold)}
+  .mn-tag{position:absolute;top:-12px;left:var(--sp-7);background:var(--gold);color:var(--ink);font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;padding:5px 12px;border-radius:999px;font-weight:700}
+  .mn-tier .name{font-family:var(--display);font-size:var(--text-xl);color:var(--ink);font-weight:400}
+  .mn-tier .price{font-family:var(--display);font-size:2.4rem;color:var(--ink);margin:var(--sp-2) 0 0;line-height:1}
+  .mn-tier .price small{font-family:var(--body);font-size:var(--text-sm);color:var(--on-sand-dim);margin-left:6px}
+  .mn-tier .per{color:var(--on-sand-dim);font-size:var(--text-sm);margin-top:6px}
+  .mn-feats{list-style:none;padding:0;margin:var(--sp-5) 0 var(--sp-6);display:grid;gap:10px;flex:1}
+  .mn-feats li{display:flex;gap:10px;align-items:flex-start;font-size:var(--text-sm);color:var(--on-sand);line-height:1.5}
+  .mn-feats svg{width:16px;height:16px;flex:none;color:var(--sea);margin-top:3px}
+  .mn-feats li.soon{color:var(--on-sand-light)}
+  .mn-feats li.soon svg{color:var(--sand-3)}
+  .mn-tier .btn{justify-content:center;width:100%;padding:13px}
+
+  /* ── FAQ ── */
+  .mn-faq{background:var(--white);padding:var(--sp-16) 0;border-top:1px solid var(--line)}
+  .mn-faq-list{max-width:760px;margin:0 auto;display:grid;gap:10px}
+  .mn-faq details{border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);padding:0 var(--sp-5)}
+  .mn-faq summary{cursor:pointer;padding:var(--sp-4) 0;font-weight:600;color:var(--ink);list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center}
+  .mn-faq summary::-webkit-details-marker{display:none}
+  .mn-faq summary::after{content:"+";font-family:var(--mono);color:var(--gold);font-size:1.1rem}
+  .mn-faq details[open] summary::after{content:"–"}
+  .mn-faq details p{padding:0 0 var(--sp-4);color:var(--on-sand-dim);font-size:var(--text-sm);line-height:1.65}
+
+  /* ── Footer ── */
+  .mn-foot{background:var(--ink);color:var(--on-ink-dim);padding:var(--sp-10) 0}
+  .mn-foot .mn-wrap{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-5);flex-wrap:wrap;font-size:var(--text-sm)}
+  .mn-foot nav{display:flex;gap:var(--sp-5);flex-wrap:wrap}
+  .mn-foot a:hover{color:var(--gold)}
+
+  @media (min-width:900px){
+    .mn-hero-grid{grid-template-columns:1.1fr .9fr}
+    .mn-trust .mn-wrap{grid-template-columns:repeat(4,1fr)}
+    .mn-how-grid{grid-template-columns:repeat(3,1fr)}
+    .mn-tiers{grid-template-columns:repeat(2,1fr)}
+    .mn-pv-grid{grid-template-columns:repeat(2,1fr)}
+  }
+  @media (max-width:560px){
+    .mn-hero{padding:var(--sp-12) 0 var(--sp-10)}
+    .mn-card{padding:var(--sp-5)}
+    .mn-prop-grid{grid-template-columns:minmax(0,1fr)}
+    .mn-screen{height:520px}
+    .mn-row .btn{width:100%;justify-content:center}
+    .mn-steps{gap:4px}
+    .mn-step{font-size:.52rem;letter-spacing:.06em}
+  }
+</style>
+</head>
+<body data-page="mini">
+
+<header>
+  <nav class="wrap">
+    <a class="brand" href="/" aria-label="PropLync Mini">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 23.4h10.8" stroke="#0a1628" stroke-width="2.3" stroke-linecap="round" opacity=".45"/></svg>
+      <span class="wordmark">PropLync<span class="accent" style="margin-left:.28em">Mini</span></span>
+    </a>
+    <div class="navtools">
+      <a class="btn btn-ghost" href="/panel" style="font-size:.78rem;padding:8px 14px" data-es="Mi página" data-en="My page">Mi página</a>
+      <div class="lang" role="group" aria-label="Language">
+        <button id="es" class="on" onclick="setLang('es')">ES</button>
+        <button id="en" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2.5 20 6v6c0 5-3.4 8.6-8 9.5C7.4 20.6 4 17 4 12V6l8-3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-7.7 13.6L3 21l4.5-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.2 8.4c.2-.4.5-.4.8-.4h.6c.2 0 .4.1.5.4l.8 1.9c.1.2 0 .4-.1.6l-.5.6c-.1.2-.1.3 0 .5a6 6 0 0 0 2.9 2.6c.2.1.4 0 .5-.1l.7-.8c.2-.2.4-.2.6-.1l1.8.9c.3.1.4.3.4.5 0 .9-.6 1.9-1.6 2.2-.8.3-1.9.2-3.5-.6a9.6 9.6 0 0 1-4-4c-.7-1.4-.6-2.6.1-3.6z" fill="currentColor"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9.5V20h12V9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+</svg>
+
+<section class="mn-hero">
+  <div class="mn-wrap mn-hero-grid">
+    <div>
+      <div class="mn-eyebrow" data-es="PropLync Mini · para asesores inmobiliarios" data-en="PropLync Mini · for real-estate agents">PropLync Mini · para asesores inmobiliarios</div>
+      <h1 data-es="Tus propiedades en un solo link, con tu marca." data-en="All your properties in one link, with your brand.">Tus propiedades en un solo link, con tu marca.</h1>
+      <p class="lede" data-es="Pega tu inventario tal como lo mandas por WhatsApp. En unos minutos tienes una página profesional con fotos, precios, ficha de cada propiedad y un botón «Me interesa» que lleva directo a tu WhatsApp." data-en="Paste your inventory the way you send it on WhatsApp. In a few minutes you have a professional page with photos, prices, details for each property and an “I'm interested” button straight to your WhatsApp.">Pega tu inventario tal como lo mandas por WhatsApp. En unos minutos tienes una página profesional con fotos, precios, ficha de cada propiedad y un botón «Me interesa» que lleva directo a tu WhatsApp.</p>
+      <div class="mn-cta-row">
+        <a class="btn btn-gold" href="#app" data-es="Crear mi página" data-en="Create my page">Crear mi página</a>
+        <a class="btn btn-ghost-light" href="#precios" data-es="Ver precios" data-en="See pricing">Ver precios</a>
+      </div>
+      <div class="mn-proof">
+        <span><svg><use href="#i-clock"/></svg><em data-es="Lista en minutos, no en 24 horas" data-en="Ready in minutes, not in 24 hours">Lista en minutos, no en 24 horas</em></span>
+        <span><svg><use href="#i-edit"/></svg><em data-es="Tú la actualizas cuando quieras" data-en="You update it whenever you want">Tú la actualizas cuando quieras</em></span>
+        <span><svg><use href="#i-shield"/></svg><em data-es="Ves cómo queda antes de pagar" data-en="See how it looks before you pay">Ves cómo queda antes de pagar</em></span>
+      </div>
+    </div>
+    <div>
+      <div class="mn-phone" aria-hidden="true"><div class="mn-screen" id="mn-demo"></div></div>
+      <div class="mn-phone-note" data-es="Así se ve una página real" data-en="This is what a real page looks like">Así se ve una página real</div>
+    </div>
+  </div>
+</section>
+
+<div class="mn-trust">
+  <div class="mn-wrap">
+    <div><svg><use href="#i-wa"/></svg><span data-es="Botón «Me interesa» a tu WhatsApp" data-en="“I'm interested” button to your WhatsApp">Botón «Me interesa» a tu WhatsApp</span></div>
+    <div><svg><use href="#i-camera"/></svg><span data-es="Fotos, precio y ficha por propiedad" data-en="Photos, price and details per property">Fotos, precio y ficha por propiedad</span></div>
+    <div><svg><use href="#i-lock"/></svg><span data-es="Tus datos no se comparten" data-en="Your data is never shared">Tus datos no se comparten</span></div>
+    <div><svg><use href="#i-check"/></svg><span data-es="Sin contratos ni mensualidad forzosa" data-en="No contracts, no forced monthly fee">Sin contratos ni mensualidad forzosa</span></div>
+  </div>
+</div>
+
+<main class="mn-app" id="app">
+  <div class="mn-wrap">
+    <div class="mn-steps" aria-hidden="true">
+      <div class="mn-step on" data-step="paste"><i></i><span data-es="Pega" data-en="Paste">Pega</span></div>
+      <div class="mn-step" data-step="review"><i></i><span data-es="Revisa" data-en="Review">Revisa</span></div>
+      <div class="mn-step" data-step="signin"><i></i><span data-es="Correo" data-en="Email">Correo</span></div>
+      <div class="mn-step" data-step="done"><i></i><span data-es="Lista" data-en="Ready">Lista</span></div>
+    </div>
+
+    <div class="mn-card" id="mn-closed" hidden>
+      <h2 data-es="Abrimos muy pronto" data-en="Opening very soon">Abrimos muy pronto</h2>
+      <p class="mn-hint" data-es="Estamos preparando las primeras páginas. Vuelve en unos días." data-en="We are preparing the first pages. Come back in a few days.">Estamos preparando las primeras páginas. Vuelve en unos días.</p>
+    </div>
+
+    <!-- 1. Paste -->
+    <section class="mn-card" id="step-paste">
+      <div class="mn-card-head"><span class="mn-num">1</span>
+        <div><h2 data-es="Pega tus propiedades" data-en="Paste your properties">Pega tus propiedades</h2>
+        <p class="mn-hint" data-es="Copia el mensaje de WhatsApp con tu inventario, una o varias propiedades. Nuestra IA lo ordena y tú revisas todo antes de publicar." data-en="Copy the WhatsApp message with your inventory, one or several properties. Our AI sorts it out and you check everything before publishing.">Copia el mensaje de WhatsApp con tu inventario, una o varias propiedades. Nuestra IA lo ordena y tú revisas todo antes de publicar.</p></div>
+      </div>
+      <div class="mn-field">
+        <textarea class="mn-in" id="mn-text" maxlength="12000" placeholder="Casa en Jardines del Moral, 3 rec, 2 baños, 180 m², $3,450,000&#10;Depa en Centro, 2 rec, 1 baño, 95 m², renta $12,500 al mes, amueblado"></textarea>
+        <div class="mn-example"><span data-es="¿Quieres probar? " data-en="Want to try? ">¿Quieres probar? </span><button type="button" id="mn-sample" data-es="Usar un ejemplo" data-en="Use an example">Usar un ejemplo</button></div>
+      </div>
+      <div class="mn-row">
+        <button class="btn btn-gold" id="mn-read" data-es="Crear mi página" data-en="Create my page">Crear mi página</button>
+      </div>
+      <div class="mn-msg" id="mn-read-msg" aria-live="polite"></div>
+    </section>
+
+    <!-- 2. Review -->
+    <section class="mn-card" id="step-review" hidden>
+      <div class="mn-card-head"><span class="mn-num">2</span>
+        <div><h2 data-es="Así se verá tu página" data-en="This is how your page will look">Así se verá tu página</h2>
+        <p class="mn-hint" data-es="Una vista previa con tus propiedades. Abajo puedes corregir los datos y agregar fotos (hasta 10 propiedades)." data-en="A preview with your properties. Below you can fix the details and add photos (up to 10 properties).">Una vista previa con tus propiedades. Abajo puedes corregir los datos y agregar fotos (hasta 10 propiedades).</p></div>
+      </div>
+      <div class="mn-preview" id="mn-preview" aria-label="Vista previa"></div>
+
+      <h3 class="mn-sub" data-es="Tus datos de contacto" data-en="Your contact details">Tus datos de contacto</h3>
+      <div class="mn-prop-grid">
+        <label class="wide"><span data-es="Tu nombre o el de tu inmobiliaria" data-en="Your name or your agency's">Tu nombre o el de tu inmobiliaria</span>
+          <input class="mn-in" id="mn-name" maxlength="120" autocomplete="organization" placeholder="Nadia Domínguez · Asesora inmobiliaria"></label>
+        <label class="wide"><span data-es="Tu WhatsApp, con lada" data-en="Your WhatsApp, with country code">Tu WhatsApp, con lada</span>
+          <input class="mn-in" id="mn-wa" type="tel" maxlength="25" autocomplete="tel" placeholder="+52 998 123 4567"></label>
+      </div>
+
+      <h3 class="mn-sub" data-es="Revisa cada propiedad" data-en="Check each property">Revisa cada propiedad</h3>
+      <p class="mn-hint" data-es="Agrega hasta 6 fotos por propiedad; la primera es la portada. También puedes hacerlo después desde tu panel." data-en="Add up to 6 photos per property; the first one is the cover. You can also do it later from your panel.">Agrega hasta 6 fotos por propiedad; la primera es la portada. También puedes hacerlo después desde tu panel.</p>
+      <div id="mn-props"></div>
+
+      <div class="mn-row">
+        <button class="btn btn-gold" id="mn-next" data-es="Pagar y publicar · MXN 249" data-en="Pay and publish · MXN 249">Pagar y publicar · MXN 249</button>
+        <button class="btn btn-outline" id="mn-back" data-es="Volver a pegar" data-en="Paste again">Volver a pegar</button>
+      </div>
+      <div class="mn-msg" id="mn-review-msg" aria-live="polite"></div>
+    </section>
+
+    <!-- 3. Email code -->
+    <section class="mn-card" id="step-signin" hidden>
+      <div class="mn-card-head"><span class="mn-num">3</span>
+        <div><h2 data-es="Confirma tu correo" data-en="Confirm your email">Confirma tu correo</h2>
+        <p class="mn-hint" data-es="Te enviamos un código para guardar la página a tu nombre. Con ese mismo correo entras después a editarla; no necesitas contraseña." data-en="We'll send you a code to save the page under your name. You use the same email later to edit it; no password needed.">Te enviamos un código para guardar la página a tu nombre. Con ese mismo correo entras después a editarla; no necesitas contraseña.</p></div>
+      </div>
+      <div class="mn-field">
+        <label class="mn-label" for="mn-email" data-es="Correo electrónico" data-en="Email">Correo electrónico</label>
+        <div class="mn-row" style="margin-top:0">
+          <input class="mn-in" id="mn-email" type="email" autocomplete="email" placeholder="tu@correo.com" style="flex:1 1 220px;width:auto">
+          <button class="btn btn-gold" id="mn-send" data-es="Enviar código" data-en="Send code">Enviar código</button>
+        </div>
+      </div>
+      <div class="mn-field" id="mn-code-row" hidden>
+        <label class="mn-label" for="mn-code" data-es="Código de 6 dígitos" data-en="6-digit code">Código de 6 dígitos</label>
+        <div class="mn-row" style="margin-top:0">
+          <input class="mn-in" id="mn-code" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" style="flex:1 1 160px;width:auto">
+          <button class="btn btn-gold" id="mn-verify" data-es="Confirmar" data-en="Confirm">Confirmar</button>
+        </div>
+      </div>
+      <div class="mn-msg" id="mn-signin-msg" aria-live="polite"></div>
+    </section>
+
+    <!-- 4. Done -->
+    <section class="mn-card" id="step-done" hidden>
+      <span class="mn-ok-badge"><svg width="14" height="14"><use href="#i-check"/></svg><span data-es="Página guardada" data-en="Page saved">Página guardada</span></span>
+      <h2 data-es="Tu página está lista" data-en="Your page is ready">Tu página está lista</h2>
+      <p class="mn-hint" style="margin-top:6px" data-es="Para publicarla, paga MXN 249 por 3 meses. En cuanto confirmemos tu pago, tu página se publica en este link:" data-en="To publish it, pay MXN 249 for 3 months. As soon as we confirm your payment, your page goes live at this link:">Para publicarla, paga MXN 249 por 3 meses. En cuanto confirmemos tu pago, tu página se publica en este link:</p>
+      <div class="mn-link" id="mn-url"></div>
+      <div class="mn-row">
+        <a class="btn btn-gold" id="mn-pay" href="/panel?pay=1" data-es="Pagar y publicar · MXN 249" data-en="Pay and publish · MXN 249">Pagar y publicar · MXN 249</a>
+        <button class="btn btn-outline" id="mn-copy" data-es="Copiar link" data-en="Copy link">Copiar link</button>
+        <a class="btn btn-outline" href="/panel" data-es="Ir a mi panel" data-en="Go to my panel">Ir a mi panel</a>
+      </div>
+      <ul class="mn-next">
+        <li><svg><use href="#i-check"/></svg><span data-es="Mientras tanto, desde tu panel puedes agregar fotos, corregir datos y añadir tu logo y colores." data-en="Meanwhile, from your panel you can add photos, fix details and add your logo and colours.">Mientras tanto, desde tu panel puedes agregar fotos, corregir datos y añadir tu logo y colores.</span></li>
+        <li><svg><use href="#i-check"/></svg><span data-es="Para volver a entrar usa el mismo correo: te mandamos un código, sin contraseña." data-en="To sign in again use the same email: we send you a code, no password.">Para volver a entrar usa el mismo correo: te mandamos un código, sin contraseña.</span></li>
+        <li><svg><use href="#i-check"/></svg><span data-es="Tu página dura 3 meses por pago. Si no renuevas, se pausa; no se borra nada." data-en="Your page lasts 3 months per payment. If you don't renew it pauses; nothing is deleted.">Tu página dura 3 meses por pago. Si no renuevas, se pausa; no se borra nada.</span></li>
+      </ul>
+      <div class="mn-msg" id="mn-photo-msg" aria-live="polite"></div>
+    </section>
+  </div>
+</main>
+
+<section class="mn-how">
+  <div class="mn-wrap">
+    <div class="mn-sec-head">
+      <h2 data-es="Cómo funciona" data-en="How it works">Cómo funciona</h2>
+      <p data-es="Lo que hoy tardas en mandar fotos una por una, aquí se hace una vez." data-en="What takes you ages sending photos one by one is done once here.">Lo que hoy tardas en mandar fotos una por una, aquí se hace una vez.</p>
+    </div>
+    <div class="mn-how-grid">
+      <div class="mn-how-item"><div class="k">01</div><h3 data-es="Pega tu inventario" data-en="Paste your inventory">Pega tu inventario</h3><p data-es="El mismo texto que mandas por WhatsApp. La IA separa cada propiedad y saca precio, recámaras, metros y zona." data-en="The same text you send on WhatsApp. The AI separates each property and pulls price, bedrooms, size and area.">El mismo texto que mandas por WhatsApp. La IA separa cada propiedad y saca precio, recámaras, metros y zona.</p></div>
+      <div class="mn-how-item"><div class="k">02</div><h3 data-es="Revisa y agrega fotos" data-en="Check and add photos">Revisa y agrega fotos</h3><p data-es="Ves tu página tal como quedará. Corriges lo que haga falta y subes las fotos de cada propiedad." data-en="You see your page exactly as it will look. Fix what needs fixing and upload each property's photos.">Ves tu página tal como quedará. Corriges lo que haga falta y subes las fotos de cada propiedad.</p></div>
+      <div class="mn-how-item"><div class="k">03</div><h3 data-es="Paga y comparte" data-en="Pay and share">Paga y comparte</h3><p data-es="Confirmas tu correo con un código y tu página queda guardada. Al pagar se publica al instante y compartes un solo link." data-en="You confirm your email with a code and your page is saved. Once paid it goes live instantly and you share a single link.">Confirmas tu correo con un código y tu página queda guardada. Al pagar se publica al instante y compartes un solo link.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="mn-pricing" id="precios">
+  <div class="mn-wrap">
+    <div class="mn-sec-head">
+      <h2 data-es="Precios claros" data-en="Clear pricing">Precios claros</h2>
+      <p data-es="Pagas cuando tu página ya está lista y la viste. Sin tarjeta para empezar." data-en="You pay once your page is ready and you've seen it. No card to start.">Pagas cuando tu página ya está lista y la viste. Sin tarjeta para empezar.</p>
+    </div>
+    <div class="mn-tiers">
+      <div class="mn-tier best">
+        <span class="mn-tag" data-es="Más elegido" data-en="Most popular">Más elegido</span>
+        <div class="name" data-es="Página por 3 meses" data-en="Page for 3 months">Página por 3 meses</div>
+        <div class="price">$249<small>MXN</small></div>
+        <div class="per" data-es="Pago único. Renuevas cada 3 meses solo si quieres seguir." data-en="One payment. Renew every 3 months only if you want to keep it.">Pago único. Renuevas cada 3 meses solo si quieres seguir.</div>
+        <ul class="mn-feats">
+          <li><svg><use href="#i-check"/></svg><span data-es="Hasta 10 propiedades con fotos, precio y ficha" data-en="Up to 10 properties with photos, price and details">Hasta 10 propiedades con fotos, precio y ficha</span></li>
+          <li><svg><use href="#i-check"/></svg><span data-es="Botón «Me interesa» directo a tu WhatsApp en cada propiedad" data-en="“I'm interested” button straight to your WhatsApp on every property">Botón «Me interesa» directo a tu WhatsApp en cada propiedad</span></li>
+          <li><svg><use href="#i-check"/></svg><span data-es="Tu nombre, logo, colores, teléfono, correo y ubicación" data-en="Your name, logo, colours, phone, email and location">Tu nombre, logo, colores, teléfono, correo y ubicación</span></li>
+          <li><svg><use href="#i-check"/></svg><span data-es="Se publica al instante y la editas cuando quieras" data-en="Goes live instantly and you edit it whenever you want">Se publica al instante y la editas cuando quieras</span></li>
+        </ul>
+        <a class="btn btn-gold" href="#app" data-es="Crear mi página" data-en="Create my page">Crear mi página</a>
+      </div>
+      <div class="mn-tier">
+        <div class="name" data-es="Mensual + CRM" data-en="Monthly + CRM">Mensual + CRM</div>
+        <div class="price">$149<small data-es="MXN / mes" data-en="MXN / month">MXN / mes</small></div>
+        <div class="per" data-es="Para asesores con más inventario y seguimiento de clientes." data-en="For agents with more inventory and client follow-up.">Para asesores con más inventario y seguimiento de clientes.</div>
+        <ul class="mn-feats">
+          <li><svg><use href="#i-check"/></svg><span data-es="Hasta 30 propiedades" data-en="Up to 30 properties">Hasta 30 propiedades</span></li>
+          <li><svg><use href="#i-check"/></svg><span data-es="Sin marca de PropLync en tu página" data-en="No PropLync badge on your page">Sin marca de PropLync en tu página</span></li>
+          <li><svg><use href="#i-check"/></svg><span data-es="Cada «Me interesa» queda como prospecto en tu CRM, con notas y seguimientos" data-en="Every “I'm interested” becomes a lead in your CRM, with notes and follow-ups">Cada «Me interesa» queda como prospecto en tu CRM, con notas y seguimientos</span></li>
+          <li class="soon"><svg><use href="#i-clock"/></svg><span data-es="Disponible al activar el pago en línea" data-en="Available once online payment is live">Disponible al activar el pago en línea</span></li>
+        </ul>
+        <a class="btn btn-outline" href="#app" data-es="Empezar con 3 meses" data-en="Start with 3 months">Empezar con 3 meses</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mn-faq">
+  <div class="mn-wrap">
+    <div class="mn-sec-head"><h2 data-es="Preguntas frecuentes" data-en="Frequently asked questions">Preguntas frecuentes</h2></div>
+    <div class="mn-faq-list">
+      <details><summary data-es="¿Cuándo pago?" data-en="When do I pay?">¿Cuándo pago?</summary><p data-es="Después de ver tu página lista. Guardas la página con tu correo y te contactamos por WhatsApp para confirmar el pago; en cuanto se confirma, se publica. Muy pronto podrás pagar en línea con Mercado Pago." data-en="After seeing your page ready. You save it with your email and we contact you on WhatsApp to confirm the payment; as soon as it is confirmed, it goes live. Very soon you will be able to pay online with Mercado Pago.">Después de ver tu página lista. Guardas la página con tu correo y te contactamos por WhatsApp para confirmar el pago; en cuanto se confirma, se publica. Muy pronto podrás pagar en línea con Mercado Pago.</p></details>
+      <details><summary data-es="¿Qué pasa cuando terminan los 3 meses?" data-en="What happens when the 3 months end?">¿Qué pasa cuando terminan los 3 meses?</summary><p data-es="Tu página se pausa: tus datos de contacto siguen visibles y tus propiedades se ocultan hasta que renueves. No se borra nada." data-en="Your page pauses: your contact details stay visible and your properties are hidden until you renew. Nothing is deleted.">Tu página se pausa: tus datos de contacto siguen visibles y tus propiedades se ocultan hasta que renueves. No se borra nada.</p></details>
+      <details><summary data-es="¿Puedo cambiar propiedades después?" data-en="Can I change properties later?">¿Puedo cambiar propiedades después?</summary><p data-es="Sí. Entras a tu panel con tu correo (te mandamos un código) y agregas, editas o quitas propiedades y fotos cuando quieras, sin costo adicional." data-en="Yes. You sign in to your dashboard with your email (we send you a code) and add, edit or remove properties and photos whenever you want, at no extra cost.">Sí. Entras a tu panel con tu correo (te mandamos un código) y agregas, editas o quitas propiedades y fotos cuando quieras, sin costo adicional.</p></details>
+      <details><summary data-es="¿Mis clientes ven otras agencias?" data-en="Do my clients see other agencies?">¿Mis clientes ven otras agencias?</summary><p data-es="No. Tu página muestra solo tus propiedades y tu marca. El botón «Me interesa» abre WhatsApp contigo, nadie más." data-en="No. Your page shows only your properties and your brand. The “I'm interested” button opens WhatsApp with you, nobody else.">No. Tu página muestra solo tus propiedades y tu marca. El botón «Me interesa» abre WhatsApp contigo, nadie más.</p></details>
+    </div>
+  </div>
+</section>
+
+<footer class="mn-foot">
+  <div class="mn-wrap">
+    <span>© <span id="mn-year"></span> PropLync Mini · <span data-es="Hecho en la Riviera Maya" data-en="Built in the Riviera Maya">Hecho en la Riviera Maya</span></span>
+    <nav>
+      <a href="/privacidad" data-es="Aviso de privacidad" data-en="Privacy notice">Aviso de privacidad</a>
+      <a href="/terminos" data-es="Términos" data-en="Terms">Términos</a>
+      <a href="/panel" data-es="Entrar" data-en="Sign in">Entrar</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="/js/escape.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/supabase-client.js"></script>
+<script>
+(function () {
+  'use strict';
+  var MAX = 10;          // plans.js: the Mini page holds up to 10 properties
+  var MAX_PHOTOS = 6;    // per property, here; the dashboard allows the plan's 10
+  var PHOTO_PX = 1600;   // longest side after downscaling: enough for a phone screen, small enough to upload on 4G
+  function $(id) { return document.getElementById(id); }
+  function t(es, en) { return document.documentElement.lang === 'en' ? en : es; }
+  function msg(el, text, kind) { el.textContent = text || ''; el.classList.toggle('err', kind === 'err'); el.classList.toggle('ok', kind === 'ok'); }
+  function setStep(id) {
+    var order = ['paste', 'review', 'signin', 'done'];
+    var at = order.indexOf(id);
+    document.querySelectorAll('.mn-step').forEach(function (el) {
+      var i = order.indexOf(el.dataset.step);
+      el.classList.toggle('on', i === at);
+      el.classList.toggle('done', i < at);
+    });
+  }
+  function show(id) {
+    ['step-paste', 'step-review', 'step-signin', 'step-done'].forEach(function (s) { $(s).hidden = s !== id; });
+    setStep(id.replace('step-', ''));
+    $('app').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  $('mn-year').textContent = new Date().getFullYear();
+
+  var props = [];     // what the AI read, as the agent corrects it; each has .photos = [{blob, url}]
+  var email = '';
+
+  /* The door can be closed with one setting (MINI_SIGNUP); say so up front instead of after the work. */
+  fetch('/api/signup?action=status').then(function (r) { return r.json(); }).then(function (d) {
+    if (d && d.open) return;
+    $('mn-closed').hidden = false;
+    $('mn-read').disabled = true;
+  }).catch(function () { /* unknown: let them try; the publish answer will say */ });
+
+  var SAMPLE = 'Buen día, les comparto mi inventario:\n🏡 Casa en Jardines del Moral, 3 rec, 2.5 baños, 180 m² de construcción, cochera para 2. $3,450,000\n🏢 Departamento en el Centro, 2 rec, 1 baño, 95 m², amueblado. Renta $12,500 al mes\n✨ Departamento con balcón en Col. Del Valle, 2 rec, 2 baños, 110 m², alberca y gym. 2.15 mdp';
+  $('mn-sample').addEventListener('click', function () { $('mn-text').value = SAMPLE; $('mn-text').focus(); });
+
+  /* ---------- the page in miniature: the hero demo and the review preview share it ---------- */
+  function money(p) {
+    if (!p.amount) return '';
+    return (p.currency ? p.currency + ' ' : '') + '$' + Number(p.amount).toLocaleString('en-US') +
+      (p.operation === 'rental' ? (document.documentElement.lang === 'en' ? ' /mo' : ' /mes') : '');
+  }
+  function cardHTML(p) {
+    var specs = [p.bedrooms ? p.bedrooms + ' ' + t('rec', 'bd') : '', p.bathrooms ? p.bathrooms + ' ' + t('baños', 'bath') : '', p.size ? p.size + ' m²' : '']
+      .filter(Boolean).map(function (s) { return '<span>' + escapeHtml(s) + '</span>'; }).join('');
+    var cover = p.photos && p.photos.length ? p.photos[0].url : (p.cover || '');
+    var photoStyle = cover ? ' style="background-image:url(\'' + cssUrl(cover) + '\')"' : '';
+    // The hero demo keeps its dark gradient tiles (a sample, not a missing photo); a real property without photos gets the light "no photo yet" tile.
+    var empty = cover || p.demo ? '' : ' is-empty';
+    return '<article class="pcard"><div class="pcard-photo' + empty + '"' + photoStyle + '>' + (cover || p.demo ? '' : '<svg class="mn-nophoto" aria-hidden="true"><use href="#i-home"/></svg>') + '<span class="pcard-badge ' +
+      (p.operation === 'rental' ? 'badge-rental">' + escapeHtml(t('Renta', 'Rent')) : 'badge-sale">' + escapeHtml(t('Venta', 'Sale'))) + '</span></div>' +
+      '<div class="pcard-body"><div class="pcard-loc">' + escapeHtml([p.neighborhood, p.town].filter(Boolean).join(' · ')) + '</div>' +
+      '<div class="pcard-title">' + escapeHtml(p.title || t('Propiedad', 'Property')) + '</div>' +
+      (specs ? '<div class="pcard-specs">' + specs + '</div>' : '') +
+      '<div class="pcard-foot"><span class="pcard-price">' + escapeHtml(money(p)) + '</span><span class="mn-pv-cta">' + escapeHtml(t('Me interesa', 'I am interested')) + '</span></div>' +
+      '</div></article>';
+  }
+  function pageHTML(name, list, ribbon, placeholder) {
+    var cards = list.map(cardHTML).join('');
+    return (ribbon ? '<span class="mn-pv-ribbon">' + escapeHtml(ribbon) + '</span>' : '') +
+      '<div class="mn-pv-head"><div class="eyebrow">' + escapeHtml(t('Portafolio de propiedades', 'Property portfolio')) + '</div>' +
+      '<div class="name' + (placeholder ? ' is-placeholder' : '') + '">' + escapeHtml(name) + '</div><span class="mn-pv-wa"><svg><use href="#i-wa"/></svg>' + escapeHtml(t('Escribir por WhatsApp', 'Message on WhatsApp')) + '</span></div>' +
+      '<div class="mn-pv-grid">' + (cards || '<p class="mn-hint" style="padding:8px">' + escapeHtml(t('Elige al menos una propiedad.', 'Pick at least one property.')) + '</p>') + '</div>' +
+      '<div class="mn-pv-foot">' + escapeHtml(t('Hecho con PropLync.mx', 'Made with PropLync.mx')) + '</div>';
+  }
+
+  /* The hero phone: a real page from sample data, so the promise is literal. Photo tiles are gradients, not stock photos. */
+  var DEMO = [
+    { title: 'Casa en Jardines del Moral', town: 'León', neighborhood: 'Jardines del Moral', bedrooms: 3, bathrooms: 2, size: 180, operation: 'sale', currency: 'MXN', amount: 3450000, cover: '', demo: true },
+    { title: 'Departamento en el Centro', town: 'León', neighborhood: 'Centro', bedrooms: 2, bathrooms: 1, size: 95, operation: 'rental', currency: 'MXN', amount: 12500, cover: '', demo: true },
+    { title: 'Departamento con balcón', town: 'León', neighborhood: 'Del Valle', bedrooms: 2, bathrooms: 2, size: 110, operation: 'sale', currency: 'MXN', amount: 2150000, cover: '', demo: true }
+  ];
+  function renderDemo() { $('mn-demo').innerHTML = pageHTML(t('Nadia Domínguez · Asesora', 'Nadia Domínguez · Agent'), DEMO, ''); }
+  renderDemo();
+
+  function renderPreview() {
+    var typed = $('mn-name').value.trim();
+    $('mn-preview').innerHTML = pageHTML(typed || t('Tu nombre o tu inmobiliaria', 'Your name or agency'), props.filter(function (p) { return p.include; }), t('Vista previa', 'Preview'), !typed);
+  }
+
+  /* ---------- 1. read the pasted inventory ---------- */
+  $('mn-read').addEventListener('click', async function () {
+    var btn = this;
+    var text = $('mn-text').value.trim();
+    if (text.length < 20) { msg($('mn-read-msg'), t('Pega al menos una propiedad con su precio.', 'Paste at least one property with its price.'), 'err'); return; }
+    btn.disabled = true;
+    msg($('mn-read-msg'), t('Leyendo tus propiedades…', 'Reading your properties…'));
+    try {
+      var r = await fetch('/api/import', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: text }) });
+      var d = await r.json().catch(function () { return {}; });
+      if (r.status === 429) { msg($('mn-read-msg'), t('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.'), 'err'); return; }
+      if (!r.ok) { msg($('mn-read-msg'), t('No pudimos leerlo. Intenta de nuevo en un momento.', 'We could not read it. Try again in a moment.'), 'err'); return; }
+      if (!d.properties || !d.properties.length) { msg($('mn-read-msg'), t('No encontramos propiedades en ese texto. Incluye al menos tipo, zona y precio.', 'We found no properties in that text. Include at least type, area and price.'), 'err'); return; }
+      props = d.properties.map(function (x, i) { return Object.assign({ include: i < MAX, missing: x.missing || [], photos: [] }, x.property); });
+      msg($('mn-read-msg'), '');
+      renderProps();
+      renderPreview();
+      show('step-review');
+    } catch (e) {
+      msg($('mn-read-msg'), t('Sin conexión. Intenta de nuevo.', 'No connection. Try again.'), 'err');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  /* ---------- 2. review: every field the AI read is editable, photos per property ---------- */
+  var MISSING_LBL = { town: ['ciudad', 'town'], amount: ['precio', 'price'], currency: ['moneda', 'currency'], bedrooms: ['recámaras', 'bedrooms'], size: ['m²', 'm²'] };
+
+  function field(i, key, label, numeric) {
+    var v = props[i][key];
+    var shown = v == null || (numeric && !v) ? '' : v;   // 0 means "not given", so show an empty box, not a fact
+    return '<label' + (key === 'title' ? ' class="wide"' : '') + '><span>' + escapeHtml(label) + '</span>' +
+      '<input class="mn-in" data-i="' + i + '" data-k="' + key + '"' + (numeric ? ' type="number" min="0" inputmode="numeric"' : '') +
+      ' value="' + escapeHtml(String(shown)) + '"></label>';
+  }
+  function select(i, key, options, label) {
+    return '<label><span>' + escapeHtml(label) + '</span><select class="mn-in" data-i="' + i + '" data-k="' + key + '">' +
+      options.map(function (o) { return '<option value="' + o[0] + '"' + (props[i][key] === o[0] ? ' selected' : '') + '>' + escapeHtml(o[1]) + '</option>'; }).join('') +
+      '</select></label>';
+  }
+  function photosHTML(i) {
+    var p = props[i];
+    var tiles = p.photos.map(function (ph, j) {
+      return '<div class="mn-ph"><img src="' + escapeHtml(ph.url) + '" alt="">' +
+        (j === 0 ? '<small>' + escapeHtml(t('Portada', 'Cover')) + '</small>' : '') +
+        '<button type="button" data-rm="' + i + ':' + j + '" aria-label="' + escapeHtml(t('Quitar foto', 'Remove photo')) + '">×</button></div>';
+    }).join('');
+    var add = p.photos.length < MAX_PHOTOS
+      ? '<label class="mn-add"><svg><use href="#i-camera"/></svg><span>' + escapeHtml(t('Fotos', 'Photos')) + '</span><input type="file" accept="image/*" multiple data-ph="' + i + '"></label>'
+      : '';
+    return '<div class="mn-photos">' + tiles + add + '</div>';
+  }
+
+  function renderProps() {
+    var en = document.documentElement.lang === 'en';
+    $('mn-props').innerHTML = props.map(function (p, i) {
+      var miss = (p.missing || []).filter(function (m) { return MISSING_LBL[m]; }).map(function (m) { return MISSING_LBL[m][en ? 1 : 0]; });
+      return '<div class="mn-prop' + (p.include ? '' : ' off') + '">' +
+        '<div class="mn-prop-head"><input type="checkbox" data-inc="' + i + '"' + (p.include ? ' checked' : '') + ' aria-label="' + escapeHtml(t('Publicar esta propiedad', 'Publish this property')) + '">' +
+        '<span>' + escapeHtml(p.title || t('Propiedad', 'Property')) + '</span></div>' +
+        '<div class="mn-prop-grid">' +
+          field(i, 'title', t('Título', 'Title')) +
+          field(i, 'amount', t('Precio', 'Price'), true) +
+          select(i, 'currency', [['', t('Moneda…', 'Currency…')], ['MXN', 'MXN'], ['USD', 'USD']], t('Moneda', 'Currency')) +
+          select(i, 'operation', [['sale', t('Venta', 'Sale')], ['rental', t('Renta', 'Rent')]], t('Operación', 'Operation')) +
+          field(i, 'town', t('Ciudad', 'Town')) +
+          field(i, 'neighborhood', t('Colonia', 'Neighbourhood')) +
+          field(i, 'bedrooms', t('Recámaras', 'Bedrooms'), true) +
+          field(i, 'bathrooms', t('Baños', 'Bathrooms'), true) +
+          field(i, 'size', 'm²', true) +
+        '</div>' +
+        (miss.length ? '<div class="mn-missing"><span>' + escapeHtml(t('No venía en tu mensaje:', 'Not in your message:')) + '</span>' + miss.map(function (m) { return '<b>' + escapeHtml(m) + '</b>'; }).join('') + '</div>' : '') +
+        photosHTML(i) +
+      '</div>';
+    }).join('');
+  }
+
+  /* Photos are shrunk in the browser: a 12 MB phone photo becomes ~300 KB, which uploads on 4G and is all a page needs. */
+  function shrink(file) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, PHOTO_PX / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(img.src);
+        c.toBlob(function (b) { resolve(b); }, 'image/jpeg', 0.85);
+      };
+      img.onerror = function () { URL.revokeObjectURL(img.src); resolve(null); };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  async function addPhotos(i, files) {
+    var p = props[i];
+    var skipped = 0;
+    for (var f of Array.from(files)) {
+      if (p.photos.length >= MAX_PHOTOS) break;
+      if (!/^image\//.test(f.type) || f.size > 25 * 1024 * 1024) { skipped++; continue; }
+      var blob = await shrink(f);
+      if (!blob) { skipped++; continue; }
+      p.photos.push({ blob: blob, url: URL.createObjectURL(blob) });
+    }
+    renderProps(); renderPreview();
+    msg($('mn-review-msg'), skipped ? t(skipped + ' foto(s) no se pudieron leer.', skipped + ' photo(s) could not be read.') : '', skipped ? 'err' : '');
+  }
+
+  $('mn-props').addEventListener('input', function (e) {
+    var el = e.target;
+    if (el.dataset.k) { props[Number(el.dataset.i)][el.dataset.k] = el.type === 'number' ? Number(el.value || 0) : el.value; renderPreview(); }
+  });
+  $('mn-props').addEventListener('change', function (e) {
+    var el = e.target;
+    if (el.dataset.ph != null) { addPhotos(Number(el.dataset.ph), el.files); return; }
+    if (el.dataset.inc != null) {
+      var i = Number(el.dataset.inc);
+      var chosen = props.filter(function (p) { return p.include; }).length;
+      if (el.checked && chosen >= MAX) {
+        el.checked = false;
+        msg($('mn-review-msg'), t('Tu página tiene espacio para 10 propiedades.', 'Your page has room for 10 properties.'), 'err');
+        return;
+      }
+      props[i].include = el.checked;
+      msg($('mn-review-msg'), '');
+      renderProps(); renderPreview();
+    } else if (el.dataset.k) {
+      props[Number(el.dataset.i)][el.dataset.k] = el.value;
+      renderPreview();
+    }
+  });
+  $('mn-props').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-rm]');
+    if (!b) return;
+    var parts = b.dataset.rm.split(':');
+    var removed = props[Number(parts[0])].photos.splice(Number(parts[1]), 1)[0];
+    if (removed) URL.revokeObjectURL(removed.url);
+    renderProps(); renderPreview();
+  });
+  $('mn-name').addEventListener('input', renderPreview);
+  $('mn-back').addEventListener('click', function () { show('step-paste'); });
+
+  function chosenProps() { return props.filter(function (p) { return p.include; }); }
+
+  function reviewProblem() {
+    var chosen = chosenProps();
+    if (!chosen.length) return t('Elige al menos una propiedad.', 'Pick at least one property.');
+    for (var i = 0; i < chosen.length; i++) {
+      if (!String(chosen[i].title || '').trim()) return t('Cada propiedad necesita un título.', 'Each property needs a title.');
+      if (!chosen[i].currency) return t('Elige la moneda de cada precio (MXN o USD).', 'Pick the currency of each price (MXN or USD).');
+    }
+    if (!$('mn-name').value.trim()) return t('Escribe tu nombre o el de tu inmobiliaria.', 'Write your name or your agency\'s.');
+    if (!/^[0-9+()\-\s]{6,25}$/.test($('mn-wa').value.trim())) return t('Revisa tu WhatsApp: solo números, con lada.', 'Check your WhatsApp: numbers only, with country code.');
+    return '';
+  }
+
+  $('mn-next').addEventListener('click', async function () {
+    var problem = reviewProblem();
+    if (problem) { msg($('mn-review-msg'), problem, 'err'); return; }
+    msg($('mn-review-msg'), '');
+    // Already signed in on this device (a reload, or a second try): save straight away.
+    if (await getSession()) { publish($('mn-review-msg')); return; }
+    show('step-signin');
+  });
+
+  /* ---------- 3. email code (the same Supabase sign-in as /brief) ---------- */
+  $('mn-send').addEventListener('click', async function () {
+    var btn = this;
+    email = $('mn-email').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg($('mn-signin-msg'), t('Revisa tu correo.', 'Check your email.'), 'err'); return; }
+    btn.disabled = true;
+    var r = await initSupabase().auth.signInWithOtp({ email: email, options: { emailRedirectTo: location.origin + '/' } });
+    btn.disabled = false;
+    if (r.error) {
+      msg($('mn-signin-msg'), /rate|seconds/i.test(r.error.message) ? t('Espera un momento antes de pedir otro código.', 'Wait a moment before asking for another code.') : t('No pudimos enviar el código. Intenta de nuevo.', 'Could not send the code. Try again.'), 'err');
+      return;
+    }
+    $('mn-code-row').hidden = false;
+    $('mn-code').focus();
+    msg($('mn-signin-msg'), t('Te enviamos un correo con el código. Revisa también la carpeta de spam.', 'We sent you an email with the code. Check your spam folder too.'), 'ok');
+  });
+
+  $('mn-verify').addEventListener('click', async function () {
+    var btn = this;
+    var code = $('mn-code').value.replace(/\s/g, '');
+    if (!code) return;
+    btn.disabled = true;
+    var r = await initSupabase().auth.verifyOtp({ email: email, token: code, type: 'email' });
+    btn.disabled = false;
+    if (r.error) { msg($('mn-signin-msg'), t('Ese código no es válido o ya venció.', 'That code is not valid or has expired.'), 'err'); return; }
+    msg($('mn-signin-msg'), '');
+    publish($('mn-signin-msg'));
+  });
+  $('mn-email').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('mn-send').click(); } });
+  $('mn-code').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('mn-verify').click(); } });
+
+  /* ---------- 4. save the page, then its photos ---------- */
+  var ERRORS = {
+    already_has_agency: ['Este correo ya tiene una página. Entra a tu panel para editarla.', 'This email already has a page. Open your dashboard to edit it.'],
+    mini_closed: ['Abrimos muy pronto. Vuelve en unos días.', 'Opening very soon. Come back in a few days.'],
+    sign_in_required: ['Tu sesión venció. Confirma tu correo de nuevo.', 'Your session expired. Confirm your email again.'],
+    rate_limited: ['Demasiados intentos. Espera un momento.', 'Too many attempts. Wait a moment.'],
+    invalid_whatsapp_number: ['Revisa tu WhatsApp.', 'Check your WhatsApp.']
+  };
+
+  /* Uploads go under <agencyId>/<listingId>-<n>.jpg: storage only lets a member write under its agency's folder,
+     and both exist only now. Then the listing is updated through the same endpoint the dashboard uses. */
+  async function uploadPhotos(d, out) {
+    var chosen = chosenProps();
+    var jobs = [];
+    chosen.forEach(function (p, i) { if (p.photos.length && d.listings && d.listings[i]) jobs.push({ p: p, l: d.listings[i] }); });
+    if (!jobs.length) return { total: 0, failed: 0 };
+    var sb = initSupabase();
+    var total = jobs.reduce(function (a, j) { return a + j.p.photos.length; }, 0), done = 0, failed = 0;
+    for (var j of jobs) {
+      var urls = [];
+      for (var k = 0; k < j.p.photos.length; k++) {
+        msg(out, t('Subiendo fotos ', 'Uploading photos ') + (done + 1) + '/' + total + '…');
+        var path = d.agency_id + '/' + j.l.id + '-' + k + '.jpg';
+        try {
+          var up = await sb.storage.from('listing-photos').upload(path, j.p.photos[k].blob, { contentType: 'image/jpeg', upsert: true });
+          if (up.error) failed++; else urls.push(sb.storage.from('listing-photos').getPublicUrl(path).data.publicUrl);
+        } catch (e) { failed++; }
+        done++;
+      }
+      if (urls.length) {
+        var r = await authedFetch('/api/panel?id=' + encodeURIComponent(j.l.id), {
+          method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ image: urls[0], images: urls })
+        }).catch(function () { return { ok: false }; });
+        if (!r.ok) failed += urls.length;
+      }
+    }
+    return { total: total, failed: failed };
+  }
+
+  async function publish(out) {
+    msg(out, t('Guardando tu página…', 'Saving your page…'));
+    try {
+      var r = await authedFetch('/api/signup?action=create', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          agencyName: $('mn-name').value.trim(),
+          whatsapp_number: $('mn-wa').value.trim(),
+          listings: chosenProps().map(function (p) {
+            return { title: p.title, town: p.town, neighborhood: p.neighborhood, bedrooms: p.bedrooms, bathrooms: p.bathrooms,
+                     size: p.size, parking: p.parking, operation: p.operation, currency: p.currency, amount: p.amount, features: p.features };
+          })
+        })
+      });
+      var d = await r.json().catch(function () { return {}; });
+      if (!r.ok) {
+        var e = ERRORS[d.error] || ['No pudimos guardar la página. Intenta de nuevo.', 'We could not save the page. Try again.'];
+        msg(out, t(e[0], e[1]), 'err');
+        if (d.error === 'already_has_agency') {
+          var a = document.createElement('a');
+          a.href = '/panel'; a.className = 'btn btn-outline'; a.style.display = 'inline-block'; a.style.marginTop = '10px';
+          a.textContent = t('Ir a mi panel', 'Go to my panel');
+          out.appendChild(document.createElement('br')); out.appendChild(a);
+        }
+        if (d.error === 'sign_in_required') show('step-signin');
+        return;
+      }
+      var photos = await uploadPhotos(d, out);
+      msg(out, '');
+      $('mn-pay').href = '/panel?pay=1';
+      $('mn-url').textContent = location.origin + '/' + encodeURIComponent(d.slug);
+      var pm = $('mn-photo-msg');
+      if (photos.total && !photos.failed) msg(pm, t('Se guardaron tus ' + photos.total + ' fotos.', 'Your ' + photos.total + ' photos were saved.'), 'ok');
+      else if (photos.failed) msg(pm, t(photos.failed + ' foto(s) no se pudieron subir. Puedes agregarlas desde tu panel.', photos.failed + ' photo(s) could not be uploaded. You can add them from your panel.'), 'err');
+      show('step-done');
+    } catch (err) {
+      msg(out, t('Sin conexión. Intenta de nuevo.', 'No connection. Try again.'), 'err');
+    }
+  }
+
+  $('mn-copy').addEventListener('click', function () {
+    var btn = this;
+    navigator.clipboard.writeText($('mn-url').textContent).then(function () {
+      btn.textContent = t('Copiado ✓', 'Copied ✓');
+      setTimeout(function () { btn.textContent = t('Copiar link', 'Copy link'); }, 2000);
+    }).catch(function () {});
+  });
+
+  document.addEventListener('langchange', function () {
+    renderDemo();
+    if (props.length && !$('step-review').hidden) { renderProps(); renderPreview(); }
+  });
+})();
+</script>
+</body>
+</html>
