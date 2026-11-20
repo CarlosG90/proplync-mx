@@ -210,6 +210,8 @@ export default async function handler(req, res) {
           .maybeSingle();
         /* A Mini page not paid for (or lapsed) does not show its properties anywhere, this page included. */
         if (agencyRow && !pageActive(agencyRow)) {
+          // Never cached: the moment the page is paid for, its properties must show, not after the CDN's ten minutes.
+          res.setHeader('Cache-Control', 'no-store');
           respond(404, { error: 'property_not_available' });
           return;
         }

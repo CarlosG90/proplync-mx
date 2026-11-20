@@ -65,13 +65,15 @@ api/
   instagram-publish.js auth + plan.instagram + rate limited; posts to the shared company IG account
   property.js, search.js   JSON + server-rendered pages + sitemap.xml
   amenities.js, geocode.js, photos.js   thin external proxies
-  _lib/                auth, plans, ratelimit, redis, groq, runway, reel, notify, photos, agency, supabase, health
+  _lib/                auth, plans, listing-fields (shared field rules), ratelimit, redis, groq, runway, reel, notify, photos, agency, supabase, health
   _lib/search/         search v2: amenities.js (ES/EN tag dictionary), normalize.js (one listing shape), index-writer.js
                        (dedupe/upsert, PropLync mirror, embeddings), query.js (rules first, Groq only for leftovers), api.js (?action=query)
   _lib/scout.js        Scout engine: one resumable Claude segment per call (web_search/web_fetch + submit_candidates)
   _lib/scout-merge.js  pure dedupe/merge + hard brief limits (budget, must-haves, deal-breakers)
 supabase/              schema.sql + numbered migrations 002–009 (applied by hand or Supabase MCP)
-scripts/               operator scripts: onboard-agency, create-invite, scout, health-check, set-supabase-project
+mini.html              PropLync Mini (/mini, /pagina): self-serve "all your properties in one link" page sold from ads; paste → preview → photos → email code → saved unpaid
+scripts/mini.mjs       Mini operator script: `list` pages waiting/active/lapsed, `activate <slug>` after a payment (MXN 249 = 90 days; publishes the drafts)
+scripts/               operator scripts: onboard-agency, create-invite, scout, mini, health-check, set-supabase-project
 ingest/                crawler: run.mjs + adapters/ (Apify: Inmuebles24, Lamudi; scraper_web: our own free scraper via mexico_scout_platform/src/worker.py); runs daily via .github/workflows/ingest.yml
 mexico_scout_platform/ Python sub-project (CrewAI + Scrapling + Crawl4AI + local Qdrant): the architecture to refine Scout and add a financial agent. Own venv, tests and agent.md; not deployed on Vercel (.vercelignore)
 supabase/functions/embed  edge function: gte-small embeddings (free, in Supabase); accepts only service_role JWTs

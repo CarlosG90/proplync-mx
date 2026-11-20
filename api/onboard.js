@@ -34,7 +34,7 @@ import { enforceRateLimit } from './_lib/ratelimit.js';
 import { safeDetail, logDegraded } from './_lib/health.js';
 import { provisionAgency } from './_lib/agency.js';
 import { PLANS, MINI_PRICE_MXN, MINI_PERIOD_DAYS } from './_lib/plans.js';
-import { validateListingFields } from './my-listings.js';
+import { validateListingFields } from './_lib/listing-fields.js';
 import { notifyOperator } from './_lib/notify.js';
 import { waitUntil } from '@vercel/functions';
 
@@ -121,15 +121,19 @@ export async function handleMiniSignup(req, res, deps = {}) {
   const { data: member } = await svc.from('agency_members').select('agency_id').eq('user_id', user.id).limit(1).maybeSingle();
   if (member) { res.status(409).json({ error: 'already_has_agency' }); return; }
 
-  let agency;
+  let agency, inserted = [];
   try {
     agency = await (deps.provisionAgency || provisionAgency)(svc, { userId: user.id, agencyName: name, plan: 'mini' });
     // plan_expires_at stays null: not paid yet, so the page is not live (plans.js pageActive).
     const { error: upErr } = await svc.from('agencies')
       .update({ whatsapp_number: whatsapp, plan_expires_at: null }).eq('id', agency.id);
     if (upErr) throw upErr;
-    const { error: insErr } = await svc.from('listings').insert(rows.map((r) => ({ ...r, agency_id: agency.id })));
+    // The ids come back so the page can attach the photos the agent picked (uploaded
+    // under <agencyId>/… once they are a member, then saved through my-listings).
+    const { data, error: insErr } = await svc.from('listings')
+      .insert(rows.map((r) => ({ ...r, agency_id: agency.id }))).select('id, public_id');
     if (insErr) throw insErr;
+    inserted = data || [];
   } catch (err) {
     logDegraded('onboard:mini', err);
     res.status(500).json({ error: 'mini_signup_failed', detail: safeDetail(err) });
@@ -145,7 +149,11 @@ export async function handleMiniSignup(req, res, deps = {}) {
   }).catch((err) => logDegraded('onboard:mini-notify', err));
   if (deps.notifyOperator) await alert; else waitUntil(alert);
 
-  res.status(200).json({ slug: agency.slug, status: 'pending_payment', saved: rows.length, price_mxn: MINI_PRICE_MXN, period_days: MINI_PERIOD_DAYS });
+  res.status(200).json({
+    slug: agency.slug, agency_id: agency.id, status: 'pending_payment', saved: rows.length,
+    listings: inserted.map((l) => ({ id: l.id, public_id: l.public_id })),
+    price_mxn: MINI_PRICE_MXN, period_days: MINI_PERIOD_DAYS
+  });
 }
 
 /** sha256 hex — what signup_invites stores instead of the code itself. */

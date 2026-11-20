@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { planFor, pageActive, miniState, marketingAccess, reelAccess } from '../api/_lib/plans.js';
 import { extendUntil } from '../scripts/mini.mjs';
-import { validateAgencyFields } from '../api/my-listings.js';
+import { validateAgencyFields } from '../api/_lib/listing-fields.js';
 
 // ---------- the mini plan (migration 018) ----------
 
