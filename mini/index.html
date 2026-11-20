@@ -454,6 +454,7 @@
 <script src="/js/escape.js"></script>
 <script src="/js/i18n.js"></script>
 <script src="/js/supabase-client.js"></script>
+<script src="/js/track.js"></script>
 <script>
 (function () {
   'use strict';
@@ -530,6 +531,7 @@
   ];
   function renderDemo() { $('mn-demo').innerHTML = pageHTML(t('Nadia Domínguez · Asesora', 'Nadia Domínguez · Agent'), DEMO, ''); }
   renderDemo();
+  miniTrack('mini_view');
 
   function renderPreview() {
     var typed = $('mn-name').value.trim();
@@ -554,6 +556,7 @@
       renderProps();
       renderPreview();
       show('step-review');
+      miniTrack('mini_preview', { count: props.length });
     } catch (e) {
       msg($('mn-read-msg'), t('Sin conexión. Intenta de nuevo.', 'No connection. Try again.'), 'err');
     } finally {
@@ -806,6 +809,7 @@
       if (photos.total && !photos.failed) msg(pm, t('Se guardaron tus ' + photos.total + ' fotos.', 'Your ' + photos.total + ' photos were saved.'), 'ok');
       else if (photos.failed) msg(pm, t(photos.failed + ' foto(s) no se pudieron subir. Puedes agregarlas desde tu panel.', photos.failed + ' photo(s) could not be uploaded. You can add them from your panel.'), 'err');
       show('step-done');
+      miniTrack('mini_signup', { count: d.saved || 0, photos: photos.total || 0 });
     } catch (err) {
       msg(out, t('Sin conexión. Intenta de nuevo.', 'No connection. Try again.'), 'err');
     }

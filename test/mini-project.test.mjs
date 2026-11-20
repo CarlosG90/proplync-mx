@@ -148,3 +148,33 @@ test('operator list: the newest notice per page wins', () => {
   assert.equal(m.get('a1').props.method, 'oxxo');
   assert.equal(m.size, 2);
 });
+
+const { buildEventRow } = await import('../api/_lib/events.js');
+const { handleEvent, MINI_EVENTS } = await import('../mini/api/signup.js');
+
+test('events: fixed names, anonymous session, contact-looking values dropped', () => {
+  const names = new Set(['mini_view']);
+  assert.equal(buildEventRow({ name: 'x', session: 'abcdefgh' }, names).error, 'unknown_event');
+  assert.equal(buildEventRow({ name: 'mini_view', session: 'short' }, names).error, 'invalid_session');
+  const { row } = buildEventRow({ name: 'mini_view', session: 'abc-12345', page: 'mini', utm_source: 'facebook ads', ref_host: 'L.FACEBOOK.COM',
+    props: { slug: 'nadia', email: 'a@b.com', phone: '9981234567', ok: 3 } }, names);
+  assert.equal(row.utm_source, 'facebook ads');
+  assert.equal(row.ref_host, 'l.facebook.com');
+  assert.deepEqual(row.props, { slug: 'nadia', ok: 3 });
+});
+
+test('Mini events endpoint: only Mini names, POST only, payment steps are server-side only', async () => {
+  assert.ok(!MINI_EVENTS.has('mini_paid_notice') && !MINI_EVENTS.has('mini_activated'));
+  const inserts = [];
+  const deps = { enforceRateLimit: async () => false, getServiceClient: () => ({ from: () => ({ insert: async (r) => { inserts.push(r); return { error: null }; } }) }) };
+  let res = fakeRes();
+  await handleEvent({ method: 'GET', body: {} }, res, deps);
+  assert.equal(res.statusCode, 405);
+  res = fakeRes();
+  await handleEvent({ method: 'POST', body: { name: 'landing_view', session: 'abcdefgh' } }, res, deps);
+  assert.equal(res.body.error, 'unknown_event');
+  res = fakeRes();
+  await handleEvent({ method: 'POST', body: { name: 'mini_view', session: 'abcdefgh', page: 'mini' } }, res, deps);
+  assert.equal(res.statusCode, 202);
+  assert.equal(inserts[0].name, 'mini_view');
+});

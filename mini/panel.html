@@ -134,7 +134,7 @@
   @keyframes pnspin{to{transform:rotate(360deg)}}
 </style>
 </head>
-<body>
+<body data-page="panel">
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9.5V20h12V9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
@@ -333,6 +333,7 @@
 <script src="/js/i18n.js"></script>
 <script src="/js/supabase-client.js"></script>
 <script src="/js/pay-config.js"></script>
+<script src="/js/track.js"></script>
 <script>
 (function () {
   'use strict';
@@ -414,6 +415,7 @@
     S.agency = ag.data.agency; S.listings = ls.data.listings || []; S.plan = ls.data.plan || {};
     renderAll();
     show('pn-app');
+    miniTrack('mini_panel_view', { state: miniState().state, listings: S.listings.length });
     if (new URLSearchParams(location.search).get('pay')) openPay();
   }
 
@@ -694,6 +696,7 @@
   function hasBank() { return !!(MINI_PAY.clabe && MINI_PAY.bank); }
   function openPay() {
     var m = miniState();
+    miniTrack('mini_pay_open', { state: m.state });
     $('pay-title').textContent = m.state === 'pending' ? t('Publicar tu página', 'Publish your page') : t('Renovar tu página', 'Renew your page');
     var ref = (S.agency && S.agency.slug) || '';
     var bank = hasBank();
