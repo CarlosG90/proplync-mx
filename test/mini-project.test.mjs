@@ -179,61 +179,81 @@ test('Mini events endpoint: only Mini names, POST only, payment steps are server
   assert.equal(inserts[0].name, 'mini_view');
 });
 
-/* ---------- preview: the owner sees the finished page before paying ---------- */
-const { makePreviewToken, readPreviewToken, PREVIEW_TTL_SEC } = await import('../mini/api/_preview.js');
-const { handlePreviewLink } = await import('../mini/api/panel.js');
-const ENV = { SUPABASE_SERVICE_ROLE_KEY: 'test-service-key' };
+/* ---------- preview: only the signed-in owner sees the page before paying ---------- */
+const { handlePreview } = await import('../mini/api/panel.js');
+const { default: pageHandler } = await import('../mini/api/page.js');
 
-test('preview token: grants one agency, expires, and cannot be forged or edited', () => {
-  const now = Date.now();
-  const tok = makePreviewToken('a1', { now, env: ENV });
-  assert.equal(readPreviewToken(tok, { now, env: ENV }), 'a1');
-  assert.equal(readPreviewToken(tok, { now: now + (PREVIEW_TTL_SEC + 5) * 1000, env: ENV }), null);
-  assert.equal(readPreviewToken(tok, { now, env: { SUPABASE_SERVICE_ROLE_KEY: 'other-key' } }), null);
-  const [, sig] = tok.split('.');
-  const forged = Buffer.from(JSON.stringify({ a: 'a2', e: Math.floor(now / 1000) + 999 })).toString('base64url') + '.' + sig;
-  assert.equal(readPreviewToken(forged, { now, env: ENV }), null);
-  for (const bad of ['', 'x', 'x.y', null, 'a'.repeat(500)]) assert.equal(readPreviewToken(bad, { now, env: ENV }), null);
-  assert.equal(makePreviewToken('a1', { env: {} }), null);
+function previewSvc(agencyRow, rows = [listing()], seen = {}) {
+  return {
+    from(table) {
+      const q = {
+        select() { return q; }, eq(k, v) { (seen.eq ||= []).push([table, k, v]); return q; },
+        in(k, v) { seen.in = [table, k, v]; return q; }, order() { return q; }, limit: async () => ({ data: rows, error: null }),
+        maybeSingle: async () => ({ data: table === 'agencies' ? agencyRow : null, error: null })
+      };
+      return q;
+    }
+  };
+}
+function htmlRes() {
+  return { statusCode: 0, headers: {}, body: '', status(c) { this.statusCode = c; return this; }, setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
+    send(b) { this.body = b; return this; }, json(b) { this.body = b; return this; }, redirect(c, u) { this.statusCode = c; this.location = u; return this; } };
+}
+
+test('preview address: the server sends an empty private shell, never the page', async () => {
+  const unpaid = agency({ plan_expires_at: null, name: 'Nadia Secreta' });
+  const seen = {};
+  const res = htmlRes();
+  await pageHandler({ method: 'GET', query: { slug: 'nadia', vista: '1' }, headers: { host: 'm.example' } }, res,
+    { getServiceClient: () => previewSvc(unpaid, [listing({ title_es: 'Casa Escondida' })], seen) });
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.headers['cache-control'], 'no-store');
+  assert.equal(seen.in, undefined, 'no listing is even read for the shell');
+  assert.doesNotMatch(res.body, /Nadia Secreta|Casa Escondida|\+52 998|n@x\.com/);
+  assert.match(res.body, /"state":"preview_private"/);
+  assert.match(res.body, /<meta name="robots" content="noindex">/);
+  assert.match(res.body, /<title>Vista previa privada · PropLync Mini<\/title>/);
+  assert.doesNotMatch(res.body, /og:image|rel="canonical"/);
+  // a paid page drops ?vista and goes to its clean address
+  const live = htmlRes();
+  await pageHandler({ method: 'GET', query: { slug: 'nadia', vista: '1' }, headers: {} }, live, { getServiceClient: () => previewSvc(agency()) });
+  assert.equal(live.statusCode, 302);
+  assert.equal(live.location, '/nadia');
 });
 
-test('page model: a preview shows the unpaid page in full, with the price to publish', () => {
+test('preview data: GET only, signed in, Mini only, own page only, drafts included', async () => {
+  const unpaid = agency({ plan_expires_at: null });
+  let res = fakeRes();
+  await handlePreview({ method: 'POST', query: {} }, res, deps(previewSvc(unpaid)));
+  assert.equal(res.statusCode, 405);
+  res = fakeRes();
+  await handlePreview({ method: 'GET', query: { slug: 'nadia' } }, res, deps(previewSvc(unpaid), null));
+  assert.equal(res.statusCode, 401);
+  res = fakeRes();
+  await handlePreview({ method: 'GET', query: { slug: 'nadia' } }, res, deps(previewSvc(agency({ plan: 'pro' }))));
+  assert.equal(res.body.error, 'not_a_mini_page');
+  res = fakeRes();
+  await handlePreview({ method: 'GET', query: { slug: 'someone-else' } }, res, deps(previewSvc(unpaid)));
+  assert.equal(res.statusCode, 403);
+  assert.equal(res.body.error, 'not_your_page');
+  const seen = {};
+  res = fakeRes();
+  await handlePreview({ method: 'GET', query: { slug: 'nadia' } }, res, deps(previewSvc(unpaid, [listing()], seen)));
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.state, 'preview');
+  assert.equal(res.body.listings.length, 1);
+  assert.equal(res.body.agency.whatsapp_number, '+52 998 1');
+  assert.equal(res.body.agency.plan_expires_at, undefined);
+  assert.ok(res.body.publish.price > 0);
+  assert.deepEqual(seen.in, ['listings', 'status', ['published', 'draft']]);
+  assert.ok(seen.eq.some(([t, k, v]) => t === 'agencies' && k === 'id' && v === 'a1'), 'the agency comes from the session, not the URL');
+});
+
+test('page model: a preview shows the unpaid page in full; a paid page stays live', () => {
   const m = buildModel(agency({ plan_expires_at: null }), [listing()], Date.now(), { preview: true });
   assert.equal(m.state, 'preview');
   assert.equal(m.listings.length, 1);
-  assert.equal(m.agency.whatsapp_number, '+52 998 1');
-  assert.equal(m.agency.plan_expires_at, undefined);
-  assert.ok(m.publish && m.publish.price > 0);
-  // a paid page stays a live page, and a live page carries no publish prompt
   const live = buildModel(agency(), [listing()], Date.now(), { preview: true });
   assert.equal(live.state, 'active');
   assert.equal(live.publish, undefined);
-});
-
-test('render: a preview is private (noindex, no canonical, no referrer)', () => {
-  const html = renderPage(TEMPLATE, buildModel(agency({ plan_expires_at: null }), [listing()], Date.now(), { preview: true }), { origin: 'https://m.example' });
-  assert.match(html, /<meta name="robots" content="noindex">/);
-  assert.match(html, /<meta name="referrer" content="no-referrer">/);
-  assert.doesNotMatch(html, /rel="canonical"/);
-  assert.match(html, /<title>Vista previa · Nadia<\/title>/);
-});
-
-test('preview link handler: POST only, signed in, Mini pages only, link to its own slug', async () => {
-  const d = (svc, user) => ({ ...deps(svc, user), makePreviewToken: (id) => 'tok-' + id });
-  let res = fakeRes();
-  await handlePreviewLink({ method: 'GET' }, res, d(fakeSvc(agency())));
-  assert.equal(res.statusCode, 405);
-  res = fakeRes();
-  await handlePreviewLink({ method: 'POST' }, res, d(fakeSvc(agency()), null));
-  assert.equal(res.statusCode, 401);
-  res = fakeRes();
-  await handlePreviewLink({ method: 'POST' }, res, d(fakeSvc(agency({ plan: 'pro' }))));
-  assert.equal(res.body.error, 'not_a_mini_page');
-  res = fakeRes();
-  await handlePreviewLink({ method: 'POST' }, res, d(fakeSvc(agency({ plan_expires_at: null }))));
-  assert.equal(res.statusCode, 200);
-  assert.equal(res.body.url, '/nadia?vista=tok-a1');
-  res = fakeRes();
-  await handlePreviewLink({ method: 'POST' }, res, { ...d(fakeSvc(agency())), makePreviewToken: () => null });
-  assert.equal(res.statusCode, 503);
 });

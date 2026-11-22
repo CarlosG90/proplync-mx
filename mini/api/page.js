@@ -13,12 +13,13 @@
  * "not available" note, never cached, so activation shows at once. Agencies on
  * PropLync plans are sent to their PropLync page.
  *
- * PREVIEW (/:slug?vista=<token>)
- * The owner sees the finished page, drafts included, before paying: the panel
- * hands out a signed link (api/_preview.js) and this renders state "preview",
- * which p.html draws like a live page plus a "not public yet" bar with the
- * payment step. Never cached, never indexed, no referrer (the token is in the URL).
- * A page that is already live drops the token and redirects to its clean address.
+ * PREVIEW (/:slug?vista=1)
+ * The owner sees the finished page, drafts included, before paying. The address
+ * carries no secret, so a shared preview link is worthless: this answers with
+ * an empty shell (state "preview_private": no name, no properties), and p.html
+ * fetches the page itself from /api/panel?action=preview with the owner's own
+ * session, which never leaves their browser. Anyone else sees "this preview is
+ * private". A page that is already live redirects to its clean address.
  *
  * WHY NOT REUSE api/search.js ?agency=
  * That endpoint belongs to the PropLync project; calling it across projects would
@@ -29,19 +30,16 @@
 
 import { readFileSync } from 'node:fs';
 import { getServiceClient } from './_proplync/_lib/supabase.js';
-import { pageActive, MINI_PRICE_MXN } from './_proplync/_lib/plans.js';
+import { pageActive } from './_proplync/_lib/plans.js';
+import { AGENCY_FIELDS, LISTING_FIELDS, buildModel } from './_page-model.js';
+
+export { AGENCY_FIELDS, LISTING_FIELDS, buildModel };
 import { logDegraded } from './_proplync/_lib/health.js';
-import { readPreviewToken } from './_preview.js';
 
 const TEMPLATE = readFileSync(new URL('../p.html', import.meta.url), 'utf8');
 const PROPLYNC_SITE = (process.env.PROPLYNC_SITE_URL || 'https://proplync-mx.vercel.app').replace(/\/$/, '');
 const SLUG = /^[a-z0-9][a-z0-9-]{0,79}$/;
 const PUBLIC_ID = /^[A-Za-z0-9_-]{1,40}$/;
-
-export const AGENCY_FIELDS = 'id, name, slug, logo_url, cover_url, primary_color, whatsapp_number, phone, ' +
-  'public_email, address, maps_url, services, bio, plan, plan_expires_at';
-export const LISTING_FIELDS = 'public_id, title_es, title_en, town, neighborhood, bedrooms, bathrooms, size, ' +
-  'parking, operation, currency, amount, image, images, features, description_es, description_en, property_type';
 
 const escAttr = (s) => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -53,28 +51,6 @@ export const jsonForScript = (v) => JSON.stringify(v)
 const money = (l) => (l && l.amount ? `${l.currency || 'MXN'} $${Number(l.amount).toLocaleString('en-US')}${l.operation === 'rental' ? ' /mes' : ''}` : '');
 const firstPhoto = (l) => (l && (l.image || (Array.isArray(l.images) && l.images[0]))) || '';
 const httpsOnly = (u) => (typeof u === 'string' && /^https:\/\//i.test(u) ? u : '');
-
-/** What the page shows, from the rows. Internal columns never reach the browser. Pure, for tests. */
-export function buildModel(agency, listings, now = Date.now(), { preview = false } = {}) {
-  if (!agency) return { state: 'not_found' };
-  const active = pageActive(agency, now);
-  const card = {
-    name: agency.name || '', slug: agency.slug,
-    logo_url: agency.logo_url || null, cover_url: agency.cover_url || null, primary_color: agency.primary_color || null
-  };
-  if (!active && !preview) return { state: 'paused', agency: card, listings: [] };
-  return {
-    state: active ? 'active' : 'preview',
-    agency: {
-      ...card,
-      whatsapp_number: agency.whatsapp_number || null, phone: agency.phone || null,
-      public_email: agency.public_email || null, address: agency.address || null, maps_url: agency.maps_url || null,
-      services: Array.isArray(agency.services) ? agency.services : [], bio: agency.bio || ''
-    },
-    listings: (listings || []).map((l) => ({ ...l })),
-    ...(active ? {} : { publish: { price: MINI_PRICE_MXN } })
-  };
-}
 
 /** Fill the template: meta tags for link previews plus the model as JSON. Pure, for tests. */
 export function renderPage(template, model, { origin = '', focus = null } = {}) {
@@ -88,9 +64,9 @@ export function renderPage(template, model, { origin = '', focus = null } = {}) 
   } else if (model.state === 'paused') {
     title = `${a.name} · PropLync Mini`;
     desc = 'Esta página no está disponible por ahora.';
-  } else if (model.state === 'preview') {
-    title = `Vista previa · ${a.name}`;
-    desc = 'Vista previa privada. Esta página aún no es pública.';
+  } else if (model.state === 'preview_private') {
+    title = 'Vista previa privada · PropLync Mini';
+    desc = 'Esta vista previa solo la ve el dueño de la página.';
   } else if (pick) {
     const where = [pick.neighborhood, pick.town].filter(Boolean).join(', ');
     title = `${pick.title_es || pick.title_en || 'Propiedad'} · ${a.name}`;
@@ -113,17 +89,16 @@ export function renderPage(template, model, { origin = '', focus = null } = {}) 
     canonical ? `<meta property="og:url" content="${escAttr(canonical)}"><link rel="canonical" href="${escAttr(canonical)}">` : '',
     image ? `<meta property="og:image" content="${escAttr(image)}"><meta name="twitter:card" content="summary_large_image">` : '',
     model.state === 'active' ? '' : '<meta name="robots" content="noindex">',
-    model.state === 'preview' ? '<meta name="referrer" content="no-referrer">' : ''
   ].filter(Boolean).join('\n');
   const tokens = { '__TITLE__': escAttr(title), '__META__': meta, '__DATA__': jsonForScript({ ...model, focus: pick ? pick.public_id : null }) };
   return template.replace(/__TITLE__|__META__|__DATA__/g, (k) => tokens[k]);
 }
 
-export default async function handler(req, res) {
+export default async function handler(req, res, deps = {}) {
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.status(405).json({ error: 'method_not_allowed' }); return; }
   const slug = String((req.query && req.query.slug) || '').toLowerCase();
   const focus = PUBLIC_ID.test(String(req.query && req.query.p || '')) ? String(req.query.p) : null;
-  const vista = String((req.query && req.query.vista) || '');
+  const vista = !!(req.query && req.query.vista !== undefined);
   const host = req.headers['x-forwarded-host'] || req.headers.host || '';
   const origin = host ? `https://${host}` : '';
   const send = (status, model, cache) => {
@@ -134,7 +109,7 @@ export default async function handler(req, res) {
 
   if (!SLUG.test(slug)) { send(404, { state: 'not_found' }, 'no-store'); return; }
   try {
-    const svc = getServiceClient();
+    const svc = (deps.getServiceClient || getServiceClient)();
     const { data: agency, error } = await svc.from('agencies').select(AGENCY_FIELDS).eq('slug', slug).maybeSingle();
     if (error) throw error;
     if (!agency) { send(404, { state: 'not_found' }, 'no-store'); return; }
@@ -149,18 +124,16 @@ export default async function handler(req, res) {
       res.redirect(302, `/${encodeURIComponent(slug)}${focus ? '?p=' + encodeURIComponent(focus) : ''}`);
       return;
     }
-    // A preview link is good only for this agency; a stale or forged one falls back to the public view.
-    const preview = !!vista && !active && readPreviewToken(vista) === String(agency.id);
+    // The preview's content comes from the owner's session in the browser, never from this response.
+    if (vista) { send(200, { state: 'preview_private', agency: { slug: agency.slug } }, 'no-store'); return; }
     let listings = [];
-    if (active || preview) {
+    if (active) {
       const { data, error: lErr } = await svc.from('listings').select(LISTING_FIELDS)
-        .eq('agency_id', agency.id).in('status', preview ? ['published', 'draft'] : ['published'])
-        .order('created_at', { ascending: false }).limit(30);
+        .eq('agency_id', agency.id).eq('status', 'published').order('created_at', { ascending: false }).limit(30);
       if (lErr) throw lErr;
       listings = data || [];
     }
-    const model = buildModel(agency, listings, Date.now(), { preview });
-    if (preview) res.setHeader('Referrer-Policy', 'no-referrer');
+    const model = buildModel(agency, listings);
     // A live page can sit in the CDN for a minute; a hidden one never, so payment shows at once.
     send(200, model, model.state === 'active' ? 'public, max-age=0, s-maxage=60, stale-while-revalidate=300' : 'no-store');
   } catch (err) {

@@ -12,9 +12,10 @@
  *       field validation (api/_lib/listing-fields.js), RLS and the search mirror
  *       are the same rules the PropLync dashboard runs.
  *   POST ?action=paid-notice  "Ya pagué": the customer reports a payment.
- *   POST ?action=preview-link  a short-lived signed link to the customer's own
- *       page as buyers will see it, drafts included, before it is paid
- *       (api/_preview.js).
+ *   GET ?action=preview&slug=  the customer's own page as buyers will see it,
+ *       drafts included, before it is paid. Only for the signed-in owner of that
+ *       slug: the preview address (/:slug?vista=1) carries no secret, so a shared
+ *       link shows nothing to anyone else (api/page.js).
  *
  * WHY THE PAYMENT NOTICE IS AN EVENTS ROW, NOT ONLY AN EMAIL
  * Payment is collected by hand until Mercado Pago is connected, and the operator
@@ -33,7 +34,7 @@ import { enforceRateLimit } from './_proplync/_lib/ratelimit.js';
 import { safeDetail, logDegraded } from './_proplync/_lib/health.js';
 import { miniState, MINI_PRICE_MXN } from './_proplync/_lib/plans.js';
 import { notifyOperator } from './_proplync/_lib/notify.js';
-import { makePreviewToken, PREVIEW_TTL_SEC } from './_preview.js';
+import { buildModel, AGENCY_FIELDS, LISTING_FIELDS } from './_page-model.js';
 
 export const PAY_METHODS = ['transfer', 'deposit', 'oxxo', 'other'];
 
@@ -90,31 +91,36 @@ export async function handlePaidNotice(req, res, deps = {}) {
   }
 }
 
-/** The customer's page as it will look, at its own address, before it is paid. */
-export async function handlePreviewLink(req, res, deps = {}) {
-  if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }
-  if (await (deps.enforceRateLimit || enforceRateLimit)(req, res, { bucket: 'mini-preview', limit: 60, windowSec: 3600 })) return;
+/** The owner's page as it will look, before it is paid. Signed in, own page only, never cached. */
+export async function handlePreview(req, res, deps = {}) {
+  if (req.method !== 'GET') { res.status(405).json({ error: 'method_not_allowed' }); return; }
+  if (await (deps.enforceRateLimit || enforceRateLimit)(req, res, { bucket: 'mini-preview', limit: 120, windowSec: 3600 })) return;
+  res.setHeader('Cache-Control', 'no-store');
 
   const auth = await (deps.requireAgencyUser || requireAgencyUser)(req);
   if (!auth) { res.status(401).json({ error: 'unauthorized' }); return; }
 
   const svc = (deps.getServiceClient || getServiceClient)();
   try {
-    const { data: agency, error } = await svc.from('agencies').select('id, slug, plan').eq('id', auth.agencyId).maybeSingle();
+    const { data: agency, error } = await svc.from('agencies')
+      .select(AGENCY_FIELDS).eq('id', auth.agencyId).maybeSingle();
     if (error) throw error;
-    if (!agency || String(agency.plan || '').toLowerCase() !== 'mini' || !agency.slug) { res.status(400).json({ error: 'not_a_mini_page' }); return; }
-    const token = (deps.makePreviewToken || makePreviewToken)(agency.id);
-    if (!token) { logDegraded('mini:preview-link', new Error('no signing key')); res.status(503).json({ error: 'preview_unavailable' }); return; }
-    res.setHeader('Cache-Control', 'no-store');
-    res.status(200).json({ url: `/${encodeURIComponent(agency.slug)}?vista=${encodeURIComponent(token)}`, expires_in: PREVIEW_TTL_SEC });
+    if (!agency || String(agency.plan || '').toLowerCase() !== 'mini') { res.status(400).json({ error: 'not_a_mini_page' }); return; }
+    // Signed in, but as someone else: the preview of another page is not theirs to see.
+    const slug = String((req.query && req.query.slug) || '').toLowerCase();
+    if (slug && slug !== agency.slug) { res.status(403).json({ error: 'not_your_page' }); return; }
+    const { data: listings, error: lErr } = await svc.from('listings').select(LISTING_FIELDS)
+      .eq('agency_id', agency.id).in('status', ['published', 'draft']).order('created_at', { ascending: false }).limit(30);
+    if (lErr) throw lErr;
+    res.status(200).json(buildModel(agency, listings || [], Date.now(), { preview: true }));
   } catch (err) {
-    logDegraded('mini:preview-link', err);
+    logDegraded('mini:preview', err);
     res.status(500).json({ error: 'preview_failed', detail: safeDetail(err) });
   }
 }
 
 export default async function handler(req, res) {
   if (req.query && req.query.action === 'paid-notice') return handlePaidNotice(req, res);
-  if (req.query && req.query.action === 'preview-link') return handlePreviewLink(req, res);
+  if (req.query && req.query.action === 'preview') return handlePreview(req, res);
   return listingsHandler(req, res);
 }

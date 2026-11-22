@@ -390,10 +390,11 @@ __META__
       '</div></main>';
   }
 
-  function offHTML(eyebrow, heading, body) {
+  function offHTML(eyebrow, heading, body, action) {
     return '<main class="mp-hero mp-off"><div class="mp-wrap">' + (agency.name ? markHTML('mp-logo') : '') +
       '<div class="mp-eyebrow">' + escapeHtml(eyebrow) + '</div>' +
-      '<h1>' + heading + '</h1><p>' + escapeHtml(body) + '</p></div></main>';
+      '<h1>' + heading + '</h1>' + (body ? '<p>' + escapeHtml(body) + '</p>' : '') +
+      (action ? '<div class="mp-actions" style="justify-content:center">' + action + '</div>' : '') + '</div></main>';
   }
 
   function publishHTML() {
@@ -410,6 +411,11 @@ __META__
   function render() {
     var html;
     if (LIVE) html = barHTML() + heroHTML() + listHTML() + footHTML() + (PREVIEW ? publishHTML() : '');
+    else if (data.state === 'preview_loading') html = offHTML(t('Vista previa', 'Preview'), escapeHtml(t('Cargando…', 'Loading…')), '');
+    else if (data.state === 'preview_private') html = offHTML(t('Vista previa privada', 'Private preview'),
+      escapeHtml(t('Esta vista previa es', 'This preview is')) + ' <em>' + escapeHtml(t('privada', 'private')) + '</em>',
+      t('Solo la ve el dueño de la página, con su sesión iniciada. Cuando la página se publique, la verás en su link.', 'Only the page owner can see it, signed in. Once the page is published you will see it at its link.'),
+      '<a class="mp-btn mp-btn-main" href="/panel?preview=1">' + escapeHtml(t('Soy el dueño · Entrar', 'I am the owner · Sign in')) + '</a>') + footHTML();
     else if (data.state === 'paused') html = barHTML() + offHTML(t('Página en pausa', 'Page paused'), nameHTML(agency.name), t('Esta página no está disponible por ahora. Si buscas a este asesor, escríbele directamente.', 'This page is not available right now. If you are looking for this agent, contact them directly.')) + footHTML();
     else html = offHTML('PropLync Mini', escapeHtml(t('Página no encontrada', 'Page not found')), t('Esta página no existe o cambió de dirección. Revisa el link que te compartieron.', 'This page does not exist or has moved. Check the link you were sent.')) + footHTML();
     root.innerHTML = html;
@@ -503,11 +509,51 @@ __META__
     if (a && data.state === 'active') miniTrack('mini_interest', { slug: agency.slug, from: a.classList.contains('mp-interest') || a.closest('.mp-sheet-bar') ? 'property' : 'card' });
   });
 
-  brand();
-  render();
-  if (data.state === 'active') miniTrack('mini_page_view', { slug: agency.slug, listings: listings.length, property: !!data.focus });
-  if (PREVIEW) miniTrack('mini_page_preview', { listings: listings.length });
-  if (data.focus) openSheet(data.focus);
+  function start(model) {
+    data = model; agency = data.agency || {}; listings = data.listings || [];
+    PREVIEW = data.state === 'preview'; LIVE = data.state === 'active' || PREVIEW;
+    brand();
+    render();
+    if (data.state === 'active') miniTrack('mini_page_view', { slug: agency.slug, listings: listings.length, property: !!data.focus });
+    if (PREVIEW) miniTrack('mini_page_preview', { listings: listings.length });
+    if (data.focus) openSheet(data.focus);
+  }
+
+  /* PRIVATE PREVIEW (/:slug?vista=1). The server sends an empty shell; the page itself comes from
+     /api/panel?action=preview with the session this browser already holds from the panel (supabase-js keeps it in
+     localStorage as sb-<ref>-auth-token; read directly so this page stays SDK-free). A forwarded link has no session
+     behind it, so whoever opens it sees "private". An expired session goes once through the panel, which refreshes it
+     and comes back; a second failure shows "private" instead of looping. */
+  var SESSION_KEY = 'sb-rznuuykmtvbgmnczbqiq-auth-token', RETRY_KEY = 'mp_preview_retry';
+  function storedSession() {
+    try { var x = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); return x && x.access_token ? x : null; } catch (e) { return null; }
+  }
+  function showPrivate() { start({ state: 'preview_private', agency: {} }); }
+  function viaPanel() {
+    try {
+      if (sessionStorage.getItem(RETRY_KEY)) { sessionStorage.removeItem(RETRY_KEY); showPrivate(); return; }
+      sessionStorage.setItem(RETRY_KEY, '1');
+    } catch (e) { showPrivate(); return; }
+    location.replace('/panel?preview=1');
+  }
+  function loadPreview(slug) {
+    start({ state: 'preview_loading', agency: {} });
+    var sess = storedSession();
+    if (!sess) { showPrivate(); return; }
+    if (sess.expires_at && sess.expires_at * 1000 < Date.now() + 30000) { viaPanel(); return; }
+    fetch('/api/panel?action=preview&slug=' + encodeURIComponent(slug), { headers: { Authorization: 'Bearer ' + sess.access_token }, cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (m) {
+        try { sessionStorage.removeItem(RETRY_KEY); } catch (e) {}
+        if (m.state !== 'preview') { location.replace('/' + encodeURIComponent(slug)); return; }
+        m.focus = new URLSearchParams(location.search).get('p');
+        start(m);
+      })
+      .catch(function (code) { if (code === 401) viaPanel(); else showPrivate(); });
+  }
+
+  if (data.state === 'preview_private') loadPreview(agency.slug || location.pathname.slice(1));
+  else start(data);
   document.addEventListener('langchange', function () {
     var openId = sheet.open && new URLSearchParams(location.search).get('p');
     render();
