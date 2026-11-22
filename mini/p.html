@@ -24,7 +24,8 @@ __META__
   goes through escapeHtml, links through safeUrl and backgrounds through cssUrl.
 -->
 <style>
-  :root{--mp-accent:var(--gold);--mp-accent-ink:var(--ink)}
+  :root{--mp-accent:var(--gold);--mp-accent-ink:var(--ink);--mp-accent-hi:var(--mp-accent)}
+  /* --mp-accent-hi: the accent as text on navy. A dark brand colour is lifted toward cream so it stays readable there. */
   body{background:var(--paper);color:var(--ink);font-family:var(--body);margin:0}
   /* the footer sits at the bottom even on a short page (paused, not found) */
   #mp-root{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
@@ -42,38 +43,53 @@ __META__
   .mp-lang button{background:none;border:0;color:var(--on-ink-dim);font:600 .66rem var(--mono);letter-spacing:.08em;padding:7px 10px;cursor:pointer}
   .mp-lang button.on{background:var(--mp-accent);color:var(--mp-accent-ink)}
 
-  /* hero: the agent's card */
-  .mp-hero{background:var(--ink) center/cover no-repeat;color:var(--on-ink);position:relative}
-  .mp-hero.has-cover::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,.55),rgba(10,22,40,.92))}
-  .mp-hero .mp-wrap{position:relative;padding-top:40px;padding-bottom:36px}
-  .mp-logo{width:72px;height:72px;border-radius:18px;background:var(--mp-accent) center/cover no-repeat;color:var(--mp-accent-ink);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:2rem;box-shadow:0 8px 30px rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.12)}
-  .mp-eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mp-accent);margin:20px 0 6px}
-  .mp-name{font-family:var(--display);font-weight:300;font-size:clamp(1.9rem,7vw,3rem);line-height:1.08;margin:0;letter-spacing:-.01em}
-  .mp-bio{color:var(--on-ink-dim);font-size:.98rem;line-height:1.6;margin:14px 0 0;max-width:60ch}
-  .mp-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
-  .mp-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;border-radius:999px;font:600 .88rem var(--body);text-decoration:none;cursor:pointer;border:1px solid transparent;transition:transform .15s ease,background .15s ease}
+  /* hero: the agent's card, in the landing's language (navy, a glow in the agent's colour, a faint grid,
+     Fraunces with one italic word). The glow and accents follow --mp-accent, so a branded page stays theirs. */
+  .mp-hero{background:var(--ink) center/cover no-repeat;color:var(--on-ink);position:relative;overflow:hidden}
+  .mp-hero::before{content:"";position:absolute;inset:0;pointer-events:none;background:
+    radial-gradient(50% 60% at 88% 12%,color-mix(in srgb,var(--mp-accent) 26%,transparent),transparent 70%),
+    radial-gradient(40% 45% at 6% 100%,rgba(45,138,133,.2),transparent 70%)}
+  .mp-hero:not(.has-cover)::after{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(240,237,232,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(240,237,232,.035) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(75% 70% at 75% 30%,#000,transparent);mask-image:radial-gradient(75% 70% at 75% 30%,#000,transparent)}
+  .mp-hero .mp-wrap{position:relative;z-index:1;padding-top:44px;padding-bottom:40px}
+  .mp-logo{width:68px;height:68px;border-radius:18px;background:var(--mp-accent) center/cover no-repeat;color:var(--mp-accent-ink);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:1.9rem;box-shadow:0 14px 36px -10px rgba(0,0,0,.55),0 0 0 1px rgba(240,237,232,.14)}
+  .mp-eyebrow{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mp-accent-hi);margin:24px 0 0;display:flex;align-items:center;gap:12px}
+  .mp-eyebrow::before{content:"";width:28px;height:1px;background:currentColor;flex:none}
+  .mp-name{font-family:var(--display);font-weight:300;font-size:clamp(2.4rem,10.5vw,4.2rem);line-height:1.02;margin:14px 0 0;letter-spacing:-.02em;overflow-wrap:anywhere}
+  .mp-name em,.mp-off h1 em{font-style:italic;font-weight:400;color:var(--mp-accent-hi)}
+  .mp-bio{color:var(--on-ink-dim);font-size:1rem;line-height:1.65;margin:16px 0 0;max-width:52ch}
+  .mp-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+  .mp-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:999px;font:600 .9rem var(--body);text-decoration:none;cursor:pointer;border:1px solid transparent;transition:transform .15s ease,background .15s ease,box-shadow .15s ease}
   .mp-btn:active{transform:scale(.98)}
   .mp-btn svg{width:17px;height:17px;flex:none}
-  .mp-btn-main{background:var(--mp-accent);color:var(--mp-accent-ink)}
-  .mp-btn-ghost{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16);color:var(--on-ink)}
-  .mp-btn-ghost:hover{background:rgba(255,255,255,.12)}
-  .mp-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;padding:0;list-style:none}
-  .mp-tags li{font-size:.76rem;color:var(--on-ink-dim);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:5px 12px}
-  .mp-stats{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.1);font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--on-ink-faint)}
-  .mp-stats b{color:var(--on-ink);font-weight:700}
+  .mp-btn-main{background:var(--mp-accent);color:var(--mp-accent-ink);box-shadow:0 10px 26px -12px color-mix(in srgb,var(--mp-accent) 80%,transparent)}
+  .mp-btn-ghost{background:rgba(240,237,232,.06);border-color:rgba(240,237,232,.18);color:var(--on-ink)}
+  .mp-btn-ghost:hover{background:rgba(240,237,232,.12)}
+  .mp-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;padding:0;list-style:none}
+  .mp-tags li{font-size:.76rem;color:var(--on-ink-dim);border:1px solid rgba(240,237,232,.16);border-radius:999px;padding:5px 12px}
+  .mp-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:30px;padding-top:22px;border-top:1px solid rgba(240,237,232,.1);max-width:520px}
+  .mp-stats b{display:block;font-family:var(--display);font-weight:300;font-size:clamp(1.7rem,7vw,2.3rem);line-height:1;color:var(--mp-accent-hi)}
+  .mp-stats span{display:block;font-size:.74rem;color:var(--on-ink-dim);margin-top:6px;line-height:1.35}
+  @media (min-width:900px){.mp-hero .mp-wrap{padding-top:72px;padding-bottom:64px}}
 
   /* listing area */
-  .mp-list{padding:28px 0 56px}
-  .mp-filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px;scrollbar-width:none}
+  .mp-list{padding:36px 0 64px}
+  .mp-list-head{margin-bottom:18px}
+  .mp-kicker{font-family:var(--mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--on-sand-light);display:flex;align-items:center;gap:12px}
+  .mp-kicker::before{content:"";width:28px;height:1px;background:currentColor;flex:none}
+  .mp-list-head h2{font-family:var(--display);font-weight:300;font-size:clamp(1.7rem,6.4vw,2.4rem);line-height:1.08;letter-spacing:-.015em;margin:10px 0 0;color:var(--ink)}
+  .mp-list-head h2 em{font-style:italic;font-weight:400;color:var(--sea-deep)}
+  .mp-seg{display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:var(--sand);border-radius:999px;padding:4px;flex:none}
+  .mp-seg .mp-chip{border:0;background:none;min-height:38px;padding:8px 16px}
+  .mp-seg .mp-chip.on{background:var(--white);color:var(--ink);box-shadow:var(--shadow-sm)}
+  .mp-filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px}
   .mp-filters::-webkit-scrollbar{display:none}
   .mp-chip{flex:none;border:1px solid var(--line);background:var(--white);color:var(--on-sand);font:500 .82rem var(--body);padding:9px 15px;border-radius:999px;cursor:pointer;min-height:40px}
   .mp-chip.on{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
-  .mp-filters .mp-sep{flex:none;width:1px;background:var(--line);margin:6px 4px}
   .mp-grid{display:grid;gap:16px;grid-template-columns:1fr}
   @media (min-width:700px){.mp-grid{grid-template-columns:repeat(2,1fr)}}
   @media (min-width:1040px){.mp-grid{grid-template-columns:repeat(3,1fr)}}
 
-  .mp-card{background:var(--white);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-sm);transition:box-shadow .2s ease,transform .2s ease}
+  .mp-card{background:var(--white);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-sm);transition:box-shadow .2s ease,transform .2s ease}
   .mp-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
   .mp-card-open{all:unset;cursor:pointer;display:block}
   .mp-card-open:focus-visible{outline:2px solid var(--mp-accent);outline-offset:-2px}
@@ -122,17 +138,33 @@ __META__
   .mp-sheet-bar .mp-btn{flex:1}
   .mp-btn-line{background:var(--white);border-color:var(--line);color:var(--ink);flex:0 0 auto !important}
 
-  /* paused or missing */
-  .mp-off{min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 20px}
-  .mp-off .mp-logo{margin:0 auto 18px}
-  .mp-off h1{font-family:var(--display);font-weight:300;font-size:1.9rem;margin:0}
-  .mp-off p{color:var(--on-sand);margin:10px auto 0;max-width:40ch;line-height:1.6}
+  /* paused or missing: the same navy stage as the hero */
+  .mp-off{flex:1;min-height:72vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:56px 20px}
+  .mp-off .mp-wrap{max-width:560px}
+  .mp-off .mp-logo{margin:0 auto 4px}
+  .mp-off .mp-eyebrow{justify-content:center}
+  .mp-off .mp-eyebrow::after{content:"";width:28px;height:1px;background:currentColor;flex:none}
+  .mp-off h1{font-family:var(--display);font-weight:300;font-size:clamp(2rem,8vw,3rem);line-height:1.05;letter-spacing:-.015em;margin:14px 0 0}
+  .mp-off p{color:var(--on-ink-dim);margin:14px auto 0;max-width:40ch;line-height:1.65}
 
-  /* our footprint: one quiet line */
-  .mp-foot-site{background:var(--paper);border-top:1px solid var(--line);padding:22px 0 calc(28px + env(safe-area-inset-bottom));font-size:.78rem;color:var(--on-sand-light);margin:0}
-  .mp-foot-site .mp-wrap{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
-  .mp-made{color:var(--on-sand);text-decoration:none;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase}
-  .mp-made:hover{color:var(--ink)}
+  /* our footprint: one quiet line on a navy band that closes the page */
+  .mp-foot-site{background:var(--ink);color:var(--on-ink-faint);padding:26px 0 calc(30px + env(safe-area-inset-bottom));font-size:.78rem;margin:0}
+  .mp-foot-site .mp-wrap{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+  .mp-made{display:inline-flex;align-items:center;gap:8px;color:var(--on-ink-dim);text-decoration:none;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase}
+  .mp-made svg{width:15px;height:15px;flex:none}
+  .mp-made:hover{color:var(--on-ink)}
+
+  /* preview: the owner's own page before it is paid. A ribbon in the bar and a publish bar at the bottom. */
+  .mp-ribbon{background:var(--mp-accent);color:var(--mp-accent-ink);font:700 .6rem var(--mono);letter-spacing:.14em;text-transform:uppercase}
+  .mp-ribbon .mp-wrap{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:32px}
+  .mp-ribbon a{color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+  .mp-publish{position:fixed;left:0;right:0;bottom:0;z-index:16;background:var(--white);border-top:1px solid var(--line);box-shadow:0 -14px 40px -18px rgba(10,22,40,.35);padding:12px 0 calc(12px + env(safe-area-inset-bottom))}
+  .mp-publish .mp-wrap{display:flex;align-items:center;gap:12px;justify-content:space-between}
+  .mp-publish p{margin:0;font-size:.8rem;line-height:1.4;color:var(--on-sand)}
+  .mp-publish p b{display:block;color:var(--ink);font-size:.9rem}
+  .mp-publish .mp-btn{flex:none;background:var(--ink);color:var(--on-ink);box-shadow:none}
+  body.is-preview .mp-foot-site{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
+  @media (max-width:420px){.mp-publish p{font-size:.74rem}.mp-publish p b{font-size:.84rem}.mp-publish .mp-btn{padding:0 14px;font-size:.84rem}}
 
   /* sticky contact on phones, once the hero button has scrolled away */
   .mp-float{position:fixed;left:16px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:15;display:none}
@@ -176,6 +208,8 @@ __META__
   var listings = data.listings || [];
   var filter = { op: 'all', town: 'all' };
   var root = document.getElementById('mp-root');
+  var PREVIEW = data.state === 'preview';
+  var LIVE = data.state === 'active' || PREVIEW;
   var sheet = document.getElementById('mp-sheet');
 
   function isEn() { return document.documentElement.lang === 'en'; }
@@ -226,6 +260,15 @@ __META__
     var s = document.documentElement.style;
     s.setProperty('--mp-accent', agency.primary_color);
     s.setProperty('--mp-accent-ink', ratio(L, lum(INK_DARK)) >= ratio(L, lum(INK_LIGHT)) ? INK_DARK : INK_LIGHT);
+    if (ratio(L, lum(INK_DARK)) < 4.5) s.setProperty('--mp-accent-hi', 'color-mix(in srgb, ' + agency.primary_color + ' 45%, ' + INK_LIGHT + ')');
+  }
+
+  /* The last word in italics and the accent colour, the landing headline's signature. One word stays plain. */
+  function nameHTML(name) {
+    var words = String(name || '').trim().split(/\s+/);
+    if (words.length < 2) return escapeHtml(words[0] || '');
+    var last = words.pop();
+    return escapeHtml(words.join(' ')) + ' <em>' + escapeHtml(last) + '</em>';
   }
 
   function markHTML(cls) {
@@ -235,14 +278,18 @@ __META__
   }
 
   function barHTML() {
-    return '<header class="mp-bar"><div class="mp-wrap">' +
-      '<a class="mp-brand" href="' + escapeHtml(pageLink()) + '">' + markHTML('mp-mark') + '<b>' + escapeHtml(agency.name || 'PropLync Mini') + '</b></a>' +
+    return '<header class="mp-bar">' +
+      (PREVIEW ? '<div class="mp-ribbon"><div class="mp-wrap"><span>' + escapeHtml(t('Vista previa · aún no es pública', 'Preview · not public yet')) + '</span>' +
+        '<a href="/panel">' + escapeHtml(t('Volver al panel', 'Back to panel')) + '</a></div></div>' : '') +
+      '<div class="mp-wrap">' +
+      '<a class="mp-brand" href="' + escapeHtml(PREVIEW ? location.pathname + location.search : pageLink()) + '">' + markHTML('mp-mark') + '<b>' + escapeHtml(agency.name || 'PropLync Mini') + '</b></a>' +
       '<div class="mp-lang" role="group" aria-label="Language"><button id="es" type="button">ES</button><button id="en" type="button">EN</button></div>' +
       '</div></header>';
   }
   function footHTML() {
     return '<footer class="mp-foot-site"><div class="mp-wrap"><span>© ' + new Date().getFullYear() + ' ' + escapeHtml(agency.name || 'PropLync Mini') + '</span>' +
-      '<a class="mp-made" href="/?ref=badge">' + escapeHtml(t('Hecho con PropLync Mini · Crea la tuya', 'Made with PropLync Mini · Make yours')) + '</a></div></footer>';
+      '<a class="mp-made" href="/?ref=badge"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        escapeHtml(t('Hecho con PropLync Mini · Crea la tuya', 'Made with PropLync Mini · Make yours')) + '</a></div></footer>';
   }
 
   function heroHTML() {
@@ -255,14 +302,20 @@ __META__
     listings.forEach(function (p) { if (p.town && towns.indexOf(p.town) === -1) towns.push(p.town); });
     var ops = { sale: 0, rental: 0 };
     listings.forEach(function (p) { ops[p.operation === 'rental' ? 'rental' : 'sale']++; });
-    var stats = ['<span><b>' + listings.length + '</b> ' + escapeHtml(listings.length === 1 ? t('propiedad', 'property') : t('propiedades', 'properties')) + '</span>'];
-    if (ops.sale) stats.push('<span><b>' + ops.sale + '</b> ' + escapeHtml(t('en venta', 'for sale')) + '</span>');
-    if (ops.rental) stats.push('<span><b>' + ops.rental + '</b> ' + escapeHtml(t('en renta', 'for rent')) + '</span>');
-    if (towns.length) stats.push('<span>' + escapeHtml(towns.slice(0, 3).join(' · ')) + '</span>');
-    return '<section class="mp-hero' + (cover ? ' has-cover' : '') + '"' + (cover ? ' style="background-image:url(\'' + cover + '\')"' : '') + '><div class="mp-wrap">' +
+    function stat(n, label) { return '<div><b>' + n + '</b><span>' + escapeHtml(label) + '</span></div>'; }
+    var stats = [stat(listings.length, listings.length === 1 ? t('propiedad', 'property') : t('propiedades', 'properties'))];
+    if (ops.sale && ops.rental) {
+      stats.push(stat(ops.sale, t('en venta', 'for sale')));
+      stats.push(stat(ops.rental, t('en renta', 'for rent')));
+    } else {
+      if (ops.sale || ops.rental) stats.push(stat(ops.sale || ops.rental, ops.rental ? t('en renta', 'for rent') : t('en venta', 'for sale')));
+      if (towns.length) stats.push(stat(towns.length, towns.length === 1 ? towns[0] : t('zonas', 'areas')));
+    }
+    var shade = 'linear-gradient(180deg,rgba(10,22,40,.6),rgba(10,22,40,.94))';
+    return '<section class="mp-hero' + (cover ? ' has-cover' : '') + '"' + (cover ? ' style="background-image:' + shade + ',url(\'' + cover + '\')"' : '') + '><div class="mp-wrap">' +
       markHTML('mp-logo') +
       '<div class="mp-eyebrow">' + escapeHtml(t('Portafolio de propiedades', 'Property portfolio')) + '</div>' +
-      '<h1 class="mp-name">' + escapeHtml(agency.name) + '</h1>' +
+      '<h1 class="mp-name">' + nameHTML(agency.name) + '</h1>' +
       (agency.bio ? '<p class="mp-bio">' + escapeHtml(agency.bio) + '</p>' : '') +
       '<div class="mp-actions" id="mp-hero-actions">' +
         (wa ? '<a class="mp-btn mp-btn-main" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Escribir por WhatsApp', 'Message on WhatsApp')) + '</a>' : '') +
@@ -271,7 +324,7 @@ __META__
         (map ? '<a class="mp-btn mp-btn-ghost" href="' + map + '" target="_blank" rel="noopener">' + icon('i-pin') + escapeHtml(t('Ubicación', 'Location')) + '</a>' : '') +
       '</div>' +
       ((agency.services || []).length ? '<ul class="mp-tags">' + agency.services.slice(0, 8).map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ul>' : '') +
-      '<div class="mp-stats">' + stats.join('') + '</div>' +
+      (listings.length ? '<div class="mp-stats">' + stats.join('') + '</div>' : '') +
       '</div></section>';
   }
 
@@ -309,12 +362,11 @@ __META__
     listings.forEach(function (p) { if (p.town && towns.indexOf(p.town) === -1) towns.push(p.town); });
     var chips = [];
     if (hasSale && hasRent) {
-      [['all', t('Todas', 'All')], ['sale', t('Venta', 'Sale')], ['rental', t('Renta', 'Rent')]].forEach(function (o) {
-        chips.push('<button type="button" class="mp-chip' + (filter.op === o[0] ? ' on' : '') + '" data-op="' + o[0] + '" aria-pressed="' + (filter.op === o[0]) + '">' + escapeHtml(o[1]) + '</button>');
-      });
+      chips.push('<span class="mp-seg">' + [['all', t('Todas', 'All')], ['sale', t('Venta', 'Sale')], ['rental', t('Renta', 'Rent')]].map(function (o) {
+        return '<button type="button" class="mp-chip' + (filter.op === o[0] ? ' on' : '') + '" data-op="' + o[0] + '" aria-pressed="' + (filter.op === o[0]) + '">' + escapeHtml(o[1]) + '</button>';
+      }).join('') + '</span>');
     }
     if (towns.length > 1) {
-      if (chips.length) chips.push('<span class="mp-sep" aria-hidden="true"></span>');
       chips.push('<button type="button" class="mp-chip' + (filter.town === 'all' ? ' on' : '') + '" data-town="all" aria-pressed="' + (filter.town === 'all') + '">' + escapeHtml(t('Todas las zonas', 'All areas')) + '</button>');
       towns.forEach(function (tw) {
         chips.push('<button type="button" class="mp-chip' + (filter.town === tw ? ' on' : '') + '" data-town="' + escapeHtml(tw) + '" aria-pressed="' + (filter.town === tw) + '">' + escapeHtml(tw) + '</button>');
@@ -325,26 +377,46 @@ __META__
 
   function listHTML() {
     var v = visible();
-    return '<main class="mp-list"><div class="mp-wrap">' + filtersHTML() +
+    var towns = [];
+    listings.forEach(function (p) { if (p.town && towns.indexOf(p.town) === -1) towns.push(p.town); });
+    var kicker = listings.length + ' ' + (listings.length === 1 ? t('propiedad', 'property') : t('propiedades', 'properties')) +
+      (towns.length ? ' · ' + towns.slice(0, 3).join(' · ') : '');
+    return '<main class="mp-list"><div class="mp-wrap">' +
+      '<div class="mp-list-head"><div class="mp-kicker">' + escapeHtml(kicker) + '</div>' +
+      '<h2>' + escapeHtml(t('Propiedades', 'Available')) + ' <em>' + escapeHtml(t('disponibles', 'properties')) + '</em></h2></div>' +
+      filtersHTML() +
       (v.length ? '<div class="mp-grid">' + v.map(cardHTML).join('') + '</div>'
         : '<div class="mp-empty">' + escapeHtml(listings.length ? t('No hay propiedades con ese filtro.', 'No properties match that filter.') : t('Pronto habrá propiedades aquí.', 'Properties are coming soon.')) + '</div>') +
       '</div></main>';
   }
 
-  function offHTML(heading, body) {
-    return '<main class="mp-off"><div>' + (agency.name ? markHTML('mp-logo') : '') +
-      '<h1>' + escapeHtml(heading) + '</h1><p>' + escapeHtml(body) + '</p></div></main>';
+  function offHTML(eyebrow, heading, body) {
+    return '<main class="mp-hero mp-off"><div class="mp-wrap">' + (agency.name ? markHTML('mp-logo') : '') +
+      '<div class="mp-eyebrow">' + escapeHtml(eyebrow) + '</div>' +
+      '<h1>' + heading + '</h1><p>' + escapeHtml(body) + '</p></div></main>';
+  }
+
+  function publishHTML() {
+    var price = data.publish && data.publish.price;
+    var noWa = !digits(agency.whatsapp_number);
+    return '<div class="mp-publish" role="region" aria-label="' + escapeHtml(t('Publicar', 'Publish')) + '"><div class="mp-wrap">' +
+      '<p><b>' + escapeHtml(t('Así la verán tus clientes', 'This is what your clients will see')) + '</b>' +
+      escapeHtml(noWa ? t('Agrega tu WhatsApp en el panel para mostrar el botón «Me interesa».', 'Add your WhatsApp in the panel to show the “I\'m interested” button.')
+                      : t('Se publica en cuanto confirmemos tu pago.', 'It goes live as soon as we confirm your payment.')) + '</p>' +
+      '<a class="mp-btn" href="/panel?pay=1">' + escapeHtml(t('Publicar', 'Publish') + (price ? ' · MXN ' + price : '')) + '</a>' +
+      '</div></div>';
   }
 
   function render() {
     var html;
-    if (data.state === 'active') html = barHTML() + heroHTML() + listHTML() + footHTML();
-    else if (data.state === 'paused') html = barHTML() + offHTML(agency.name, t('Esta página no está disponible por ahora. Si buscas a este asesor, escríbele directamente.', 'This page is not available right now. If you are looking for this agent, contact them directly.')) + footHTML();
-    else html = offHTML(t('Página no encontrada', 'Page not found'), t('Esta página no existe o cambió de dirección. Revisa el link que te compartieron.', 'This page does not exist or has moved. Check the link you were sent.')) + footHTML();
+    if (LIVE) html = barHTML() + heroHTML() + listHTML() + footHTML() + (PREVIEW ? publishHTML() : '');
+    else if (data.state === 'paused') html = barHTML() + offHTML(t('Página en pausa', 'Page paused'), nameHTML(agency.name), t('Esta página no está disponible por ahora. Si buscas a este asesor, escríbele directamente.', 'This page is not available right now. If you are looking for this agent, contact them directly.')) + footHTML();
+    else html = offHTML('PropLync Mini', escapeHtml(t('Página no encontrada', 'Page not found')), t('Esta página no existe o cambió de dirección. Revisa el link que te compartieron.', 'This page does not exist or has moved. Check the link you were sent.')) + footHTML();
     root.innerHTML = html;
     var es = document.getElementById('es'), en = document.getElementById('en');
     if (es) { es.classList.toggle('on', !isEn()); en.classList.toggle('on', isEn()); es.onclick = function () { setLang('es'); }; en.onclick = function () { setLang('en'); }; }
     var wa = waLink(t('Hola, vi tus propiedades en línea y quiero más información.', 'Hi, I saw your properties online and would like more information.'));
+    document.body.classList.toggle('is-preview', PREVIEW);
     var floatHTML = data.state === 'active' && wa
       ? '<a class="mp-btn mp-btn-main" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Escribir por WhatsApp', 'Message on WhatsApp')) + '</a>' : '';
     document.getElementById('mp-float').innerHTML = floatHTML;
@@ -379,19 +451,27 @@ __META__
       '</div></div>' +
       '<div class="mp-sheet-bar">' +
         (wa ? '<a class="mp-btn mp-btn-main" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Me interesa', 'I\'m interested')) + '</a>' : '') +
-        '<button class="mp-btn mp-btn-line" type="button" id="mp-share" aria-label="' + escapeHtml(t('Compartir', 'Share')) + '">' + icon('i-share') + '</button>' +
+        (PREVIEW ? '' : '<button class="mp-btn mp-btn-line" type="button" id="mp-share" aria-label="' + escapeHtml(t('Compartir', 'Share')) + '">' + icon('i-share') + '</button>') +
       '</div>';
     document.getElementById('mp-close').onclick = closeSheet;
-    document.getElementById('mp-share').onclick = function () { share(p, this); };
+    var sh = document.getElementById('mp-share');
+    if (sh) sh.onclick = function () { share(p, this); };
     var g = document.getElementById('mp-gallery'), n = document.getElementById('mp-gallery-n');
     if (g && n) g.addEventListener('scroll', function () { n.textContent = (Math.round(g.scrollLeft / g.clientWidth) + 1) + ' / ' + ph.length; }, { passive: true });
     if (typeof sheet.showModal === 'function') { if (!sheet.open) sheet.showModal(); } else sheet.setAttribute('open', '');
-    history.replaceState(null, '', '?p=' + encodeURIComponent(p.public_id));
+    setFocus(p.public_id);
+  }
+  /* ?p= follows the open property; other parameters (a preview's ?vista=) stay. */
+  function setFocus(id) {
+    var q = new URLSearchParams(location.search);
+    if (id) q.set('p', id); else q.delete('p');
+    var qs = q.toString();
+    try { history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '')); } catch (e) {}
   }
   function closeSheet() {
     if (sheet.open) { if (typeof sheet.close === 'function') sheet.close(); else sheet.removeAttribute('open'); }
   }
-  sheet.addEventListener('close', function () { history.replaceState(null, '', location.pathname); });
+  sheet.addEventListener('close', function () { setFocus(null); });
   sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(); });
 
   function share(p, btn) {
@@ -426,6 +506,7 @@ __META__
   brand();
   render();
   if (data.state === 'active') miniTrack('mini_page_view', { slug: agency.slug, listings: listings.length, property: !!data.focus });
+  if (PREVIEW) miniTrack('mini_page_preview', { listings: listings.length });
   if (data.focus) openSheet(data.focus);
   document.addEventListener('langchange', function () {
     var openId = sheet.open && new URLSearchParams(location.search).get('p');
