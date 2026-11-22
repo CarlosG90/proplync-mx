@@ -421,14 +421,11 @@
     if (q.get('pay')) openPay();
   }
 
-  /* Before it is paid the public link shows "not available", so "see my page" asks for a short-lived signed
-     link to the finished page (api/panel.js ?action=preview-link) and opens it here, in the same tab: a new tab
-     opened after an await is blocked on phones, and the preview has its own "back to panel" link. */
-  async function openPreview() {
-    if (miniState().state === 'active') { location.href = pageUrl(); return; }
-    var r = await api('/api/panel?action=preview-link', { method: 'POST' });
-    if (r.ok && r.data.url) { location.href = r.data.url; return; }
-    $('pn-status-text').textContent = t('No pudimos abrir la vista previa. Intenta de nuevo.', 'We could not open the preview. Try again.');
+  /* Before it is paid the public link shows "not available". /:slug?vista=1 shows the finished page, but only to
+     this browser's signed-in owner: the page loads its content with this session (api/panel.js ?action=preview),
+     so the address is useless to anyone it is forwarded to. */
+  function openPreview() {
+    location.href = pageUrl() + (miniState().state === 'active' ? '' : '?vista=1');
   }
 
   function renderAll() { renderStatus(); renderLink(); renderList(); fillCard(); }
