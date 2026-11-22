@@ -416,7 +416,19 @@
     renderAll();
     show('pn-app');
     miniTrack('mini_panel_view', { state: miniState().state, listings: S.listings.length });
-    if (new URLSearchParams(location.search).get('pay')) openPay();
+    var q = new URLSearchParams(location.search);
+    if (q.get('preview')) { history.replaceState(null, '', location.pathname); openPreview(); return; }
+    if (q.get('pay')) openPay();
+  }
+
+  /* Before it is paid the public link shows "not available", so "see my page" asks for a short-lived signed
+     link to the finished page (api/panel.js ?action=preview-link) and opens it here, in the same tab: a new tab
+     opened after an await is blocked on phones, and the preview has its own "back to panel" link. */
+  async function openPreview() {
+    if (miniState().state === 'active') { location.href = pageUrl(); return; }
+    var r = await api('/api/panel?action=preview-link', { method: 'POST' });
+    if (r.ok && r.data.url) { location.href = r.data.url; return; }
+    $('pn-status-text').textContent = t('No pudimos abrir la vista previa. Intenta de nuevo.', 'We could not open the preview. Try again.');
   }
 
   function renderAll() { renderStatus(); renderLink(); renderList(); fillCard(); }
@@ -429,10 +441,12 @@
       $('pn-status-title').textContent = t('Tu página está lista, falta publicarla', 'Your page is ready to publish');
       $('pn-status-text').textContent = t('Paga MXN ' + MINI_PAY.amount + ' por ' + MINI_PAY.periodEs + ' y la publicamos en cuanto confirmemos el pago. Mientras tanto puedes editarla.',
         'Pay MXN ' + MINI_PAY.amount + ' for ' + MINI_PAY.periodEn + ' and we publish it as soon as the payment is confirmed. You can edit it meanwhile.');
+      acts.push('<button class="pn-btn pn-ink" type="button" data-preview><svg><use href="#i-eye"/></svg><span>' + escapeHtml(t('Ver mi página terminada', 'See my finished page')) + '</span></button>');
       acts.push('<button class="pn-btn pn-gold" type="button" data-pay>' + escapeHtml(t('Pagar y publicar', 'Pay and publish')) + '</button>');
     } else if (m.state === 'expired') {
       $('pn-status-title').textContent = t('Tu página está en pausa', 'Your page is paused');
       $('pn-status-text').textContent = t('Venció el ' + fmtDate(m.activeUntil) + '. No se borró nada: renueva y vuelve a estar en línea.', 'It expired on ' + fmtDate(m.activeUntil) + '. Nothing was deleted: renew and it is back online.');
+      acts.push('<button class="pn-btn pn-ink" type="button" data-preview><svg><use href="#i-eye"/></svg><span>' + escapeHtml(t('Ver mi página', 'See my page')) + '</span></button>');
       acts.push('<button class="pn-btn pn-gold" type="button" data-pay>' + escapeHtml(t('Renovar ' + MINI_PAY.periodEs, 'Renew ' + MINI_PAY.periodEn)) + '</button>');
     } else {
       var days = m.activeUntil ? Math.ceil((Date.parse(m.activeUntil) - Date.now()) / 864e5) : null;
@@ -483,7 +497,13 @@
     }).join('');
   }
   $('pn-list').addEventListener('click', function (e) { var b = e.target.closest('[data-edit]'); if (b) openEditor(b.getAttribute('data-edit')); });
-  $('pn-status-actions').addEventListener('click', function (e) { if (e.target.closest('[data-pay]')) openPay(); });
+  $('pn-status-actions').addEventListener('click', function (e) {
+    if (e.target.closest('[data-pay]')) openPay();
+    else if (e.target.closest('[data-preview]')) openPreview();
+  });
+  $('pn-view').addEventListener('click', function (e) {
+    if (miniState().state !== 'active') { e.preventDefault(); openPreview(); }
+  });
 
   /* ---------- photos: shrink in the browser, upload under the agency's folder ---------- */
   function shrink(file) {

@@ -15,13 +15,14 @@ failed at runtime. Never edit the copy: change `api/` and run `node scripts/sync
 |---|---|---|
 | `/` | `index.html` | Landing + paste → preview → email code → saved (unpaid) |
 | `/panel` | `panel.html` | The customer's account: status, pay/renew, link + QR, properties, card |
-| `/:slug` | `p.html` via `api/page.js` | The public page (server-rendered link previews; `?p=<public_id>` opens one property) |
+| `/:slug` | `p.html` via `api/page.js` | The public page (server-rendered link previews; `?p=<public_id>` opens one property; `?vista=<token>` is the owner's private preview before paying) |
 | `/privacidad`, `/terminos` | | Legal drafts (noindex, `[CONFIRMAR]` items pending) |
 | `/pago` | redirect | → `/panel?pay=1` |
 
 ## Functions (4 of 12)
 `api/signup.js` (status, create) · `api/import.js` (paste → properties) · `api/panel.js` (card + listings via
-`api/my-listings.js`, `paid-notice`) · `api/page.js` (public page).
+`api/my-listings.js`, `paid-notice`, `preview-link`) · `api/page.js` (public page and preview). Preview links are signed
+in `api/_preview.js` (1 hour; key `MINI_PREVIEW_SECRET`, or derived from the service-role key).
 
 ## Set up the Vercel project (once)
 1. Vercel project `proplync-mini` (created 2026-11-20): this repo, **Root Directory `mini`**, framework "Other".

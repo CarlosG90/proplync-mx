@@ -13,6 +13,13 @@
  * "not available" note, never cached, so activation shows at once. Agencies on
  * PropLync plans are sent to their PropLync page.
  *
+ * PREVIEW (/:slug?vista=<token>)
+ * The owner sees the finished page, drafts included, before paying: the panel
+ * hands out a signed link (api/_preview.js) and this renders state "preview",
+ * which p.html draws like a live page plus a "not public yet" bar with the
+ * payment step. Never cached, never indexed, no referrer (the token is in the URL).
+ * A page that is already live drops the token and redirects to its clean address.
+ *
  * WHY NOT REUSE api/search.js ?agency=
  * That endpoint belongs to the PropLync project; calling it across projects would
  * tie this page's uptime and cache to the other deploy. The query is small and
@@ -22,8 +29,9 @@
 
 import { readFileSync } from 'node:fs';
 import { getServiceClient } from './_proplync/_lib/supabase.js';
-import { pageActive } from './_proplync/_lib/plans.js';
+import { pageActive, MINI_PRICE_MXN } from './_proplync/_lib/plans.js';
 import { logDegraded } from './_proplync/_lib/health.js';
+import { readPreviewToken } from './_preview.js';
 
 const TEMPLATE = readFileSync(new URL('../p.html', import.meta.url), 'utf8');
 const PROPLYNC_SITE = (process.env.PROPLYNC_SITE_URL || 'https://proplync-mx.vercel.app').replace(/\/$/, '');
@@ -47,23 +55,24 @@ const firstPhoto = (l) => (l && (l.image || (Array.isArray(l.images) && l.images
 const httpsOnly = (u) => (typeof u === 'string' && /^https:\/\//i.test(u) ? u : '');
 
 /** What the page shows, from the rows. Internal columns never reach the browser. Pure, for tests. */
-export function buildModel(agency, listings, now = Date.now()) {
+export function buildModel(agency, listings, now = Date.now(), { preview = false } = {}) {
   if (!agency) return { state: 'not_found' };
   const active = pageActive(agency, now);
   const card = {
     name: agency.name || '', slug: agency.slug,
     logo_url: agency.logo_url || null, cover_url: agency.cover_url || null, primary_color: agency.primary_color || null
   };
-  if (!active) return { state: 'paused', agency: card, listings: [] };
+  if (!active && !preview) return { state: 'paused', agency: card, listings: [] };
   return {
-    state: 'active',
+    state: active ? 'active' : 'preview',
     agency: {
       ...card,
       whatsapp_number: agency.whatsapp_number || null, phone: agency.phone || null,
       public_email: agency.public_email || null, address: agency.address || null, maps_url: agency.maps_url || null,
       services: Array.isArray(agency.services) ? agency.services : [], bio: agency.bio || ''
     },
-    listings: (listings || []).map((l) => ({ ...l }))
+    listings: (listings || []).map((l) => ({ ...l })),
+    ...(active ? {} : { publish: { price: MINI_PRICE_MXN } })
   };
 }
 
@@ -79,6 +88,9 @@ export function renderPage(template, model, { origin = '', focus = null } = {}) 
   } else if (model.state === 'paused') {
     title = `${a.name} · PropLync Mini`;
     desc = 'Esta página no está disponible por ahora.';
+  } else if (model.state === 'preview') {
+    title = `Vista previa · ${a.name}`;
+    desc = 'Vista previa privada. Esta página aún no es pública.';
   } else if (pick) {
     const where = [pick.neighborhood, pick.town].filter(Boolean).join(', ');
     title = `${pick.title_es || pick.title_en || 'Propiedad'} · ${a.name}`;
@@ -100,7 +112,8 @@ export function renderPage(template, model, { origin = '', focus = null } = {}) 
     `<meta property="og:type" content="website">`,
     canonical ? `<meta property="og:url" content="${escAttr(canonical)}"><link rel="canonical" href="${escAttr(canonical)}">` : '',
     image ? `<meta property="og:image" content="${escAttr(image)}"><meta name="twitter:card" content="summary_large_image">` : '',
-    model.state === 'active' ? '' : '<meta name="robots" content="noindex">'
+    model.state === 'active' ? '' : '<meta name="robots" content="noindex">',
+    model.state === 'preview' ? '<meta name="referrer" content="no-referrer">' : ''
   ].filter(Boolean).join('\n');
   const tokens = { '__TITLE__': escAttr(title), '__META__': meta, '__DATA__': jsonForScript({ ...model, focus: pick ? pick.public_id : null }) };
   return template.replace(/__TITLE__|__META__|__DATA__/g, (k) => tokens[k]);
@@ -110,6 +123,7 @@ export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.status(405).json({ error: 'method_not_allowed' }); return; }
   const slug = String((req.query && req.query.slug) || '').toLowerCase();
   const focus = PUBLIC_ID.test(String(req.query && req.query.p || '')) ? String(req.query.p) : null;
+  const vista = String((req.query && req.query.vista) || '');
   const host = req.headers['x-forwarded-host'] || req.headers.host || '';
   const origin = host ? `https://${host}` : '';
   const send = (status, model, cache) => {
@@ -129,14 +143,24 @@ export default async function handler(req, res) {
       res.redirect(302, `${PROPLYNC_SITE}/agencia/${encodeURIComponent(slug)}`);
       return;
     }
+    const active = pageActive(agency);
+    if (vista && active) {
+      res.setHeader('Cache-Control', 'no-store');
+      res.redirect(302, `/${encodeURIComponent(slug)}${focus ? '?p=' + encodeURIComponent(focus) : ''}`);
+      return;
+    }
+    // A preview link is good only for this agency; a stale or forged one falls back to the public view.
+    const preview = !!vista && !active && readPreviewToken(vista) === String(agency.id);
     let listings = [];
-    if (pageActive(agency)) {
+    if (active || preview) {
       const { data, error: lErr } = await svc.from('listings').select(LISTING_FIELDS)
-        .eq('agency_id', agency.id).eq('status', 'published').order('created_at', { ascending: false }).limit(30);
+        .eq('agency_id', agency.id).in('status', preview ? ['published', 'draft'] : ['published'])
+        .order('created_at', { ascending: false }).limit(30);
       if (lErr) throw lErr;
       listings = data || [];
     }
-    const model = buildModel(agency, listings);
+    const model = buildModel(agency, listings, Date.now(), { preview });
+    if (preview) res.setHeader('Referrer-Policy', 'no-referrer');
     // A live page can sit in the CDN for a minute; a hidden one never, so payment shows at once.
     send(200, model, model.state === 'active' ? 'public, max-age=0, s-maxage=60, stale-while-revalidate=300' : 'no-store');
   } catch (err) {

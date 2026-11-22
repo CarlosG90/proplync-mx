@@ -178,3 +178,62 @@ test('Mini events endpoint: only Mini names, POST only, payment steps are server
   assert.equal(res.statusCode, 202);
   assert.equal(inserts[0].name, 'mini_view');
 });
+
+/* ---------- preview: the owner sees the finished page before paying ---------- */
+const { makePreviewToken, readPreviewToken, PREVIEW_TTL_SEC } = await import('../mini/api/_preview.js');
+const { handlePreviewLink } = await import('../mini/api/panel.js');
+const ENV = { SUPABASE_SERVICE_ROLE_KEY: 'test-service-key' };
+
+test('preview token: grants one agency, expires, and cannot be forged or edited', () => {
+  const now = Date.now();
+  const tok = makePreviewToken('a1', { now, env: ENV });
+  assert.equal(readPreviewToken(tok, { now, env: ENV }), 'a1');
+  assert.equal(readPreviewToken(tok, { now: now + (PREVIEW_TTL_SEC + 5) * 1000, env: ENV }), null);
+  assert.equal(readPreviewToken(tok, { now, env: { SUPABASE_SERVICE_ROLE_KEY: 'other-key' } }), null);
+  const [, sig] = tok.split('.');
+  const forged = Buffer.from(JSON.stringify({ a: 'a2', e: Math.floor(now / 1000) + 999 })).toString('base64url') + '.' + sig;
+  assert.equal(readPreviewToken(forged, { now, env: ENV }), null);
+  for (const bad of ['', 'x', 'x.y', null, 'a'.repeat(500)]) assert.equal(readPreviewToken(bad, { now, env: ENV }), null);
+  assert.equal(makePreviewToken('a1', { env: {} }), null);
+});
+
+test('page model: a preview shows the unpaid page in full, with the price to publish', () => {
+  const m = buildModel(agency({ plan_expires_at: null }), [listing()], Date.now(), { preview: true });
+  assert.equal(m.state, 'preview');
+  assert.equal(m.listings.length, 1);
+  assert.equal(m.agency.whatsapp_number, '+52 998 1');
+  assert.equal(m.agency.plan_expires_at, undefined);
+  assert.ok(m.publish && m.publish.price > 0);
+  // a paid page stays a live page, and a live page carries no publish prompt
+  const live = buildModel(agency(), [listing()], Date.now(), { preview: true });
+  assert.equal(live.state, 'active');
+  assert.equal(live.publish, undefined);
+});
+
+test('render: a preview is private (noindex, no canonical, no referrer)', () => {
+  const html = renderPage(TEMPLATE, buildModel(agency({ plan_expires_at: null }), [listing()], Date.now(), { preview: true }), { origin: 'https://m.example' });
+  assert.match(html, /<meta name="robots" content="noindex">/);
+  assert.match(html, /<meta name="referrer" content="no-referrer">/);
+  assert.doesNotMatch(html, /rel="canonical"/);
+  assert.match(html, /<title>Vista previa · Nadia<\/title>/);
+});
+
+test('preview link handler: POST only, signed in, Mini pages only, link to its own slug', async () => {
+  const d = (svc, user) => ({ ...deps(svc, user), makePreviewToken: (id) => 'tok-' + id });
+  let res = fakeRes();
+  await handlePreviewLink({ method: 'GET' }, res, d(fakeSvc(agency())));
+  assert.equal(res.statusCode, 405);
+  res = fakeRes();
+  await handlePreviewLink({ method: 'POST' }, res, d(fakeSvc(agency()), null));
+  assert.equal(res.statusCode, 401);
+  res = fakeRes();
+  await handlePreviewLink({ method: 'POST' }, res, d(fakeSvc(agency({ plan: 'pro' }))));
+  assert.equal(res.body.error, 'not_a_mini_page');
+  res = fakeRes();
+  await handlePreviewLink({ method: 'POST' }, res, d(fakeSvc(agency({ plan_expires_at: null }))));
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.url, '/nadia?vista=tok-a1');
+  res = fakeRes();
+  await handlePreviewLink({ method: 'POST' }, res, { ...d(fakeSvc(agency())), makePreviewToken: () => null });
+  assert.equal(res.statusCode, 503);
+});
