@@ -244,3 +244,18 @@ test('miniServiceFields: prices are checked like the panel\'s', () => {
   assert.throws(() => miniServiceFields({ title_es: 'x', price: -5 }), /invalid_service_price/);
   assert.equal(miniServiceFields({ title_es: 'x', price: 10, price_kind: 'quote' }).price, null);
 });
+
+// ---------- the operator's `create` (scripts/mini.mjs) ----------
+
+test('operator create: the card flags go through the panel\'s rules', async () => {
+  const { createCard } = await import('../scripts/mini.mjs');
+  const ok = createCard({ name: ' Gestoria ', type: 'professional', whatsapp: '+52 238 000 0000', tags: 'Avalúos, Planos, ' });
+  assert.equal(ok.name, 'Gestoria');
+  assert.equal(ok.card.business_type, 'professional');
+  assert.deepEqual(ok.card.services, ['Avalúos', 'Planos']);
+  assert.equal(createCard({ name: 'X' }).card.business_type, 'real_estate', 'default type');
+  assert.throws(() => createCard({ name: 'X', type: 'circus' }), /invalid_business_type/);
+  assert.throws(() => createCard({ type: 'trades' }), /missing --name/);
+  assert.throws(() => createCard({ name: 'X', whatsapp: 'llamame' }), /invalid_whatsapp_number/);
+  assert.throws(() => createCard({ name: 'X', 'public-email': 'no-es-correo' }), /invalid_public_email/);
+});
