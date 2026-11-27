@@ -111,6 +111,20 @@ __META__
   .mp-interest svg{width:15px;height:15px}
   .mp-empty{text-align:center;color:var(--on-sand);padding:40px 16px;border:1px dashed var(--line);border-radius:18px;background:var(--white)}
 
+  /* Services (mini_services, supabase/019): the catalog of a service business. Same paper cards as the properties,
+     no photo required: many trades have none, so the title and the price carry the card. */
+  .mp-svcs{padding:36px 0 8px}
+  .mp-svcs + .mp-list{padding-top:28px}
+  .mp-svc{background:var(--white);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-sm)}
+  .mp-svc-img{aspect-ratio:16/9;background:var(--sand) center/cover no-repeat}
+  .mp-svc .mp-body{padding:16px 18px 4px}
+  .mp-svc-desc{color:var(--on-sand);font-size:.9rem;line-height:1.5;margin:8px 0 0;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  .mp-svc-desc.open{display:block;-webkit-line-clamp:unset}
+  .mp-svc-more{all:unset;cursor:pointer;color:var(--sea-deep);font:600 .8rem var(--body);margin-top:6px;display:inline-block}
+  .mp-svc-more:focus-visible{outline:2px solid var(--mp-accent);outline-offset:2px;border-radius:4px}
+  .mp-svc-meta{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;color:var(--on-sand-light);margin-top:8px}
+  .mp-price.quote{font-family:var(--body);font-weight:600;font-size:.9rem;color:var(--on-sand)}
+
   /* the property sheet */
   .mp-sheet{border:0;padding:0;margin:auto 0 0;width:100%;max-width:100%;max-height:94vh;border-radius:22px 22px 0 0;background:var(--paper);color:var(--ink);overflow:hidden}
   .mp-sheet::backdrop{background:rgba(10,22,40,.6)}
@@ -199,6 +213,7 @@ __META__
 <script src="/js/escape.js"></script>
 <script src="/js/i18n.js"></script>
 <script src="/js/track.js"></script>
+<script src="/js/business-types.js"></script>
 <script>
 (function () {
   'use strict';
@@ -206,6 +221,7 @@ __META__
   try { data = JSON.parse(document.getElementById('mp-data').textContent) || {}; } catch (e) { data = { state: 'not_found' }; }
   var agency = data.agency || {};
   var listings = data.listings || [];
+  var services = data.services || [];
   var filter = { op: 'all', town: 'all' };
   var root = document.getElementById('mp-root');
   var PREVIEW = data.state === 'preview';
@@ -243,6 +259,16 @@ __META__
     return t('Hola, me interesa esta propiedad: ', 'Hi, I am interested in this property: ') + title(p) + ' (' + money(p) + ') ' + pageLink(p);
   }
   function icon(id) { return '<svg aria-hidden="true"><use href="#' + id + '"/></svg>'; }
+
+  /* The business template (mini/js/business-types.js). A page with only properties keeps the original wording. */
+  function type() { return (window.MINI_TYPES && MINI_TYPES.typeFor(agency.business_type)) || { key: 'real_estate', hasListings: true, eyebrow: ['Servicios', 'Services'], greeting: ['Hola, vi tu página y quiero más información.', 'Hi, I saw your page and would like more information.'] }; }
+  function pair(p) { return isEn() ? p[1] : p[0]; }
+  function propertiesOnly() { return !services.length && type().hasListings; }
+  function greeting() {
+    return propertiesOnly() ? t('Hola, vi tus propiedades en línea y quiero más información.', 'Hi, I saw your properties online and would like more information.') : pair(type().greeting);
+  }
+  /* Properties show when there are some, or on a real-estate page with nothing else yet ("coming soon"). */
+  function showListings() { return listings.length > 0 || propertiesOnly(); }
 
   /* Brand colour: pick dark or light text by real WCAG contrast (same rule as PropLync's agency page). */
   var INK_DARK = '#0a1628', INK_LIGHT = '#f5f1ea';
@@ -294,7 +320,7 @@ __META__
 
   function heroHTML() {
     var cover = cssUrl(agency.cover_url);
-    var wa = waLink(t('Hola, vi tus propiedades en línea y quiero más información.', 'Hi, I saw your properties online and would like more information.'));
+    var wa = waLink(greeting());
     var tel = digits(agency.phone);
     var mail = agency.public_email ? safeUrl('mailto:' + agency.public_email) : '';
     var map = agency.maps_url ? safeUrl(agency.maps_url) : (agency.address ? safeUrl('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(agency.address)) : '');
@@ -314,7 +340,7 @@ __META__
     var shade = 'linear-gradient(180deg,rgba(10,22,40,.6),rgba(10,22,40,.94))';
     return '<section class="mp-hero' + (cover ? ' has-cover' : '') + '"' + (cover ? ' style="background-image:' + shade + ',url(\'' + cover + '\')"' : '') + '><div class="mp-wrap">' +
       markHTML('mp-logo') +
-      '<div class="mp-eyebrow">' + escapeHtml(t('Portafolio de propiedades', 'Property portfolio')) + '</div>' +
+      '<div class="mp-eyebrow">' + escapeHtml(propertiesOnly() ? t('Portafolio de propiedades', 'Property portfolio') : pair(type().eyebrow)) + '</div>' +
       '<h1 class="mp-name">' + nameHTML(agency.name) + '</h1>' +
       (agency.bio ? '<p class="mp-bio">' + escapeHtml(agency.bio) + '</p>' : '') +
       '<div class="mp-actions" id="mp-hero-actions">' +
@@ -346,6 +372,43 @@ __META__
       '<div class="mp-foot"><span class="mp-price">' + escapeHtml(money(p)) + (p.amount && per(p) ? ' <small>' + escapeHtml(per(p)) + '</small>' : '') + '</span>' +
         (wa ? '<a class="mp-interest" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Me interesa', 'I\'m interested')) + '</a>' : '') +
       '</div></article>';
+  }
+
+  function svcTitle(x) { return (isEn() ? (x.title_en || x.title_es) : (x.title_es || x.title_en)) || ''; }
+  function svcDesc(x) { return (isEn() ? (x.description_en || x.description_es) : (x.description_es || x.description_en)) || ''; }
+  function svcPrice(x) {
+    if (x.price_kind === 'quote' || x.price == null) return '';
+    var n = (x.currency || 'MXN') + ' $' + Number(x.price).toLocaleString('en-US');
+    if (x.price_kind === 'from') return t('Desde ', 'From ') + n;
+    if (x.price_kind === 'per_m2') return n + ' ' + t('por m²', 'per m²');
+    return n;
+  }
+  function svcDuration(x) {
+    var m = Number(x.duration_min);
+    if (!m) return '';
+    return m < 60 ? m + ' min' : (m % 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : (m / 60) + ' h');
+  }
+  function svcCardHTML(x) {
+    var img = cssUrl(x.image), price = svcPrice(x), desc = svcDesc(x), dur = svcDuration(x);
+    var wa = waLink(t('Hola, me interesa este servicio: ', 'Hi, I am interested in this service: ') + svcTitle(x) + (price ? ' (' + price + ')' : '') + ' ' + pageLink());
+    return '<article class="mp-svc">' +
+      (img ? '<div class="mp-svc-img" style="background-image:url(\'' + img + '\')" role="img" aria-label="' + escapeHtml(svcTitle(x)) + '"></div>' : '') +
+      '<div class="mp-body"><h3 class="mp-title">' + escapeHtml(svcTitle(x)) + '</h3>' +
+        (desc ? '<p class="mp-svc-desc" id="d-' + escapeHtml(x.id) + '">' + escapeHtml(desc) + '</p>' +
+          (desc.length > 180 ? '<button class="mp-svc-more" type="button" data-more="' + escapeHtml(x.id) + '" aria-expanded="false" aria-controls="d-' + escapeHtml(x.id) + '">' + escapeHtml(t('Ver más', 'Read more')) + '</button>' : '') : '') +
+        (dur ? '<div class="mp-svc-meta">' + escapeHtml(dur) + '</div>' : '') +
+      '</div>' +
+      '<div class="mp-foot"><span class="mp-price' + (price ? '' : ' quote') + '">' + escapeHtml(price || t('Precio a cotizar', 'Price on request')) + '</span>' +
+        (wa ? '<a class="mp-interest" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Pedir', 'Ask')) + '</a>' : '') +
+      '</div></article>';
+  }
+  function servicesHTML() {
+    if (!services.length) return '';
+    return '<section class="mp-svcs" aria-labelledby="mp-svcs-h"><div class="mp-wrap">' +
+      '<div class="mp-list-head"><div class="mp-kicker">' + escapeHtml(services.length + ' ' + (services.length === 1 ? t('servicio', 'service') : t('servicios', 'services'))) + '</div>' +
+      '<h2 id="mp-svcs-h">' + escapeHtml(t('Lo que', 'What')) + ' <em>' + escapeHtml(t('ofrezco', 'I offer')) + '</em></h2></div>' +
+      '<div class="mp-grid">' + services.map(svcCardHTML).join('') + '</div>' +
+      '</div></section>';
   }
 
   function visible() {
@@ -410,7 +473,7 @@ __META__
 
   function render() {
     var html;
-    if (LIVE) html = barHTML() + heroHTML() + listHTML() + footHTML() + (PREVIEW ? publishHTML() : '');
+    if (LIVE) html = barHTML() + heroHTML() + servicesHTML() + (showListings() ? listHTML() : '') + footHTML() + (PREVIEW ? publishHTML() : '');
     else if (data.state === 'preview_loading') html = offHTML(t('Vista previa', 'Preview'), escapeHtml(t('Cargando…', 'Loading…')), '');
     else if (data.state === 'preview_private') html = offHTML(t('Vista previa privada', 'Private preview'),
       escapeHtml(t('Esta vista previa es', 'This preview is')) + ' <em>' + escapeHtml(t('privada', 'private')) + '</em>',
@@ -421,7 +484,7 @@ __META__
     root.innerHTML = html;
     var es = document.getElementById('es'), en = document.getElementById('en');
     if (es) { es.classList.toggle('on', !isEn()); en.classList.toggle('on', isEn()); es.onclick = function () { setLang('es'); }; en.onclick = function () { setLang('en'); }; }
-    var wa = waLink(t('Hola, vi tus propiedades en línea y quiero más información.', 'Hi, I saw your properties online and would like more information.'));
+    var wa = waLink(greeting());
     document.body.classList.toggle('is-preview', PREVIEW);
     var floatHTML = data.state === 'active' && wa
       ? '<a class="mp-btn mp-btn-main" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Escribir por WhatsApp', 'Message on WhatsApp')) + '</a>' : '';
@@ -489,6 +552,14 @@ __META__
   root.addEventListener('click', function (e) {
     var open = e.target.closest('[data-open]');
     if (open) { openSheet(open.getAttribute('data-open')); return; }
+    var more = e.target.closest('[data-more]');
+    if (more) {
+      var d = document.getElementById('d-' + more.getAttribute('data-more'));
+      var on = d && d.classList.toggle('open');
+      more.setAttribute('aria-expanded', String(!!on));
+      more.textContent = on ? t('Ver menos', 'Show less') : t('Ver más', 'Read more');
+      return;
+    }
     var op = e.target.closest('[data-op]');
     if (op) { filter.op = op.getAttribute('data-op'); render(); return; }
     var town = e.target.closest('[data-town]');
@@ -506,15 +577,15 @@ __META__
   /* Count visits and WhatsApp taps (anonymous), so the agent's panel can later say what their page brings in. */
   document.addEventListener('click', function (e) {
     var a = e.target.closest('a[href^="https://wa.me/"]');
-    if (a && data.state === 'active') miniTrack('mini_interest', { slug: agency.slug, from: a.classList.contains('mp-interest') || a.closest('.mp-sheet-bar') ? 'property' : 'card' });
+    if (a && data.state === 'active') miniTrack('mini_interest', { slug: agency.slug, from: a.closest('.mp-svc') ? 'service' : a.classList.contains('mp-interest') || a.closest('.mp-sheet-bar') ? 'property' : 'card' });
   });
 
   function start(model) {
-    data = model; agency = data.agency || {}; listings = data.listings || [];
+    data = model; agency = data.agency || {}; listings = data.listings || []; services = data.services || [];
     PREVIEW = data.state === 'preview'; LIVE = data.state === 'active' || PREVIEW;
     brand();
     render();
-    if (data.state === 'active') miniTrack('mini_page_view', { slug: agency.slug, listings: listings.length, property: !!data.focus });
+    if (data.state === 'active') miniTrack('mini_page_view', { slug: agency.slug, listings: listings.length, services: services.length, property: !!data.focus });
     if (PREVIEW) miniTrack('mini_page_preview', { listings: listings.length });
     if (data.focus) openSheet(data.focus);
   }

@@ -1,7 +1,10 @@
 # PropLync Mini
 
-"All your properties in one link." A self-serve product for real-estate agents, sold from social ads:
-paste your WhatsApp inventory, see your page, confirm your email, pay MXN 249 for 3 months, share one link.
+"Your business in one link." A self-serve page sold from social ads. It started with real-estate agents
+(paste your WhatsApp inventory, see your page, confirm your email, pay MXN 249 for 3 months, share one link)
+and now serves anyone who sells services: `agencies.business_type` picks a template from `js/business-types.js`
+(real estate, professional services, trades, beauty, or general), and the page shows a services catalog
+(`mini_services`, migration 019) with or without properties.
 
 It runs as **its own Vercel project** (Root Directory `mini`), so it has its own domain, deploys and
 12-function budget. It shares PropLync's Supabase database, auth and storage, and runs PropLync's own
@@ -21,7 +24,7 @@ failed at runtime. Never edit the copy: change `api/` and run `node scripts/sync
 
 ## Functions (4 of 12)
 `api/signup.js` (status, create) · `api/import.js` (paste → properties) · `api/panel.js` (card + listings via
-`api/my-listings.js`, `paid-notice`, `preview`) · `api/page.js` (public page). The preview address carries no secret:
+`api/my-listings.js`, services via `api/_services.js`, `paid-notice`, `preview`) · `api/page.js` (public page). The preview address carries no secret:
 `/:slug?vista=1` is an empty shell that loads the page with the owner's own session, so a shared preview link shows nothing.
 
 ## Set up the Vercel project (once)

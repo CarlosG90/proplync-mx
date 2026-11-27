@@ -35,7 +35,7 @@ import { enforceRateLimit } from './_lib/ratelimit.js';
 import { safeDetail, logDegraded } from './_lib/health.js';
 import { provisionAgency } from './_lib/agency.js';
 import { PLANS, MINI_PRICE_MXN, MINI_PERIOD_DAYS } from './_lib/plans.js';
-import { validateListingFields } from './_lib/listing-fields.js';
+import { validateListingFields, BUSINESS_TYPE_KEYS } from './_lib/listing-fields.js';
 import { notifyOperator } from './_lib/notify.js';
 import { waitUntil } from '@vercel/functions';
 
@@ -80,6 +80,25 @@ export function miniListingFields(p) {
   return { ...fields, operation: x.operation === 'rental' ? 'rental' : 'sale', status: 'draft' };
 }
 
+/* A service business signs up with services instead of properties (supabase/019).
+   Kept to what the landing sends: a title and, optionally, a price. The panel edits the rest. */
+export const MINI_SIGNUP_SERVICES = 20;
+const PRICE_KINDS = ['fixed', 'from', 'per_m2', 'quote'];
+
+/** One service from the signup → a mini_services row. Throws with the 400 code. */
+export function miniServiceFields(x, i = 0) {
+  const o = x && typeof x === 'object' ? x : { title_es: x };
+  const title = String(o.title_es || o.title || '').trim();
+  if (!title) throw new Error('missing_service_title');
+  if (title.length > 120) throw new Error('service_title_too_long');
+  const titleEn = o.title_en == null ? null : String(o.title_en).trim().slice(0, 120) || null;
+  let price = o.price == null || o.price === '' ? null : Number(o.price);
+  if (price !== null && (!Number.isFinite(price) || price < 0 || price > 1e10)) throw new Error('invalid_service_price');
+  let kind = PRICE_KINDS.includes(o.price_kind) ? o.price_kind : (price !== null ? 'fixed' : 'quote');
+  if (kind === 'quote') price = null;
+  return { title_es: title, title_en: titleEn, price, price_kind: kind, currency: o.currency === 'USD' ? 'USD' : 'MXN', sort: i * 10, status: 'published' };
+}
+
 async function signedInUser(req, svc) {
   const authz = (req.headers && req.headers.authorization) || '';
   const token = authz.startsWith('Bearer ') ? authz.slice(7) : null;
@@ -94,8 +113,9 @@ async function signedInUser(req, svc) {
 }
 
 /**
- * POST ?action=mini { agencyName, whatsapp_number, listings: [...] } with the agent's session.
- * Creates the agency on plan mini, not yet paid, and saves up to 10 listings as drafts; answers { slug }.
+ * POST ?action=mini { agencyName, whatsapp_number, business_type?, listings: [...], services?: [...] } with the session.
+ * Creates the agency on plan mini, not yet paid, and saves up to 10 listings as drafts and up to 20 services
+ * (shown only once the page is paid); answers { slug }. It needs listings or services, at least one.
  * `deps` lets the tests replace the environment, the database and the operator alert.
  */
 export async function handleMiniSignup(req, res, deps = {}) {
@@ -106,16 +126,21 @@ export async function handleMiniSignup(req, res, deps = {}) {
   const user = await signedInUser(req, svc);
   if (!user) { res.status(401).json({ error: 'sign_in_required' }); return; }
 
-  const { agencyName, whatsapp_number: wa, listings } = req.body || {};
+  const { agencyName, whatsapp_number: wa, listings, services, business_type: bt } = req.body || {};
   const name = String(agencyName || '').trim();
   if (!name || name.length > 120) { res.status(400).json({ error: 'missing_agency_name' }); return; }
   const whatsapp = String(wa || '').trim();
   if (!PHONE.test(whatsapp)) { res.status(400).json({ error: 'invalid_whatsapp_number' }); return; }
+  // No type sent = the original real-estate landing, so older pages and ads keep working.
+  const businessType = bt == null || bt === '' ? 'real_estate' : bt;
+  if (!BUSINESS_TYPE_KEYS.includes(businessType)) { res.status(400).json({ error: 'invalid_business_type' }); return; }
   const list = Array.isArray(listings) ? listings.slice(0, PLANS.mini.listings) : [];
-  if (!list.length) { res.status(400).json({ error: 'no_listings' }); return; }
+  const svcList = Array.isArray(services) ? services.slice(0, MINI_SIGNUP_SERVICES) : [];
+  // A page needs something to show: properties, services, or both.
+  if (!list.length && !svcList.length) { res.status(400).json({ error: businessType === 'real_estate' ? 'no_listings' : 'no_services' }); return; }
 
-  let rows;
-  try { rows = list.map(miniListingFields); }
+  let rows, svcRows;
+  try { rows = list.map(miniListingFields); svcRows = svcList.map(miniServiceFields); }
   catch (err) { res.status(400).json({ error: err.message || 'invalid_listing' }); return; }
 
   // One agency per account. A returning agent goes to the dashboard they already have.
@@ -127,14 +152,20 @@ export async function handleMiniSignup(req, res, deps = {}) {
     agency = await (deps.provisionAgency || provisionAgency)(svc, { userId: user.id, agencyName: name, plan: 'mini' });
     // plan_expires_at stays null: not paid yet, so the page is not live (plans.js pageActive).
     const { error: upErr } = await svc.from('agencies')
-      .update({ whatsapp_number: whatsapp, plan_expires_at: null }).eq('id', agency.id);
+      .update({ whatsapp_number: whatsapp, plan_expires_at: null, business_type: businessType }).eq('id', agency.id);
     if (upErr) throw upErr;
     // The ids come back so the page can attach the photos the agent picked (uploaded
     // under <agencyId>/… once they are a member, then saved through my-listings).
-    const { data, error: insErr } = await svc.from('listings')
-      .insert(rows.map((r) => ({ ...r, agency_id: agency.id }))).select('id, public_id');
-    if (insErr) throw insErr;
-    inserted = data || [];
+    if (rows.length) {
+      const { data, error: insErr } = await svc.from('listings')
+        .insert(rows.map((r) => ({ ...r, agency_id: agency.id }))).select('id, public_id');
+      if (insErr) throw insErr;
+      inserted = data || [];
+    }
+    if (svcRows.length) {
+      const { error: sErr } = await svc.from('mini_services').insert(svcRows.map((r) => ({ ...r, agency_id: agency.id })));
+      if (sErr) throw sErr;
+    }
   } catch (err) {
     logDegraded('onboard:mini', err);
     res.status(500).json({ error: 'mini_signup_failed', detail: safeDetail(err) });
@@ -144,14 +175,16 @@ export async function handleMiniSignup(req, res, deps = {}) {
   /* Until Mercado Pago is connected, a person collects the payment, so tell them now. */
   const alert = (deps.notifyOperator || notifyOperator)({
     subject: `Mini: pagina lista para cobrar (${name})`,
-    text: `${name} preparo su pagina con ${rows.length} propiedades y espera el pago (MXN ${MINI_PRICE_MXN}, ${MINI_PERIOD_DAYS} dias).\n` +
+    text: `${name} preparo su pagina (${businessType}) con ${[rows.length ? rows.length + ' propiedades' : '', svcRows.length ? svcRows.length + ' servicios' : ''].filter(Boolean).join(' y ')} ` +
+      `y espera el pago (MXN ${MINI_PRICE_MXN}, ${MINI_PERIOD_DAYS} dias).\n` +
       `Correo: ${user.email || '-'}\nWhatsApp: ${whatsapp}\nSlug: ${agency.slug}\n\n` +
       `Cuando pague: node scripts/mini.mjs activate ${agency.slug}`
   }).catch((err) => logDegraded('onboard:mini-notify', err));
   if (deps.notifyOperator) await alert; else waitUntil(alert);
 
   res.status(200).json({
-    slug: agency.slug, agency_id: agency.id, status: 'pending_payment', saved: rows.length,
+    slug: agency.slug, agency_id: agency.id, status: 'pending_payment', saved: rows.length, services_saved: svcRows.length,
+    business_type: businessType,
     listings: inserted.map((l) => ({ id: l.id, public_id: l.public_id })),
     price_mxn: MINI_PRICE_MXN, period_days: MINI_PERIOD_DAYS
   });

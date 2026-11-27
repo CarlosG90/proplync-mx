@@ -14,12 +14,18 @@
  * -----------------------------------------------------------------------------
  */
 
-// The last six are the agent's card on /agencia/:slug (migration 018): call,
-// email, location, services and a line about them.
+// phone..bio are the agent's card on /agencia/:slug (migration 018): call,
+// email, location, services and a line about them. business_type (migration 019)
+// picks the Mini page's template.
 export const AGENCY_WRITABLE_FIELDS = ['name', 'logo_url', 'cover_url', 'primary_color', 'whatsapp_number',
-  'phone', 'public_email', 'address', 'maps_url', 'services', 'bio'];
+  'phone', 'public_email', 'address', 'maps_url', 'services', 'bio', 'business_type'];
 export const AGENCY_SELECT = 'id, name, slug, logo_url, cover_url, primary_color, whatsapp_number, ' +
-  'phone, public_email, address, maps_url, services, bio, plan, plan_expires_at';
+  'phone, public_email, address, maps_url, services, bio, business_type, plan, plan_expires_at';
+
+// The same closed list as the agencies_business_type_check constraint (019) and
+// the templates in mini/js/business-types.js. Written out because this file has
+// no imports; test/mini-services.test.mjs fails if the three disagree.
+export const BUSINESS_TYPE_KEYS = ['real_estate', 'professional', 'trades', 'beauty', 'general'];
 
 export function pickAgencyWritable(body) {
   const out = {};
@@ -127,6 +133,9 @@ export function validateAgencyFields(fields) {
       throw new BadField('invalid_maps_url');
     }
     out.maps_url = out.maps_url.trim();
+  }
+  if ('business_type' in out) {
+    if (!BUSINESS_TYPE_KEYS.includes(out.business_type)) throw new BadField('invalid_business_type');
   }
   if ('services' in out && out.services != null) {
     if (!Array.isArray(out.services) || out.services.length > 8) throw new BadField('invalid_services');
