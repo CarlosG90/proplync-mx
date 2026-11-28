@@ -32,6 +32,8 @@ import { readFileSync } from 'node:fs';
 import { getServiceClient } from './_proplync/_lib/supabase.js';
 import { pageActive } from './_proplync/_lib/plans.js';
 import { AGENCY_FIELDS, LISTING_FIELDS, buildModel } from './_page-model.js';
+import { PUBLIC_SERVICE_FIELDS } from './_services.js';
+import { typeFor } from './_business-types.js';
 
 export { AGENCY_FIELDS, LISTING_FIELDS, buildModel };
 import { logDegraded } from './_proplync/_lib/health.js';
@@ -74,11 +76,15 @@ export function renderPage(template, model, { origin = '', focus = null } = {}) 
       .filter(Boolean).join(' · ');
     image = httpsOnly(firstPhoto(pick)) || httpsOnly(a.cover_url) || httpsOnly(a.logo_url);
   } else {
+    const svcs = model.services || [];
     const towns = [...new Set(list.map((l) => l.town).filter(Boolean))].slice(0, 3).join(', ');
-    title = `${a.name} · Propiedades`;
-    desc = `${list.length} ${list.length === 1 ? 'propiedad' : 'propiedades'}${towns ? ' en ' + towns : ''}. ` +
+    const props = list.length ? `${list.length} ${list.length === 1 ? 'propiedad' : 'propiedades'}${towns ? ' en ' + towns : ''}` : '';
+    // A services page is titled by what it offers, never "0 propiedades".
+    const offer = svcs.slice(0, 3).map((x) => x.title_es || x.title_en).filter(Boolean).join(', ');
+    title = `${a.name} · ${svcs.length ? typeFor(a.business_type).eyebrow[0] : 'Propiedades'}`;
+    desc = [offer, props].filter(Boolean).join(' · ') + '. ' +
       (a.bio ? a.bio.slice(0, 140) : 'Escríbeme por WhatsApp para más información.');
-    image = httpsOnly(a.cover_url) || httpsOnly(firstPhoto(list[0])) || httpsOnly(a.logo_url);
+    image = httpsOnly(a.cover_url) || httpsOnly(firstPhoto(list[0])) || httpsOnly(svcs[0] && svcs[0].image) || httpsOnly(a.logo_url);
   }
   const canonical = model.state === 'active' && a.slug ? `${origin}/${a.slug}${pick ? '?p=' + encodeURIComponent(pick.public_id) : ''}` : '';
   const meta = [
@@ -126,14 +132,20 @@ export default async function handler(req, res, deps = {}) {
     }
     // The preview's content comes from the owner's session in the browser, never from this response.
     if (vista) { send(200, { state: 'preview_private', agency: { slug: agency.slug } }, 'no-store'); return; }
-    let listings = [];
+    let listings = [], services = [];
     if (active) {
-      const { data, error: lErr } = await svc.from('listings').select(LISTING_FIELDS)
-        .eq('agency_id', agency.id).eq('status', 'published').order('created_at', { ascending: false }).limit(30);
-      if (lErr) throw lErr;
-      listings = data || [];
+      const [l, s] = await Promise.all([
+        svc.from('listings').select(LISTING_FIELDS)
+          .eq('agency_id', agency.id).eq('status', 'published').order('created_at', { ascending: false }).limit(30),
+        svc.from('mini_services').select(PUBLIC_SERVICE_FIELDS)
+          .eq('agency_id', agency.id).eq('status', 'published').order('sort', { ascending: true }).limit(40)
+      ]);
+      if (l.error) throw l.error;
+      if (s.error) throw s.error;
+      listings = l.data || [];
+      services = s.data || [];
     }
-    const model = buildModel(agency, listings);
+    const model = buildModel(agency, listings, Date.now(), { services });
     // A live page can sit in the CDN for a minute; a hidden one never, so payment shows at once.
     send(200, model, model.state === 'active' ? 'public, max-age=0, s-maxage=60, stale-while-revalidate=300' : 'no-store');
   } catch (err) {

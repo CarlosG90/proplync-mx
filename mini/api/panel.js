@@ -12,6 +12,8 @@
  *       field validation (api/_lib/listing-fields.js), RLS and the search mirror
  *       are the same rules the PropLync dashboard runs.
  *   POST ?action=paid-notice  "Ya pagué": the customer reports a payment.
+ *   GET/POST/PUT/DELETE ?resource=services (&id=)  the services catalog
+ *       (mini_services, supabase/019; rules in api/_services.js).
  *   GET ?action=preview&slug=  the customer's own page as buyers will see it,
  *       drafts included, before it is paid. Only for the signed-in owner of that
  *       slug: the preview address (/:slug?vista=1) carries no secret, so a shared
@@ -35,6 +37,7 @@ import { safeDetail, logDegraded } from './_proplync/_lib/health.js';
 import { miniState, MINI_PRICE_MXN } from './_proplync/_lib/plans.js';
 import { notifyOperator } from './_proplync/_lib/notify.js';
 import { buildModel, AGENCY_FIELDS, LISTING_FIELDS } from './_page-model.js';
+import { handleServices, PUBLIC_SERVICE_FIELDS } from './_services.js';
 
 export const PAY_METHODS = ['transfer', 'deposit', 'oxxo', 'other'];
 
@@ -112,14 +115,36 @@ export async function handlePreview(req, res, deps = {}) {
     const { data: listings, error: lErr } = await svc.from('listings').select(LISTING_FIELDS)
       .eq('agency_id', agency.id).in('status', ['published', 'draft']).order('created_at', { ascending: false }).limit(30);
     if (lErr) throw lErr;
-    res.status(200).json(buildModel(agency, listings || [], Date.now(), { preview: true }));
+    // Hidden services stay hidden in the preview too: it shows what clients will see.
+    const { data: services, error: sErr } = await svc.from('mini_services').select(PUBLIC_SERVICE_FIELDS)
+      .eq('agency_id', agency.id).eq('status', 'published').order('sort', { ascending: true }).limit(40);
+    if (sErr) throw sErr;
+    res.status(200).json(buildModel(agency, listings || [], Date.now(), { preview: true, services: services || [] }));
   } catch (err) {
     logDegraded('mini:preview', err);
     res.status(500).json({ error: 'preview_failed', detail: safeDetail(err) });
   }
 }
 
+/** The services catalog. Signed in; only the caller's own agency's rows. */
+export async function handleServicesRoute(req, res, deps = {}) {
+  if (await (deps.enforceRateLimit || enforceRateLimit)(req, res, req.method === 'GET'
+    ? { bucket: 'mini-services-read', limit: 240, windowSec: 3600 }
+    : { bucket: 'mini-services-write', limit: 90, windowSec: 3600 })) return;
+  res.setHeader('Cache-Control', 'no-store');
+  const auth = await (deps.requireAgencyUser || requireAgencyUser)(req);
+  if (!auth) { res.status(401).json({ error: 'unauthorized' }); return; }
+  const svc = (deps.getServiceClient || getServiceClient)();
+  try {
+    await handleServices(req, res, { auth, svc });
+  } catch (err) {
+    logDegraded('mini:services', err);
+    res.status(500).json({ error: 'services_failed', detail: safeDetail(err) });
+  }
+}
+
 export default async function handler(req, res) {
+  if (req.query && req.query.resource === 'services') return handleServicesRoute(req, res);
   if (req.query && req.query.action === 'paid-notice') return handlePaidNotice(req, res);
   if (req.query && req.query.action === 'preview') return handlePreview(req, res);
   return listingsHandler(req, res);

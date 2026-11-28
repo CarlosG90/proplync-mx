@@ -53,14 +53,17 @@ Agencies (SaaS)
 
 PropLync Mini (self-serve "all your properties in one link"; its OWN Vercel project, Root Directory mini/; mini/README.md)
   pages   mini/index.html (landing + paste → preview → email code → saved unpaid), mini/panel.html (account: status,
-          pay/renew, link+QR, properties, card), mini/p.html (public page /:slug, rendered by mini/api/page.js), legal drafts
+          pay/renew, link+QR, services, properties, card), mini/p.html (public page /:slug, rendered by mini/api/page.js), legal drafts
+  types   any service business (supabase/019): agencies.business_type picks a template in mini/js/business-types.js
+          (real_estate | professional | trades | beauty | general: labels, suggested services, case types + stages);
+          the catalog is mini_services (mini/api/_services.js, panel.js ?resource=services); listings only for real_estate
   shared  mini/api/_proplync/ = generated copy of the api/ files Mini uses (scripts/sync-mini-shared.mjs; test/mini-shared fails on drift)
   api     mini/api/signup.js → api/onboard.js handleMiniSignup · mini/api/import.js → api/extract.js handleBatch
           mini/api/panel.js → api/my-listings.js (+ paid-notice → events row + operator email) · mini/api/page.js
   rules   api/_lib/listing-fields.js (shared validation), plans.js mini / pageActive / miniState; unpaid or lapsed pages
           hide listings everywhere (Mini page, PropLync search, /propiedad); Mini listings never get stock photos
   ops     scripts/mini.mjs list (shows payment notices) | activate <slug> [--periods n]; payment details: mini/js/pay-config.js
-  tests   mini-signup, mini-project, plans, extract-batch
+  tests   mini-signup, mini-project, mini-services, plans, extract-batch
   main app /mini (mini.html) still live until the cutover PR redirects it to the Mini domain
   later   Mercado Pago, CRM for monthly, funnel events from the Mini pages
 ```

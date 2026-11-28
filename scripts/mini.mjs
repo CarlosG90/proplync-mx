@@ -13,6 +13,15 @@
  *   node scripts/mini.mjs activate <slug>           one paid period (3 months)
  *   node scripts/mini.mjs activate <slug> --periods 2
  *   node scripts/mini.mjs login-link <email>        one-time sign-in link to that customer's panel
+ *   node scripts/mini.mjs create <email> --name "<business>" [--type real_estate|professional|trades|beauty|general]
+ *        [--whatsapp "+52 …"] [--phone "+52 …"] [--public-email <addr>] [--tags "A, B"] [--suggested] [--dry-run]
+ *                                                   set up a page for a customer, unpaid, ready for them to finish
+ *
+ * create exists because the fastest way to sell a page is often to build it for the
+ * customer: the operator makes the account (email confirmed, no password: they sign
+ * in with an email code), the page with their contact data and, with --suggested,
+ * the template's services (mini/js/business-types.js). The page stays unpaid, so
+ * nothing is public until `activate`. The customer finishes it from /panel.
  *
  * login-link exists because the project still sends auth email through Supabase's
  * built-in mailer (only team addresses, 2 an hour). For a demo or a customer who
@@ -24,6 +33,9 @@
 
 import { parseArgs, serviceClient, die } from './_lib.mjs';
 import { MINI_PERIOD_DAYS, MINI_PRICE_MXN, pageActive } from '../api/_lib/plans.js';
+import { provisionAgency } from '../api/_lib/agency.js';
+import { validateAgencyFields } from '../api/_lib/listing-fields.js';
+import { typeFor, BUSINESS_TYPE_KEYS } from '../mini/api/_business-types.js';
 
 const day = (iso) => (iso ? new Date(iso).toISOString().slice(0, 10) : '-');
 
@@ -99,12 +111,82 @@ async function loginLink(svc, email) {
   console.log(`\n  One-time sign-in link for ${email} (works once, expires in about an hour):\n\n  ${data.properties.action_link}\n`);
 }
 
+/** No admin getUserByEmail exists, so page listUsers until the address turns up. */
+async function findUser(svc, email) {
+  for (let page = 1; page <= 20; page++) {
+    const { data, error } = await svc.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) throw error;
+    const hit = (data.users || []).find((u) => (u.email || '').toLowerCase() === email);
+    if (hit) return hit;
+    if (!data.users || data.users.length < 200) return null;
+  }
+  return null;
+}
+
+/** The card fields from the flags, checked by the same rules as a panel save. Pure, for tests. Throws with the code. */
+export function createCard(args) {
+  const type = args.type || 'real_estate';
+  if (!BUSINESS_TYPE_KEYS.includes(type)) throw new Error(`invalid_business_type (use ${BUSINESS_TYPE_KEYS.join(', ')})`);
+  const name = String(args.name || '').trim();
+  if (!name) throw new Error('missing --name');
+  const tags = args.tags ? String(args.tags).split(',').map((t) => t.trim()).filter(Boolean) : [];
+  const card = validateAgencyFields({
+    business_type: type,
+    whatsapp_number: args.whatsapp || null, phone: args.phone || null,
+    public_email: args['public-email'] || null, services: tags
+  });
+  return { name, card };
+}
+
+async function create(svc, email, args, dryRun) {
+  let plan;
+  try { plan = createCard(args); } catch (err) { die(err.message); }
+  const { name, card } = plan;
+  const suggested = args.flags.has('suggested') ? typeFor(card.business_type).services : [];
+  console.log(`\n  ${dryRun ? 'DRY RUN, nothing written.' : 'Creating'} Mini page "${name}" (${card.business_type}) for ${email}`);
+  console.log(`  Card: WhatsApp ${card.whatsapp_number || '-'} · phone ${card.phone || '-'} · public email ${card.public_email || '-'} · tags ${card.services.join(', ') || '-'}`);
+  console.log(`  Services to add: ${suggested.length ? '\n    - ' + suggested.map((x) => x.title_es).join('\n    - ') : 'none'}`);
+  if (dryRun) { console.log(''); return; }
+
+  let user = await findUser(svc, email);
+  if (user) {
+    const { data: member } = await svc.from('agency_members').select('agency_id').eq('user_id', user.id).limit(1).maybeSingle();
+    if (member) die(`${email} already has a page (agency ${member.agency_id}). Nothing created.`);
+  } else {
+    // Confirmed, no password: the customer signs in to /panel with an email code. No email is sent now.
+    const { data, error } = await svc.auth.admin.createUser({ email, email_confirm: true });
+    if (error) die(`Could not create the account: ${error.message}`);
+    user = data.user;
+  }
+  const agency = await provisionAgency(svc, { userId: user.id, agencyName: name, plan: 'mini' });
+  // plan_expires_at stays null: unpaid, nothing public until `activate`.
+  const { error: upErr } = await svc.from('agencies').update({ ...card, plan_expires_at: null }).eq('id', agency.id);
+  if (upErr) die(`Page ${agency.slug} created but the card did not save: ${upErr.message}`);
+  if (suggested.length) {
+    const rows = suggested.map((x, i) => ({ agency_id: agency.id, title_es: x.title_es, title_en: x.title_en, price_kind: 'quote', sort: i * 10 }));
+    const { error: sErr } = await svc.from('mini_services').insert(rows);
+    if (sErr) die(`Page ${agency.slug} created but the services did not save: ${sErr.message}`);
+  }
+  const site = (process.env.MINI_SITE_URL || 'https://proplync-mini.vercel.app').replace(/\/$/, '');
+  console.log(`\n  ✓ Page ready, unpaid: ${site}/${agency.slug}  (agency ${agency.id}, user ${user.id})`);
+  console.log(`    The customer signs in at ${site}/panel with ${email} (email code), or hand them:`);
+  console.log(`      node scripts/mini.mjs login-link ${email}`);
+  console.log(`    After payment: node scripts/mini.mjs activate ${agency.slug}\n`);
+}
+
 async function main() {
-  const args = parseArgs(process.argv.slice(2), ['help']);
+  const args = parseArgs(process.argv.slice(2), ['help', 'suggested', 'dry-run']);
   const [cmd, slug] = args._;
   if (!cmd || args.flags.has('help')) {
-    console.log('\n  node scripts/mini.mjs list\n  node scripts/mini.mjs activate <slug> [--periods n]\n  node scripts/mini.mjs login-link <email>\n');
+    console.log('\n  node scripts/mini.mjs list\n  node scripts/mini.mjs activate <slug> [--periods n]\n  node scripts/mini.mjs login-link <email>\n' +
+      '  node scripts/mini.mjs create <email> --name "<business>" [--type ' + BUSINESS_TYPE_KEYS.join('|') + ']\n' +
+      '       [--whatsapp "+52 …"] [--phone "+52 …"] [--public-email <addr>] [--tags "A, B"] [--suggested] [--dry-run]\n');
     return;
+  }
+  if (cmd === 'create') {
+    if (!slug || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(slug)) die('Which email? node scripts/mini.mjs create <email> --name "<business>"');
+    if (args.flags.has('dry-run')) return create(null, slug.toLowerCase(), args, true);
+    return create(serviceClient(), slug.toLowerCase(), args, false);
   }
   const svc = serviceClient();
   if (cmd === 'list') return list(svc);
@@ -118,7 +200,7 @@ async function main() {
     if (!slug || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(slug)) die('Which email? node scripts/mini.mjs login-link <email>');
     return loginLink(svc, slug.toLowerCase());
   }
-  die(`Unknown command "${cmd}". Use list, activate or login-link.`);
+  die(`Unknown command "${cmd}". Use list, activate, login-link or create.`);
 }
 
 // Run only from the command line, so the tests can import extendUntil.

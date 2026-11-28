@@ -84,6 +84,13 @@
   .pn-pill{font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:3px 8px;background:var(--sand-2);color:var(--on-sand)}
   .pn-pill.warn{background:rgba(201,169,110,.22);color:#7a5a1c}
   .pn-edit{flex:none}
+  .pn-ord{display:flex;flex-direction:column;gap:2px;flex:none}
+  .pn-ord button{all:unset;cursor:pointer;width:36px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;color:var(--on-sand);font-size:.8rem}
+  .pn-ord button:hover{background:var(--sand-2)}
+  .pn-ord button:focus-visible{outline:2px solid var(--gold)}
+  .pn-ord button[disabled]{opacity:.25;cursor:default}
+  .pn-check{display:flex;align-items:center;gap:10px;font-size:.9rem}
+  .pn-check input{width:20px;height:20px;accent-color:var(--gold)}
   .pn-count{font-family:var(--mono);font-size:.7rem;color:var(--on-sand-light)}
 
   /* forms */
@@ -213,7 +220,18 @@
         <div class="pn-qr"><img id="pn-qr" alt="QR"><p data-es="Ponlo en tu tarjeta, tus lonas o tus estados de WhatsApp. Lleva a tu página." data-en="Put it on your card, signs or WhatsApp status. It opens your page.">Ponlo en tu tarjeta, tus lonas o tus estados de WhatsApp. Lleva a tu página.</p></div>
       </section>
 
-      <section class="pn-card">
+      <section class="pn-card" id="pn-svc-card">
+        <div class="pn-eyebrow"><span data-es="Servicios" data-en="Services">Servicios</span><span class="pn-count" id="pn-svc-used"></span></div>
+        <h2 data-es="Lo que ofreces" data-en="What you offer">Lo que ofreces</h2>
+        <ul class="pn-list" id="pn-svcs"></ul>
+        <div class="pn-row">
+          <button class="pn-btn pn-gold" id="pn-svc-new" type="button"><svg><use href="#i-plus"/></svg><span data-es="Agregar servicio" data-en="Add service">Agregar servicio</span></button>
+          <button class="pn-btn pn-line" id="pn-svc-suggest" type="button" data-es="Agregar los sugeridos" data-en="Add the suggested ones">Agregar los sugeridos</button>
+        </div>
+        <div class="pn-msg" id="pn-svc-msg" aria-live="polite"></div>
+      </section>
+
+      <section class="pn-card" id="pn-props-card">
         <div class="pn-eyebrow"><span data-es="Propiedades" data-en="Properties">Propiedades</span><span class="pn-count" id="pn-used"></span></div>
         <h2 data-es="Lo que ven tus clientes" data-en="What your clients see">Lo que ven tus clientes</h2>
         <ul class="pn-list" id="pn-list"></ul>
@@ -228,14 +246,15 @@
         <div class="pn-eyebrow" data-es="Tu tarjeta" data-en="Your card">Tu tarjeta</div>
         <h2 data-es="Cómo te presentas" data-en="How you introduce yourself">Cómo te presentas</h2>
         <div class="pn-form" id="pn-card-form">
-          <label><span data-es="Tu nombre o el de tu inmobiliaria" data-en="Your name or your agency's">Tu nombre o el de tu inmobiliaria</span><input class="pn-in" id="c-name" maxlength="120"></label>
+          <label><span data-es="Tu nombre o el de tu negocio" data-en="Your name or your business's">Tu nombre o el de tu negocio</span><input class="pn-in" id="c-name" maxlength="120"></label>
+          <label><span data-es="Tipo de negocio" data-en="Type of business">Tipo de negocio</span> <small data-es="Cambia los textos de tu página y los servicios que te sugerimos." data-en="Changes your page's wording and the services we suggest.">Cambia los textos de tu página y los servicios que te sugerimos.</small><select class="pn-in" id="c-type"></select></label>
           <div class="pn-grid2">
             <label><span>WhatsApp</span><input class="pn-in" id="c-wa" inputmode="tel" placeholder="+52 998 123 4567"></label>
             <label><span data-es="Teléfono" data-en="Phone">Teléfono</span><input class="pn-in" id="c-phone" inputmode="tel"></label>
           </div>
           <label><span data-es="Correo público" data-en="Public email">Correo público</span><input class="pn-in" id="c-email" type="email"></label>
           <label><span data-es="Sobre ti" data-en="About you">Sobre ti</span> <small data-es="Una o dos frases. Máximo 600 caracteres." data-en="One or two sentences. 600 characters max.">Una o dos frases. Máximo 600 caracteres.</small><textarea class="pn-in" id="c-bio" maxlength="600"></textarea></label>
-          <label><span data-es="Servicios" data-en="Services">Servicios</span> <small data-es="Separados por comas, hasta 8. Ej.: Venta, Renta, Preventa" data-en="Comma separated, up to 8. E.g. Sale, Rent, Pre-sale">Separados por comas, hasta 8. Ej.: Venta, Renta, Preventa</small><input class="pn-in" id="c-services"></label>
+          <label><span data-es="Etiquetas" data-en="Tags">Etiquetas</span> <small data-es="Palabras cortas bajo tu nombre, separadas por comas, hasta 8. Ej.: Venta, Renta, Avalúos" data-en="Short words under your name, comma separated, up to 8. E.g. Sale, Rent, Appraisals">Palabras cortas bajo tu nombre, separadas por comas, hasta 8. Ej.: Venta, Renta, Avalúos</small><input class="pn-in" id="c-services"></label>
           <label><span data-es="Dirección u oficina" data-en="Address or office">Dirección u oficina</span><input class="pn-in" id="c-address" maxlength="200"></label>
           <div class="pn-grid2">
             <div class="pn-imgpick"><div class="pn-thumb" id="c-logo-prev"><svg><use href="#i-cam"/></svg></div><label class="pn-btn pn-line" style="min-height:40px"><span data-es="Logo o foto" data-en="Logo or photo">Logo o foto</span><input type="file" accept="image/*" id="c-logo" hidden></label></div>
@@ -288,6 +307,37 @@
   </div>
 </dialog>
 
+<!-- service editor -->
+<dialog class="pn-sheet" id="sv" aria-labelledby="sv-title">
+  <div class="pn-sheet-head"><h2 id="sv-title"></h2><button class="pn-x" type="button" data-close="sv" aria-label="Cerrar">×</button></div>
+  <div class="pn-sheet-body">
+    <div class="pn-form">
+      <label><span data-es="Nombre del servicio" data-en="Service name">Nombre del servicio</span><input class="pn-in" id="s-title" maxlength="120"></label>
+      <label><span data-es="Nombre en inglés" data-en="Name in English">Nombre en inglés</span> <small data-es="Opcional, para visitantes que leen en inglés." data-en="Optional, for visitors who read English.">Opcional, para visitantes que leen en inglés.</small><input class="pn-in" id="s-title-en" maxlength="120"></label>
+      <label><span data-es="Descripción" data-en="Description">Descripción</span> <small data-es="Qué incluye, cuánto tarda, qué necesitas del cliente." data-en="What it includes, how long it takes, what you need from the client.">Qué incluye, cuánto tarda, qué necesitas del cliente.</small><textarea class="pn-in" id="s-desc" maxlength="1200"></textarea></label>
+      <div class="pn-grid2">
+        <label><span data-es="Precio" data-en="Price">Precio</span><select class="pn-in" id="s-kind">
+          <option value="quote" data-es="A cotizar" data-en="On request">A cotizar</option>
+          <option value="fixed" data-es="Precio fijo" data-en="Fixed price">Precio fijo</option>
+          <option value="from" data-es="Desde" data-en="From">Desde</option>
+          <option value="per_m2" data-es="Por m²" data-en="Per m²">Por m²</option>
+        </select></label>
+        <label><span data-es="Moneda" data-en="Currency">Moneda</span><select class="pn-in" id="s-cur"><option>MXN</option><option>USD</option></select></label>
+      </div>
+      <label id="s-price-wrap"><span data-es="Monto" data-en="Amount">Monto</span><input class="pn-in" id="s-price" type="number" min="0" step="0.01" inputmode="decimal"></label>
+      <label><span data-es="Duración en minutos" data-en="Duration in minutes">Duración en minutos</span> <small data-es="Opcional. Ej.: 60 para una hora." data-en="Optional. E.g. 60 for one hour.">Opcional. Ej.: 60 para una hora.</small><input class="pn-in" id="s-dur" type="number" min="5" max="1440" inputmode="numeric"></label>
+      <div class="pn-imgpick"><div class="pn-thumb" id="s-img-prev"><svg><use href="#i-cam"/></svg></div><label class="pn-btn pn-line" style="min-height:40px"><span data-es="Foto (opcional)" data-en="Photo (optional)">Foto (opcional)</span><input type="file" accept="image/*" id="s-img" hidden></label><button class="pn-btn pn-line" type="button" id="s-img-clear" style="min-height:40px" data-es="Quitar" data-en="Remove">Quitar</button></div>
+      <label class="pn-check"><input type="checkbox" id="s-visible" checked><span data-es="Mostrar en mi página" data-en="Show on my page">Mostrar en mi página</span></label>
+      <button class="pn-btn pn-line pn-danger" id="s-del" type="button" data-es="Eliminar servicio" data-en="Delete service">Eliminar servicio</button>
+      <div class="pn-msg" id="s-msg" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="pn-sheet-foot">
+    <button class="pn-btn pn-line" type="button" data-close="sv" data-es="Cancelar" data-en="Cancel">Cancelar</button>
+    <button class="pn-btn pn-gold" id="s-save" type="button" data-es="Guardar" data-en="Save">Guardar</button>
+  </div>
+</dialog>
+
 <!-- paste import -->
 <dialog class="pn-sheet" id="ps" aria-labelledby="ps-title">
   <div class="pn-sheet-head"><h2 id="ps-title" data-es="Pegar de WhatsApp" data-en="Paste from WhatsApp">Pegar de WhatsApp</h2><button class="pn-x" type="button" data-close="ps" aria-label="Cerrar">×</button></div>
@@ -334,11 +384,14 @@
 <script src="/js/supabase-client.js"></script>
 <script src="/js/pay-config.js"></script>
 <script src="/js/track.js"></script>
+<script src="/js/business-types.js"></script>
 <script>
 (function () {
   'use strict';
   var MAX_PHOTOS = 6, PHOTO_PX = 1600, GOLD = '#c9a96e';
-  var S = { agency: null, listings: [], plan: null, editing: null, photos: [], color: null };
+  var S = { agency: null, listings: [], services: [], svcLimit: 20, plan: null, editing: null, photos: [], color: null, svcEditing: null, svcImage: null };
+  function type() { return MINI_TYPES.typeFor(S.agency && S.agency.business_type); }
+  function pair(p) { return isEn() ? p[1] : p[0]; }
   function $(id) { return document.getElementById(id); }
   function isEn() { return document.documentElement.lang === 'en'; }
   function t(es, en) { return isEn() ? en : es; }
@@ -356,7 +409,14 @@
     invalid_whatsapp_number: ['Revisa tu WhatsApp: solo números, espacios y +.', 'Check your WhatsApp: digits, spaces and + only.'],
     invalid_phone: ['Revisa el teléfono.', 'Check the phone number.'],
     invalid_public_email: ['Revisa el correo público.', 'Check the public email.'],
-    invalid_services: ['Hasta 8 servicios, de 40 letras cada uno.', 'Up to 8 services, 40 characters each.'],
+    invalid_services: ['Hasta 8 etiquetas, de 40 letras cada una.', 'Up to 8 tags, 40 characters each.'],
+    invalid_business_type: ['Elige un tipo de negocio de la lista.', 'Pick a type of business from the list.'],
+    missing_title: ['Escribe el nombre.', 'Enter the name.'],
+    title_too_long: ['El nombre es muy largo (máximo 120).', 'The name is too long (120 max).'],
+    description_too_long: ['La descripción es muy larga (máximo 1,200).', 'The description is too long (1,200 max).'],
+    invalid_price: ['Revisa el monto.', 'Check the amount.'],
+    invalid_duration: ['La duración va de 5 a 1,440 minutos.', 'Duration is 5 to 1,440 minutes.'],
+    service_limit_reached: ['Ya tienes 20 servicios, el máximo. Elimina uno para agregar otro.', 'You already have 20 services, the maximum. Delete one to add another.'],
     bio_too_long: ['El texto sobre ti es muy largo (máximo 600).', 'The about text is too long (600 max).'],
     rate_limited: ['Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.']
   };
@@ -408,14 +468,16 @@
     var session = await getSession();
     if (!session) { $('pn-out').hidden = true; show('pn-signin'); return; }
     $('pn-out').hidden = false;
-    var both = await Promise.all([api('/api/panel?resource=agency'), api('/api/panel')]);
-    var ag = both[0], ls = both[1];
+    var both = await Promise.all([api('/api/panel?resource=agency'), api('/api/panel'), api('/api/panel?resource=services')]);
+    var ag = both[0], ls = both[1], sv = both[2];
     if (ag.status === 401 || ls.status === 401) { show('pn-none'); return; }
     if (!ag.ok || !ls.ok) { show('pn-signin'); msg($('pn-signin-msg'), t('No pudimos cargar tu página. Intenta de nuevo.', 'We could not load your page. Try again.'), 'err'); return; }
     S.agency = ag.data.agency; S.listings = ls.data.listings || []; S.plan = ls.data.plan || {};
+    // Services load on their own: if that call fails the rest of the panel still works.
+    S.services = sv.ok ? (sv.data.services || []) : []; S.svcLimit = (sv.ok && sv.data.limit) || 20;
     renderAll();
     show('pn-app');
-    miniTrack('mini_panel_view', { state: miniState().state, listings: S.listings.length });
+    miniTrack('mini_panel_view', { state: miniState().state, listings: S.listings.length, services: S.services.length, business_type: type().key });
     var q = new URLSearchParams(location.search);
     if (q.get('preview')) { history.replaceState(null, '', location.pathname); openPreview(); return; }
     if (q.get('pay')) openPay();
@@ -428,7 +490,7 @@
     location.href = pageUrl() + (miniState().state === 'active' ? '' : '?vista=1');
   }
 
-  function renderAll() { renderStatus(); renderLink(); renderList(); fillCard(); }
+  function renderAll() { renderStatus(); renderLink(); renderServices(); renderList(); fillCard(); }
 
   function miniState() { return (S.plan && S.plan.mini) || { state: 'active', activeUntil: null }; }
   function renderStatus() {
@@ -459,7 +521,8 @@
     var url = pageUrl();
     $('pn-url').textContent = url.replace(/^https?:\/\//, '');
     $('pn-view').href = url;
-    $('pn-wa-share').href = 'https://wa.me/?text=' + encodeURIComponent(t('Te comparto mis propiedades: ', 'Here are my properties: ') + url);
+    var props = type().hasListings && !S.services.length;
+    $('pn-wa-share').href = 'https://wa.me/?text=' + encodeURIComponent((props ? t('Te comparto mis propiedades: ', 'Here are my properties: ') : t('Te comparto mi página: ', 'Here is my page: ')) + url);
     try { var qr = qrcode(0, 'M'); qr.addData(url); qr.make(); $('pn-qr').src = qr.createDataURL(4, 2); } catch (e) { $('pn-qr').hidden = true; }
   }
   $('pn-copy').onclick = function () {
@@ -473,6 +536,8 @@
     return list;
   }
   function renderList() {
+    // A services business only sees properties if it already has some (or switched from real estate).
+    $('pn-props-card').hidden = !type().hasListings && !S.listings.length;
     var limit = (S.plan && S.plan.listingsLimit) || 10;
     $('pn-used').textContent = S.listings.length + ' / ' + limit;
     $('pn-new').disabled = S.listings.length >= limit;
@@ -659,12 +724,145 @@
     } finally { btn.disabled = false; }
   };
 
+  /* ---------- services (mini_services, supabase/019; api: mini/api/_services.js) ---------- */
+  function svcPrice(x) {
+    if (x.price_kind === 'quote' || x.price == null) return t('A cotizar', 'On request');
+    var n = (x.currency || 'MXN') + ' $' + Number(x.price).toLocaleString('en-US');
+    return x.price_kind === 'from' ? t('Desde ', 'From ') + n : x.price_kind === 'per_m2' ? n + t(' por m²', ' per m²') : n;
+  }
+  function missingSuggestions() {
+    var have = S.services.map(function (x) { return String(x.title_es || '').toLowerCase(); });
+    return (type().services || []).filter(function (x) { return have.indexOf(x.title_es.toLowerCase()) === -1; });
+  }
+  function renderServices() {
+    var n = S.services.length;
+    $('pn-svc-used').textContent = n + ' / ' + S.svcLimit;
+    $('pn-svc-new').disabled = n >= S.svcLimit;
+    var sug = missingSuggestions();
+    $('pn-svc-suggest').hidden = !sug.length || n >= S.svcLimit;
+    if (!n) {
+      $('pn-svcs').innerHTML = '<li class="pn-sub" style="padding:8px 2px">' + escapeHtml(sug.length
+        ? t('Todavía no tienes servicios. Agrega los tuyos o empieza con los sugeridos para tu tipo de negocio.', 'No services yet. Add yours or start with the ones suggested for your type of business.')
+        : t('Todavía no tienes servicios. Agrega lo que ofreces.', 'No services yet. Add what you offer.')) + '</li>';
+      return;
+    }
+    $('pn-svcs').innerHTML = S.services.map(function (x, i) {
+      var cover = cssUrl(x.image);
+      var pills = x.status === 'draft' ? '<span class="pn-pill">' + escapeHtml(t('Oculto', 'Hidden')) + '</span>' : '';
+      return '<li class="pn-item">' +
+        '<div class="pn-ord"><button type="button" data-up="' + i + '"' + (i ? '' : ' disabled') + ' aria-label="' + escapeHtml(t('Subir', 'Move up')) + '">▲</button>' +
+        '<button type="button" data-down="' + i + '"' + (i < n - 1 ? '' : ' disabled') + ' aria-label="' + escapeHtml(t('Bajar', 'Move down')) + '">▼</button></div>' +
+        (cover ? '<div class="pn-thumb" style="background-image:url(\'' + cover + '\')"></div>' : '') +
+        '<div class="pn-item-main"><div class="pn-item-title">' + escapeHtml(x.title_es || x.title_en || '') + '</div>' +
+        '<div class="pn-item-meta"><span>' + escapeHtml(svcPrice(x)) + '</span>' + pills + '</div></div>' +
+        '<button class="pn-btn pn-line pn-edit" type="button" data-svc="' + escapeHtml(x.id) + '">' + escapeHtml(t('Editar', 'Edit')) + '</button></li>';
+    }).join('');
+  }
+  async function refreshServices() {
+    var r = await api('/api/panel?resource=services');
+    if (r.ok) { S.services = r.data.services || []; S.svcLimit = r.data.limit || S.svcLimit; renderServices(); renderLink(); renderList(); }
+  }
+  /* Swap two neighbours. Sort values are rewritten as 0,10,20… so the order stays stable whatever was there before. */
+  async function moveService(i, j) {
+    if (j < 0 || j >= S.services.length) return;
+    var list = S.services.slice(), tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+    var changes = [];
+    list.forEach(function (x, k) { if (x.sort !== k * 10) changes.push(api('/api/panel?resource=services&id=' + encodeURIComponent(x.id), jsonOpts('PUT', { sort: k * 10 }))); });
+    S.services = list.map(function (x, k) { x.sort = k * 10; return x; }); renderServices();
+    var res = await Promise.all(changes);
+    if (res.some(function (r) { return !r.ok; })) { msg($('pn-svc-msg'), t('No se pudo guardar el orden.', 'The order could not be saved.'), 'err'); await refreshServices(); }
+  }
+  $('pn-svcs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-svc]'); if (b) { openService(b.getAttribute('data-svc')); return; }
+    var up = e.target.closest('[data-up]'); if (up) { var i = +up.getAttribute('data-up'); moveService(i, i - 1); return; }
+    var dn = e.target.closest('[data-down]'); if (dn) { var k = +dn.getAttribute('data-down'); moveService(k, k + 1); }
+  });
+  function syncPriceField() { $('s-price-wrap').hidden = $('s-kind').value === 'quote'; }
+  $('s-kind').onchange = syncPriceField;
+  function openService(id) {
+    var x = id ? S.services.filter(function (v) { return v.id === id; })[0] : null;
+    S.svcEditing = x ? x.id : null;
+    S.svcImage = x ? x.image || null : null;
+    $('sv-title').textContent = x ? t('Editar servicio', 'Edit service') : t('Nuevo servicio', 'New service');
+    $('s-title').value = x ? x.title_es || '' : '';
+    $('s-title-en').value = x ? x.title_en || '' : '';
+    $('s-desc').value = x ? x.description_es || '' : '';
+    $('s-kind').value = x ? x.price_kind || 'quote' : 'quote';
+    $('s-cur').value = x && x.currency === 'USD' ? 'USD' : 'MXN';
+    $('s-price').value = x && x.price != null ? x.price : '';
+    $('s-dur').value = x && x.duration_min ? x.duration_min : '';
+    $('s-visible').checked = !x || x.status !== 'draft';
+    setPrev('s-img-prev', S.svcImage);
+    $('s-del').hidden = !x;
+    $('s-del').dataset.confirm = ''; $('s-del').textContent = t('Eliminar servicio', 'Delete service');
+    syncPriceField();
+    msg($('s-msg'), '');
+    sheet('sv');
+  }
+  $('pn-svc-new').onclick = function () { openService(null); };
+  $('s-img').onchange = async function () {
+    var f = this.files[0]; this.value = '';
+    if (!f) return;
+    msg($('s-msg'), t('Subiendo imagen…', 'Uploading image…'));
+    var url = await upload(f, 'service');
+    if (!url) { msg($('s-msg'), t('No se pudo subir la imagen.', 'The image could not be uploaded.'), 'err'); return; }
+    S.svcImage = url; setPrev('s-img-prev', url); msg($('s-msg'), '');
+  };
+  $('s-img-clear').onclick = function () { S.svcImage = null; setPrev('s-img-prev', null); };
+  $('s-save').onclick = async function () {
+    var title = $('s-title').value.trim();
+    if (!title) { msg($('s-msg'), errText('missing_title'), 'err'); return; }
+    var kind = $('s-kind').value, priceRaw = $('s-price').value.trim();
+    if (kind !== 'quote' && priceRaw === '') { msg($('s-msg'), t('Escribe el monto, o elige «A cotizar».', 'Enter the amount, or choose “On request”.'), 'err'); return; }
+    var body = {
+      title_es: title, title_en: $('s-title-en').value.trim() || null, description_es: $('s-desc').value.trim() || null,
+      price_kind: kind, price: kind === 'quote' ? null : Number(priceRaw), currency: $('s-cur').value,
+      duration_min: $('s-dur').value.trim() === '' ? null : Number($('s-dur').value),
+      image: S.svcImage || null, status: $('s-visible').checked ? 'published' : 'draft'
+    };
+    this.disabled = true;
+    var r = S.svcEditing ? await api('/api/panel?resource=services&id=' + encodeURIComponent(S.svcEditing), jsonOpts('PUT', body))
+      : await api('/api/panel?resource=services', jsonOpts('POST', body));
+    this.disabled = false;
+    if (!r.ok) { msg($('s-msg'), errText(r.data.error), 'err'); return; }
+    close('sv');
+    await refreshServices();
+    msg($('pn-svc-msg'), t('Guardado.', 'Saved.'), 'ok');
+  };
+  $('s-del').onclick = async function () {
+    if (!S.svcEditing) return;
+    if (this.dataset.confirm !== '1') { this.dataset.confirm = '1'; this.textContent = t('Toca otra vez para eliminar', 'Tap again to delete'); return; }
+    var r = await api('/api/panel?resource=services&id=' + encodeURIComponent(S.svcEditing), { method: 'DELETE' });
+    if (!r.ok) { msg($('s-msg'), errText(r.data.error), 'err'); return; }
+    close('sv');
+    await refreshServices();
+    msg($('pn-svc-msg'), t('Servicio eliminado.', 'Service deleted.'), 'ok');
+  };
+  /* The template's suggestions, one POST each, in order, up to the cap. They are a start: the customer edits prices after. */
+  $('pn-svc-suggest').onclick = async function () {
+    var btn = this, list = missingSuggestions().slice(0, S.svcLimit - S.services.length), added = 0;
+    btn.disabled = true;
+    msg($('pn-svc-msg'), t('Agregando…', 'Adding…'));
+    for (var i = 0; i < list.length; i++) {
+      var r = await api('/api/panel?resource=services', jsonOpts('POST', { title_es: list[i].title_es, title_en: list[i].title_en, price_kind: 'quote' }));
+      if (r.ok) added++;
+    }
+    btn.disabled = false;
+    await refreshServices();
+    msg($('pn-svc-msg'), t('Agregamos ' + added + ' servicio(s). Edita cada uno para poner precio y descripción.', 'Added ' + added + ' service(s). Edit each one to add a price and description.'), added ? 'ok' : 'err');
+  };
+
   /* ---------- the agent's card ---------- */
   function fillCard() {
     var a = S.agency || {};
     $('c-name').value = a.name || ''; $('c-wa').value = a.whatsapp_number || ''; $('c-phone').value = a.phone || '';
     $('c-email').value = a.public_email || ''; $('c-bio').value = a.bio || ''; $('c-address').value = a.address || '';
     $('c-services').value = (a.services || []).join(', ');
+    $('c-type').innerHTML = MINI_TYPES.KEYS.map(function (k) {
+      var ty = MINI_TYPES.TYPES[k];
+      return '<option value="' + k + '">' + escapeHtml(pair(ty.label) + ' · ' + pair(ty.hint)) + '</option>';
+    }).join('');
+    $('c-type').value = type().key;
     S.color = a.primary_color || null;
     $('c-color').value = a.primary_color && /^#[0-9a-f]{6}$/i.test(a.primary_color) ? a.primary_color : GOLD;
     setPrev('c-logo-prev', a.logo_url); setPrev('c-cover-prev', a.cover_url);
@@ -699,6 +897,7 @@
       name: name, whatsapp_number: $('c-wa').value.trim() || null, phone: $('c-phone').value.trim() || null,
       public_email: $('c-email').value.trim() || null, bio: $('c-bio').value.trim() || null, address: $('c-address').value.trim() || null,
       services: $('c-services').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 8),
+      business_type: $('c-type').value,
       primary_color: S.color && S.color.toLowerCase() !== GOLD ? S.color : null
     };
     this.disabled = true;
@@ -706,6 +905,7 @@
     this.disabled = false;
     if (!r.ok) { msg($('c-msg'), errText(r.data.error), 'err'); return; }
     S.agency = r.data.agency;
+    renderLink(); renderServices(); renderList();
     msg($('c-msg'), t('Tarjeta guardada.', 'Card saved.'), 'ok');
   };
 

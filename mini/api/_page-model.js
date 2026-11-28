@@ -9,21 +9,24 @@
  */
 
 import { pageActive, MINI_PRICE_MXN } from './_proplync/_lib/plans.js';
+import { typeFor } from './_business-types.js';
 
 export const AGENCY_FIELDS = 'id, name, slug, logo_url, cover_url, primary_color, whatsapp_number, phone, ' +
-  'public_email, address, maps_url, services, bio, plan, plan_expires_at';
+  'public_email, address, maps_url, services, bio, business_type, plan, plan_expires_at';
 export const LISTING_FIELDS = 'public_id, title_es, title_en, town, neighborhood, bedrooms, bathrooms, size, ' +
   'parking, operation, currency, amount, image, images, features, description_es, description_en, property_type';
 
-/** What the page shows, from the rows. Internal columns never reach the browser. Pure, for tests. */
-export function buildModel(agency, listings, now = Date.now(), { preview = false } = {}) {
+/** What the page shows, from the rows. Internal columns never reach the browser. Pure, for tests.
+ *  `services` are the published mini_services rows (supabase/019); business_type picks the template. */
+export function buildModel(agency, listings, now = Date.now(), { preview = false, services = [] } = {}) {
   if (!agency) return { state: 'not_found' };
   const active = pageActive(agency, now);
+  const type = typeFor(agency.business_type);
   const card = {
-    name: agency.name || '', slug: agency.slug,
+    name: agency.name || '', slug: agency.slug, business_type: type.key,
     logo_url: agency.logo_url || null, cover_url: agency.cover_url || null, primary_color: agency.primary_color || null
   };
-  if (!active && !preview) return { state: 'paused', agency: card, listings: [] };
+  if (!active && !preview) return { state: 'paused', agency: card, listings: [], services: [] };
   return {
     state: active ? 'active' : 'preview',
     agency: {
@@ -33,6 +36,7 @@ export function buildModel(agency, listings, now = Date.now(), { preview = false
       services: Array.isArray(agency.services) ? agency.services : [], bio: agency.bio || ''
     },
     listings: (listings || []).map((l) => ({ ...l })),
+    services: (services || []).map((x) => ({ ...x })),
     ...(active ? {} : { publish: { price: MINI_PRICE_MXN } })
   };
 }
