@@ -22,9 +22,9 @@ failed at runtime. Never edit the copy: change `api/` and run `node scripts/sync
 | `/privacidad`, `/terminos` | | Legal drafts (noindex, `[CONFIRMAR]` items pending) |
 | `/pago` | redirect | → `/panel?pay=1` |
 
-## Functions (5 of 12)
+## Functions (6 of 12)
 `api/signup.js` (status, create) · `api/import.js` (paste → properties) · `api/panel.js` (card + listings via
-`api/my-listings.js`, services via `api/_services.js`, material (infographics, PDFs) via `api/_assets.js`, `paid-notice`, `preview`) · `api/page.js` (public page) · `api/whatsapp.js` (Meta webhook for the assistant). Panel resources also serve
+`api/my-listings.js`, services via `api/_services.js`, material (infographics, PDFs) via `api/_assets.js`, `paid-notice`, `preview`) · `api/page.js` (public page) · `api/whatsapp.js` (Meta webhook for the assistant) · `api/agenda.js` ("Agendar cita": free times, requests). Panel resources also serve
 the CRM (`api/_cases.js`) and the assistant's training and test chat (`api/_bot.js`). The preview address carries no secret:
 `/:slug?vista=1` is an empty shell that loads the page with the owner's own session, so a shared preview link shows nothing.
 

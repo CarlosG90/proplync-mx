@@ -12,7 +12,7 @@ import { pageActive, MINI_PRICE_MXN } from './_proplync/_lib/plans.js';
 import { typeFor } from './_business-types.js';
 
 export const AGENCY_FIELDS = 'id, name, slug, logo_url, cover_url, primary_color, whatsapp_number, phone, ' +
-  'public_email, address, maps_url, services, bio, business_type, profession, instagram, facebook, tiktok, website, plan, plan_expires_at';
+  'public_email, address, maps_url, services, bio, business_type, profession, instagram, facebook, tiktok, website, agenda, plan, plan_expires_at';
 export const LISTING_FIELDS = 'public_id, title_es, title_en, town, neighborhood, bedrooms, bathrooms, size, ' +
   'parking, operation, currency, amount, image, images, features, description_es, description_en, property_type';
 
@@ -35,7 +35,9 @@ export function buildModel(agency, listings, now = Date.now(), { preview = false
       public_email: agency.public_email || null, address: agency.address || null, maps_url: agency.maps_url || null,
       services: Array.isArray(agency.services) ? agency.services : [], bio: agency.bio || '',
       profession: agency.profession || '', instagram: agency.instagram || null, facebook: agency.facebook || null,
-      tiktok: agency.tiktok || null, website: agency.website || null
+      tiktok: agency.tiktok || null, website: agency.website || null,
+      // Only whether to show "Agendar cita"; the free times come from mini/api/agenda.js.
+      agenda_on: !!(agency.agenda && agency.agenda.enabled)
     },
     listings: (listings || []).map((l) => ({ ...l })),
     services: (services || []).map((x) => ({ ...x })),

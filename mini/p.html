@@ -111,6 +111,36 @@ __META__
   .mp-cta-g{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;border-radius:14px;font:600 .82rem var(--body);
     letter-spacing:.2em;text-transform:uppercase;text-decoration:none;border:0;cursor:pointer}
   .mp-cta-g svg{width:18px;height:18px}
+  /* "Agendar cita": a month grid (Monday first), then the day's times, then the client's details */
+  .mp-book-btn{margin-top:22px}
+  .mp-bk{padding:20px 18px 8px}
+  .mp-bk-h{display:flex;align-items:center;gap:12px;background:var(--ink);color:var(--on-ink);margin:-20px -18px 16px;padding:18px}
+  .mp-bk-h .mp-mark{width:40px;height:40px;border-radius:50%}
+  .mp-bk-h b{display:block;font-family:var(--display);font-weight:400;font-size:1.15rem}
+  .mp-bk-h small{font-family:var(--display);font-style:italic;color:var(--mp-accent-hi);font-size:.85rem}
+  .mp-bk-step{display:flex;align-items:center;gap:10px;font:600 .8rem var(--body);letter-spacing:.14em;text-transform:uppercase;margin:18px 0 10px}
+  .mp-bk-step i{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--on-ink);display:flex;align-items:center;justify-content:center;font:700 .72rem var(--mono);letter-spacing:0}
+  .mp-cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .mp-cal-nav b{font-family:var(--display);font-weight:400;font-size:1.05rem;letter-spacing:.08em;text-transform:uppercase}
+  .mp-cal-nav button{width:36px;height:36px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--mp-accent) 70%,#7a5a1c);background:var(--white);color:#7a5a1c;cursor:pointer;font-size:1rem}
+  .mp-cal-nav button[disabled]{opacity:.3;cursor:default}
+  .mp-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .mp-cal span{font:600 .62rem var(--body);color:var(--on-sand-light);text-align:center;padding:4px 0}
+  .mp-cal button{aspect-ratio:1;border-radius:10px;border:1px solid var(--line);background:var(--white);font:600 .9rem var(--body);color:var(--ink);cursor:pointer}
+  .mp-cal button.off{background:none;border-color:transparent;color:var(--on-sand-light);text-decoration:line-through;cursor:default}
+  .mp-cal button.on{border:2px solid var(--mp-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--mp-accent) 25%,transparent)}
+  .mp-times{display:flex;flex-wrap:wrap;gap:8px}
+  .mp-times button{border:1px solid var(--line);background:var(--white);border-radius:999px;padding:9px 14px;font:600 .86rem var(--mono);cursor:pointer;color:var(--ink)}
+  .mp-times button.on{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+  .mp-bk-f{display:grid;gap:10px}
+  .mp-bk-f label{display:grid;gap:5px;font:600 .78rem var(--body);color:var(--on-sand)}
+  .mp-bk-f input,.mp-bk-f select,.mp-bk-f textarea{font:400 1rem var(--body);padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--white);color:var(--ink);width:100%;box-sizing:border-box}
+  .mp-bk-note{font-size:.78rem;color:var(--on-sand-light);margin:10px 0 0}
+  .mp-bk-msg{font-size:.86rem;margin-top:10px;color:#a23a24}
+  .mp-bk-ok{text-align:center;padding:10px 0 4px}
+  .mp-bk-ok > svg{width:42px;height:42px;color:var(--mp-accent)}
+  .mp-bk-ok b{display:block;font-family:var(--display);font-weight:400;font-size:1.4rem;margin:8px 0}
+
   /* closing card: QR, signature, "Quiero una página así" */
   .mp-sign{background:var(--ink);color:var(--on-ink);text-align:center;padding:40px 0 34px}
   .mp-sign .mp-wrap{max-width:560px}
@@ -293,6 +323,7 @@ __META__
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9.5V20h12V9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
   <symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 9.5h17M8 3v4M16 3v4M8 13h2M12 13h2M8 16.5h2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
   <symbol id="i-ig" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor"/></symbol>
   <symbol id="i-fb" viewBox="0 0 24 24"><path d="M14 8h3V4.5h-3c-2.5 0-4 1.6-4 4V11H7.5v3.5H10V21h3.6v-6.5h3l.5-3.5h-3.5V8.8c0-.5.3-.8.9-.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
   <symbol id="i-tt" viewBox="0 0 24 24"><path d="M14 3.5v11.2a3.3 3.3 0 1 1-3.3-3.3M14 3.5c.4 2.6 2.2 4.3 4.8 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -492,6 +523,7 @@ __META__
       (agency.bio ? '<p class="mp-bio">' + escapeHtml(agency.bio) + '</p>' : '') +
       '<div class="mp-rows" id="mp-hero-actions">' + rows + '</div>' +
       chipsHTML() +
+      (agency.agenda_on ? '<button class="mp-cta-g mp-gold mp-book-btn" type="button" data-book>' + icon('i-cal') + escapeHtml(t('Agendar cita', 'Book an appointment')) + '</button>' : '') +
       '</div></section>';
   }
   /* Closing card: a QR to this page, the owner's name as a signature, and our "make yours" offer. */
@@ -643,6 +675,112 @@ __META__
     if (typeof sheet.showModal === 'function') { if (!sheet.open) sheet.showModal(); } else sheet.setAttribute('open', '');
     setParam('s', x.id);
     if (data.state === 'active') miniTrack('mini_service_open', { slug: agency.slug });
+  }
+
+  /* ---------- "Agendar cita" (mini/api/agenda.js; the owner approves in the panel) ---------- */
+  var BK = null;   // { slots, services, month: 'YYYY-MM', day, time }
+  var MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  var MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function bkShell(inner) {
+    document.getElementById('mp-sheet-in').innerHTML = '<div class="mp-sheet-scroll"><div class="mp-bk">' +
+      '<div class="mp-bk-h">' + markHTML('mp-mark') + '<div><b>' + escapeHtml(agency.name || '') + '</b><small>' + escapeHtml(t('Agenda tu cita', 'Book your appointment')) + '</small></div>' +
+      '<button class="mp-close" type="button" id="mp-close" aria-label="' + escapeHtml(t('Cerrar', 'Close')) + '" style="position:static;margin-left:auto">×</button></div>' + inner + '</div></div>';
+    document.getElementById('mp-close').onclick = closeSheet;
+    if (typeof sheet.showModal === 'function') { if (!sheet.open) sheet.showModal(); } else sheet.setAttribute('open', '');
+  }
+  function fmtDay(date) {
+    var d = new Date(date + 'T12:00:00Z');
+    return d.toLocaleDateString(isEn() ? 'en-US' : 'es-MX', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  }
+  function bkRender() {
+    var by = {}; BK.slots.forEach(function (d) { by[d.date] = d; });
+    var ym = BK.month.split('-').map(Number), first = new Date(Date.UTC(ym[0], ym[1] - 1, 1)), lead = (first.getUTCDay() + 6) % 7;
+    var daysIn = new Date(Date.UTC(ym[0], ym[1], 0)).getUTCDate();
+    var months = BK.slots.map(function (d) { return d.date.slice(0, 7); }).filter(function (m, i, a) { return a.indexOf(m) === i; });
+    var mi = months.indexOf(BK.month);
+    var cells = ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(function (h, i) { return '<span>' + (isEn() ? 'MTWTFSS'[i] : h) + '</span>'; }).join('');
+    for (var i = 0; i < lead; i++) cells += '<span></span>';
+    for (var d = 1; d <= daysIn; d++) {
+      var date = BK.month + '-' + String(d).padStart(2, '0'), e = by[date], ok = e && e.times.length;
+      cells += '<button type="button"' + (ok ? ' data-bk-day="' + date + '"' : ' disabled') + ' class="' + (ok ? '' : 'off') + (BK.day === date ? ' on' : '') + '">' + d + '</button>';
+    }
+    var day = BK.day && by[BK.day];
+    var html = '<p style="margin:0;font-size:.9rem;color:var(--on-sand)">' + escapeHtml(t('Elige día y hora. ' + (agency.name || '') + ' confirma tu cita y te avisa por WhatsApp.', 'Pick a day and time. ' + (agency.name || '') + ' confirms your appointment on WhatsApp.')) + '</p>' +
+      '<div class="mp-bk-step"><i>1</i>' + escapeHtml(t('Elige el día', 'Pick the day')) + '</div>' +
+      '<div class="mp-cal-nav"><button type="button" data-bk-mo="-1"' + (mi > 0 ? '' : ' disabled') + ' aria-label="' + escapeHtml(t('Mes anterior', 'Previous month')) + '">‹</button>' +
+        '<b>' + escapeHtml((isEn() ? MONTHS_EN : MONTHS_ES)[ym[1] - 1] + ' ' + ym[0]) + '</b>' +
+        '<button type="button" data-bk-mo="1"' + (mi < months.length - 1 ? '' : ' disabled') + ' aria-label="' + escapeHtml(t('Mes siguiente', 'Next month')) + '">›</button></div>' +
+      '<div class="mp-cal">' + cells + '</div>';
+    if (day) {
+      html += '<div class="mp-bk-step"><i>2</i>' + escapeHtml(t('Elige la hora', 'Pick the time')) + ' · ' + escapeHtml(fmtDay(BK.day)) + '</div><div class="mp-times">' +
+        day.times.map(function (tm) { return '<button type="button" data-bk-time="' + tm + '" class="' + (BK.time === tm ? 'on' : '') + '">' + tm + '</button>'; }).join('') + '</div>';
+    }
+    if (day && BK.time) {
+      html += '<div class="mp-bk-step"><i>3</i>' + escapeHtml(t('Tus datos', 'Your details')) + '</div><div class="mp-bk-f">' +
+        (BK.services.length ? '<label>' + escapeHtml(t('Servicio', 'Service')) + '<select id="bk-svc"><option value="">' + escapeHtml(t('— Elige (opcional) —', '— Pick (optional) —')) + '</option>' +
+          BK.services.map(function (x) { return '<option value="' + escapeHtml(x.id) + '"' + (BK.svc === x.id ? ' selected' : '') + '>' + escapeHtml(isEn() ? (x.title_en || x.title_es) : x.title_es) + '</option>'; }).join('') + '</select></label>' : '') +
+        '<label>' + escapeHtml(t('Tu nombre', 'Your name')) + '<input id="bk-name" maxlength="120" autocomplete="name"></label>' +
+        '<label>' + escapeHtml(t('Tu WhatsApp', 'Your WhatsApp')) + '<input id="bk-phone" type="tel" inputmode="tel" maxlength="30" autocomplete="tel" placeholder="238 000 0000"></label>' +
+        '<label>' + escapeHtml(t('Comentario (opcional)', 'Comment (optional)')) + '<textarea id="bk-note" maxlength="500" rows="2"></textarea></label>' +
+        '<button class="mp-cta-g mp-gold" type="button" id="bk-send">' + escapeHtml(t('Solicitar cita · ', 'Request · ') + BK.time) + '</button>' +
+        '<div class="mp-bk-msg" id="bk-msg" aria-live="polite"></div></div>';
+    }
+    html += '<p class="mp-bk-note">' + escapeHtml(t('Tu cita queda pendiente hasta que ' + (agency.name || 'el negocio') + ' la confirme.', 'Your appointment is pending until ' + (agency.name || 'the business') + ' confirms it.')) + '</p>';
+    bkShell(html);
+  }
+  function openBooking(serviceId) {
+    BK = { slots: [], services: [], month: '', day: null, time: null, svc: serviceId || null };
+    bkShell('<p style="text-align:center;color:var(--on-sand)">' + escapeHtml(t('Cargando horarios…', 'Loading times…')) + '</p>');
+    fetch('/api/agenda?slug=' + encodeURIComponent(agency.slug || ''), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (d) {
+        BK.slots = d.slots || []; BK.services = d.services || [];
+        var firstOpen = BK.slots.filter(function (x) { return x.times.length; })[0];
+        BK.month = (firstOpen || BK.slots[0] || { date: new Date().toISOString().slice(0, 10) }).date.slice(0, 7);
+        if (!firstOpen) { bkShell('<p style="text-align:center;color:var(--on-sand)">' + escapeHtml(t('Por ahora no hay horarios disponibles. Escríbenos por WhatsApp.', 'No times available right now. Message us on WhatsApp.')) + '</p>'); return; }
+        bkRender();
+      })
+      .catch(function () { bkShell('<p style="text-align:center;color:#a23a24">' + escapeHtml(t('No pudimos cargar la agenda. Intenta en un momento.', 'Could not load the calendar. Try again shortly.')) + '</p>'); });
+    if (data.state === 'active') miniTrack('mini_book_open', { slug: agency.slug });
+  }
+  sheet.addEventListener('click', function (e) {
+    if (!BK) return;
+    var dd = e.target.closest('[data-bk-day]'); if (dd) { BK.day = dd.getAttribute('data-bk-day'); BK.time = null; bkRender(); return; }
+    var mo = e.target.closest('[data-bk-mo]');
+    if (mo && !mo.disabled) {
+      var months = BK.slots.map(function (d) { return d.date.slice(0, 7); }).filter(function (m, i, a) { return a.indexOf(m) === i; });
+      BK.month = months[months.indexOf(BK.month) + Number(mo.getAttribute('data-bk-mo'))] || BK.month; bkRender(); return;
+    }
+    var tm = e.target.closest('[data-bk-time]'); if (tm) { BK.time = tm.getAttribute('data-bk-time'); bkRender(); var n = document.getElementById('bk-name'); if (n) n.focus(); return; }
+    if (e.target.closest('#bk-send')) bookSend();
+  });
+  function bookSend() {
+    var name = document.getElementById('bk-name').value.trim(), phone = document.getElementById('bk-phone').value.trim();
+    var sel = document.getElementById('bk-svc'), svcId = sel ? sel.value : '', note = document.getElementById('bk-note').value.trim();
+    var out = document.getElementById('bk-msg');
+    if (!name) { out.textContent = t('Escribe tu nombre.', 'Enter your name.'); return; }
+    if (phone.replace(/\D/g, '').length < 8) { out.textContent = t('Revisa tu WhatsApp (10 dígitos).', 'Check your WhatsApp (10 digits).'); return; }
+    if (PREVIEW) { out.textContent = t('Vista previa: así se verá. Las citas se reciben cuando tu página esté publicada.', 'Preview: this is how it looks. Bookings open once your page is live.'); return; }
+    var btn = document.getElementById('bk-send'); btn.disabled = true; out.textContent = '';
+    fetch('/api/agenda', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ slug: agency.slug, date: BK.day, time: BK.time, name: name, phone: phone, service_id: svcId || null, note: note || null }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, status: r.status, d: d }; }); })
+      .then(function (x) {
+        if (!x.ok) {
+          btn.disabled = false;
+          if (x.d.error === 'slot_taken') { out.textContent = t('Ese horario se acaba de ocupar. Elige otro.', 'That time was just taken. Pick another.'); openBooking(svcId); return; }
+          out.textContent = x.status === 429 ? t('Demasiados intentos. Espera un momento.', 'Too many attempts. Wait a moment.') : t('No se pudo enviar. Intenta de nuevo.', 'Could not send. Try again.');
+          return;
+        }
+        var svcName = (BK.services.filter(function (s) { return s.id === svcId; })[0] || {}).title_es;
+        var wa = waLink(t('Hola, soy ', 'Hi, I am ') + name + t('. Acabo de solicitar una cita', '. I just requested an appointment') + (svcName ? ' (' + svcName + ')' : '') + t(' para el ', ' for ') + fmtDay(BK.day) + ' ' + BK.time + '.');
+        bkShell('<div class="mp-bk-ok">' + icon('i-cal') + '<b>' + escapeHtml(t('Solicitud enviada', 'Request sent')) + '</b>' +
+          '<p style="margin:0 0 16px;color:var(--on-sand)">' + escapeHtml(fmtDay(BK.day) + ' · ' + BK.time) + '<br>' + escapeHtml(t((agency.name || '') + ' te confirma por WhatsApp.', (agency.name || '') + ' will confirm on WhatsApp.')) + '</p>' +
+          (wa ? '<a class="mp-cta-g mp-gold" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Avisar por WhatsApp', 'Let them know on WhatsApp')) + '</a>' : '') + '</div>');
+        BK = null;
+        miniTrack('mini_book_request', { slug: agency.slug });
+      })
+      .catch(function () { btn.disabled = false; out.textContent = t('Sin conexión. Intenta de nuevo.', 'No connection. Try again.'); });
   }
 
   /* Full size in the bottom sheet: an infographic is read by scrolling down it. Download and WhatsApp share. */
@@ -804,7 +942,7 @@ __META__
   function closeSheet() {
     if (sheet.open) { if (typeof sheet.close === 'function') sheet.close(); else sheet.removeAttribute('open'); }
   }
-  sheet.addEventListener('close', function () { setFocus(null); setParam('s', null); });
+  sheet.addEventListener('close', function () { setFocus(null); setParam('s', null); BK = null; });
   sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(); });
 
   function share(p, btn) {
@@ -816,6 +954,7 @@ __META__
   root.addEventListener('click', function (e) {
     var open = e.target.closest('[data-open]');
     if (open) { openSheet(open.getAttribute('data-open')); return; }
+    if (e.target.closest('[data-book]')) { openBooking(null); return; }
     var so = e.target.closest('[data-svc-open]');
     if (so) { openService(so.getAttribute('data-svc-open')); return; }
     var asset = e.target.closest('[data-asset]');
