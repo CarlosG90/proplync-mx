@@ -19,6 +19,9 @@
     },
     "api/whatsapp.js": {
       "maxDuration": 30
+    },
+    "api/agenda.js": {
+      "maxDuration": 10
     }
   },
   "redirects": [

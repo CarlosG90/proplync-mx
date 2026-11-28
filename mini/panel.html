@@ -91,8 +91,8 @@
   .pn-ord button[disabled]{opacity:.25;cursor:default}
   /* tabs: Mi página · Clientes · WhatsApp */
   .pn-off-tab{display:none !important}
-  .pn-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--sand);border-radius:999px;padding:4px;margin:0 0 14px;position:sticky;top:64px;z-index:10}
-  .pn-tabs button{border:0;background:none;border-radius:999px;padding:10px 6px;font:600 .86rem var(--body);color:var(--on-sand);cursor:pointer}
+  .pn-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--sand);border-radius:999px;padding:4px;margin:0 0 14px;position:sticky;top:64px;z-index:10}
+  .pn-tabs button{border:0;background:none;border-radius:999px;padding:10px 4px;font:600 .8rem var(--body);color:var(--on-sand);cursor:pointer}
   .pn-tabs button[aria-selected=true]{background:var(--white);color:var(--ink);box-shadow:var(--shadow-sm)}
   /* client CRM */
   .pn-crm-sum{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
@@ -248,6 +248,7 @@
 
       <nav class="pn-tabs" id="pn-tabs" role="tablist" aria-label="Secciones">
         <button type="button" role="tab" data-tab-btn="pagina" data-es="Mi página" data-en="My page">Mi página</button>
+        <button type="button" role="tab" data-tab-btn="agenda" data-es="Agenda" data-en="Agenda">Agenda</button>
         <button type="button" role="tab" data-tab-btn="clientes" data-es="Clientes" data-en="Clients">Clientes</button>
         <button type="button" role="tab" data-tab-btn="whatsapp" data-es="WhatsApp" data-en="WhatsApp">WhatsApp</button>
       </nav>
@@ -283,6 +284,31 @@
           <label class="pn-btn pn-gold" id="pn-asset-pick"><svg><use href="#i-plus"/></svg><span data-es="Subir material" data-en="Upload material">Subir material</span><input type="file" id="pn-asset-files" accept="image/jpeg,image/png,image/webp,image/*,application/pdf" multiple hidden></label>
         </div>
         <div class="pn-msg" id="pn-asset-msg" aria-live="polite"></div>
+      </section>
+
+      <section class="pn-card" id="pn-agenda-card" data-tab="agenda">
+        <div class="pn-eyebrow"><span data-es="Agenda" data-en="Agenda">Agenda</span><span class="pn-count" id="ag-state"></span></div>
+        <h2 data-es="Tus clientes agendan, tú autorizas" data-en="Clients book, you approve">Tus clientes agendan, tú autorizas</h2>
+        <p class="pn-sub" data-es="Tu página muestra «Agendar cita»: el cliente elige día y hora, y la solicitud llega aquí. Al confirmarla o rechazarla te abrimos WhatsApp con el mensaje listo para enviárselo." data-en="Your page shows “Book an appointment”: the client picks a day and time, and the request arrives here. When you confirm or decline it we open WhatsApp with the message ready to send.">Tu página muestra «Agendar cita»: el cliente elige día y hora, y la solicitud llega aquí. Al confirmarla o rechazarla te abrimos WhatsApp con el mensaje listo para enviárselo.</p>
+        <div id="ag-list" style="margin-top:12px"></div>
+        <details class="pn-convo" style="margin-top:14px" id="ag-set-wrap"><summary data-es="Horarios y ajustes" data-en="Hours and settings">Horarios y ajustes</summary>
+          <div class="pn-form" style="margin-top:10px">
+            <label class="pn-check"><input type="checkbox" id="ag-on"><span data-es="Mostrar «Agendar cita» en mi página" data-en="Show “Book an appointment” on my page">Mostrar «Agendar cita» en mi página</span></label>
+            <div><span style="font-weight:600;font-size:.86rem" data-es="Días que atiendes" data-en="Days you work">Días que atiendes</span><div class="pn-row" id="ag-days" style="margin-top:6px;gap:6px"></div></div>
+            <div class="pn-grid2">
+              <label><span data-es="Desde" data-en="From">Desde</span><input class="pn-in" type="time" id="ag-start" step="900"></label>
+              <label><span data-es="Hasta" data-en="Until">Hasta</span><input class="pn-in" type="time" id="ag-end" step="900"></label>
+              <label><span data-es="Duración de cada cita" data-en="Length of each appointment">Duración de cada cita</span><select class="pn-in" id="ag-slot">
+                <option value="15">15 min</option><option value="20">20 min</option><option value="30">30 min</option><option value="45">45 min</option>
+                <option value="60">1 h</option><option value="90">1 h 30</option><option value="120">2 h</option></select></label>
+              <label><span data-es="Días hacia adelante" data-en="Days ahead">Días hacia adelante</span><input class="pn-in" type="number" id="ag-ahead" min="1" max="90"></label>
+              <label><span data-es="Aviso mínimo (horas)" data-en="Minimum notice (hours)">Aviso mínimo (horas)</span><input class="pn-in" type="number" id="ag-notice" min="0" max="72"></label>
+              <label><span data-es="Zona horaria" data-en="Time zone">Zona horaria</span><select class="pn-in" id="ag-tz"></select></label>
+            </div>
+            <button class="pn-btn pn-gold" type="button" id="ag-save" data-es="Guardar horarios" data-en="Save hours">Guardar horarios</button>
+          </div>
+        </details>
+        <div class="pn-msg" id="ag-msg" aria-live="polite"></div>
       </section>
 
       <section class="pn-card" id="pn-crm-card" data-tab="clientes">
@@ -586,7 +612,7 @@
 (function () {
   'use strict';
   var MAX_PHOTOS = 6, PHOTO_PX = 1600, GOLD = '#c9a96e';
-  var S = { agency: null, listings: [], services: [], svcLimit: 20, plan: null, editing: null, photos: [], color: null, svcEditing: null, svcPhotos: [], assets: [], assetLimit: 30, assetEditing: null, bot: null, botInfo: null, chat: [], crm: null, crmSvc: 'all', crmEditing: null, tab: 'pagina' };
+  var S = { agency: null, listings: [], services: [], svcLimit: 20, plan: null, editing: null, photos: [], color: null, svcEditing: null, svcPhotos: [], assets: [], assetLimit: 30, assetEditing: null, bot: null, botInfo: null, chat: [], crm: null, crmSvc: 'all', crmEditing: null, tab: 'pagina', agenda: null };
   function type() { return MINI_TYPES.typeFor(S.agency && S.agency.business_type); }
   function pair(p) { return isEn() ? p[1] : p[0]; }
   function $(id) { return document.getElementById(id); }
@@ -634,6 +660,10 @@
     faq_answer_too_long: ['Una respuesta es muy larga (máximo 1,200).', 'An answer is too long (1,200 max).'],
     extra_too_long: ['La información extra es muy larga (máximo 4,000).', 'The extra information is too long (4,000 max).'],
     never_too_long: ['El texto de «nunca» es muy largo (máximo 800).', 'The “never” text is too long (800 max).'],
+    invalid_hours: ['La hora de fin debe ser después de la de inicio.', 'The end time must be after the start.'],
+    invalid_days: ['Elige al menos un día.', 'Pick at least one day.'],
+    invalid_ahead: ['Días hacia adelante: de 1 a 90.', 'Days ahead: 1 to 90.'],
+    invalid_notice: ['Aviso mínimo: de 0 a 72 horas.', 'Minimum notice: 0 to 72 hours.'],
     invalid_service: ['Ese servicio ya no existe. Elige otro.', 'That service no longer exists. Pick another.'],
     invalid_asset_url: ['No se pudo guardar el archivo. Intenta de nuevo.', 'The file could not be saved. Try again.'],
     bio_too_long: ['El texto sobre ti es muy largo (máximo 600).', 'The about text is too long (600 max).'],
@@ -687,8 +717,8 @@
     var session = await getSession();
     if (!session) { $('pn-out').hidden = true; show('pn-signin'); return; }
     $('pn-out').hidden = false;
-    var both = await Promise.all([api('/api/panel?resource=agency'), api('/api/panel'), api('/api/panel?resource=services'), api('/api/panel?resource=assets'), api('/api/panel?resource=bot'), api('/api/panel?resource=cases')]);
-    var ag = both[0], ls = both[1], sv = both[2], as = both[3], bt = both[4], cs = both[5];
+    var both = await Promise.all([api('/api/panel?resource=agency'), api('/api/panel'), api('/api/panel?resource=services'), api('/api/panel?resource=assets'), api('/api/panel?resource=bot'), api('/api/panel?resource=cases'), api('/api/panel?resource=agenda')]);
+    var ag = both[0], ls = both[1], sv = both[2], as = both[3], bt = both[4], cs = both[5], agd = both[6];
     if (ag.status === 401 || ls.status === 401) { show('pn-none'); return; }
     if (!ag.ok || !ls.ok) { show('pn-signin'); msg($('pn-signin-msg'), t('No pudimos cargar tu página. Intenta de nuevo.', 'We could not load your page. Try again.'), 'err'); return; }
     S.agency = ag.data.agency; S.listings = ls.data.listings || []; S.plan = ls.data.plan || {};
@@ -697,6 +727,7 @@
     S.assets = as.ok ? (as.data.assets || []) : []; S.assetLimit = (as.ok && as.data.limit) || 30;
     S.botInfo = bt.ok ? bt.data : null; S.bot = S.botInfo ? S.botInfo.bot : null;
     S.crm = cs.ok ? cs.data : null;
+    S.agenda = agd.ok ? agd.data : null;
     renderAll();
     show('pn-app');
     miniTrack('mini_panel_view', { state: miniState().state, listings: S.listings.length, services: S.services.length, business_type: type().key });
@@ -713,7 +744,7 @@
     location.href = pageUrl() + (miniState().state === 'active' ? '' : '?vista=1');
   }
 
-  function renderAll() { renderStatus(); renderLink(); renderServices(); renderAssets(); renderBot(); renderCrm(); renderList(); fillCard(); setTab(S.tab); }
+  function renderAll() { renderStatus(); renderLink(); renderServices(); renderAssets(); renderBot(); renderCrm(); renderAgenda(); renderList(); fillCard(); setTab(S.tab); }
 
   function miniState() { return (S.plan && S.plan.mini) || { state: 'active', activeUntil: null }; }
   function renderStatus() {
@@ -1327,7 +1358,7 @@
 
   /* ---------- tabs ---------- */
   function setTab(tab) {
-    if (['pagina', 'clientes', 'whatsapp'].indexOf(tab) === -1) tab = 'pagina';
+    if (['pagina', 'agenda', 'clientes', 'whatsapp'].indexOf(tab) === -1) tab = 'pagina';
     S.tab = tab;
     document.querySelectorAll('[data-tab]').forEach(function (el) { el.classList.toggle('pn-off-tab', el.getAttribute('data-tab') !== tab); });
     document.querySelectorAll('[data-tab-btn]').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-tab-btn') === tab)); });
@@ -1509,6 +1540,76 @@
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'clientes-' + ((S.agency && S.agency.slug) || 'mini') + '.csv';
     document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   };
+
+  /* ---------- Agenda: appointment requests the owner approves (mini_appointments, supabase/024) ---------- */
+  var AG_ST = { requested: ['Por confirmar', 'To confirm'], confirmed: ['Confirmada', 'Confirmed'], declined: ['Rechazada', 'Declined'], cancelled: ['Cancelada', 'Cancelled'] };
+  function agWhen(iso) {
+    var tz = (S.agenda && S.agenda.agenda.tz) || 'America/Mexico_City';
+    try { return new Date(iso).toLocaleString(isEn() ? 'en-US' : 'es-MX', { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso; }
+  }
+  function agSvc(id) { var v = id && S.services.filter(function (x) { return x.id === id; })[0]; return v ? (v.title_es || '') : ''; }
+  function renderAgenda() {
+    if (!S.agenda) { $('pn-agenda-card').hidden = true; return; }
+    $('pn-agenda-card').hidden = false;
+    var a = S.agenda.agenda, list = S.agenda.appointments || [], now = Date.now();
+    var pending = list.filter(function (x) { return x.status === 'requested' && Date.parse(x.starts_at) > now; }).length;
+    $('ag-state').textContent = a.enabled ? (pending ? pending + ' ' + t('por confirmar', 'to confirm') : t('Activa', 'On')) : t('Apagada', 'Off');
+    var upcoming = list.filter(function (x) { return Date.parse(x.starts_at) > now - 3600000; });
+    $('ag-list').innerHTML = upcoming.length ? '<ul class="pn-list">' + upcoming.map(function (x) {
+      var phone = String(x.client_phone || '').replace(/\D/g, ''); if (phone.length === 10) phone = '52' + phone;
+      return '<li class="pn-item" style="align-items:flex-start"><div class="pn-item-main">' +
+        '<div class="pn-item-title">' + escapeHtml(agWhen(x.starts_at)) + '</div>' +
+        '<div class="pn-item-meta"><span>' + escapeHtml(x.client_name) + ' · ' + escapeHtml(x.client_phone) + '</span></div>' +
+        (agSvc(x.service_id) ? '<div class="pn-item-meta"><span>' + escapeHtml(agSvc(x.service_id)) + '</span></div>' : '') +
+        (x.note ? '<div class="pn-item-meta"><span>' + escapeHtml(x.note) + '</span></div>' : '') +
+        '<div class="pn-item-meta"><span class="pn-pill' + (x.status === 'requested' ? ' warn' : '') + '">' + escapeHtml(pair(AG_ST[x.status] || AG_ST.requested)) + '</span></div></div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px;flex:none">' +
+          (x.status === 'requested' ? '<button class="pn-btn pn-gold pn-edit" type="button" data-ag="' + escapeHtml(x.id) + '" data-st="confirmed">' + escapeHtml(t('Confirmar', 'Confirm')) + '</button>' +
+            '<button class="pn-btn pn-line pn-edit" type="button" data-ag="' + escapeHtml(x.id) + '" data-st="declined">' + escapeHtml(t('Rechazar', 'Decline')) + '</button>' :
+           x.status === 'confirmed' ? '<button class="pn-btn pn-line pn-edit" type="button" data-ag="' + escapeHtml(x.id) + '" data-st="cancelled">' + escapeHtml(t('Cancelar', 'Cancel')) + '</button>' : '') +
+          (phone ? '<a class="pn-btn pn-line pn-edit" href="https://wa.me/' + phone + '" target="_blank" rel="noopener" aria-label="WhatsApp"><svg><use href="#i-wa"/></svg></a>' : '') +
+        '</div></li>';
+    }).join('') + '</ul>' : '<p class="pn-sub">' + escapeHtml(a.enabled ? t('Aún no hay citas. Cuando alguien agende desde tu página aparecerá aquí.', 'No appointments yet. When someone books from your page it shows here.')
+      : t('La agenda está apagada. Ábrela en «Horarios y ajustes».', 'The agenda is off. Turn it on in “Hours and settings”.')) + '</p>';
+    if (!a.enabled) $('ag-set-wrap').open = true;
+    $('ag-on').checked = !!a.enabled;
+    var names = isEn() ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    $('ag-days').innerHTML = [1, 2, 3, 4, 5, 6, 0].map(function (d) {
+      return '<label class="pn-check" style="border:1px solid var(--line);border-radius:999px;padding:6px 10px"><input type="checkbox" data-agday="' + d + '"' + (a.days.indexOf(d) !== -1 ? ' checked' : '') + '><span>' + names[d] + '</span></label>';
+    }).join('');
+    $('ag-start').value = a.start; $('ag-end').value = a.end; $('ag-slot').value = String(a.slot);
+    $('ag-ahead').value = a.ahead; $('ag-notice').value = a.notice;
+    $('ag-tz').innerHTML = (S.agenda.time_zones || [a.tz]).map(function (z) { return '<option value="' + escapeHtml(z) + '">' + escapeHtml(z.replace('America/', '').replace('_', ' ')) + '</option>'; }).join('');
+    $('ag-tz').value = a.tz;
+  }
+  $('ag-save').onclick = async function () {
+    var body = { enabled: $('ag-on').checked, start: $('ag-start').value, end: $('ag-end').value, slot: Number($('ag-slot').value),
+      ahead: Number($('ag-ahead').value), notice: Number($('ag-notice').value), tz: $('ag-tz').value,
+      days: Array.from(document.querySelectorAll('[data-agday]')).filter(function (c) { return c.checked; }).map(function (c) { return Number(c.getAttribute('data-agday')); }) };
+    this.disabled = true;
+    var r = await api('/api/panel?resource=agenda', jsonOpts('PUT', body));
+    this.disabled = false;
+    if (!r.ok) { msg($('ag-msg'), errText(r.data.error), 'err'); return; }
+    S.agenda.agenda = r.data.agenda; renderAgenda();
+    msg($('ag-msg'), body.enabled ? t('Guardado. Tu página ya muestra «Agendar cita».', 'Saved. Your page now shows “Book an appointment”.') : t('Guardado.', 'Saved.'), 'ok');
+  };
+  /* Confirm / decline: save, then open WhatsApp to the client with the message written (the owner presses send). */
+  $('ag-list').addEventListener('click', async function (e) {
+    var b = e.target.closest('[data-ag]'); if (!b) return;
+    var id = b.getAttribute('data-ag'), st = b.getAttribute('data-st');
+    var x = (S.agenda.appointments || []).filter(function (a) { return a.id === id; })[0]; if (!x) return;
+    var win = window.open('about:blank', '_blank');
+    var r = await api('/api/panel?resource=agenda&id=' + encodeURIComponent(id), jsonOpts('PUT', { status: st }));
+    if (!r.ok) { if (win) win.close(); msg($('ag-msg'), errText(r.data.error), 'err'); return; }
+    x.status = r.data.appointment.status; renderAgenda();
+    var phone = String(x.client_phone || '').replace(/\D/g, ''); if (phone.length === 10) phone = '52' + phone;
+    var name = (S.agency && S.agency.name) || '', when = agWhen(x.starts_at), svc = agSvc(x.service_id);
+    var text = st === 'confirmed' ? 'Hola ' + x.client_name + ', soy ' + name + '. Tu cita' + (svc ? ' (' + svc + ')' : '') + ' quedó confirmada para el ' + when + '. ¡Te esperamos!'
+      : st === 'declined' ? 'Hola ' + x.client_name + ', soy ' + name + '. Ese horario (' + when + ') no me es posible. ¿Te acomoda otro día u hora?'
+      : 'Hola ' + x.client_name + ', soy ' + name + '. Tuve que cancelar tu cita del ' + when + '. ¿Agendamos otro día?';
+    var url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(text);
+    if (win) win.location = url; else location.href = url;
+  });
 
   /* ---------- the agent's card ---------- */
   function fillCard() {

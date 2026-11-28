@@ -8,5 +8,5 @@ Loaded when you work in this folder. The root `CLAUDE.md` still applies.
 - **Vercel limits:** 10 s per request on Hobby; long work goes through `waitUntil` and the resumable Scout chain. 4.5 MB request body.
 - **LLM output is untrusted:** validate JSON before use (`parseReply`, Scout's range checks). A Groq 429 means "busy", never a crash.
 - **Concierge** returns `{ say, brief, missing, done }`; the `brief` field names are a contract with `buyer_briefs`. Prompt changes: follow the "Concierge prompt loop" in `docs/CONTEXT-MAP.md`.
-- **DB:** service-role client only here. The three Finder tables have RLS on and no policies. A schema change is a new `supabase/0NN_*.sql` (idempotent, with RLS); the next free number is 023.
+- **DB:** service-role client only here. The three Finder tables have RLS on and no policies. A schema change is a new `supabase/0NN_*.sql` (idempotent, with RLS); the next free number is 025.
 - **Tests** for anything in `_lib/` go in `test/` and into the `npm test` list in `package.json`.

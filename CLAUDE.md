@@ -129,7 +129,7 @@ Data model: `agencies` (plan, slug, whatsapp_number, marketing_trials_used), `ag
 - Run locally with `vercel dev` (needs `.env.local`; pull it with `vercel env pull`). Static pages also open directly.
 - Env vars: see `.env.example` (names only; never print values). Key ones: `SUPABASE_*`, `GROQ_API_KEY`, `ANTHROPIC_API_KEY`, `RUNWAYML_API_SECRET`, `KV_REST_API_URL/TOKEN`, `IG_ACCESS_TOKEN`, `IG_BUSINESS_ACCOUNT_ID`, `RESEND_API_KEY`, `SIGNUP_INVITE_CODE`, `PUBLIC_SITE_URL`.
 - **Shipping:** branch → PR → Vercel preview → squash-merge to `main` (title ends with `(#N)`) → production auto-deploys. Don't push straight to `main`.
-- **DB changes:** add `supabase/0NN_description.sql` (idempotent: `if not exists`), apply in Supabase Studio or MCP, and include RLS policies in the same file. The next number is **023**.
+- **DB changes:** add `supabase/0NN_description.sql` (idempotent: `if not exists`), apply in Supabase Studio or MCP, and include RLS policies in the same file. The next number is **025**.
 - **Tests:** `npm test` runs the Scout merge/validation unit tests; there is no CI yet. Otherwise verify by running handlers with mocked `req`/`res` and probing the preview or production URLs. Say plainly what wasn't tested. A real Scout run costs money: ask first.
 - Useful skills: `onboard-agency`, `audio-a-prompt` (voice note → site change prompt), `real-estate-content`, `digital-marketing-strategy`, `instagram-publish`, `/review`, `/ship`, `/qa`. For web browsing use gstack `/browse`, not the Chrome MCP.
 

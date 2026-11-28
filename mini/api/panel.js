@@ -20,6 +20,8 @@
  *       recent conversations (mini_bot, supabase/021; rules in api/_bot.js).
  *   GET/POST/PUT/DELETE ?resource=cases (&id=, &service=&stages=1)  the client CRM:
  *       jobs per service, WhatsApp leads, totals (mini_cases, supabase/022; api/_cases.js).
+ *   GET/PUT ?resource=agenda (&id=)  "Agendar cita": settings, appointments, confirm/decline
+ *       (agencies.agenda, mini_appointments, supabase/024; rules in api/_agenda.js).
  *   POST ?action=bot-test  { messages, draft }  one reply from the assistant, for the
  *       panel's test chat, with unsaved training applied. Nothing is stored or sent.
  *   GET ?action=preview&slug=  the customer's own page as buyers will see it,
@@ -49,6 +51,7 @@ import { handleServices, PUBLIC_SERVICE_FIELDS } from './_services.js';
 import { handleAssets, ASSET_FIELDS, missingTable } from './_assets.js';
 import { cleanTraining, botDefaults, loadBotContext, botReply, BOT_FIELDS } from './_bot.js';
 import { handleCases } from './_cases.js';
+import { cleanAgenda, agendaConfig, APPOINTMENT_FIELDS, TIME_ZONES } from './_agenda.js';
 
 export const PAY_METHODS = ['transfer', 'deposit', 'oxxo', 'other'];
 
@@ -203,6 +206,46 @@ async function handleBot(req, res, { auth, svc }) {
 export const handleBotRoute = ownRoute('bot', handleBot);
 export const handleCasesRoute = ownRoute('cases', handleCases);
 
+/** "Agendar cita", the owner's side: settings, the appointments, confirm / decline (mini_appointments, supabase/024). */
+async function handleAgenda(req, res, { auth, svc }) {
+  const id = req.query && req.query.id;
+  if (req.method === 'GET') {
+    const [ag, ap] = await Promise.all([
+      svc.from('agencies').select('agenda').eq('id', auth.agencyId).maybeSingle(),
+      svc.from('mini_appointments').select(APPOINTMENT_FIELDS).eq('agency_id', auth.agencyId)
+        .gte('starts_at', new Date(Date.now() - 14 * 864e5).toISOString()).order('starts_at', { ascending: true }).limit(300)
+    ]);
+    if (ag.error) throw ag.error;
+    if (ap.error) throw ap.error;
+    res.status(200).json({ agenda: agendaConfig(ag.data && ag.data.agenda), time_zones: TIME_ZONES, appointments: ap.data || [] });
+    return;
+  }
+  if ((req.method === 'PUT' || req.method === 'PATCH') && id) {
+    if (!/^[0-9a-f-]{36}$/i.test(String(id))) { res.status(400).json({ error: 'invalid_id' }); return; }
+    const status = req.body && req.body.status;
+    if (!['confirmed', 'declined', 'cancelled'].includes(status)) { res.status(400).json({ error: 'invalid_status' }); return; }
+    const { data, error } = await svc.from('mini_appointments').update({ status, updated_at: new Date().toISOString() })
+      .eq('id', id).eq('agency_id', auth.agencyId).select(APPOINTMENT_FIELDS).maybeSingle();
+    if (error) throw error;
+    if (!data) { res.status(404).json({ error: 'not_found' }); return; }
+    res.status(200).json({ appointment: data });
+    return;
+  }
+  if (req.method === 'PUT' || req.method === 'PATCH') {
+    const { agenda, error } = cleanAgenda(req.body);
+    if (error) { res.status(400).json({ error }); return; }
+    const { data: cur, error: rErr } = await svc.from('agencies').select('agenda').eq('id', auth.agencyId).maybeSingle();
+    if (rErr) throw rErr;
+    const next = { ...agendaConfig(cur && cur.agenda), ...agenda };
+    const { error: uErr } = await svc.from('agencies').update({ agenda: next }).eq('id', auth.agencyId);
+    if (uErr) throw uErr;
+    res.status(200).json({ agenda: next });
+    return;
+  }
+  res.status(405).json({ error: 'method_not_allowed' });
+}
+export const handleAgendaRoute = ownRoute('agenda', handleAgenda);
+
 /** The test chat: one reply with the saved training plus the unsaved draft. Nothing stored, nothing sent. */
 export async function handleBotTest(req, res, deps = {}) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }
@@ -239,6 +282,7 @@ export default async function handler(req, res) {
   if (req.query && req.query.resource === 'assets') return handleAssetsRoute(req, res);
   if (req.query && req.query.resource === 'bot') return handleBotRoute(req, res);
   if (req.query && req.query.resource === 'cases') return handleCasesRoute(req, res);
+  if (req.query && req.query.resource === 'agenda') return handleAgendaRoute(req, res);
   if (req.query && req.query.action === 'bot-test') return handleBotTest(req, res);
   if (req.query && req.query.action === 'paid-notice') return handlePaidNotice(req, res);
   if (req.query && req.query.action === 'preview') return handlePreview(req, res);

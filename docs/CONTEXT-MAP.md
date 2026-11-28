@@ -63,6 +63,9 @@ PropLync Mini (self-serve "all your properties in one link"; its OWN Vercel proj
   crm     client CRM per service: mini_cases (supabase/022), steps per service (mini_services.stages, template default),
           WhatsApp inquiries become leads (leadFromWhatsApp); monthly add-on agencies.crm_until (plans.js crmActive,
           MXN 149; scripts/mini.mjs crm <slug>); panel tab "Clientes"; api mini/api/_cases.js (panel ?resource=cases)
+  agenda  "Agendar cita": agencies.agenda settings + mini_appointments (supabase/024, unique slot index); public
+          mini/api/agenda.js (free times, request), rules mini/api/_agenda.js (Mexico time zones via Intl); panel tab
+          "Agenda" (confirm/decline → WhatsApp to the client); a request is also a CRM lead (source 'agenda')
   material infographics + PDFs: mini_assets (supabase/020), files in listing-photos/<agency_id>/asset-*, rows only for
           URLs inside that folder (mini/api/_assets.js, panel.js ?resource=assets); page section "Material e información"
   shared  mini/api/_proplync/ = generated copy of the api/ files Mini uses (scripts/sync-mini-shared.mjs; test/mini-shared fails on drift)
@@ -71,7 +74,7 @@ PropLync Mini (self-serve "all your properties in one link"; its OWN Vercel proj
   rules   api/_lib/listing-fields.js (shared validation), plans.js mini / pageActive / miniState; unpaid or lapsed pages
           hide listings everywhere (Mini page, PropLync search, /propiedad); Mini listings never get stock photos
   ops     scripts/mini.mjs list (shows payment notices) | activate <slug> [--periods n]; payment details: mini/js/pay-config.js
-  tests   mini-signup, mini-project, mini-services, mini-bot, mini-crm, plans, extract-batch
+  tests   mini-signup, mini-project, mini-services, mini-bot, mini-crm, mini-agenda, plans, extract-batch
   main app /mini (mini.html) still live until the cutover PR redirects it to the Mini domain
   later   Mercado Pago, CRM for monthly, funnel events from the Mini pages
 ```
