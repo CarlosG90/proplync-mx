@@ -198,8 +198,28 @@ export function enforceRules(out, { agency = {}, bot = {}, history = [] }) {
   const first = !(history || []).some((m) => m.role === 'bot');
   if (first && !/asistente/i.test(reply)) reply = `Hola, soy el asistente automático de ${agency.name || 'este negocio'}. ` + reply;
   const hand = handoffText(agency, bot);
-  if (out.handoff && !reply.includes(hand)) reply = reply.trimEnd() + '\n\n' + hand;
+  if (out.handoff) {
+    // The model sometimes writes the message twice: once in its own words, once verbatim. Keep its own words.
+    if (reply.includes(hand) && saysHandoff(reply.replace(hand, ' '), hand)) reply = reply.replace(hand, ' ').replace(/\s{2,}/g, ' ').trim();
+    else if (!saysHandoff(reply, hand)) reply = reply.trimEnd() + '\n\n' + hand;
+  }
   return { ...out, reply };
+}
+
+/**
+ * Does the reply already carry the owner's handoff message? Not only word for word: the model often
+ * paraphrases it ("Le paso su mensaje a Gael…" without the "Gracias."), and appending the exact text
+ * then repeated it (live test, 2026-11-28). Counted as present when nearly all its meaningful words are
+ * in the reply. Pure, for tests.
+ */
+export function saysHandoff(reply, hand) {
+  if (!hand) return true;
+  if (reply.includes(hand)) return true;
+  const words = (s) => normWord(s).split(/[^a-z0-9ñ]+/).filter((w) => w.length >= 4);
+  const want = [...new Set(words(hand))];
+  if (!want.length) return false;
+  const have = new Set(words(reply));
+  return want.filter((w) => have.has(w)).length / want.length >= 0.8;
 }
 
 /**
