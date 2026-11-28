@@ -34,7 +34,7 @@ import { enforceRateLimit } from './_lib/ratelimit.js';
 import { safeDetail, logDegraded } from './_lib/health.js';
 import { provisionAgency } from './_lib/agency.js';
 import { PLANS, MINI_PRICE_MXN, MINI_PERIOD_DAYS } from './_lib/plans.js';
-import { validateListingFields, BUSINESS_TYPE_KEYS } from './_lib/listing-fields.js';
+import { validateListingFields, validateAgencyFields, BUSINESS_TYPE_KEYS } from './_lib/listing-fields.js';
 import { notifyOperator } from './_lib/notify.js';
 import { waitUntil } from '@vercel/functions';
 
@@ -112,7 +112,7 @@ async function signedInUser(req, svc) {
 }
 
 /**
- * POST ?action=mini { agencyName, whatsapp_number, business_type?, listings: [...], services?: [...] } with the session.
+ * POST ?action=mini { agencyName, whatsapp_number, business_type?, listings: [...], services?: [...], address?, bio? } with the session.
  * Creates the agency on plan mini, not yet paid, and saves up to 10 listings as drafts and up to 20 services
  * (shown only once the page is paid); answers { slug }. It needs listings or services, at least one.
  * `deps` lets the tests replace the environment, the database and the operator alert.
@@ -125,7 +125,7 @@ export async function handleMiniSignup(req, res, deps = {}) {
   const user = await signedInUser(req, svc);
   if (!user) { res.status(401).json({ error: 'sign_in_required' }); return; }
 
-  const { agencyName, whatsapp_number: wa, listings, services, business_type: bt } = req.body || {};
+  const { agencyName, whatsapp_number: wa, listings, services, business_type: bt, address, bio } = req.body || {};
   const name = String(agencyName || '').trim();
   if (!name || name.length > 120) { res.status(400).json({ error: 'missing_agency_name' }); return; }
   const whatsapp = String(wa || '').trim();
@@ -138,9 +138,15 @@ export async function handleMiniSignup(req, res, deps = {}) {
   // A page needs something to show: properties, services, or both.
   if (!list.length && !svcList.length) { res.status(400).json({ error: businessType === 'real_estate' ? 'no_listings' : 'no_services' }); return; }
 
-  let rows, svcRows;
-  try { rows = list.map(miniListingFields); svcRows = svcList.map(miniServiceFields); }
-  catch (err) { res.status(400).json({ error: err.message || 'invalid_listing' }); return; }
+  let rows, svcRows, extra;
+  try {
+    rows = list.map(miniListingFields); svcRows = svcList.map(miniServiceFields);
+    // Optional on the landing: the business address (only if they want it shown) and one line about what they do.
+    const opt = {};
+    if (typeof address === 'string' && address.trim()) opt.address = address.trim();
+    if (typeof bio === 'string' && bio.trim()) opt.bio = bio.trim();
+    extra = validateAgencyFields(opt);
+  } catch (err) { res.status(400).json({ error: err.message || 'invalid_listing' }); return; }
 
   // One agency per account. A returning agent goes to the dashboard they already have.
   const { data: member } = await svc.from('agency_members').select('agency_id').eq('user_id', user.id).limit(1).maybeSingle();
@@ -151,7 +157,7 @@ export async function handleMiniSignup(req, res, deps = {}) {
     agency = await (deps.provisionAgency || provisionAgency)(svc, { userId: user.id, agencyName: name, plan: 'mini' });
     // plan_expires_at stays null: not paid yet, so the page is not live (plans.js pageActive).
     const { error: upErr } = await svc.from('agencies')
-      .update({ whatsapp_number: whatsapp, plan_expires_at: null, business_type: businessType }).eq('id', agency.id);
+      .update({ ...extra, whatsapp_number: whatsapp, plan_expires_at: null, business_type: businessType }).eq('id', agency.id);
     if (upErr) throw upErr;
     // The ids come back so the page can attach the photos the agent picked (uploaded
     // under <agencyId>/… once they are a member, then saved through my-listings).

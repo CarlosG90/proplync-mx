@@ -23,10 +23,11 @@ export const AGENT_STAGES = [
   ['agent_signup_complete', 'Created an account']
 ];
 
-/* PropLync Mini (mini/): browser tab sessions for the first three steps; the last two are counted per page
+/* PropLync Mini (mini/): browser tab sessions for the first four steps (an ad's ?tipo= skips the type pick); the last two are counted per page
    (agency), since the payment notice and the activation are recorded by the server and the operator. */
 export const MINI_STAGES = [
   ['mini_view', 'Saw the Mini landing'],
+  ['mini_type', 'Picked a business type'],
   ['mini_preview', 'Built a preview'],
   ['mini_signup', 'Saved a page (email confirmed)'],
   ['mini_paid_notice', 'Reported a payment (pages)'],

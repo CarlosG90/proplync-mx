@@ -259,3 +259,34 @@ test('operator create: the card flags go through the panel\'s rules', async () =
   assert.throws(() => createCard({ name: 'X', whatsapp: 'llamame' }), /invalid_whatsapp_number/);
   assert.throws(() => createCard({ name: 'X', 'public-email': 'no-es-correo' }), /invalid_public_email/);
 });
+
+// ---------- the easy start (PR C): address and "what I do" at signup ----------
+
+test('signup: a services page can carry its business address and one line about what they do', async () => {
+  const svc = signupSvc(); const r = res();
+  await handleMiniSignup(signupReq({ agencyName: 'Ana López', whatsapp_number: '+52 238 000 0000', business_type: 'general',
+    services: ['Sesión de retrato'], address: '  Av. Reforma 10, Tehuacán ', bio: ' Fotografía de bodas ' }), r, deps(svc));
+  assert.equal(r.statusCode, 200, JSON.stringify(r.body));
+  const up = svc.writes.find((w) => w.table === 'agencies').v;
+  assert.equal(up.address, 'Av. Reforma 10, Tehuacán');
+  assert.equal(up.bio, 'Fotografía de bodas');
+});
+
+test('signup: no address means none is written; a too-long one is refused before anything is created', async () => {
+  let svc = signupSvc(); let r = res();
+  await handleMiniSignup(signupReq({ agencyName: 'X', whatsapp_number: '+52 238 000 0000', business_type: 'trades', services: ['Plomería'], address: '   ' }), r, deps(svc));
+  assert.equal(r.statusCode, 200);
+  assert.ok(!('address' in svc.writes.find((w) => w.table === 'agencies').v));
+  svc = signupSvc(); r = res();
+  await handleMiniSignup(signupReq({ agencyName: 'X', whatsapp_number: '+52 238 000 0000', business_type: 'trades', services: ['Plomería'], address: 'x'.repeat(201) }), r, deps(svc));
+  assert.equal(r.statusCode, 400);
+  assert.equal(r.body.error, 'address_too_long');
+  assert.equal(svc.writes.length, 0);
+});
+
+test('the business-type pick is an allowed funnel event and a funnel step', async () => {
+  const { MINI_EVENTS } = await import('../mini/api/signup.js');
+  const { MINI_STAGES } = await import('../api/_lib/funnel.js');
+  assert.ok(MINI_EVENTS.has('mini_type'));
+  assert.deepEqual(MINI_STAGES.map((s) => s[0]).slice(0, 3), ['mini_view', 'mini_type', 'mini_preview']);
+});

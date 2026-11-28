@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-<title data-es="Tus propiedades en un solo link · PropLync Mini" data-en="Your properties in one link · PropLync Mini">Tus propiedades en un solo link · PropLync Mini</title>
-<meta name="description" content="Pega tus propiedades como las mandas por WhatsApp y en minutos tienes una página con tu marca, fotos y botón Me interesa. MXN 249 por 3 meses.">
-<meta property="og:title" content="Tus propiedades en un solo link, con tu marca">
-<meta property="og:description" content="Pega tu inventario de WhatsApp y en minutos tienes tu página con fotos y botón Me interesa directo a tu WhatsApp. MXN 249 por 3 meses.">
+<title data-es="Tu negocio en un solo link · PropLync Mini" data-en="Your business in one link · PropLync Mini">Tu negocio en un solo link · PropLync Mini</title>
+<meta name="description" content="Tus servicios, tus precios y tu WhatsApp en una página con tu marca, lista en minutos. Para cualquier negocio de servicios y para asesores inmobiliarios. MXN 249 por 3 meses.">
+<meta property="og:title" content="Tu negocio en un solo link, con tu marca">
+<meta property="og:description" content="Elige a qué te dedicas y en minutos tienes tu página con tus servicios y un botón directo a tu WhatsApp. MXN 249 por 3 meses.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,8 +20,14 @@
   PropLync Mini runs as its own Vercel project (mini/, Root Directory "mini") so the
   self-serve business has its own domain, deploys and function budget, while it
   shares PropLync's Supabase database and field rules (api/_lib). This is its front
-  door for agents
-  who arrive from a social ad. A competitor sells this by hand (MXN 250, 24 hours);
+  door for anyone who sells services (and for real-estate agents)
+  who arrive from a social ad.
+
+  EASY FIRST (2026-11-27): the first question is "¿A qué te dedicas?". One tap picks a
+  template (js/business-types.js); a services business starts with its template's
+  services already ticked, so the page exists before they have typed anything but
+  their name and WhatsApp. Ads can preselect with ?tipo=inmobiliaria | profesional |
+  oficios | belleza | otro. Real estate keeps the paste-your-inventory path below. A competitor sells this by hand (MXN 250, 24 hours);
   here the agent pastes their WhatsApp inventory, sees their page exactly as it will
   look, adds photos, proves their email with a code, and the page is saved under their
   name. It goes public once paid (MXN 249 for 3 months, up to 10 properties; plans.js).
@@ -190,6 +196,30 @@
   .mn-pv-cta{font-weight:600;font-size:.74rem;padding:8px 14px;border-radius:999px;background:var(--gold);color:var(--ink);white-space:nowrap}
   .mn-pv-foot{padding:14px;text-align:center;font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--on-sand-light);border-top:1px solid var(--line)}
 
+  /* "¿A qué te dedicas?": one tap picks the template (mini/js/business-types.js) */
+  .mn-types{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:var(--sp-2)}
+  .mn-types button{border:1.5px solid var(--sand-3);background:var(--white);border-radius:var(--radius);padding:12px 12px;text-align:left;cursor:pointer;font:inherit;color:var(--ink);min-height:64px;display:flex;flex-direction:column;gap:3px;transition:border-color var(--duration) ease,box-shadow var(--duration) ease}
+  .mn-types button b{font-size:.92rem;font-weight:600;line-height:1.25}
+  .mn-types button small{font-size:.72rem;color:var(--on-sand-dim);line-height:1.35}
+  .mn-types button:hover{border-color:var(--sea)}
+  .mn-types button:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(45,138,133,.25)}
+  .mn-types button[aria-checked=true]{border-color:var(--sea);background:rgba(45,138,133,.07);box-shadow:0 0 0 1px var(--sea)}
+  .mn-types button.wide{grid-column:1 / -1}
+  /* the services checklist: ticked from the template, one tap to drop, one field to add */
+  .mn-svcs{display:grid;gap:8px;margin-top:var(--sp-3)}
+  .mn-svc{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;background:var(--paper);cursor:pointer;font-size:var(--text-sm);color:var(--ink);line-height:1.35}
+  .mn-svc input{width:20px;height:20px;flex:none;accent-color:var(--sea)}
+  .mn-svc.off{opacity:.5}
+  .mn-svc-add{display:flex;gap:8px;margin-top:10px}
+  .mn-svc-add .mn-in{flex:1}
+  .mn-pv-svc{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .mn-pv-svc b{font-family:var(--display);font-weight:400;font-size:1rem;color:var(--ink);line-height:1.25}
+  .mn-pv-svc small{display:block;font-size:.72rem;color:var(--on-sand-dim);margin-top:3px}
+  .dm-svc{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:11px 12px}
+  .dm-svc b{display:block;font-family:var(--display);font-weight:400;font-size:.84rem;color:var(--ink)}
+  .dm-svc p{display:flex;justify-content:space-between;align-items:center;margin:6px 0 0;font-family:var(--mono);font-weight:700;font-size:.66rem;color:var(--ink)}
+  .dm-svc p i{font-style:normal;font-family:var(--body);font-size:.56rem;font-weight:600;background:var(--gold);color:var(--ink);padding:4px 8px;border-radius:999px}
+
   /* the done state */
   .mn-link{font-family:var(--mono);font-size:var(--text-sm);word-break:break-all;background:var(--paper);border:1px solid var(--line);padding:12px 14px;border-radius:var(--radius-sm);margin-top:var(--sp-3);color:var(--ink)}
   .mn-next{list-style:none;padding:0;margin:var(--sp-5) 0 0;display:grid;gap:10px}
@@ -296,16 +326,16 @@
 <section class="mn-hero">
   <div class="mn-wrap mn-hero-grid">
     <div>
-      <div class="mn-eyebrow" data-es="PropLync Mini · para asesores inmobiliarios" data-en="PropLync Mini · for real-estate agents">PropLync Mini · para asesores inmobiliarios</div>
-      <h1 data-es="Un link. <em>Todas</em> tus propiedades." data-en="One link. <em>All</em> your properties.">Un link. <em>Todas</em> tus propiedades.</h1>
-      <p class="lede" data-es="Deja de reenviar fotos y fichas por separado. Arma tu página en minutos con tu marca, y cada cliente que la abra te escribe directo por WhatsApp desde la propiedad que le gustó." data-en="Stop forwarding photos and listings one by one. Build your branded page in minutes, and every client who opens it messages you on WhatsApp straight from the property they liked.">Deja de reenviar fotos y fichas por separado. Arma tu página en minutos con tu marca, y cada cliente que la abra te escribe directo por WhatsApp desde la propiedad que le gustó.</p>
+      <div class="mn-eyebrow" id="hero-eyebrow" data-es="PropLync Mini · para asesores inmobiliarios" data-en="PropLync Mini · for real-estate agents">PropLync Mini · para asesores inmobiliarios</div>
+      <h1 id="hero-h1" data-es="Un link. <em>Todas</em> tus propiedades." data-en="One link. <em>All</em> your properties.">Un link. <em>Todas</em> tus propiedades.</h1>
+      <p class="lede" id="hero-lede" data-es="Deja de reenviar fotos y fichas por separado. Arma tu página en minutos con tu marca, y cada cliente que la abra te escribe directo por WhatsApp desde la propiedad que le gustó." data-en="Stop forwarding photos and listings one by one. Build your branded page in minutes, and every client who opens it messages you on WhatsApp straight from the property they liked.">Deja de reenviar fotos y fichas por separado. Arma tu página en minutos con tu marca, y cada cliente que la abra te escribe directo por WhatsApp desde la propiedad que le gustó.</p>
       <div class="mn-cta-row">
         <a class="btn btn-gold" href="#app" data-es="Crear mi página" data-en="Create my page">Crear mi página</a>
         <div class="mn-price-line" data-es="<b>MXN 249 por 3 meses.</b><br>Ves tu página antes de pagar." data-en="<b>MXN 249 for 3 months.</b><br>See your page before you pay."><b>MXN 249 por 3 meses.</b><br>Ves tu página antes de pagar.</div>
       </div>
       <div class="mn-stats">
-        <div><b>10</b><span data-es="propiedades con fotos y ficha" data-en="properties with photos and details">propiedades con fotos y ficha</span></div>
-        <div><b data-es="5 min" data-en="5 min">5 min</b><span data-es="de tu inventario a tu página" data-en="from your inventory to your page">de tu inventario a tu página</span></div>
+        <div><b id="hero-n1">10</b><span id="hero-s1" data-es="propiedades con fotos y ficha" data-en="properties with photos and details">propiedades con fotos y ficha</span></div>
+        <div><b id="hero-n2" data-es="5 min" data-en="5 min">5 min</b><span id="hero-s2" data-es="de tu inventario a tu página" data-en="from your inventory to your page">de tu inventario a tu página</span></div>
         <div><b>1</b><span data-es="link para compartir en todos lados" data-en="link to share everywhere">link para compartir en todos lados</span></div>
       </div>
     </div>
@@ -334,9 +364,30 @@
     <!-- 1. Start: paste a message or upload photos -->
     <section class="mn-card" id="step-paste">
       <div class="mn-card-head"><span class="mn-num">1</span>
-        <div><h2 data-es="Agrega tus propiedades" data-en="Add your properties">Agrega tus propiedades</h2>
-        <p class="mn-hint" data-es="Pega el mensaje de WhatsApp con tu inventario, o sube las fotos de cada propiedad. Tú revisas todo antes de publicar." data-en="Paste the WhatsApp message with your inventory, or upload each property's photos. You check everything before publishing.">Pega el mensaje de WhatsApp con tu inventario, o sube las fotos de cada propiedad. Tú revisas todo antes de publicar.</p></div>
+        <div><h2 data-es="¿A qué te dedicas?" data-en="What do you do?">¿A qué te dedicas?</h2>
+        <p class="mn-hint" data-es="Elige tu tipo de negocio y te preparamos la página. Tú revisas todo antes de publicar." data-en="Pick your type of business and we set up the page for you. You check everything before publishing.">Elige tu tipo de negocio y te preparamos la página. Tú revisas todo antes de publicar.</p></div>
       </div>
+      <div class="mn-types" id="mn-types" role="radiogroup" aria-label="Tipo de negocio"></div>
+
+      <!-- services businesses: the template's services, ticked -->
+      <div id="mn-svc-pane" hidden>
+        <div class="mn-field" id="mn-what-wrap" hidden>
+          <label class="mn-label" for="mn-what" data-es="¿Qué haces? En pocas palabras" data-en="What do you do? In a few words">¿Qué haces? En pocas palabras</label>
+          <input class="mn-in" id="mn-what" maxlength="120" placeholder="Fotografía de bodas y eventos">
+        </div>
+        <h3 class="mn-sub" style="margin-top:var(--sp-5)" data-es="Tus servicios" data-en="Your services">Tus servicios</h3>
+        <p class="mn-hint" data-es="Quita los que no ofreces y agrega los tuyos. Precios y descripciones los pones después, desde tu panel." data-en="Untick what you don't offer and add your own. Prices and descriptions come later, from your panel.">Quita los que no ofreces y agrega los tuyos. Precios y descripciones los pones después, desde tu panel.</p>
+        <div class="mn-svcs" id="mn-svc-list"></div>
+        <div class="mn-svc-add">
+          <input class="mn-in" id="mn-svc-new" maxlength="120" placeholder="Agrega un servicio" aria-label="Agrega un servicio">
+          <button class="btn btn-outline" type="button" id="mn-svc-add" data-es="Agregar" data-en="Add">Agregar</button>
+        </div>
+      </div>
+
+      <!-- real estate: paste the inventory or upload photos (as before) -->
+      <div id="mn-re-pane" hidden>
+      <h3 class="mn-sub" style="margin-top:var(--sp-5)" data-es="Agrega tus propiedades" data-en="Add your properties">Agrega tus propiedades</h3>
+      <p class="mn-hint" data-es="Pega el mensaje de WhatsApp con tu inventario, o sube las fotos de cada propiedad." data-en="Paste the WhatsApp message with your inventory, or upload each property's photos.">Pega el mensaje de WhatsApp con tu inventario, o sube las fotos de cada propiedad.</p>
       <div class="mn-modes" role="tablist">
         <button type="button" role="tab" class="on" id="mn-mode-text" aria-selected="true"><svg><use href="#i-chat"/></svg><span data-es="Pegar mensaje" data-en="Paste message">Pegar mensaje</span></button>
         <button type="button" role="tab" id="mn-mode-photos" aria-selected="false"><svg><use href="#i-images"/></svg><span data-es="Subir fotos" data-en="Upload photos">Subir fotos</span></button>
@@ -357,7 +408,8 @@
         </label>
         <div id="mn-photo-props"></div>
       </div>
-      <div class="mn-row">
+      </div>
+      <div class="mn-row" id="mn-read-row" hidden>
         <button class="btn btn-gold" id="mn-read" data-es="Crear mi página" data-en="Create my page">Crear mi página</button>
       </div>
       <div class="mn-msg" id="mn-read-msg" aria-live="polite"></div>
@@ -367,22 +419,26 @@
     <section class="mn-card" id="step-review" hidden>
       <div class="mn-card-head"><span class="mn-num">2</span>
         <div><h2 data-es="Así se verá tu página" data-en="This is how your page will look">Así se verá tu página</h2>
-        <p class="mn-hint" data-es="Una vista previa con tus propiedades. Abajo puedes corregir los datos y agregar fotos (hasta 10 propiedades)." data-en="A preview with your properties. Below you can fix the details and add photos (up to 10 properties).">Una vista previa con tus propiedades. Abajo puedes corregir los datos y agregar fotos (hasta 10 propiedades).</p></div>
+        <p class="mn-hint" id="mn-review-hint" data-es="Una vista previa con tus propiedades. Abajo puedes corregir los datos y agregar fotos (hasta 10 propiedades)." data-en="A preview with your properties. Below you can fix the details and add photos (up to 10 properties).">Una vista previa con tus propiedades. Abajo puedes corregir los datos y agregar fotos (hasta 10 propiedades).</p></div>
       </div>
       <div class="mn-preview" id="mn-preview" aria-label="Vista previa"></div>
 
       <h3 class="mn-sub" data-es="Tus datos de contacto" data-en="Your contact details">Tus datos de contacto</h3>
       <div class="mn-prop-grid">
-        <label class="wide"><span data-es="Tu nombre o el de tu inmobiliaria" data-en="Your name or your agency's">Tu nombre o el de tu inmobiliaria</span>
+        <label class="wide"><span data-es="Tu nombre o el de tu negocio" data-en="Your name or your business's">Tu nombre o el de tu negocio</span>
           <input class="mn-in" id="mn-name" maxlength="120" autocomplete="organization" placeholder="Nadia Domínguez · Asesora inmobiliaria"></label>
         <label class="wide"><span data-es="Tu WhatsApp, con lada" data-en="Your WhatsApp, with country code">Tu WhatsApp, con lada</span>
           <input class="mn-in" id="mn-wa" type="tel" maxlength="25" autocomplete="tel" placeholder="+52 998 123 4567"></label>
+        <label class="wide" id="mn-addr-wrap" hidden><span data-es="¿Quieres mostrar la dirección de tu negocio? (opcional)" data-en="Do you want to show your business address? (optional)">¿Quieres mostrar la dirección de tu negocio? (opcional)</span>
+          <input class="mn-in" id="mn-addr" maxlength="200" autocomplete="street-address" placeholder="Déjalo vacío si atiendes a domicilio o en línea"></label>
       </div>
 
+      <div id="mn-re-review">
       <h3 class="mn-sub" data-es="Revisa cada propiedad" data-en="Check each property">Revisa cada propiedad</h3>
       <p class="mn-hint" data-es="Agrega hasta 6 fotos por propiedad; la primera es la portada. También puedes hacerlo después desde tu panel." data-en="Add up to 6 photos per property; the first one is the cover. You can also do it later from your panel.">Agrega hasta 6 fotos por propiedad; la primera es la portada. También puedes hacerlo después desde tu panel.</p>
       <div id="mn-props"></div>
       <button class="btn btn-outline" id="mn-add-prop" type="button" style="margin-top:12px"><span data-es="+ Agregar otra propiedad" data-en="+ Add another property">+ Agregar otra propiedad</span></button>
+      </div>
 
       <div class="mn-row">
         <button class="btn btn-gold" id="mn-next" data-es="Guardar y ver mi página" data-en="Save and see my page">Guardar y ver mi página</button>
@@ -439,11 +495,11 @@
   <div class="mn-wrap">
     <div class="mn-sec-head">
       <h2 data-es="Cómo funciona" data-en="How it works">Cómo funciona</h2>
-      <p data-es="Lo que hoy tardas en mandar fotos una por una, aquí se hace una vez." data-en="What takes you ages sending photos one by one is done once here.">Lo que hoy tardas en mandar fotos una por una, aquí se hace una vez.</p>
+      <p data-es="Lo que hoy explicas cliente por cliente, aquí queda en una página." data-en="What you explain client by client today lives on one page here.">Lo que hoy explicas cliente por cliente, aquí queda en una página.</p>
     </div>
     <div class="mn-how-grid">
-      <div class="mn-how-item"><div class="k">01</div><h3 data-es="Pega tu inventario o sube fotos" data-en="Paste your inventory or upload photos">Pega tu inventario o sube fotos</h3><p data-es="El mismo texto que mandas por WhatsApp (la IA separa cada propiedad y saca precio, recámaras, metros y zona), o directo las fotos de cada propiedad." data-en="The same text you send on WhatsApp (the AI separates each property and pulls price, bedrooms, size and area), or each property's photos directly.">El mismo texto que mandas por WhatsApp (la IA separa cada propiedad y saca precio, recámaras, metros y zona), o directo las fotos de cada propiedad.</p></div>
-      <div class="mn-how-item"><div class="k">02</div><h3 data-es="Revisa y agrega fotos" data-en="Check and add photos">Revisa y agrega fotos</h3><p data-es="Ves tu página tal como quedará. Corriges lo que haga falta y subes las fotos de cada propiedad." data-en="You see your page exactly as it will look. Fix what needs fixing and upload each property's photos.">Ves tu página tal como quedará. Corriges lo que haga falta y subes las fotos de cada propiedad.</p></div>
+      <div class="mn-how-item"><div class="k">01</div><h3 data-es="Elige tu negocio" data-en="Pick your business">Elige tu negocio</h3><p data-es="Te damos tus servicios ya escritos para tu tipo de negocio; quitas y agregas los tuyos. Si vendes propiedades, pegas tu inventario de WhatsApp o subes las fotos." data-en="We give you your services already written for your type of business; untick and add your own. If you sell property, paste your WhatsApp inventory or upload the photos.">Te damos tus servicios ya escritos para tu tipo de negocio; quitas y agregas los tuyos. Si vendes propiedades, pegas tu inventario de WhatsApp o subes las fotos.</p></div>
+      <div class="mn-how-item"><div class="k">02</div><h3 data-es="Revisa tu página" data-en="Check your page">Revisa tu página</h3><p data-es="Ves tu página tal como quedará. Escribes tu nombre y tu WhatsApp; precios, fotos y logo los agregas cuando quieras." data-en="You see your page exactly as it will look. Add your name and WhatsApp; prices, photos and logo whenever you like.">Ves tu página tal como quedará. Escribes tu nombre y tu WhatsApp; precios, fotos y logo los agregas cuando quieras.</p></div>
       <div class="mn-how-item"><div class="k">03</div><h3 data-es="Mírala, paga y comparte" data-en="See it, pay, share">Mírala, paga y comparte</h3><p data-es="Confirmas tu correo con un código y ves tu página terminada antes de pagar. Al confirmar tu pago la publicamos y compartes un solo link." data-en="You confirm your email with a code and see your finished page before paying. Once your payment is confirmed we publish it and you share a single link.">Confirmas tu correo con un código y ves tu página terminada antes de pagar. Al confirmar tu pago la publicamos y compartes un solo link.</p></div>
     </div>
   </div>
@@ -462,8 +518,8 @@
         <div class="price">$249<small>MXN</small></div>
         <div class="per" data-es="Pago único. Renuevas cada 3 meses solo si quieres seguir." data-en="One payment. Renew every 3 months only if you want to keep it.">Pago único. Renuevas cada 3 meses solo si quieres seguir.</div>
         <ul class="mn-feats">
-          <li><svg><use href="#i-check"/></svg><span data-es="Hasta 10 propiedades con fotos, precio y ficha" data-en="Up to 10 properties with photos, price and details">Hasta 10 propiedades con fotos, precio y ficha</span></li>
-          <li><svg><use href="#i-check"/></svg><span data-es="Botón «Me interesa» directo a tu WhatsApp en cada propiedad" data-en="“I'm interested” button straight to your WhatsApp on every property">Botón «Me interesa» directo a tu WhatsApp en cada propiedad</span></li>
+          <li><svg><use href="#i-check"/></svg><span data-es="Hasta 20 servicios con precio, o 10 propiedades con fotos y ficha" data-en="Up to 20 services with prices, or 10 properties with photos and details">Hasta 20 servicios con precio, o 10 propiedades con fotos y ficha</span></li>
+          <li><svg><use href="#i-check"/></svg><span data-es="Botón directo a tu WhatsApp en cada servicio o propiedad" data-en="A button straight to your WhatsApp on every service or property">Botón directo a tu WhatsApp en cada servicio o propiedad</span></li>
           <li><svg><use href="#i-check"/></svg><span data-es="Tu nombre, logo, colores, teléfono, correo y ubicación" data-en="Your name, logo, colours, phone, email and location">Tu nombre, logo, colores, teléfono, correo y ubicación</span></li>
           <li><svg><use href="#i-check"/></svg><span data-es="Se publica al instante y la editas cuando quieras" data-en="Goes live instantly and you edit it whenever you want">Se publica al instante y la editas cuando quieras</span></li>
         </ul>
@@ -472,11 +528,11 @@
       <div class="mn-tier">
         <div class="name" data-es="Mensual + CRM" data-en="Monthly + CRM">Mensual + CRM</div>
         <div class="price">$149<small data-es="MXN / mes" data-en="MXN / month">MXN / mes</small></div>
-        <div class="per" data-es="Para asesores con más inventario y seguimiento de clientes." data-en="For agents with more inventory and client follow-up.">Para asesores con más inventario y seguimiento de clientes.</div>
+        <div class="per" data-es="Para llevar tus trámites y clientes: etapas, cobros, anticipos y comisiones." data-en="To run your jobs and clients: stages, fees, deposits and commissions.">Para llevar tus trámites y clientes: etapas, cobros, anticipos y comisiones.</div>
         <ul class="mn-feats">
           <li><svg><use href="#i-check"/></svg><span data-es="Hasta 30 propiedades" data-en="Up to 30 properties">Hasta 30 propiedades</span></li>
           <li><svg><use href="#i-check"/></svg><span data-es="Sin marca de PropLync en tu página" data-en="No PropLync badge on your page">Sin marca de PropLync en tu página</span></li>
-          <li><svg><use href="#i-check"/></svg><span data-es="Cada «Me interesa» queda como prospecto en tu CRM, con notas y seguimientos" data-en="Every “I'm interested” becomes a lead in your CRM, with notes and follow-ups">Cada «Me interesa» queda como prospecto en tu CRM, con notas y seguimientos</span></li>
+          <li><svg><use href="#i-check"/></svg><span data-es="CRM de trámites: cliente, etapa, costo, anticipo, resto y comisión" data-en="Job CRM: client, stage, fee, deposit, balance and commission">CRM de trámites: cliente, etapa, costo, anticipo, resto y comisión</span></li>
           <li class="soon"><svg><use href="#i-clock"/></svg><span data-es="Disponible al activar el pago en línea" data-en="Available once online payment is live">Disponible al activar el pago en línea</span></li>
         </ul>
         <a class="btn btn-outline" href="#app" data-es="Empezar con 3 meses" data-en="Start with 3 months">Empezar con 3 meses</a>
@@ -491,8 +547,8 @@
     <div class="mn-faq-list">
       <details><summary data-es="¿Cuándo pago?" data-en="When do I pay?">¿Cuándo pago?</summary><p data-es="Después de ver tu página lista. La guardas con tu correo y desde tu panel nos pides los datos de pago; en cuanto confirmamos el pago, se publica." data-en="After seeing your page ready. You save it with your email and request the payment details from your panel; as soon as we confirm the payment, it goes live.">Después de ver tu página lista. La guardas con tu correo y desde tu panel nos pides los datos de pago; en cuanto confirmamos el pago, se publica.</p></details>
       <details><summary data-es="¿Qué pasa cuando terminan los 3 meses?" data-en="What happens when the 3 months end?">¿Qué pasa cuando terminan los 3 meses?</summary><p data-es="Tu página se pausa: deja de mostrarse hasta que renueves. No se borra nada." data-en="Your page pauses: it stops showing until you renew. Nothing is deleted.">Tu página se pausa: deja de mostrarse hasta que renueves. No se borra nada.</p></details>
-      <details><summary data-es="¿Puedo cambiar propiedades después?" data-en="Can I change properties later?">¿Puedo cambiar propiedades después?</summary><p data-es="Sí. Entras a tu panel con tu correo (te mandamos un código) y agregas, editas o quitas propiedades y fotos cuando quieras, sin costo adicional." data-en="Yes. You sign in to your dashboard with your email (we send you a code) and add, edit or remove properties and photos whenever you want, at no extra cost.">Sí. Entras a tu panel con tu correo (te mandamos un código) y agregas, editas o quitas propiedades y fotos cuando quieras, sin costo adicional.</p></details>
-      <details><summary data-es="¿Mis clientes ven otras agencias?" data-en="Do my clients see other agencies?">¿Mis clientes ven otras agencias?</summary><p data-es="No. Tu página muestra solo tus propiedades y tu marca. El botón «Me interesa» abre WhatsApp contigo, nadie más." data-en="No. Your page shows only your properties and your brand. The “I'm interested” button opens WhatsApp with you, nobody else.">No. Tu página muestra solo tus propiedades y tu marca. El botón «Me interesa» abre WhatsApp contigo, nadie más.</p></details>
+      <details><summary data-es="¿Puedo cambiar mis servicios después?" data-en="Can I change my services later?">¿Puedo cambiar mis servicios después?</summary><p data-es="Sí. Entras a tu panel con tu correo (te mandamos un código) y agregas, editas o quitas servicios, propiedades, precios y fotos cuando quieras, sin costo adicional." data-en="Yes. You sign in to your dashboard with your email (we send you a code) and add, edit or remove services, properties, prices and photos whenever you want, at no extra cost.">Sí. Entras a tu panel con tu correo (te mandamos un código) y agregas, editas o quitas servicios, propiedades, precios y fotos cuando quieras, sin costo adicional.</p></details>
+      <details><summary data-es="¿Mis clientes ven otros negocios?" data-en="Do my clients see other businesses?">¿Mis clientes ven otros negocios?</summary><p data-es="No. Tu página muestra solo lo tuyo y tu marca. Cada botón de WhatsApp abre el chat contigo, nadie más." data-en="No. Your page shows only your work and your brand. Every WhatsApp button opens a chat with you, nobody else.">No. Tu página muestra solo lo tuyo y tu marca. Cada botón de WhatsApp abre el chat contigo, nadie más.</p></details>
     </div>
   </div>
 </section>
@@ -513,6 +569,7 @@
 <script src="/js/i18n.js"></script>
 <script src="/js/supabase-client.js"></script>
 <script src="/js/track.js"></script>
+<script src="/js/business-types.js"></script>
 <script>
 (function () {
   'use strict';
@@ -541,12 +598,97 @@
   var props = [];     // what the AI read, as the agent corrects it; each has .photos = [{blob, url}]
   var email = '';
 
+  /* ---------- 0. "¿A qué te dedicas?" ----------
+     WHY: the page must be easy to make for anyone who sells services, not only agents. One tap picks a template
+     (mini/js/business-types.js); real estate keeps the paste-your-inventory path, every other business starts
+     from its template's services, already ticked. Ads can preselect with ?tipo= so the visitor skips the choice. */
+  var TYPES = MINI_TYPES.TYPES;
+  var TYPE = null;        // a key of TYPES once chosen
+  var svcs = [];          // [{ title_es, title_en, on }]
+  var TIPO = { inmobiliaria: 'real_estate', 'bienes-raices': 'real_estate', profesional: 'professional', profesionistas: 'professional',
+               oficios: 'trades', hogar: 'trades', belleza: 'beauty', bienestar: 'beauty', servicios: 'general', otro: 'general' };
+  function pair(p) { return document.documentElement.lang === 'en' ? p[1] : p[0]; }
+  function isRE() { return TYPE === 'real_estate'; }
+  /* Set a bilingual element: its data-es/data-en (so i18n.js keeps it on a language switch) and its current text. */
+  function setBi(el, es, en, html) {
+    if (!el) return;
+    var a = html ? es : escapeHtml(es), b = html ? en : escapeHtml(en);
+    el.setAttribute('data-es', a); el.setAttribute('data-en', b);
+    el.innerHTML = document.documentElement.lang === 'en' ? b : a;
+  }
+  /* The hero speaks to whoever the ad brought. No type: any business. */
+  var HERO = {
+    any: ['PropLync Mini · tu negocio en un link', 'PropLync Mini · your business in one link', 'Un link. <em>Todo</em> lo que ofreces.', 'One link. <em>Everything</em> you offer.',
+      'Arma tu página en minutos: tus servicios, tus precios y un botón de WhatsApp. Cada cliente que la abra te escribe directo.',
+      'Build your page in minutes: your services, your prices and a WhatsApp button. Every client who opens it messages you directly.'],
+    real_estate: ['PropLync Mini · para asesores inmobiliarios', 'PropLync Mini · for real-estate agents', 'Un link. <em>Todas</em> tus propiedades.', 'One link. <em>All</em> your properties.',
+      'Deja de reenviar fotos y fichas por separado. Arma tu página en minutos con tu marca, y cada cliente que la abra te escribe directo por WhatsApp desde la propiedad que le gustó.',
+      'Stop forwarding photos and listings one by one. Build your branded page in minutes, and every client who opens it messages you on WhatsApp straight from the property they liked.'],
+    professional: ['PropLync Mini · para profesionistas', 'PropLync Mini · for professionals', 'Un link. <em>Todos</em> tus servicios.', 'One link. <em>All</em> your services.',
+      'Tus servicios, tus precios y tu contacto en una página con tu nombre. Tus clientes te piden cotización por WhatsApp desde el servicio que necesitan.',
+      'Your services, prices and contact on one page with your name. Clients ask for a quote on WhatsApp from the service they need.'],
+    trades: ['PropLync Mini · para oficios y servicios del hogar', 'PropLync Mini · for trades and home services', 'Un link. <em>Todos</em> tus trabajos.', 'One link. <em>All</em> your work.',
+      'Lo que haces, cuánto cobras y dónde trabajas, en una página. Te escriben por WhatsApp con el servicio que necesitan.',
+      'What you do, what you charge and where you work, on one page. Clients message you on WhatsApp with the service they need.'],
+    beauty: ['PropLync Mini · para belleza y bienestar', 'PropLync Mini · for beauty and wellness', 'Un link. <em>Todos</em> tus servicios.', 'One link. <em>All</em> your services.',
+      'Tu menú de servicios con precios y duración, en una página con tu marca. Tus clientas agendan por WhatsApp desde el servicio que quieren.',
+      'Your service menu with prices and duration, on one branded page. Clients book on WhatsApp from the service they want.']
+  };
+  function renderHero() {
+    var h = HERO[TYPE] || HERO.any;
+    setBi($('hero-eyebrow'), h[0], h[1]); setBi($('hero-h1'), h[2], h[3], true); setBi($('hero-lede'), h[4], h[5]);
+    if (isRE()) { $('hero-n1').textContent = '10'; setBi($('hero-s1'), 'propiedades con fotos y ficha', 'properties with photos and details'); setBi($('hero-n2'), '5 min', '5 min'); setBi($('hero-s2'), 'de tu inventario a tu página', 'from your inventory to your page'); }
+    else { $('hero-n1').textContent = '20'; setBi($('hero-s1'), 'servicios con precio y descripción', 'services with price and description'); setBi($('hero-n2'), '3 min', '3 min'); setBi($('hero-s2'), 'para tener tu página lista', 'to have your page ready'); }
+  }
+  function renderTypes() {
+    $('mn-types').innerHTML = MINI_TYPES.KEYS.map(function (k) {
+      var ty = TYPES[k];
+      return '<button type="button" role="radio" data-type="' + k + '" aria-checked="' + (TYPE === k) + '"' + (k === 'general' ? ' class="wide"' : '') + '>' +
+        '<b>' + escapeHtml(pair(ty.label)) + '</b><small>' + escapeHtml(pair(ty.hint)) + '</small></button>';
+    }).join('');
+  }
+  function renderSvcs() {
+    $('mn-svc-list').innerHTML = svcs.length ? svcs.map(function (x, i) {
+      var title = document.documentElement.lang === 'en' && x.title_en ? x.title_en : x.title_es;
+      return '<label class="mn-svc' + (x.on ? '' : ' off') + '"><input type="checkbox" data-svc="' + i + '"' + (x.on ? ' checked' : '') + '><span>' + escapeHtml(title) + '</span></label>';
+    }).join('') : '<p class="mn-hint">' + escapeHtml(t('Escribe abajo lo que ofreces, uno por uno.', 'Type what you offer below, one at a time.')) + '</p>';
+  }
+  function chooseType(k, fromUrl) {
+    if (!TYPES[k]) return;
+    var changed = TYPE !== k;
+    TYPE = k;
+    if (changed) svcs = TYPES[k].services.map(function (x) { return { title_es: x.title_es, title_en: x.title_en, on: true }; });
+    renderTypes(); renderHero(); renderSvcs(); renderDemo();
+    $('mn-re-pane').hidden = !isRE();
+    $('mn-svc-pane').hidden = isRE();
+    $('mn-what-wrap').hidden = k !== 'general';
+    $('mn-read-row').hidden = false;
+    msg($('mn-read-msg'), '');
+    if (!fromUrl) miniTrack('mini_type', { business_type: k });
+  }
+  $('mn-types').addEventListener('click', function (e) { var b = e.target.closest('[data-type]'); if (b) chooseType(b.getAttribute('data-type')); });
+  $('mn-svc-list').addEventListener('change', function (e) {
+    var c = e.target.closest('[data-svc]'); if (!c) return;
+    svcs[+c.getAttribute('data-svc')].on = c.checked; renderSvcs();
+  });
+  function addSvc() {
+    var v = $('mn-svc-new').value.trim();
+    if (!v) return;
+    if (svcs.filter(function (x) { return x.on; }).length >= 20) { msg($('mn-read-msg'), t('Hasta 20 servicios.', 'Up to 20 services.'), 'err'); return; }
+    if (!svcs.some(function (x) { return x.title_es.toLowerCase() === v.toLowerCase(); })) svcs.push({ title_es: v.slice(0, 120), title_en: null, on: true });
+    $('mn-svc-new').value = ''; $('mn-svc-new').focus(); renderSvcs(); msg($('mn-read-msg'), '');
+  }
+  $('mn-svc-add').addEventListener('click', addSvc);
+  $('mn-svc-new').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); addSvc(); } });
+  function chosenSvcs() { return svcs.filter(function (x) { return x.on; }); }
+
   /* The door can be closed with one setting (MINI_SIGNUP); say so up front instead of after the work. */
   fetch('/api/signup?action=status').then(function (r) { return r.json(); }).then(function (d) {
     if (d && d.open) return;
     $('mn-closed').hidden = false;
     $('mn-read').disabled = true;
     $('mn-photo-files').disabled = true;
+    document.querySelectorAll('#mn-types button').forEach(function (b) { b.disabled = true; });
   }).catch(function () { /* unknown: let them try; the publish answer will say */ });
 
   var SAMPLE = 'Buen día, les comparto mi inventario:\n🏡 Casa en Jardines del Moral, 3 rec, 2.5 baños, 180 m² de construcción, cochera para 2. $3,450,000\n🏢 Departamento en el Centro, 2 rec, 1 baño, 95 m², amueblado. Renta $12,500 al mes\n✨ Departamento con balcón en Col. Del Valle, 2 rec, 2 baños, 110 m², alberca y gym. 2.15 mdp';
@@ -573,12 +715,19 @@
       '<div class="pcard-foot"><span class="pcard-price">' + escapeHtml(money(p)) + '</span><span class="mn-pv-cta">' + escapeHtml(t('Me interesa', 'I am interested')) + '</span></div>' +
       '</div></article>';
   }
+  function svcRowHTML(x) {
+    var title = document.documentElement.lang === 'en' && x.title_en ? x.title_en : x.title_es;
+    return '<div class="mn-pv-svc"><div><b>' + escapeHtml(title) + '</b><small>' + escapeHtml(t('Precio a cotizar', 'Price on request')) + '</small></div>' +
+      '<span class="mn-pv-cta">' + escapeHtml(t('Pedir', 'Ask')) + '</span></div>';
+  }
   function pageHTML(name, list, ribbon, placeholder) {
-    var cards = list.map(cardHTML).join('');
+    var services = !isRE() && TYPE;
+    var cards = services ? list.map(svcRowHTML).join('') : list.map(cardHTML).join('');
+    var eyebrow = services ? ($('mn-what').value.trim() && TYPE === 'general' ? $('mn-what').value.trim() : pair(TYPES[TYPE].eyebrow)) : t('Portafolio de propiedades', 'Property portfolio');
     return (ribbon ? '<span class="mn-pv-ribbon">' + escapeHtml(ribbon) + '</span>' : '') +
-      '<div class="mn-pv-head"><div class="eyebrow">' + escapeHtml(t('Portafolio de propiedades', 'Property portfolio')) + '</div>' +
+      '<div class="mn-pv-head"><div class="eyebrow">' + escapeHtml(eyebrow) + '</div>' +
       '<div class="name' + (placeholder ? ' is-placeholder' : '') + '">' + escapeHtml(name) + '</div><span class="mn-pv-wa"><svg><use href="#i-wa"/></svg>' + escapeHtml(t('Escribir por WhatsApp', 'Message on WhatsApp')) + '</span></div>' +
-      '<div class="mn-pv-grid">' + (cards || '<p class="mn-hint" style="padding:8px">' + escapeHtml(t('Elige al menos una propiedad.', 'Pick at least one property.')) + '</p>') + '</div>' +
+      '<div class="mn-pv-grid">' + (cards || '<p class="mn-hint" style="padding:8px">' + escapeHtml(services ? t('Elige al menos un servicio.', 'Pick at least one service.') : t('Elige al menos una propiedad.', 'Pick at least one property.')) + '</p>') + '</div>' +
       '<div class="mn-pv-foot">' + escapeHtml(t('Hecho con PropLync Mini', 'Made with PropLync Mini')) + '</div>';
   }
 
@@ -590,7 +739,28 @@
     { title: 'Departamento con balcón', town: 'León', neighborhood: 'Del Valle', bedrooms: 2, bathrooms: 2, size: 110, operation: 'sale', currency: 'MXN', amount: 2150000, cover: '', demo: true }
   ];
   var DEMO_IMG = ['/img/demo-1.jpg', '/img/demo-2.jpg', '/img/demo-3.jpg'];
+  /* The hero phone for a services business: same frame, a service menu instead of houses. */
+  var DEMO_SVC = { professional: ['Lic. Andrea Ruiz', [['Consulta inicial', 'MXN $500'], ['Trámite o gestión', 'A cotizar'], ['Asesoría', 'Desde MXN $1,200']]],
+                   trades: ['Plomería Hernández', [['Visita y diagnóstico', 'MXN $250'], ['Reparación de fugas', 'Desde MXN $450'], ['Instalación de boiler', 'Desde MXN $1,800']]],
+                   beauty: ['Estudio Valeria', [['Corte y peinado', 'Desde MXN $350'], ['Manicure y pedicure', 'MXN $480'], ['Masaje relajante · 60 min', 'MXN $650']]],
+                   general: ['Ana López · Fotografía', [['Sesión de retrato', 'MXN $1,500'], ['Boda completa', 'Desde MXN $12,000'], ['Evento por hora', 'MXN $900']]] };
   function renderDemo() {
+    // No type yet: the generic hero, so the generic example (a photographer). Real estate keeps the houses.
+    var key = !TYPE ? 'general' : (isRE() ? null : TYPE);
+    var d = key && DEMO_SVC[key];
+    if (d) {
+      $('mn-demo').innerHTML = '<div class="dm-head"><div class="dm-logo">' + escapeHtml(d[0].charAt(0)) + '</div>' +
+        '<div class="dm-eye">' + escapeHtml(pair(TYPES[key].eyebrow)) + '</div><div class="dm-name">' + escapeHtml(d[0]) + '</div>' +
+        '<div class="dm-acts"><span>WhatsApp</span><span>' + escapeHtml(t('Llamar', 'Call')) + '</span></div></div>' +
+        '<div class="dm-list">' + d[1].map(function (r) {
+          return '<div class="dm-svc"><b>' + escapeHtml(r[0]) + '</b><p>' + escapeHtml(r[1]) + '<i>' + escapeHtml(t('Pedir', 'Ask')) + '</i></p></div>';
+        }).join('') + '</div>';
+      $('mn-chat').innerHTML = '<div class="mn-chat-top"><i></i>' + escapeHtml(t('Cliente · hoy', 'Client · today')) + '</div>' +
+        '<div class="mn-bub"><div class="mn-prev"><div><b>' + escapeHtml(d[0]) + '</b><span>' + escapeHtml(t('Servicios y precios', 'Services and prices')) + '</span><em>proplync-mini.vercel.app</em></div></div>' +
+        '<p>' + escapeHtml(t('Aquí están mis servicios y precios 👇', 'Here are my services and prices 👇')) + '</p><small>10:24 ✓✓</small></div>' +
+        '<div class="mn-reply">' + escapeHtml(t('¡Hola! Me interesa: ', 'Hi! I am interested in: ') + d[1][0][0]) + '<small>10:31</small></div>';
+      return;
+    }
     var cards = DEMO.slice(0, 2).map(function (p, i) {
       return '<div class="dm-card"><img src="' + DEMO_IMG[i] + '" alt="" loading="lazy"><div><small>' + escapeHtml(p.neighborhood + ' · ' + p.town) + '</small>' +
         '<b>' + escapeHtml(p.title) + '</b><p>' + escapeHtml(money(p)) + '<i>' + escapeHtml(t('Me interesa', 'I\'m interested')) + '</i></p></div></div>';
@@ -606,12 +776,19 @@
       '<p>' + escapeHtml(t('Te comparto todo lo que tengo disponible 👇', 'Here is everything I have available 👇')) + '</p><small>10:24 ✓✓</small></div>' +
       '<div class="mn-reply">' + escapeHtml(t('¡Me interesa la casa de Jardines del Moral!', 'I\'m interested in the Jardines del Moral house!')) + '<small>10:31</small></div>';
   }
-  renderDemo();
-  miniTrack('mini_view');
+  renderTypes();
+  (function () {
+    var q = new URLSearchParams(location.search).get('tipo');
+    var k = q && (TIPO[q.toLowerCase()] || (TYPES[q] ? q : null));
+    if (k) chooseType(k, true); else { renderHero(); renderDemo(); }
+  })();
+  miniTrack('mini_view', TYPE ? { business_type: TYPE } : {});
 
   function renderPreview() {
     var typed = $('mn-name').value.trim();
-    $('mn-preview').innerHTML = pageHTML(typed || t('Tu nombre o tu inmobiliaria', 'Your name or agency'), props.filter(function (p) { return p.include; }), t('Vista previa', 'Preview'), !typed);
+    $('mn-preview').innerHTML = isRE()
+      ? pageHTML(typed || t('Tu nombre o tu inmobiliaria', 'Your name or agency'), props.filter(function (p) { return p.include; }), t('Vista previa', 'Preview'), !typed)
+      : pageHTML(typed || t('Tu nombre o tu negocio', 'Your name or business'), chosenSvcs(), t('Vista previa', 'Preview'), !typed);
   }
 
   /* ---------- 1a. start from photos: each selection becomes one property the agent then describes ---------- */
@@ -673,6 +850,21 @@
   /* ---------- 1b. read the pasted inventory ---------- */
   $('mn-read').addEventListener('click', async function () {
     var btn = this;
+    if (!TYPE) { msg($('mn-read-msg'), t('Elige a qué te dedicas.', 'Pick what you do.'), 'err'); return; }
+    if (!isRE()) {
+      if (!chosenSvcs().length) { msg($('mn-read-msg'), t('Elige o escribe al menos un servicio.', 'Pick or type at least one service.'), 'err'); return; }
+      msg($('mn-read-msg'), '');
+      $('mn-re-review').hidden = true; $('mn-addr-wrap').hidden = false;
+      setBi($('mn-review-hint'), 'Una vista previa con tus servicios. Escribe tu nombre y tu WhatsApp; lo demás lo completas desde tu panel.', 'A preview with your services. Add your name and WhatsApp; the rest you complete from your panel.');
+      $('mn-name').placeholder = t('Tu nombre o el de tu negocio', 'Your name or your business\'s');
+      renderPreview();
+      show('step-review');
+      miniTrack('mini_preview', { count: chosenSvcs().length, from: 'services', business_type: TYPE });
+      setTimeout(function () { $('mn-name').focus(); }, 400);
+      return;
+    }
+    $('mn-re-review').hidden = false; $('mn-addr-wrap').hidden = true;
+    setBi($('mn-review-hint'), 'Una vista previa con tus propiedades. Abajo puedes corregir los datos y agregar fotos (hasta 10 propiedades).', 'A preview with your properties. Below you can fix the details and add photos (up to 10 properties).');
     if (mode === 'photos') {
       if (!photoProps.length) { msg($('mn-read-msg'), t('Sube las fotos de al menos una propiedad.', 'Upload the photos of at least one property.'), 'err'); return; }
       props = photoProps.map(function (pp) { return blankProp(pp.photos); });
@@ -835,6 +1027,11 @@
   function chosenProps() { return props.filter(function (p) { return p.include; }); }
 
   function reviewProblem() {
+    if (!isRE()) {
+      if (!$('mn-name').value.trim()) return t('Escribe tu nombre o el de tu negocio.', 'Write your name or your business\'s.');
+      if (!/^[0-9+()\-\s]{6,25}$/.test($('mn-wa').value.trim())) return t('Revisa tu WhatsApp: solo números, con lada.', 'Check your WhatsApp: numbers only, with country code.');
+      return '';
+    }
     var chosen = chosenProps();
     if (!chosen.length) return t('Elige al menos una propiedad.', 'Pick at least one property.');
     for (var i = 0; i < chosen.length; i++) {
@@ -892,7 +1089,9 @@
     mini_closed: ['Abrimos muy pronto. Vuelve en unos días.', 'Opening very soon. Come back in a few days.'],
     sign_in_required: ['Tu sesión venció. Confirma tu correo de nuevo.', 'Your session expired. Confirm your email again.'],
     rate_limited: ['Demasiados intentos. Espera un momento.', 'Too many attempts. Wait a moment.'],
-    invalid_whatsapp_number: ['Revisa tu WhatsApp.', 'Check your WhatsApp.']
+    invalid_whatsapp_number: ['Revisa tu WhatsApp.', 'Check your WhatsApp.'],
+    address_too_long: ['La dirección es muy larga (máximo 200).', 'The address is too long (200 max).'],
+    no_services: ['Elige al menos un servicio.', 'Pick at least one service.']
   };
 
   /* Uploads go under <agencyId>/<listingId>-<n>.jpg: storage only lets a member write under its agency's folder,
@@ -933,7 +1132,11 @@
         body: JSON.stringify({
           agencyName: $('mn-name').value.trim(),
           whatsapp_number: $('mn-wa').value.trim(),
-          listings: chosenProps().map(function (p) {
+          business_type: TYPE,
+          services: isRE() ? [] : chosenSvcs().map(function (x) { return { title_es: x.title_es, title_en: x.title_en }; }),
+          address: isRE() ? undefined : ($('mn-addr').value.trim() || undefined),
+          bio: TYPE === 'general' ? ($('mn-what').value.trim() || undefined) : undefined,
+          listings: !isRE() ? [] : chosenProps().map(function (p) {
             return { title: p.title, town: p.town, neighborhood: p.neighborhood, bedrooms: p.bedrooms, bathrooms: p.bathrooms,
                      size: p.size, parking: p.parking, operation: p.operation, currency: p.currency, amount: p.amount, features: p.features };
           })
@@ -960,7 +1163,7 @@
       if (photos.total && !photos.failed) msg(pm, t('Se guardaron tus ' + photos.total + ' fotos.', 'Your ' + photos.total + ' photos were saved.'), 'ok');
       else if (photos.failed) msg(pm, t(photos.failed + ' foto(s) no se pudieron subir. Puedes agregarlas desde tu panel.', photos.failed + ' photo(s) could not be uploaded. You can add them from your panel.'), 'err');
       show('step-done');
-      miniTrack('mini_signup', { count: d.saved || 0, photos: photos.total || 0 });
+      miniTrack('mini_signup', { count: d.saved || 0, services: d.services_saved || 0, photos: photos.total || 0, business_type: TYPE });
     } catch (err) {
       msg(out, t('Sin conexión. Intenta de nuevo.', 'No connection. Try again.'), 'err');
     }
@@ -975,9 +1178,10 @@
   });
 
   document.addEventListener('langchange', function () {
+    renderTypes(); renderSvcs();
     renderDemo();
     renderPhotoProps();
-    if (props.length && !$('step-review').hidden) { renderProps(); renderPreview(); }
+    if (!$('step-review').hidden) { if (isRE() && props.length) renderProps(); renderPreview(); }
   });
 })();
 </script>
