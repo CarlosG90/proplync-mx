@@ -164,6 +164,7 @@ __META__
   /* our footprint: one quiet line on a navy band that closes the page */
   .mp-foot-site{background:var(--ink);color:var(--on-ink-faint);padding:26px 0 calc(30px + env(safe-area-inset-bottom));font-size:.78rem;margin:0}
   .mp-foot-site .mp-wrap{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+  .mp-foot-mail{color:var(--on-ink-dim);text-decoration:underline;text-underline-offset:3px;word-break:break-all}
   .mp-made{display:inline-flex;align-items:center;gap:8px;color:var(--on-ink-dim);text-decoration:none;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase}
   .mp-made svg{width:15px;height:15px;flex:none}
   .mp-made:hover{color:var(--on-ink)}
@@ -259,6 +260,11 @@ __META__
     return t('Hola, me interesa esta propiedad: ', 'Hi, I am interested in this property: ') + title(p) + ' (' + money(p) + ') ' + pageLink(p);
   }
   function icon(id) { return '<svg aria-hidden="true"><use href="#' + id + '"/></svg>'; }
+  /* safeUrl() allows only http(s) and our own paths, so it drops a mailto: link (the email button never showed).
+     The address was validated on save (api/_lib/listing-fields.js: no spaces, quotes or angle brackets), checked
+     again here, and the whole href is escaped. */
+  var EMAIL_OK = /^[^\s"'<>@]+@[^\s"'<>@]+\.[^\s"'<>@]+$/;
+  function mailHref(addr) { return addr && EMAIL_OK.test(addr) ? escapeHtml('mailto:' + addr) : ''; }
 
   /* The business template (mini/js/business-types.js). A page with only properties keeps the original wording. */
   function type() { return (window.MINI_TYPES && MINI_TYPES.typeFor(agency.business_type)) || { key: 'real_estate', hasListings: true, eyebrow: ['Servicios', 'Services'], greeting: ['Hola, vi tu página y quiero más información.', 'Hi, I saw your page and would like more information.'] }; }
@@ -313,7 +319,9 @@ __META__
       '</div></header>';
   }
   function footHTML() {
-    return '<footer class="mp-foot-site"><div class="mp-wrap"><span>© ' + new Date().getFullYear() + ' ' + escapeHtml(agency.name || 'PropLync Mini') + '</span>' +
+    var mail = LIVE ? mailHref(agency.public_email) : '';
+    return '<footer class="mp-foot-site"><div class="mp-wrap"><span>© ' + new Date().getFullYear() + ' ' + escapeHtml(agency.name || 'PropLync Mini') +
+      (mail ? ' · <a class="mp-foot-mail" href="' + mail + '">' + escapeHtml(agency.public_email) + '</a>' : '') + '</span>' +
       '<a class="mp-made" href="/?ref=badge"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.2l12.4 6.4v9.2c0 7.4-5.3 11.9-12.4 14-7.1-2.1-12.4-6.6-12.4-14V8.6L16 2.2z" fill="#c9a96e"/><path d="M10.6 18.4L16 13.2l5.4 5.2" stroke="#0a1628" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         escapeHtml(t('Hecho con PropLync Mini · Crea la tuya', 'Made with PropLync Mini · Make yours')) + '</a></div></footer>';
   }
@@ -322,7 +330,7 @@ __META__
     var cover = cssUrl(agency.cover_url);
     var wa = waLink(greeting());
     var tel = digits(agency.phone);
-    var mail = agency.public_email ? safeUrl('mailto:' + agency.public_email) : '';
+    var mail = mailHref(agency.public_email);
     var map = agency.maps_url ? safeUrl(agency.maps_url) : (agency.address ? safeUrl('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(agency.address)) : '');
     var towns = [];
     listings.forEach(function (p) { if (p.town && towns.indexOf(p.town) === -1) towns.push(p.town); });
