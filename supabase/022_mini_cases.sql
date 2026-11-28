@@ -29,6 +29,9 @@ alter table agencies add column if not exists crm_until timestamptz;
 
 alter table mini_services add column if not exists stages text[];
 
+-- Several photos per service (the first is the cover). `image` stays as the cover for old rows and readers.
+alter table mini_services add column if not exists images text[] not null default '{}';
+
 create table if not exists mini_cases (
   id uuid primary key default gen_random_uuid(),
   agency_id uuid not null references agencies(id) on delete cascade,
