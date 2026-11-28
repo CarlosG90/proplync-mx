@@ -33,6 +33,7 @@ import { getServiceClient } from './_proplync/_lib/supabase.js';
 import { pageActive } from './_proplync/_lib/plans.js';
 import { AGENCY_FIELDS, LISTING_FIELDS, buildModel } from './_page-model.js';
 import { PUBLIC_SERVICE_FIELDS } from './_services.js';
+import { ASSET_FIELDS, missingTable } from './_assets.js';
 import { typeFor } from './_business-types.js';
 
 export { AGENCY_FIELDS, LISTING_FIELDS, buildModel };
@@ -55,10 +56,12 @@ const firstPhoto = (l) => (l && (l.image || (Array.isArray(l.images) && l.images
 const httpsOnly = (u) => (typeof u === 'string' && /^https:\/\//i.test(u) ? u : '');
 
 /** Fill the template: meta tags for link previews plus the model as JSON. Pure, for tests. */
-export function renderPage(template, model, { origin = '', focus = null } = {}) {
+export function renderPage(template, model, { origin = '', focus = null, service = null } = {}) {
   const a = model.agency || {};
   const list = model.listings || [];
   const pick = focus && list.find((l) => l.public_id === focus);
+  // ?s=<service id>: a link to one service previews that service (name, price) on WhatsApp.
+  const svcPick = !pick && service && (model.services || []).find((x) => x.id === service);
   let title, desc, image = '';
   if (model.state === 'not_found') {
     title = 'Página no encontrada · PropLync Mini';
@@ -69,6 +72,12 @@ export function renderPage(template, model, { origin = '', focus = null } = {}) 
   } else if (model.state === 'preview_private') {
     title = 'Vista previa privada · PropLync Mini';
     desc = 'Esta vista previa solo la ve el dueño de la página.';
+  } else if (svcPick) {
+    const price = svcPick.price_kind === 'quote' || svcPick.price == null ? 'Precio a cotizar'
+      : `${svcPick.price_kind === 'from' ? 'Desde ' : ''}${svcPick.currency || 'MXN'} $${Number(svcPick.price).toLocaleString('en-US')}${svcPick.price_kind === 'per_m2' ? ' por m²' : ''}`;
+    title = `${svcPick.title_es || svcPick.title_en} · ${a.name}`;
+    desc = [price, (svcPick.description_es || '').slice(0, 140)].filter(Boolean).join(' · ');
+    image = httpsOnly(svcPick.image) || httpsOnly(a.cover_url) || httpsOnly(a.logo_url);
   } else if (pick) {
     const where = [pick.neighborhood, pick.town].filter(Boolean).join(', ');
     title = `${pick.title_es || pick.title_en || 'Propiedad'} · ${a.name}`;
@@ -84,9 +93,12 @@ export function renderPage(template, model, { origin = '', focus = null } = {}) 
     title = `${a.name} · ${svcs.length ? typeFor(a.business_type).eyebrow[0] : 'Propiedades'}`;
     desc = [offer, props].filter(Boolean).join(' · ') + '. ' +
       (a.bio ? a.bio.slice(0, 140) : 'Escríbeme por WhatsApp para más información.');
-    image = httpsOnly(a.cover_url) || httpsOnly(firstPhoto(list[0])) || httpsOnly(svcs[0] && svcs[0].image) || httpsOnly(a.logo_url);
+    const firstImg = (model.assets || []).find((x) => x.kind === 'image');
+    image = httpsOnly(a.cover_url) || httpsOnly(firstPhoto(list[0])) || httpsOnly(svcs[0] && svcs[0].image) ||
+      httpsOnly(firstImg && firstImg.url) || httpsOnly(a.logo_url);
   }
-  const canonical = model.state === 'active' && a.slug ? `${origin}/${a.slug}${pick ? '?p=' + encodeURIComponent(pick.public_id) : ''}` : '';
+  const canonical = model.state === 'active' && a.slug
+    ? `${origin}/${a.slug}${pick ? '?p=' + encodeURIComponent(pick.public_id) : svcPick ? '?s=' + encodeURIComponent(svcPick.id) : ''}` : '';
   const meta = [
     `<meta name="description" content="${escAttr(desc)}">`,
     `<meta property="og:title" content="${escAttr(title)}">`,
@@ -104,13 +116,14 @@ export default async function handler(req, res, deps = {}) {
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.status(405).json({ error: 'method_not_allowed' }); return; }
   const slug = String((req.query && req.query.slug) || '').toLowerCase();
   const focus = PUBLIC_ID.test(String(req.query && req.query.p || '')) ? String(req.query.p) : null;
+  const service = /^[0-9a-f-]{36}$/i.test(String(req.query && req.query.s || '')) ? String(req.query.s) : null;
   const vista = !!(req.query && req.query.vista !== undefined);
   const host = req.headers['x-forwarded-host'] || req.headers.host || '';
   const origin = host ? `https://${host}` : '';
   const send = (status, model, cache) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', cache);
-    res.status(status).send(renderPage(TEMPLATE, model, { origin, focus }));
+    res.status(status).send(renderPage(TEMPLATE, model, { origin, focus, service }));
   };
 
   if (!SLUG.test(slug)) { send(404, { state: 'not_found' }, 'no-store'); return; }
@@ -132,20 +145,25 @@ export default async function handler(req, res, deps = {}) {
     }
     // The preview's content comes from the owner's session in the browser, never from this response.
     if (vista) { send(200, { state: 'preview_private', agency: { slug: agency.slug } }, 'no-store'); return; }
-    let listings = [], services = [];
+    let listings = [], services = [], assets = [];
     if (active) {
-      const [l, s] = await Promise.all([
+      const [l, s, a] = await Promise.all([
         svc.from('listings').select(LISTING_FIELDS)
           .eq('agency_id', agency.id).eq('status', 'published').order('created_at', { ascending: false }).limit(30),
         svc.from('mini_services').select(PUBLIC_SERVICE_FIELDS)
-          .eq('agency_id', agency.id).eq('status', 'published').order('sort', { ascending: true }).limit(40)
+          .eq('agency_id', agency.id).eq('status', 'published').order('sort', { ascending: true }).limit(40),
+        svc.from('mini_assets').select(ASSET_FIELDS)
+          .eq('agency_id', agency.id).order('sort', { ascending: true }).limit(40)
       ]);
       if (l.error) throw l.error;
       if (s.error) throw s.error;
+      if (a.error && !missingTable(a.error)) throw a.error;
+      if (a.error) logDegraded('mini:page-assets', a.error);
+      assets = a.error ? [] : a.data || [];
       listings = l.data || [];
       services = s.data || [];
     }
-    const model = buildModel(agency, listings, Date.now(), { services });
+    const model = buildModel(agency, listings, Date.now(), { services, assets });
     // A live page can sit in the CDN for a minute; a hidden one never, so payment shows at once.
     send(200, model, model.state === 'active' ? 'public, max-age=0, s-maxage=60, stale-while-revalidate=300' : 'no-store');
   } catch (err) {

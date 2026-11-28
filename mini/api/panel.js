@@ -14,6 +14,8 @@
  *   POST ?action=paid-notice  "Ya pagué": the customer reports a payment.
  *   GET/POST/PUT/DELETE ?resource=services (&id=)  the services catalog
  *       (mini_services, supabase/019; rules in api/_services.js).
+ *   GET/POST/PUT/DELETE ?resource=assets (&id=)  the owner's material: infographics
+ *       and PDFs (mini_assets, supabase/020; rules in api/_assets.js).
  *   GET ?action=preview&slug=  the customer's own page as buyers will see it,
  *       drafts included, before it is paid. Only for the signed-in owner of that
  *       slug: the preview address (/:slug?vista=1) carries no secret, so a shared
@@ -38,6 +40,7 @@ import { miniState, MINI_PRICE_MXN } from './_proplync/_lib/plans.js';
 import { notifyOperator } from './_proplync/_lib/notify.js';
 import { buildModel, AGENCY_FIELDS, LISTING_FIELDS } from './_page-model.js';
 import { handleServices, PUBLIC_SERVICE_FIELDS } from './_services.js';
+import { handleAssets, ASSET_FIELDS, missingTable } from './_assets.js';
 
 export const PAY_METHODS = ['transfer', 'deposit', 'oxxo', 'other'];
 
@@ -119,32 +122,40 @@ export async function handlePreview(req, res, deps = {}) {
     const { data: services, error: sErr } = await svc.from('mini_services').select(PUBLIC_SERVICE_FIELDS)
       .eq('agency_id', agency.id).eq('status', 'published').order('sort', { ascending: true }).limit(40);
     if (sErr) throw sErr;
-    res.status(200).json(buildModel(agency, listings || [], Date.now(), { preview: true, services: services || [] }));
+    const { data: assets, error: aErr } = await svc.from('mini_assets').select(ASSET_FIELDS)
+      .eq('agency_id', agency.id).order('sort', { ascending: true }).limit(40);
+    if (aErr && !missingTable(aErr)) throw aErr;
+    res.status(200).json(buildModel(agency, listings || [], Date.now(), { preview: true, services: services || [], assets: aErr ? [] : assets || [] }));
   } catch (err) {
     logDegraded('mini:preview', err);
     res.status(500).json({ error: 'preview_failed', detail: safeDetail(err) });
   }
 }
 
-/** The services catalog. Signed in; only the caller's own agency's rows. */
-export async function handleServicesRoute(req, res, deps = {}) {
-  if (await (deps.enforceRateLimit || enforceRateLimit)(req, res, req.method === 'GET'
-    ? { bucket: 'mini-services-read', limit: 240, windowSec: 3600 }
-    : { bucket: 'mini-services-write', limit: 90, windowSec: 3600 })) return;
-  res.setHeader('Cache-Control', 'no-store');
-  const auth = await (deps.requireAgencyUser || requireAgencyUser)(req);
-  if (!auth) { res.status(401).json({ error: 'unauthorized' }); return; }
-  const svc = (deps.getServiceClient || getServiceClient)();
-  try {
-    await handleServices(req, res, { auth, svc });
-  } catch (err) {
-    logDegraded('mini:services', err);
-    res.status(500).json({ error: 'services_failed', detail: safeDetail(err) });
-  }
+/** A catalog resource (services, assets): signed in; only the caller's own agency's rows. */
+function ownRoute(name, handle) {
+  return async function (req, res, deps = {}) {
+    if (await (deps.enforceRateLimit || enforceRateLimit)(req, res, req.method === 'GET'
+      ? { bucket: 'mini-' + name + '-read', limit: 240, windowSec: 3600 }
+      : { bucket: 'mini-' + name + '-write', limit: 90, windowSec: 3600 })) return;
+    res.setHeader('Cache-Control', 'no-store');
+    const auth = await (deps.requireAgencyUser || requireAgencyUser)(req);
+    if (!auth) { res.status(401).json({ error: 'unauthorized' }); return; }
+    const svc = (deps.getServiceClient || getServiceClient)();
+    try {
+      await handle(req, res, { auth, svc });
+    } catch (err) {
+      logDegraded('mini:' + name, err);
+      res.status(500).json({ error: name + '_failed', detail: safeDetail(err) });
+    }
+  };
 }
+export const handleServicesRoute = ownRoute('services', handleServices);
+export const handleAssetsRoute = ownRoute('assets', handleAssets);
 
 export default async function handler(req, res) {
   if (req.query && req.query.resource === 'services') return handleServicesRoute(req, res);
+  if (req.query && req.query.resource === 'assets') return handleAssetsRoute(req, res);
   if (req.query && req.query.action === 'paid-notice') return handlePaidNotice(req, res);
   if (req.query && req.query.action === 'preview') return handlePreview(req, res);
   return listingsHandler(req, res);

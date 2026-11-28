@@ -24,7 +24,7 @@ failed at runtime. Never edit the copy: change `api/` and run `node scripts/sync
 
 ## Functions (4 of 12)
 `api/signup.js` (status, create) · `api/import.js` (paste → properties) · `api/panel.js` (card + listings via
-`api/my-listings.js`, services via `api/_services.js`, `paid-notice`, `preview`) · `api/page.js` (public page). The preview address carries no secret:
+`api/my-listings.js`, services via `api/_services.js`, material (infographics, PDFs) via `api/_assets.js`, `paid-notice`, `preview`) · `api/page.js` (public page). The preview address carries no secret:
 `/:slug?vista=1` is an empty shell that loads the page with the owner's own session, so a shared preview link shows nothing.
 
 ## Set up the Vercel project (once)

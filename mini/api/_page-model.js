@@ -18,7 +18,7 @@ export const LISTING_FIELDS = 'public_id, title_es, title_en, town, neighborhood
 
 /** What the page shows, from the rows. Internal columns never reach the browser. Pure, for tests.
  *  `services` are the published mini_services rows (supabase/019); business_type picks the template. */
-export function buildModel(agency, listings, now = Date.now(), { preview = false, services = [] } = {}) {
+export function buildModel(agency, listings, now = Date.now(), { preview = false, services = [], assets = [] } = {}) {
   if (!agency) return { state: 'not_found' };
   const active = pageActive(agency, now);
   const type = typeFor(agency.business_type);
@@ -26,7 +26,7 @@ export function buildModel(agency, listings, now = Date.now(), { preview = false
     name: agency.name || '', slug: agency.slug, business_type: type.key,
     logo_url: agency.logo_url || null, cover_url: agency.cover_url || null, primary_color: agency.primary_color || null
   };
-  if (!active && !preview) return { state: 'paused', agency: card, listings: [], services: [] };
+  if (!active && !preview) return { state: 'paused', agency: card, listings: [], services: [], assets: [] };
   return {
     state: active ? 'active' : 'preview',
     agency: {
@@ -37,6 +37,8 @@ export function buildModel(agency, listings, now = Date.now(), { preview = false
     },
     listings: (listings || []).map((l) => ({ ...l })),
     services: (services || []).map((x) => ({ ...x })),
+    // The owner's infographics and PDFs (mini_assets, supabase/020).
+    assets: (assets || []).map((x) => ({ id: x.id, url: x.url, kind: x.kind, title: x.title || null, service_id: x.service_id || null })),
     ...(active ? {} : { publish: { price: MINI_PRICE_MXN } })
   };
 }

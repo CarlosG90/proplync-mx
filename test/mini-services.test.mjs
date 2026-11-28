@@ -290,3 +290,92 @@ test('the business-type pick is an allowed funnel event and a funnel step', asyn
   assert.ok(MINI_EVENTS.has('mini_type'));
   assert.deepEqual(MINI_STAGES.map((s) => s[0]).slice(0, 3), ['mini_view', 'mini_type', 'mini_preview']);
 });
+
+// ---------- material: infographics and PDFs (mini_assets, supabase/020) ----------
+
+const { cleanAsset, handleAssets, folderPrefix, MAX_ASSETS } = await import('../mini/api/_assets.js');
+const SB = 'https://proj.supabase.co';
+const AG = '11111111-aaaa-bbbb-cccc-222222222222';
+const own = (name) => folderPrefix(SB, AG) + name;
+
+test('cleanAsset: only image or PDF files inside the owner\'s own folder', () => {
+  const ok = cleanAsset({ url: own('asset-abc_1.PNG'), title: ' Requisitos avalúo ' }, { agencyId: AG, supabaseUrl: SB });
+  assert.deepEqual(ok.asset, { url: own('asset-abc_1.PNG'), kind: 'image', title: 'Requisitos avalúo' });
+  assert.equal(cleanAsset({ url: own('lista.pdf') }, { agencyId: AG, supabaseUrl: SB }).asset.kind, 'pdf');
+  for (const [url, code] of [
+    ['https://evil.example.com/x.png', 'invalid_asset_url'],
+    [folderPrefix(SB, '99999999-aaaa-bbbb-cccc-222222222222') + 'x.png', 'invalid_asset_url'],   // another agency
+    [own('x.svg'), 'invalid_asset_type'],
+    [own('x.html'), 'invalid_asset_type'],
+    [own('sub/x.png'), 'invalid_asset_type'],
+    [own('../other/x.png'), 'invalid_asset_type'],
+    [own('x.png?download=1'), 'invalid_asset_type'],
+    ['', 'invalid_asset_url']
+  ]) assert.equal(cleanAsset({ url }, { agencyId: AG, supabaseUrl: SB }).error, code, url);
+  assert.equal(cleanAsset({ url: own('x.png'), title: 'x'.repeat(121) }, { agencyId: AG, supabaseUrl: SB }).error, 'title_too_long');
+});
+
+test('cleanAsset partial (PUT): title and order only; the file never changes', () => {
+  assert.deepEqual(cleanAsset({ title: 'Nuevo', sort: 20, url: 'https://evil.example.com/x.png' }, { partial: true }).asset, { title: 'Nuevo', sort: 20 });
+});
+
+test('assets: scoped to the caller\'s agency, capped, and the URL is checked against that agency', async () => {
+  const svc = fakeSvc({ count: 2 }); let r = res();
+  await handleAssets({ method: 'POST', query: {}, body: { url: own('asset-1.jpg'), agency_id: 'someone-else' } }, r, { auth: { agencyId: AG }, svc, supabaseUrl: SB });
+  assert.equal(r.statusCode, 201);
+  const ins = svc.calls.find((c) => c.op === 'insert');
+  assert.equal(ins.value.agency_id, AG);
+  assert.equal(ins.value.sort, 20);
+  r = res();
+  await handleAssets({ method: 'POST', query: {}, body: { url: own('asset-1.jpg') } }, r, { auth: { agencyId: 'other-agency' }, svc: fakeSvc(), supabaseUrl: SB });
+  assert.equal(r.body.error, 'invalid_asset_url', 'a file in someone else\'s folder');
+  r = res();
+  await handleAssets({ method: 'POST', query: {}, body: { url: own('asset-1.jpg') } }, r, { auth: { agencyId: AG }, svc: fakeSvc({ count: MAX_ASSETS }), supabaseUrl: SB });
+  assert.equal(r.body.error, 'asset_limit_reached');
+  const del = fakeSvc({ rows: [] }); r = res();
+  await handleAssets({ method: 'DELETE', query: { id: ID } }, r, { auth: { agencyId: AG }, svc: del, supabaseUrl: SB });
+  assert.equal(r.statusCode, 404);
+  assert.deepEqual(del.calls.find((c) => c.op === 'delete').filters, [['id', ID], ['agency_id', AG]]);
+});
+
+test('page model: material rides along on a paid page, hidden on a paused one, and only its public fields', () => {
+  const a = { id: 'x1', url: own('asset-1.png'), kind: 'image', title: 'Requisitos', sort: 0, agency_id: AG };
+  const live = buildModel(agency(), [], Date.now(), { assets: [a] });
+  assert.deepEqual(live.assets, [{ id: 'x1', url: a.url, kind: 'image', title: 'Requisitos', service_id: null }]);
+  assert.deepEqual(buildModel(agency({ plan_expires_at: null }), [], Date.now(), { assets: [a] }).assets, []);
+});
+
+test('missingTable: a page without migration 020 shows no material instead of failing', async () => {
+  const { missingTable } = await import('../mini/api/_assets.js');
+  assert.equal(missingTable({ code: '42P01' }), true);
+  assert.equal(missingTable({ code: 'PGRST205', message: "Could not find the table 'public.mini_assets' in the schema cache" }), true);
+  assert.equal(missingTable({ code: '57014', message: 'canceling statement due to statement timeout' }), false);
+  assert.equal(missingTable(null), false);
+});
+
+// ---------- "Ver detalles": material linked to a service ----------
+
+test('cleanAsset: a linked service is a uuid or none', () => {
+  assert.equal(cleanAsset({ service_id: '11111111-2222-3333-4444-555555555555' }, { partial: true }).asset.service_id, '11111111-2222-3333-4444-555555555555');
+  assert.equal(cleanAsset({ service_id: '' }, { partial: true }).asset.service_id, null);
+  assert.equal(cleanAsset({ service_id: 'not-a-uuid' }, { partial: true }).error, 'invalid_service');
+});
+
+test('assets: linking to a service that is not the owner\'s is refused', async () => {
+  const svc = fakeSvc({ rows: [] }); const r = res();   // the ownership lookup finds nothing
+  await handleAssets({ method: 'PUT', query: { id: ID }, body: { service_id: '99999999-2222-3333-4444-555555555555' } }, r, { auth: { agencyId: AG }, svc, supabaseUrl: SB });
+  assert.equal(r.statusCode, 400);
+  assert.equal(r.body.error, 'invalid_service');
+  const look = svc.calls.find((c) => c.table === 'mini_services');
+  assert.deepEqual(look.filters, [['id', '99999999-2222-3333-4444-555555555555'], ['agency_id', AG]]);
+});
+
+test('a link to one service (?s=) previews that service on WhatsApp', () => {
+  const s1 = svcRow({ id: '11111111-2222-3333-4444-555555555555', title_es: 'Avalúo Infonavit', price: 3500, price_kind: 'from', description_es: 'Con visita al inmueble.' });
+  const html = renderPage(TEMPLATE, buildModel(agency(), [], Date.now(), { services: [s1] }), { origin: 'https://m.test', service: s1.id });
+  assert.match(html, /<title>Avalúo Infonavit · Gestoria Ejemplo<\/title>/);
+  assert.match(html, /Desde MXN \$3,500 · Con visita al inmueble\./);
+  assert.match(html, /gestoria\?s=11111111-2222-3333-4444-555555555555/);
+  const none = renderPage(TEMPLATE, buildModel(agency(), [], Date.now(), { services: [s1] }), { origin: 'https://m.test', service: '00000000-0000-0000-0000-000000000000' });
+  assert.match(none, /<title>Gestoria Ejemplo · Servicios profesionales<\/title>/, 'unknown id: the page preview');
+});

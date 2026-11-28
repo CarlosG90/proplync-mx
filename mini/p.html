@@ -120,9 +120,29 @@ __META__
   .mp-svc .mp-body{padding:16px 18px 4px}
   .mp-svc-desc{color:var(--on-sand);font-size:.9rem;line-height:1.5;margin:8px 0 0;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
   .mp-svc-desc.open{display:block;-webkit-line-clamp:unset}
+  .mp-svc-open{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin-top:10px;color:var(--sea-deep);font:600 .84rem var(--body);min-height:32px}
+  .mp-svc-open:focus-visible{outline:2px solid var(--mp-accent);outline-offset:2px;border-radius:4px}
+  .mp-svc-open small{font:600 .7rem var(--body);color:var(--on-sand-light)}
+  .mp-svc-head{all:unset;cursor:pointer;display:block}
+  .mp-svc-head:focus-visible{outline:2px solid var(--mp-accent);outline-offset:2px;border-radius:6px}
+  .mp-sheet-assets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:6px}
   .mp-svc-more{all:unset;cursor:pointer;color:var(--sea-deep);font:600 .8rem var(--body);margin-top:6px;display:inline-block}
   .mp-svc-more:focus-visible{outline:2px solid var(--mp-accent);outline-offset:2px;border-radius:4px}
   .mp-svc-meta{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;color:var(--on-sand-light);margin-top:8px}
+  /* Material (mini_assets, supabase/020): the owner's infographics and PDFs. Tiles crop to the top of a tall
+     infographic (where its title is); tap opens it full size. */
+  .mp-assets{padding:28px 0 8px}
+  .mp-assets-grid{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+  @media (min-width:700px){.mp-assets-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media (min-width:1040px){.mp-assets-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  .mp-asset{all:unset;cursor:pointer;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm);text-decoration:none;color:var(--ink)}
+  .mp-asset:focus-visible{outline:2px solid var(--mp-accent);outline-offset:2px}
+  .mp-asset-img{aspect-ratio:4/5;background:var(--sand-2) top center/cover no-repeat}
+  .mp-asset-pdf{aspect-ratio:4/5;background:linear-gradient(160deg,var(--sand),var(--sand-2));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--on-sand)}
+  .mp-asset-pdf svg{width:38px;height:38px}
+  .mp-asset-pdf b{font:700 .66rem var(--mono);letter-spacing:.14em;background:#a23a24;color:#fff;padding:3px 8px;border-radius:6px}
+  .mp-asset span{font-size:.82rem;line-height:1.3;padding:9px 11px 11px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
+  .mp-asset-full{display:block;width:100%;height:auto;background:var(--sand-2)}
   .mp-price.quote{font-family:var(--body);font-weight:600;font-size:.9rem;color:var(--on-sand)}
 
   /* the property sheet */
@@ -199,6 +219,8 @@ __META__
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9.5V20h12V9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
   <symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v5h5M10 13h6M10 17h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
 </svg>
 
@@ -223,6 +245,7 @@ __META__
   var agency = data.agency || {};
   var listings = data.listings || [];
   var services = data.services || [];
+  var assets = data.assets || [];
   var filter = { op: 'all', town: 'all' };
   var root = document.getElementById('mp-root');
   var PREVIEW = data.state === 'preview';
@@ -375,7 +398,8 @@ __META__
         '</div>' +
         '<div class="mp-body"><div class="mp-loc">' + escapeHtml([p.neighborhood, p.town].filter(Boolean).join(' · ') || ' ') + '</div>' +
         '<h2 class="mp-title">' + escapeHtml(title(p)) + '</h2>' +
-        (sp ? '<div class="mp-specs">' + sp + '</div>' : '') + '</div>' +
+        (sp ? '<div class="mp-specs">' + sp + '</div>' : '') +
+        '<span class="mp-svc-open" aria-hidden="true">' + escapeHtml(t('Ver detalles', 'See details')) + ' →</span></div>' +
       '</button>' +
       '<div class="mp-foot"><span class="mp-price">' + escapeHtml(money(p)) + (p.amount && per(p) ? ' <small>' + escapeHtml(per(p)) + '</small>' : '') + '</span>' +
         (wa ? '<a class="mp-interest" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Me interesa', 'I\'m interested')) + '</a>' : '') +
@@ -396,15 +420,23 @@ __META__
     if (!m) return '';
     return m < 60 ? m + ' min' : (m % 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : (m / 60) + ' h');
   }
+  function svcLink(x) { return location.origin + '/' + encodeURIComponent(agency.slug || '') + '?s=' + encodeURIComponent(x.id); }
+  function svcWa(x) {
+    var price = svcPrice(x);
+    return waLink(t('Hola, me interesa este servicio: ', 'Hi, I am interested in this service: ') + svcTitle(x) + (price ? ' (' + price + ')' : '') + ' ' + svcLink(x));
+  }
+  /* The owner's material linked to this service (mini_assets.service_id). */
+  function svcAssets(x) { return assets.filter(function (a) { return a.service_id === x.id && safeUrl(a.url); }); }
   function svcCardHTML(x) {
     var img = cssUrl(x.image), price = svcPrice(x), desc = svcDesc(x), dur = svcDuration(x);
-    var wa = waLink(t('Hola, me interesa este servicio: ', 'Hi, I am interested in this service: ') + svcTitle(x) + (price ? ' (' + price + ')' : '') + ' ' + pageLink());
+    var wa = svcWa(x), n = svcAssets(x).length;
     return '<article class="mp-svc">' +
       (img ? '<div class="mp-svc-img" style="background-image:url(\'' + img + '\')" role="img" aria-label="' + escapeHtml(svcTitle(x)) + '"></div>' : '') +
-      '<div class="mp-body"><h3 class="mp-title">' + escapeHtml(svcTitle(x)) + '</h3>' +
-        (desc ? '<p class="mp-svc-desc" id="d-' + escapeHtml(x.id) + '">' + escapeHtml(desc) + '</p>' +
-          (desc.length > 180 ? '<button class="mp-svc-more" type="button" data-more="' + escapeHtml(x.id) + '" aria-expanded="false" aria-controls="d-' + escapeHtml(x.id) + '">' + escapeHtml(t('Ver más', 'Read more')) + '</button>' : '') : '') +
+      '<div class="mp-body"><button class="mp-svc-head" type="button" data-svc-open="' + escapeHtml(x.id) + '"><h3 class="mp-title">' + escapeHtml(svcTitle(x)) + '</h3></button>' +
+        (desc ? '<p class="mp-svc-desc">' + escapeHtml(desc) + '</p>' : '') +
         (dur ? '<div class="mp-svc-meta">' + escapeHtml(dur) + '</div>' : '') +
+        '<button class="mp-svc-open" type="button" data-svc-open="' + escapeHtml(x.id) + '">' + escapeHtml(t('Ver detalles', 'See details')) + ' →' +
+          (n ? ' <small>· ' + escapeHtml(n + ' ' + (n === 1 ? t('archivo', 'file') : t('archivos', 'files'))) + '</small>' : '') + '</button>' +
       '</div>' +
       '<div class="mp-foot"><span class="mp-price' + (price ? '' : ' quote') + '">' + escapeHtml(price || t('Precio a cotizar', 'Price on request')) + '</span>' +
         (wa ? '<a class="mp-interest" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Pedir', 'Ask')) + '</a>' : '') +
@@ -417,6 +449,87 @@ __META__
       '<h2 id="mp-svcs-h">' + escapeHtml(t('Lo que', 'What')) + ' <em>' + escapeHtml(t('ofrezco', 'I offer')) + '</em></h2></div>' +
       '<div class="mp-grid">' + services.map(svcCardHTML).join('') + '</div>' +
       '</div></section>';
+  }
+
+  function assetTitle(x, i) { return x.title || (x.kind === 'pdf' ? t('Documento ', 'Document ') : t('Imagen ', 'Image ')) + (i + 1); }
+  function assetsHTML() {
+    var list = assets.filter(function (x) { return safeUrl(x.url); });
+    if (!list.length) return '';
+    return '<section class="mp-assets" aria-labelledby="mp-assets-h"><div class="mp-wrap">' +
+      '<div class="mp-list-head"><div class="mp-kicker">' + escapeHtml(list.length + ' ' + (list.length === 1 ? t('archivo', 'file') : t('archivos', 'files'))) + '</div>' +
+      '<h2 id="mp-assets-h">' + escapeHtml(t('Material e', 'Material and')) + ' <em>' + escapeHtml(t('información', 'information')) + '</em></h2></div>' +
+      '<div class="mp-assets-grid">' + list.map(function (x, i) {
+        var label = assetTitle(x, i);
+        if (x.kind === 'pdf') {
+          return '<a class="mp-asset" href="' + safeUrl(x.url) + '" target="_blank" rel="noopener" data-asset-pdf="' + escapeHtml(x.id) + '">' +
+            '<div class="mp-asset-pdf">' + icon('i-doc') + '<b>PDF</b></div><span>' + escapeHtml(label) + '</span></a>';
+        }
+        return '<button class="mp-asset" type="button" data-asset="' + escapeHtml(x.id) + '" aria-label="' + escapeHtml(t('Ver: ', 'View: ') + label) + '">' +
+          '<div class="mp-asset-img" style="background-image:url(\'' + cssUrl(x.url) + '\')"></div><span>' + escapeHtml(label) + '</span></button>';
+      }).join('') + '</div></div></section>';
+  }
+  /* One service in detail: photo, full description, price, duration, its material, ask on WhatsApp, share its link. */
+  function openService(id) {
+    var x = services.filter(function (v) { return v.id === id; })[0];
+    if (!x) return;
+    var img = safeUrl(x.image), price = svcPrice(x), desc = svcDesc(x), dur = svcDuration(x), wa = svcWa(x), mats = svcAssets(x);
+    var facts = [[t('Precio', 'Price'), price || t('A cotizar', 'On request')]];
+    if (dur) facts.push([t('Duración', 'Duration'), dur]);
+    document.getElementById('mp-sheet-in').innerHTML =
+      '<div class="mp-sheet-scroll" style="position:relative">' +
+        '<button class="mp-close" type="button" id="mp-close" aria-label="' + escapeHtml(t('Cerrar', 'Close')) + '">×</button>' +
+        (img ? '<img class="mp-asset-full" src="' + img + '" alt="' + escapeHtml(svcTitle(x)) + '">' : '<div style="height:56px"></div>') +
+        '<div class="mp-sheet-body">' +
+          '<div class="mp-loc">' + escapeHtml(pair(type().eyebrow)) + '</div>' +
+          '<h2 class="mp-title" id="mp-sheet-title" style="font-size:1.45rem">' + escapeHtml(svcTitle(x)) + '</h2>' +
+          '<div class="mp-facts">' + facts.map(function (f) { return '<div class="mp-fact"><span>' + escapeHtml(f[0]) + '</span><b>' + escapeHtml(f[1]) + '</b></div>'; }).join('') + '</div>' +
+          (desc ? '<h3>' + escapeHtml(t('Descripción', 'Description')) + '</h3><p class="mp-desc">' + escapeHtml(desc) + '</p>'
+                : '<p class="mp-desc" style="margin-top:16px">' + escapeHtml(t('Escríbenos por WhatsApp y te damos todos los detalles de este servicio.', 'Message us on WhatsApp and we will give you all the details of this service.')) + '</p>') +
+          (mats.length ? '<h3>' + escapeHtml(t('Material de este servicio', 'Material for this service')) + '</h3><div class="mp-sheet-assets">' + mats.map(function (a, i) {
+            var label = assetTitle(a, i);
+            return a.kind === 'pdf'
+              ? '<a class="mp-asset" href="' + safeUrl(a.url) + '" target="_blank" rel="noopener"><div class="mp-asset-pdf">' + icon('i-doc') + '<b>PDF</b></div><span>' + escapeHtml(label) + '</span></a>'
+              : '<button class="mp-asset" type="button" data-asset="' + escapeHtml(a.id) + '"><div class="mp-asset-img" style="background-image:url(\'' + cssUrl(a.url) + '\')"></div><span>' + escapeHtml(label) + '</span></button>';
+          }).join('') + '</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="mp-sheet-bar">' +
+        (wa ? '<a class="mp-btn mp-btn-main" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Pedir este servicio', 'Ask for this service')) + '</a>' : '') +
+        (PREVIEW ? '' : '<button class="mp-btn mp-btn-line" type="button" id="mp-share" aria-label="' + escapeHtml(t('Compartir', 'Share')) + '">' + icon('i-share') + '</button>') +
+      '</div>';
+    document.getElementById('mp-close').onclick = closeSheet;
+    var sh = document.getElementById('mp-share');
+    if (sh) sh.onclick = function () {
+      var url = svcLink(x), btn = this;
+      if (navigator.share) { navigator.share({ title: svcTitle(x), text: svcTitle(x) + ' · ' + (agency.name || ''), url: url }).catch(function () {}); return; }
+      if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { btn.textContent = t('Copiado', 'Copied'); }).catch(function () {});
+    };
+    if (typeof sheet.showModal === 'function') { if (!sheet.open) sheet.showModal(); } else sheet.setAttribute('open', '');
+    setParam('s', x.id);
+    if (data.state === 'active') miniTrack('mini_service_open', { slug: agency.slug });
+  }
+
+  /* Full size in the bottom sheet: an infographic is read by scrolling down it. Download and WhatsApp share. */
+  function openAsset(id) {
+    var i = -1;
+    assets.forEach(function (x, k) { if (x.id === id) i = k; });
+    var x = assets[i];
+    if (!x || x.kind !== 'image' || !safeUrl(x.url)) return;
+    var label = assetTitle(x, i);
+    var share = safeUrl('https://wa.me/?text=' + encodeURIComponent(label + ' · ' + (agency.name || '') + ' ' + x.url));
+    document.getElementById('mp-sheet-in').innerHTML =
+      '<div class="mp-sheet-scroll" style="position:relative">' +
+        '<button class="mp-close" type="button" id="mp-close" aria-label="' + escapeHtml(t('Cerrar', 'Close')) + '">×</button>' +
+        '<img class="mp-asset-full" src="' + safeUrl(x.url) + '" alt="' + escapeHtml(label) + '">' +
+        '<div class="mp-sheet-body"><h2 class="mp-title" id="mp-sheet-title" style="font-size:1.2rem">' + escapeHtml(label) + '</h2></div>' +
+      '</div>' +
+      '<div class="mp-sheet-bar">' +
+        (PREVIEW ? '' : '<a class="mp-btn mp-btn-main" href="' + share + '" target="_blank" rel="noopener" data-share-asset>' + icon('i-wa') + escapeHtml(t('Compartir', 'Share')) + '</a>') +
+        '<a class="mp-btn mp-btn-line" href="' + safeUrl(x.url) + '" target="_blank" rel="noopener" download aria-label="' + escapeHtml(t('Descargar', 'Download')) + '">' + icon('i-down') + '</a>' +
+      '</div>';
+    document.getElementById('mp-close').onclick = closeSheet;
+    if (typeof sheet.showModal === 'function') { if (!sheet.open) sheet.showModal(); } else sheet.setAttribute('open', '');
+    if (data.state === 'active') miniTrack('mini_asset_open', { slug: agency.slug });
   }
 
   function visible() {
@@ -481,7 +594,7 @@ __META__
 
   function render() {
     var html;
-    if (LIVE) html = barHTML() + heroHTML() + servicesHTML() + (showListings() ? listHTML() : '') + footHTML() + (PREVIEW ? publishHTML() : '');
+    if (LIVE) html = barHTML() + heroHTML() + servicesHTML() + assetsHTML() + (showListings() ? listHTML() : '') + footHTML() + (PREVIEW ? publishHTML() : '');
     else if (data.state === 'preview_loading') html = offHTML(t('Vista previa', 'Preview'), escapeHtml(t('Cargando…', 'Loading…')), '');
     else if (data.state === 'preview_private') html = offHTML(t('Vista previa privada', 'Private preview'),
       escapeHtml(t('Esta vista previa es', 'This preview is')) + ' <em>' + escapeHtml(t('privada', 'private')) + '</em>',
@@ -539,16 +652,17 @@ __META__
     setFocus(p.public_id);
   }
   /* ?p= follows the open property; other parameters (a preview's ?vista=) stay. */
-  function setFocus(id) {
+  function setParam(key, id) {
     var q = new URLSearchParams(location.search);
-    if (id) q.set('p', id); else q.delete('p');
+    if (id) q.set(key, id); else q.delete(key);
     var qs = q.toString();
     try { history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '')); } catch (e) {}
   }
+  function setFocus(id) { setParam('p', id); }
   function closeSheet() {
     if (sheet.open) { if (typeof sheet.close === 'function') sheet.close(); else sheet.removeAttribute('open'); }
   }
-  sheet.addEventListener('close', function () { setFocus(null); });
+  sheet.addEventListener('close', function () { setFocus(null); setParam('s', null); });
   sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(); });
 
   function share(p, btn) {
@@ -560,6 +674,10 @@ __META__
   root.addEventListener('click', function (e) {
     var open = e.target.closest('[data-open]');
     if (open) { openSheet(open.getAttribute('data-open')); return; }
+    var so = e.target.closest('[data-svc-open]');
+    if (so) { openService(so.getAttribute('data-svc-open')); return; }
+    var asset = e.target.closest('[data-asset]');
+    if (asset) { openAsset(asset.getAttribute('data-asset')); return; }
     var more = e.target.closest('[data-more]');
     if (more) {
       var d = document.getElementById('d-' + more.getAttribute('data-more'));
@@ -585,17 +703,19 @@ __META__
   /* Count visits and WhatsApp taps (anonymous), so the agent's panel can later say what their page brings in. */
   document.addEventListener('click', function (e) {
     var a = e.target.closest('a[href^="https://wa.me/"]');
-    if (a && data.state === 'active') miniTrack('mini_interest', { slug: agency.slug, from: a.closest('.mp-svc') ? 'service' : a.classList.contains('mp-interest') || a.closest('.mp-sheet-bar') ? 'property' : 'card' });
+    // Sharing an infographic with someone else is not a message to the owner: not counted as interest.
+    if (a && data.state === 'active' && !a.hasAttribute('data-share-asset')) miniTrack('mini_interest', { slug: agency.slug, from: a.closest('.mp-svc') ? 'service' : a.classList.contains('mp-interest') || a.closest('.mp-sheet-bar') ? 'property' : 'card' });
   });
 
   function start(model) {
-    data = model; agency = data.agency || {}; listings = data.listings || []; services = data.services || [];
+    data = model; agency = data.agency || {}; listings = data.listings || []; services = data.services || []; assets = data.assets || [];
     PREVIEW = data.state === 'preview'; LIVE = data.state === 'active' || PREVIEW;
     brand();
     render();
     if (data.state === 'active') miniTrack('mini_page_view', { slug: agency.slug, listings: listings.length, services: services.length, property: !!data.focus });
     if (PREVIEW) miniTrack('mini_page_preview', { listings: listings.length });
     if (data.focus) openSheet(data.focus);
+    else { var sq = new URLSearchParams(location.search).get('s'); if (sq && LIVE) openService(sq); }
   }
 
   /* PRIVATE PREVIEW (/:slug?vista=1). The server sends an empty shell; the page itself comes from

@@ -57,6 +57,8 @@ PropLync Mini (self-serve "all your properties in one link"; its OWN Vercel proj
   types   any service business (supabase/019): agencies.business_type picks a template in mini/js/business-types.js
           (real_estate | professional | trades | beauty | general: labels, suggested services, case types + stages);
           the catalog is mini_services (mini/api/_services.js, panel.js ?resource=services); listings only for real_estate
+  material infographics + PDFs: mini_assets (supabase/020), files in listing-photos/<agency_id>/asset-*, rows only for
+          URLs inside that folder (mini/api/_assets.js, panel.js ?resource=assets); page section "Material e información"
   shared  mini/api/_proplync/ = generated copy of the api/ files Mini uses (scripts/sync-mini-shared.mjs; test/mini-shared fails on drift)
   api     mini/api/signup.js → api/onboard.js handleMiniSignup · mini/api/import.js → api/extract.js handleBatch
           mini/api/panel.js → api/my-listings.js (+ paid-notice → events row + operator email) · mini/api/page.js
