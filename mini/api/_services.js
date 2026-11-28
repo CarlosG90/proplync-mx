@@ -21,8 +21,10 @@
  */
 
 export const SERVICE_FIELDS = 'id, title_es, title_en, description_es, description_en, price, price_kind, currency, ' +
-  'duration_min, image, sort, status';
-export const PUBLIC_SERVICE_FIELDS = 'id, title_es, title_en, description_es, description_en, price, price_kind, currency, duration_min, image, sort';
+  'duration_min, image, images, sort, status';
+export const PUBLIC_SERVICE_FIELDS = 'id, title_es, title_en, description_es, description_en, price, price_kind, currency, duration_min, image, images, sort';
+// Several photos per service (supabase/022 mini_services.images); `image` mirrors the first, the cover.
+export const MAX_SERVICE_PHOTOS = 8;
 export const MAX_SERVICES = 20;
 export const PRICE_KINDS = ['fixed', 'from', 'per_m2', 'quote'];
 const IMAGE_URL = /^https:\/\/\S+$/i;
@@ -83,6 +85,19 @@ export function cleanService(body, { partial = false } = {}) {
       if (b.image === null || b.image === '') out.image = null;
       else if (typeof b.image !== 'string' || b.image.length > 1000 || !IMAGE_URL.test(b.image.trim())) return { error: 'invalid_image' };
       else out.image = b.image.trim();
+    }
+    if (b.images !== undefined) {
+      if (b.images === null) out.images = [];
+      else if (!Array.isArray(b.images) || b.images.length > MAX_SERVICE_PHOTOS) return { error: 'invalid_images' };
+      else {
+        out.images = [];
+        for (const u of b.images) {
+          if (typeof u !== 'string' || u.length > 1000 || !IMAGE_URL.test(u.trim())) return { error: 'invalid_image' };
+          if (!out.images.includes(u.trim())) out.images.push(u.trim());
+        }
+      }
+      // The cover is always the first photo, so pages that read only `image` stay right.
+      out.image = out.images[0] || null;
     }
     if (b.sort !== undefined) {
       const n = Number(b.sort);

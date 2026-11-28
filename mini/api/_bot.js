@@ -173,13 +173,42 @@ export function parseBotReply(text) {
   return { reply, handoff: j.handoff === true, service };
 }
 
+const normWord = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const STOP = new Set(['para', 'ante', 'como', 'sobre', 'entre', 'desde', 'hasta', 'servicio', 'servicios', 'gestion', 'gestiones']);
+/** The service a client's words point to, when the model didn't say: the title sharing the most words. Pure, for tests. */
+export function guessService(text, services) {
+  const words = new Set(normWord(text).split(/[^a-z0-9ñ]+/).filter((w) => w.length >= 5 && !STOP.has(w)).map((w) => w.replace(/s$/, '')));
+  if (!words.size) return null;
+  let best = null, score = 0;
+  for (const s of services || []) {
+    const tw = normWord(s.title_es).split(/[^a-z0-9ñ]+/).filter((w) => w.length >= 5 && !STOP.has(w)).map((w) => w.replace(/s$/, ''));
+    const hits = tw.filter((w) => words.has(w)).length;
+    if (hits > score) { score = hits; best = s.title_es; }
+  }
+  return best;
+}
+
+/**
+ * The rules the model sometimes forgets, applied in code (found in the first live test, 2026-11-28):
+ * the first reply of a conversation says it is an automatic assistant, and a handoff always ends with the
+ * owner's handoff message. Pure, for tests.
+ */
+export function enforceRules(out, { agency = {}, bot = {}, history = [] }) {
+  let reply = out.reply;
+  const first = !(history || []).some((m) => m.role === 'bot');
+  if (first && !/asistente/i.test(reply)) reply = `Hola, soy el asistente automático de ${agency.name || 'este negocio'}. ` + reply;
+  const hand = handoffText(agency, bot);
+  if (out.handoff && !reply.includes(hand)) reply = reply.trimEnd() + '\n\n' + hand;
+  return { ...out, reply };
+}
+
 /**
  * One reply for a conversation. history: [{ role: 'user'|'bot', body }] oldest
  * first, the client's latest message last. Returns { reply, handoff } or
  * { busy: true } when Groq is rate-limited. Never throws for a bad model answer:
  * that becomes the owner's handoff message.
  */
-export async function botReply({ agency, bot, knowledge, history }, deps = {}) {
+export async function botReply({ agency, bot, knowledge, history, services = [] }, deps = {}) {
   const chat = deps.groqChat || groqChat;
   const turns = (history || []).slice(-12).map((m) => ({
     role: m.role === 'bot' ? 'assistant' : 'user',
@@ -201,7 +230,10 @@ export async function botReply({ agency, bot, knowledge, history }, deps = {}) {
   }
   let parsed = null;
   try { parsed = parseBotReply(messageText(data)); } catch { parsed = null; }
-  return parsed || { reply: handoffText(agency, bot), handoff: true, fallback: true };
+  if (!parsed) return { reply: handoffText(agency, bot), handoff: true, fallback: true, service: null };
+  const lastUser = [...(history || [])].reverse().find((m) => m.role !== 'bot');
+  if (!parsed.service) parsed.service = guessService(lastUser && lastUser.body, services);
+  return enforceRules(parsed, { agency, bot, history });
 }
 
 /** The bot's saved training, with the defaults of a bot never configured. */
@@ -233,5 +265,5 @@ export async function loadBotContext(svc, agencyId, { siteUrl = process.env.MINI
   // Material is optional: before migration 020 the table may not exist.
   const assets = as.error ? [] : as.data || [];
   const knowledge = buildKnowledge({ agency, services: sv.data || [], assets, listings: ls.data || [], bot, pageUrl });
-  return { agency, bot, knowledge };
+  return { agency, bot, knowledge, services: sv.data || [] };
 }

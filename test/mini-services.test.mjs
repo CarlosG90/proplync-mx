@@ -379,3 +379,17 @@ test('a link to one service (?s=) previews that service on WhatsApp', () => {
   const none = renderPage(TEMPLATE, buildModel(agency(), [], Date.now(), { services: [s1] }), { origin: 'https://m.test', service: '00000000-0000-0000-0000-000000000000' });
   assert.match(none, /<title>Gestoria Ejemplo · Servicios profesionales<\/title>/, 'unknown id: the page preview');
 });
+
+// ---------- several photos per service ----------
+
+test('cleanService: several https photos; the first is the cover', async () => {
+  const { cleanService, MAX_SERVICE_PHOTOS } = await import('../mini/api/_services.js');
+  const u = (n) => `https://cdn.example.com/s${n}.jpg`;
+  const ok = cleanService({ title_es: 'Planos', images: [u(1), u(2), u(1), ' ' + u(3)] }).service;
+  assert.deepEqual(ok.images, [u(1), u(2), u(3)]);
+  assert.equal(ok.image, u(1));
+  assert.deepEqual(cleanService({ images: [] }, { partial: true }).service, { images: [], image: null });
+  assert.equal(cleanService({ title_es: 'x', images: Array.from({ length: MAX_SERVICE_PHOTOS + 1 }, (_, i) => u(i)) }).error, 'invalid_images');
+  assert.equal(cleanService({ title_es: 'x', images: ['javascript:alert(1)'] }).error, 'invalid_image');
+  assert.equal(cleanService({ title_es: 'x', images: 'https://a.b/c.jpg' }).error, 'invalid_images');
+});

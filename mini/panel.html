@@ -515,7 +515,8 @@
       </div>
       <label id="s-price-wrap"><span data-es="Monto" data-en="Amount">Monto</span><input class="pn-in" id="s-price" type="number" min="0" step="0.01" inputmode="decimal"></label>
       <label><span data-es="Duración en minutos" data-en="Duration in minutes">Duración en minutos</span> <small data-es="Opcional. Ej.: 60 para una hora." data-en="Optional. E.g. 60 for one hour.">Opcional. Ej.: 60 para una hora.</small><input class="pn-in" id="s-dur" type="number" min="5" max="1440" inputmode="numeric"></label>
-      <div class="pn-imgpick"><div class="pn-thumb" id="s-img-prev"><svg><use href="#i-cam"/></svg></div><label class="pn-btn pn-line" style="min-height:40px"><span data-es="Foto (opcional)" data-en="Photo (optional)">Foto (opcional)</span><input type="file" accept="image/*" id="s-img" hidden></label><button class="pn-btn pn-line" type="button" id="s-img-clear" style="min-height:40px" data-es="Quitar" data-en="Remove">Quitar</button></div>
+      <label><span data-es="Fotos" data-en="Photos">Fotos</span> <small data-es="Hasta 8, puedes elegir varias a la vez. La primera es la portada; toca ★ para cambiarla." data-en="Up to 8, you can pick several at once. The first is the cover; tap ★ to change it.">Hasta 8, puedes elegir varias a la vez. La primera es la portada; toca ★ para cambiarla.</small></label>
+      <div class="pn-photos" id="s-photos"></div>
       <label class="pn-check"><input type="checkbox" id="s-visible" checked><span data-es="Mostrar en mi página" data-en="Show on my page">Mostrar en mi página</span></label>
       <button class="pn-btn pn-line pn-danger" id="s-del" type="button" data-es="Eliminar servicio" data-en="Delete service">Eliminar servicio</button>
       <div class="pn-msg" id="s-msg" aria-live="polite"></div>
@@ -578,7 +579,7 @@
 (function () {
   'use strict';
   var MAX_PHOTOS = 6, PHOTO_PX = 1600, GOLD = '#c9a96e';
-  var S = { agency: null, listings: [], services: [], svcLimit: 20, plan: null, editing: null, photos: [], color: null, svcEditing: null, svcImage: null, assets: [], assetLimit: 30, assetEditing: null, bot: null, botInfo: null, chat: [], crm: null, crmSvc: 'all', crmEditing: null, tab: 'pagina' };
+  var S = { agency: null, listings: [], services: [], svcLimit: 20, plan: null, editing: null, photos: [], color: null, svcEditing: null, svcPhotos: [], assets: [], assetLimit: 30, assetEditing: null, bot: null, botInfo: null, chat: [], crm: null, crmSvc: 'all', crmEditing: null, tab: 'pagina' };
   function type() { return MINI_TYPES.typeFor(S.agency && S.agency.business_type); }
   function pair(p) { return isEn() ? p[1] : p[0]; }
   function $(id) { return document.getElementById(id); }
@@ -604,6 +605,8 @@
     title_too_long: ['El nombre es muy largo (máximo 120).', 'The name is too long (120 max).'],
     description_too_long: ['La descripción es muy larga (máximo 1,200).', 'The description is too long (1,200 max).'],
     invalid_price: ['Revisa el monto.', 'Check the amount.'],
+    invalid_images: ['Hasta 8 fotos por servicio.', 'Up to 8 photos per service.'],
+    invalid_image: ['Una de las fotos no se pudo guardar. Quítala y súbela de nuevo.', 'One of the photos could not be saved. Remove it and upload it again.'],
     invalid_duration: ['La duración va de 5 a 1,440 minutos.', 'Duration is 5 to 1,440 minutes.'],
     service_limit_reached: ['Ya tienes 20 servicios, el máximo. Elimina uno para agregar otro.', 'You already have 20 services, the maximum. Delete one to add another.'],
     asset_limit_reached: ['Ya tienes 30 archivos, el máximo. Quita uno para subir otro.', 'You already have 30 files, the maximum. Remove one to upload another.'],
@@ -990,7 +993,8 @@
   function openService(id) {
     var x = id ? S.services.filter(function (v) { return v.id === id; })[0] : null;
     S.svcEditing = x ? x.id : null;
-    S.svcImage = x ? x.image || null : null;
+    // Several photos per service (supabase/022); older services carry only `image`.
+    S.svcPhotos = x ? ((x.images && x.images.length) ? x.images.slice() : (x.image ? [x.image] : [])) : [];
     $('sv-title').textContent = x ? t('Editar servicio', 'Edit service') : t('Nuevo servicio', 'New service');
     $('s-title').value = x ? x.title_es || '' : '';
     $('s-title-en').value = x ? x.title_en || '' : '';
@@ -1000,7 +1004,7 @@
     $('s-price').value = x && x.price != null ? x.price : '';
     $('s-dur').value = x && x.duration_min ? x.duration_min : '';
     $('s-visible').checked = !x || x.status !== 'draft';
-    setPrev('s-img-prev', S.svcImage);
+    renderSvcPhotos();
     $('s-del').hidden = !x;
     $('s-del').dataset.confirm = ''; $('s-del').textContent = t('Eliminar servicio', 'Delete service');
     syncPriceField();
@@ -1008,15 +1012,34 @@
     sheet('sv');
   }
   $('pn-svc-new').onclick = function () { openService(null); };
-  $('s-img').onchange = async function () {
-    var f = this.files[0]; this.value = '';
-    if (!f) return;
-    msg($('s-msg'), t('Subiendo imagen…', 'Uploading image…'));
-    var url = await upload(f, 'service');
-    if (!url) { msg($('s-msg'), t('No se pudo subir la imagen.', 'The image could not be uploaded.'), 'err'); return; }
-    S.svcImage = url; setPrev('s-img-prev', url); msg($('s-msg'), '');
-  };
-  $('s-img-clear').onclick = function () { S.svcImage = null; setPrev('s-img-prev', null); };
+  var MAX_SVC_PHOTOS = 8;
+  function renderSvcPhotos() {
+    var tiles = S.svcPhotos.map(function (u, i) {
+      return '<div class="pn-ph"><img src="' + safeUrl(u) + '" alt="">' + (i === 0 ? '<small>' + escapeHtml(t('Portada', 'Cover')) + '</small>'
+        : '<button type="button" class="cover" data-scover="' + i + '" aria-label="' + escapeHtml(t('Usar como portada', 'Use as cover')) + '">★</button>') +
+        '<button type="button" data-srm="' + i + '" aria-label="' + escapeHtml(t('Quitar foto', 'Remove photo')) + '">×</button></div>';
+    }).join('');
+    var add = S.svcPhotos.length < MAX_SVC_PHOTOS ? '<label class="pn-add"><svg><use href="#i-cam"/></svg><span>' + escapeHtml(t('Agregar', 'Add')) + '</span><input type="file" accept="image/*" multiple id="s-files"></label>' : '';
+    $('s-photos').innerHTML = tiles + add;
+    var f = $('s-files');
+    if (f) f.onchange = async function () {
+      var files = Array.prototype.slice.call(this.files, 0, MAX_SVC_PHOTOS - S.svcPhotos.length), failed = 0;
+      $('s-save').disabled = true;
+      for (var i = 0; i < files.length; i++) {
+        msg($('s-msg'), t('Subiendo foto ', 'Uploading photo ') + (i + 1) + '/' + files.length + '…');
+        var url = await upload(files[i], 'service');
+        if (url) S.svcPhotos.push(url); else failed++;
+        renderSvcPhotos();
+      }
+      $('s-save').disabled = false;
+      msg($('s-msg'), failed ? t(failed + ' foto(s) no se pudieron subir.', failed + ' photo(s) could not be uploaded.') : '', failed ? 'err' : '');
+    };
+  }
+  $('s-photos').addEventListener('click', function (e) {
+    var rm = e.target.closest('[data-srm]'), cv = e.target.closest('[data-scover]');
+    if (rm) { S.svcPhotos.splice(+rm.getAttribute('data-srm'), 1); renderSvcPhotos(); }
+    if (cv) { var i = +cv.getAttribute('data-scover'); S.svcPhotos.unshift(S.svcPhotos.splice(i, 1)[0]); renderSvcPhotos(); }
+  });
   $('s-save').onclick = async function () {
     var title = $('s-title').value.trim();
     if (!title) { msg($('s-msg'), errText('missing_title'), 'err'); return; }
@@ -1026,7 +1049,7 @@
       title_es: title, title_en: $('s-title-en').value.trim() || null, description_es: $('s-desc').value.trim() || null,
       price_kind: kind, price: kind === 'quote' ? null : Number(priceRaw), currency: $('s-cur').value,
       duration_min: $('s-dur').value.trim() === '' ? null : Number($('s-dur').value),
-      image: S.svcImage || null, status: $('s-visible').checked ? 'published' : 'draft'
+      images: S.svcPhotos.slice(0, MAX_SVC_PHOTOS), status: $('s-visible').checked ? 'published' : 'draft'
     };
     this.disabled = true;
     var r = S.svcEditing ? await api('/api/panel?resource=services&id=' + encodeURIComponent(S.svcEditing), jsonOpts('PUT', body))
