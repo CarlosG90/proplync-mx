@@ -93,7 +93,19 @@ __META__
   .mp-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
   .mp-card-open{all:unset;cursor:pointer;display:block}
   .mp-card-open:focus-visible{outline:2px solid var(--mp-accent);outline-offset:-2px}
-  .mp-photo{aspect-ratio:4/3;background:var(--sand-2) center/cover no-repeat;position:relative}
+  .mp-photo{aspect-ratio:4/3;background:var(--sand-2);position:relative}
+  /* COMPLETE PHOTOS (2026-11-28): owners upload infographics and phone photos of any shape; a fixed box with
+     background-size:cover cut off their text (a square flyer in a 16:9 card lost its logo and phone number).
+     .mp-fit shows the whole image (object-fit:contain) and fills the spare room with a soft, blurred copy of
+     the same picture instead of empty bars. .auto lets the image keep its own height, capped for tall ones. */
+  .mp-fit{position:relative;overflow:hidden;background:var(--sand-2);isolation:isolate}
+  .mp-fit::before{content:"";position:absolute;inset:-24px;background:var(--bg) center/cover no-repeat;filter:blur(22px) saturate(1.1);opacity:.55;z-index:-1}
+  .mp-fit img{display:block;width:100%;height:100%;object-fit:contain}
+  .mp-fit.auto img{height:auto;max-height:min(115vw,560px)}
+  /* Side by side (2-3 columns) a wide flyer next to square ones made a ragged row: one square frame for all,
+     the whole image still inside it. On a phone (one column) each keeps its own shape. */
+  @media (min-width:700px){.mp-svc-img .mp-fit.auto img{aspect-ratio:1/1;height:auto;max-height:none}}
+  .mp-photo .mp-badge,.mp-photo .mp-count,.mp-svc-img .mp-count{z-index:1}
   .mp-photo.is-empty{aspect-ratio:16/7;background:linear-gradient(135deg,var(--sand),var(--sand-2));display:flex;align-items:center;justify-content:center}
   .mp-photo.is-empty svg{width:38px;height:38px;color:var(--on-sand-light);opacity:.5}
   .mp-badge{position:absolute;top:12px;left:12px;font:700 .58rem var(--mono);letter-spacing:.14em;text-transform:uppercase;padding:5px 10px;border-radius:7px;background:rgba(10,22,40,.82);color:#fff}
@@ -116,7 +128,7 @@ __META__
   .mp-svcs{padding:36px 0 8px}
   .mp-svcs + .mp-list{padding-top:28px}
   .mp-svc{background:var(--white);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-sm)}
-  .mp-svc-img{all:unset;cursor:pointer;display:block;position:relative;aspect-ratio:16/9;background:var(--sand) center/cover no-repeat}
+  .mp-svc-img{all:unset;cursor:pointer;display:block;position:relative}
   .mp-svc-img:focus-visible{outline:2px solid var(--mp-accent);outline-offset:-2px}
   .mp-svc .mp-body{padding:16px 18px 4px}
   .mp-svc-desc{color:var(--on-sand);font-size:.9rem;line-height:1.5;margin:8px 0 0;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
@@ -138,7 +150,7 @@ __META__
   @media (min-width:1040px){.mp-assets-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
   .mp-asset{all:unset;cursor:pointer;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm);text-decoration:none;color:var(--ink)}
   .mp-asset:focus-visible{outline:2px solid var(--mp-accent);outline-offset:2px}
-  .mp-asset-img{aspect-ratio:4/5;background:var(--sand-2) top center/cover no-repeat}
+  .mp-asset-img{aspect-ratio:4/5}
   .mp-asset-pdf{aspect-ratio:4/5;background:linear-gradient(160deg,var(--sand),var(--sand-2));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--on-sand)}
   .mp-asset-pdf svg{width:38px;height:38px}
   .mp-asset-pdf b{font:700 .66rem var(--mono);letter-spacing:.14em;background:#a23a24;color:#fff;padding:3px 8px;border-radius:6px}
@@ -156,7 +168,8 @@ __META__
   .mp-close{position:absolute;top:12px;right:12px;z-index:3;width:40px;height:40px;border-radius:50%;border:0;background:rgba(10,22,40,.72);color:#fff;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .mp-gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;background:var(--sand-2)}
   .mp-gallery::-webkit-scrollbar{display:none}
-  .mp-gallery img{flex:none;width:100%;aspect-ratio:4/3;object-fit:cover;scroll-snap-align:start}
+  .mp-gallery .mp-slide{flex:none;width:100%;aspect-ratio:4/3;max-height:72vh;scroll-snap-align:start}
+  .mp-gallery.sq .mp-slide{aspect-ratio:1/1}
   .mp-gallery-wrap{position:relative}
   .mp-gallery-n{position:absolute;bottom:12px;right:12px;font:600 .72rem var(--body);background:rgba(10,22,40,.7);color:#fff;padding:5px 10px;border-radius:999px}
   .mp-sheet-body{padding:20px 20px 8px}
@@ -284,6 +297,12 @@ __META__
     return t('Hola, me interesa esta propiedad: ', 'Hi, I am interested in this property: ') + title(p) + ' (' + money(p) + ') ' + pageLink(p);
   }
   function icon(id) { return '<svg aria-hidden="true"><use href="#' + id + '"/></svg>'; }
+  /* A whole photo, never cropped (see .mp-fit in the styles). */
+  function fitHTML(url, cls, alt, lazy) {
+    var src = safeUrl(url), bg = cssUrl(url);
+    if (!src) return '';
+    return '<div class="mp-fit' + (cls ? ' ' + cls : '') + '" style="--bg:url(\'' + bg + '\')"><img src="' + src + '" alt="' + escapeHtml(alt || '') + '"' + (lazy ? ' loading="lazy"' : '') + ' decoding="async"></div>';
+  }
   /* safeUrl() allows only http(s) and our own paths, so it drops a mailto: link (the email button never showed).
      The address was validated on save (api/_lib/listing-fields.js: no spaces, quotes or angle brackets), checked
      again here, and the whole href is escaped. */
@@ -392,8 +411,8 @@ __META__
     var sp = specs(p).map(function (s) { return '<span>' + escapeHtml(s) + '</span>'; }).join('');
     return '<article class="mp-card">' +
       '<button class="mp-card-open" type="button" data-open="' + escapeHtml(p.public_id) + '" aria-label="' + escapeHtml(t('Ver detalles: ', 'View details: ') + title(p)) + '">' +
-        '<div class="mp-photo' + (cover ? '' : ' is-empty') + '"' + (cover ? ' style="background-image:url(\'' + cover + '\')"' : '') + '>' +
-          (cover ? '' : icon('i-home')) +
+        (cover ? '<div class="mp-photo mp-fit" style="--bg:url(\'' + cover + '\')"><img src="' + safeUrl(ph[0]) + '" alt="" loading="lazy" decoding="async">'
+               : '<div class="mp-photo is-empty">' + icon('i-home')) +
           '<span class="mp-badge' + (p.operation === 'rental' ? ' rent' : '') + '">' + escapeHtml(p.operation === 'rental' ? t('Renta', 'Rent') : t('Venta', 'Sale')) + '</span>' +
           (ph.length > 1 ? '<span class="mp-count">' + icon('i-cam') + ph.length + '</span>' : '') +
         '</div>' +
@@ -437,7 +456,8 @@ __META__
     var ph = svcPhotos(x), img = ph.length ? cssUrl(ph[0]) : '', price = svcPrice(x), desc = svcDesc(x), dur = svcDuration(x);
     var wa = svcWa(x), n = svcAssets(x).length;
     return '<article class="mp-svc">' +
-      (img ? '<button class="mp-svc-img" type="button" data-svc-open="' + escapeHtml(x.id) + '" style="background-image:url(\'' + img + '\')" aria-label="' + escapeHtml(t('Ver fotos: ', 'See photos: ') + svcTitle(x)) + '">' +
+      (img ? '<button class="mp-svc-img" type="button" data-svc-open="' + escapeHtml(x.id) + '" aria-label="' + escapeHtml(t('Ver fotos: ', 'See photos: ') + svcTitle(x)) + '">' +
+        fitHTML(ph[0], 'auto', svcTitle(x), true) +
         (ph.length > 1 ? '<span class="mp-count">' + icon('i-cam') + ph.length + '</span>' : '') + '</button>' : '') +
       '<div class="mp-body"><button class="mp-svc-head" type="button" data-svc-open="' + escapeHtml(x.id) + '"><h3 class="mp-title">' + escapeHtml(svcTitle(x)) + '</h3></button>' +
         (desc ? '<p class="mp-svc-desc">' + escapeHtml(desc) + '</p>' : '') +
@@ -472,7 +492,7 @@ __META__
             '<div class="mp-asset-pdf">' + icon('i-doc') + '<b>PDF</b></div><span>' + escapeHtml(label) + '</span></a>';
         }
         return '<button class="mp-asset" type="button" data-asset="' + escapeHtml(x.id) + '" aria-label="' + escapeHtml(t('Ver: ', 'View: ') + label) + '">' +
-          '<div class="mp-asset-img" style="background-image:url(\'' + cssUrl(x.url) + '\')"></div><span>' + escapeHtml(label) + '</span></button>';
+          fitHTML(x.url, 'mp-asset-img', label, true) + '<span>' + escapeHtml(label) + '</span></button>';
       }).join('') + '</div></div></section>';
   }
   /* One service in detail: photo, full description, price, duration, its material, ask on WhatsApp, share its link. */
@@ -485,7 +505,7 @@ __META__
     document.getElementById('mp-sheet-in').innerHTML =
       '<div class="mp-sheet-scroll" style="position:relative">' +
         '<button class="mp-close" type="button" id="mp-close" aria-label="' + escapeHtml(t('Cerrar', 'Close')) + '">×</button>' +
-        (ph.length ? '<div class="mp-gallery-wrap"><div class="mp-gallery" id="mp-gallery">' + ph.map(function (u, i) { return '<img src="' + safeUrl(u) + '" alt="' + escapeHtml(svcTitle(x) + ' · ' + (i + 1)) + '"' + (i ? ' loading="lazy"' : '') + '>'; }).join('') + '</div>' +
+        (ph.length ? '<div class="mp-gallery-wrap"><div class="mp-gallery sq" id="mp-gallery">' + ph.map(function (u, i) { return fitHTML(u, 'mp-slide', svcTitle(x) + ' · ' + (i + 1), i > 0); }).join('') + '</div>' +
           (ph.length > 1 ? '<span class="mp-gallery-n" id="mp-gallery-n">1 / ' + ph.length + '</span>' : '') + '</div>' : '<div style="height:56px"></div>') +
         '<div class="mp-sheet-body">' +
           '<div class="mp-loc">' + escapeHtml(pair(type().eyebrow)) + '</div>' +
@@ -497,7 +517,7 @@ __META__
             var label = assetTitle(a, i);
             return a.kind === 'pdf'
               ? '<a class="mp-asset" href="' + safeUrl(a.url) + '" target="_blank" rel="noopener"><div class="mp-asset-pdf">' + icon('i-doc') + '<b>PDF</b></div><span>' + escapeHtml(label) + '</span></a>'
-              : '<button class="mp-asset" type="button" data-asset="' + escapeHtml(a.id) + '"><div class="mp-asset-img" style="background-image:url(\'' + cssUrl(a.url) + '\')"></div><span>' + escapeHtml(label) + '</span></button>';
+              : '<button class="mp-asset" type="button" data-asset="' + escapeHtml(a.id) + '">' + fitHTML(a.url, 'mp-asset-img', label, true) + '<span>' + escapeHtml(label) + '</span></button>';
           }).join('') + '</div>' : '') +
         '</div>' +
       '</div>' +
@@ -638,7 +658,7 @@ __META__
     document.getElementById('mp-sheet-in').innerHTML =
       '<div class="mp-sheet-scroll"><div class="mp-gallery-wrap">' +
         '<button class="mp-close" type="button" id="mp-close" aria-label="' + escapeHtml(t('Cerrar', 'Close')) + '">×</button>' +
-        (ph.length ? '<div class="mp-gallery" id="mp-gallery">' + ph.map(function (u, i) { return '<img src="' + safeUrl(u) + '" alt="' + escapeHtml(title(p) + ' · ' + (i + 1)) + '"' + (i ? ' loading="lazy"' : '') + '>'; }).join('') + '</div>' +
+        (ph.length ? '<div class="mp-gallery" id="mp-gallery">' + ph.map(function (u, i) { return fitHTML(u, 'mp-slide', title(p) + ' · ' + (i + 1), i > 0); }).join('') + '</div>' +
           (ph.length > 1 ? '<span class="mp-gallery-n" id="mp-gallery-n">1 / ' + ph.length + '</span>' : '')
           : '<div class="mp-photo is-empty">' + icon('i-home') + '</div>') +
       '</div><div class="mp-sheet-body">' +
