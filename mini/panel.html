@@ -327,6 +327,7 @@
     <div class="pn-form">
       <div id="as-prev"></div>
       <label><span data-es="Título" data-en="Title">Título</span> <small data-es="Lo que ven tus clientes bajo la imagen. Ej.: Requisitos para avalúo Infonavit" data-en="What clients see under the file. E.g. Requirements for an Infonavit appraisal">Lo que ven tus clientes bajo la imagen. Ej.: Requisitos para avalúo Infonavit</small><input class="pn-in" id="as-name" maxlength="120"></label>
+      <label><span data-es="¿De qué servicio es?" data-en="Which service is it for?">¿De qué servicio es?</span> <small data-es="Aparece dentro de «Ver detalles» de ese servicio, además de la sección Material." data-en="It shows inside that service's “See details”, besides the Material section.">Aparece dentro de «Ver detalles» de ese servicio, además de la sección Material.</small><select class="pn-in" id="as-svc"></select></label>
       <button class="pn-btn pn-line pn-danger" id="as-del" type="button" data-es="Quitar de mi página" data-en="Remove from my page">Quitar de mi página</button>
       <div class="pn-msg" id="as-msg" aria-live="polite"></div>
     </div>
@@ -449,6 +450,7 @@
     service_limit_reached: ['Ya tienes 20 servicios, el máximo. Elimina uno para agregar otro.', 'You already have 20 services, the maximum. Delete one to add another.'],
     asset_limit_reached: ['Ya tienes 30 archivos, el máximo. Quita uno para subir otro.', 'You already have 30 files, the maximum. Remove one to upload another.'],
     invalid_asset_type: ['Solo imágenes JPG, PNG, WebP o PDF.', 'Only JPG, PNG, WebP images or PDF.'],
+    invalid_service: ['Ese servicio ya no existe. Elige otro.', 'That service no longer exists. Pick another.'],
     invalid_asset_url: ['No se pudo guardar el archivo. Intenta de nuevo.', 'The file could not be saved. Try again.'],
     bio_too_long: ['El texto sobre ti es muy largo (máximo 600).', 'The about text is too long (600 max).'],
     rate_limited: ['Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.']
@@ -924,6 +926,7 @@
     return { url: sb.storage.from('listing-photos').getPublicUrl(path).data.publicUrl, path: path };
   }
   function assetName(file) { return String(file.name || '').replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim().slice(0, 120); }
+  function svcName(id) { var v = id && S.services.filter(function (s) { return s.id === id; })[0]; return v ? (v.title_es || v.title_en || '') : ''; }
   function renderAssets() {
     var n = S.assets.length;
     $('pn-asset-used').textContent = n + ' / ' + S.assetLimit;
@@ -940,7 +943,7 @@
         '<button type="button" data-adown="' + i + '"' + (i < n - 1 ? '' : ' disabled') + ' aria-label="' + escapeHtml(t('Bajar', 'Move down')) + '">▼</button></div>' +
         '<div class="pn-thumb"' + (thumb ? ' style="background-image:url(\'' + thumb + '\');background-position:top center"' : '') + '>' + (thumb ? '' : '<b style="font:700 .6rem var(--mono);color:#a23a24">PDF</b>') + '</div>' +
         '<div class="pn-item-main"><div class="pn-item-title">' + escapeHtml(x.title || (x.kind === 'pdf' ? t('Documento PDF', 'PDF document') : t('Imagen', 'Image'))) + '</div>' +
-        '<div class="pn-item-meta"><span>' + escapeHtml(x.kind === 'pdf' ? 'PDF' : t('Imagen', 'Image')) + '</span>' + (x.title ? '' : '<span class="pn-pill warn">' + escapeHtml(t('Sin título', 'No title')) + '</span>') + '</div></div>' +
+        '<div class="pn-item-meta"><span>' + escapeHtml((x.kind === 'pdf' ? 'PDF' : t('Imagen', 'Image')) + (svcName(x.service_id) ? ' · ' + svcName(x.service_id) : '')) + '</span>' + (x.title ? '' : '<span class="pn-pill warn">' + escapeHtml(t('Sin título', 'No title')) + '</span>') + '</div></div>' +
         '<button class="pn-btn pn-line pn-edit" type="button" data-asset="' + escapeHtml(x.id) + '">' + escapeHtml(t('Editar', 'Edit')) + '</button></li>';
     }).join('');
   }
@@ -989,6 +992,9 @@
     if (!x) return;
     S.assetEditing = x;
     $('as-name').value = x.title || '';
+    $('as-svc').innerHTML = '<option value="">' + escapeHtml(t('Ninguno · solo en Material', 'None · Material only')) + '</option>' +
+      S.services.map(function (v) { return '<option value="' + escapeHtml(v.id) + '">' + escapeHtml(v.title_es || v.title_en || '') + '</option>'; }).join('');
+    $('as-svc').value = x.service_id || '';
     $('as-prev').innerHTML = x.kind === 'image' && safeUrl(x.url)
       ? '<img src="' + safeUrl(x.url) + '" alt="" style="display:block;max-width:100%;max-height:260px;margin:0 auto;border-radius:10px">'
       : '<a class="pn-btn pn-line" href="' + safeUrl(x.url) + '" target="_blank" rel="noopener">' + escapeHtml(t('Abrir el PDF', 'Open the PDF')) + '</a>';
@@ -999,7 +1005,7 @@
   $('as-save').onclick = async function () {
     var x = S.assetEditing; if (!x) return;
     this.disabled = true;
-    var r = await api('/api/panel?resource=assets&id=' + encodeURIComponent(x.id), jsonOpts('PUT', { title: $('as-name').value.trim() || null }));
+    var r = await api('/api/panel?resource=assets&id=' + encodeURIComponent(x.id), jsonOpts('PUT', { title: $('as-name').value.trim() || null, service_id: $('as-svc').value || null }));
     this.disabled = false;
     if (!r.ok) { msg($('as-msg'), errText(r.data.error), 'err'); return; }
     close('as'); await refreshAssets(); msg($('pn-asset-msg'), t('Guardado.', 'Saved.'), 'ok');

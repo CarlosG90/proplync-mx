@@ -16,7 +16,7 @@
  * -----------------------------------------------------------------------------
  */
 
-export const ASSET_FIELDS = 'id, url, kind, title, sort';
+export const ASSET_FIELDS = 'id, url, kind, title, sort, service_id';
 
 /** "This table doesn't exist yet" (migration 020 not applied): Postgres 42P01, or PostgREST's schema-cache miss.
  *  The page and the preview then show no material instead of failing for every visitor. */
@@ -33,8 +33,9 @@ export function folderPrefix(supabaseUrl, agencyId) {
 }
 
 /**
- * The panel's body → a clean row, or { error }. `partial` for a PUT (title and
- * sort only: the file itself never changes, the owner deletes and uploads again).
+ * The panel's body → a clean row, or { error }. `partial` for a PUT (title, sort
+ * and linked service only: the file itself never changes, the owner deletes and
+ * uploads again).
  * Pure, for tests.
  */
 export function cleanAsset(body, { agencyId, supabaseUrl, partial = false } = {}) {
@@ -61,12 +62,25 @@ export function cleanAsset(body, { agencyId, supabaseUrl, partial = false } = {}
       out.title = t || null;
     }
   }
+  if (b.service_id !== undefined) {
+    if (b.service_id === null || b.service_id === '') out.service_id = null;
+    else if (typeof b.service_id !== 'string' || !UUID.test(b.service_id)) return { error: 'invalid_service' };
+    else out.service_id = b.service_id;
+  }
   if (b.sort !== undefined) {
     const n = Number(b.sort);
     if (!Number.isInteger(n) || n < 0 || n > 10000) return { error: 'invalid_sort' };
     out.sort = n;
   }
   return { asset: out };
+}
+
+/** A linked service must be one of this owner's services. */
+async function ownService(svc, agencyId, serviceId) {
+  if (!serviceId) return true;
+  const { data, error } = await svc.from('mini_services').select('id').eq('id', serviceId).eq('agency_id', agencyId).maybeSingle();
+  if (error) throw error;
+  return !!data;
 }
 
 /** GET / POST / PUT ?id= / DELETE ?id= on the signed-in owner's material. */
@@ -86,6 +100,7 @@ export async function handleAssets(req, res, { auth, svc, supabaseUrl = process.
   if (req.method === 'POST') {
     const { asset, error } = cleanAsset(req.body, { agencyId: auth.agencyId, supabaseUrl });
     if (error) { res.status(400).json({ error }); return; }
+    if (!(await ownService(svc, auth.agencyId, asset.service_id))) { res.status(400).json({ error: 'invalid_service' }); return; }
     const { count, error: cErr } = await mine().select('id', { count: 'exact', head: true }).eq('agency_id', auth.agencyId);
     if (cErr) throw cErr;
     if ((count || 0) >= MAX_ASSETS) { res.status(403).json({ error: 'asset_limit_reached', limit: MAX_ASSETS }); return; }
@@ -101,6 +116,7 @@ export async function handleAssets(req, res, { auth, svc, supabaseUrl = process.
     const { asset, error } = cleanAsset(req.body, { partial: true });
     if (error) { res.status(400).json({ error }); return; }
     if (!Object.keys(asset).length) { res.status(400).json({ error: 'nothing_to_update' }); return; }
+    if (!(await ownService(svc, auth.agencyId, asset.service_id))) { res.status(400).json({ error: 'invalid_service' }); return; }
     const { data, error: uErr } = await mine().update(asset).eq('id', id).eq('agency_id', auth.agencyId)
       .select(ASSET_FIELDS).maybeSingle();
     if (uErr) throw uErr;

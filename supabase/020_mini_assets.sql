@@ -22,11 +22,15 @@ create table if not exists mini_assets (
   url text not null check (url ~ '^https://' and length(url) <= 1000),
   kind text not null check (kind in ('image', 'pdf')),
   title text check (title is null or length(title) <= 120),
+  -- Optional: the service this material explains (shown in that service's detail).
+  service_id uuid references mini_services(id) on delete set null,
   sort integer not null default 0,
   created_at timestamptz not null default now()
 );
 
 create index if not exists mini_assets_agency_idx on mini_assets (agency_id, sort, created_at);
+-- Added after the first draft of this file: also on a table created before it.
+alter table mini_assets add column if not exists service_id uuid references mini_services(id) on delete set null;
 
 -- Your agency's material, nobody else's. The public page reads it with the
 -- service role (mini/api/page.js), only for a paid page.

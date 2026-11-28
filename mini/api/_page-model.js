@@ -38,7 +38,7 @@ export function buildModel(agency, listings, now = Date.now(), { preview = false
     listings: (listings || []).map((l) => ({ ...l })),
     services: (services || []).map((x) => ({ ...x })),
     // The owner's infographics and PDFs (mini_assets, supabase/020).
-    assets: (assets || []).map((x) => ({ id: x.id, url: x.url, kind: x.kind, title: x.title || null })),
+    assets: (assets || []).map((x) => ({ id: x.id, url: x.url, kind: x.kind, title: x.title || null, service_id: x.service_id || null })),
     ...(active ? {} : { publish: { price: MINI_PRICE_MXN } })
   };
 }

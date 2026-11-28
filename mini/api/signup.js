@@ -24,7 +24,7 @@ import { safeDetail } from './_proplync/_lib/health.js';
    arbitrary names. Anonymous tab ids only (api/_lib/events.js). mini_paid_notice and mini_activated are
    written by the server and the operator script, not accepted from browsers. */
 export const MINI_EVENTS = new Set([
-  'mini_view', 'mini_type', 'mini_preview', 'mini_signup', 'mini_panel_view', 'mini_pay_open', 'mini_page_view', 'mini_interest', 'mini_page_preview', 'mini_asset_open'
+  'mini_view', 'mini_type', 'mini_preview', 'mini_signup', 'mini_panel_view', 'mini_pay_open', 'mini_page_view', 'mini_interest', 'mini_page_preview', 'mini_asset_open', 'mini_service_open'
 ]);
 
 export async function handleEvent(req, res, deps = {}) {

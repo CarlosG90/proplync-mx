@@ -120,6 +120,12 @@ __META__
   .mp-svc .mp-body{padding:16px 18px 4px}
   .mp-svc-desc{color:var(--on-sand);font-size:.9rem;line-height:1.5;margin:8px 0 0;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
   .mp-svc-desc.open{display:block;-webkit-line-clamp:unset}
+  .mp-svc-open{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin-top:10px;color:var(--sea-deep);font:600 .84rem var(--body);min-height:32px}
+  .mp-svc-open:focus-visible{outline:2px solid var(--mp-accent);outline-offset:2px;border-radius:4px}
+  .mp-svc-open small{font:600 .7rem var(--body);color:var(--on-sand-light)}
+  .mp-svc-head{all:unset;cursor:pointer;display:block}
+  .mp-svc-head:focus-visible{outline:2px solid var(--mp-accent);outline-offset:2px;border-radius:6px}
+  .mp-sheet-assets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:6px}
   .mp-svc-more{all:unset;cursor:pointer;color:var(--sea-deep);font:600 .8rem var(--body);margin-top:6px;display:inline-block}
   .mp-svc-more:focus-visible{outline:2px solid var(--mp-accent);outline-offset:2px;border-radius:4px}
   .mp-svc-meta{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;color:var(--on-sand-light);margin-top:8px}
@@ -392,7 +398,8 @@ __META__
         '</div>' +
         '<div class="mp-body"><div class="mp-loc">' + escapeHtml([p.neighborhood, p.town].filter(Boolean).join(' · ') || ' ') + '</div>' +
         '<h2 class="mp-title">' + escapeHtml(title(p)) + '</h2>' +
-        (sp ? '<div class="mp-specs">' + sp + '</div>' : '') + '</div>' +
+        (sp ? '<div class="mp-specs">' + sp + '</div>' : '') +
+        '<span class="mp-svc-open" aria-hidden="true">' + escapeHtml(t('Ver detalles', 'See details')) + ' →</span></div>' +
       '</button>' +
       '<div class="mp-foot"><span class="mp-price">' + escapeHtml(money(p)) + (p.amount && per(p) ? ' <small>' + escapeHtml(per(p)) + '</small>' : '') + '</span>' +
         (wa ? '<a class="mp-interest" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Me interesa', 'I\'m interested')) + '</a>' : '') +
@@ -413,15 +420,23 @@ __META__
     if (!m) return '';
     return m < 60 ? m + ' min' : (m % 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : (m / 60) + ' h');
   }
+  function svcLink(x) { return location.origin + '/' + encodeURIComponent(agency.slug || '') + '?s=' + encodeURIComponent(x.id); }
+  function svcWa(x) {
+    var price = svcPrice(x);
+    return waLink(t('Hola, me interesa este servicio: ', 'Hi, I am interested in this service: ') + svcTitle(x) + (price ? ' (' + price + ')' : '') + ' ' + svcLink(x));
+  }
+  /* The owner's material linked to this service (mini_assets.service_id). */
+  function svcAssets(x) { return assets.filter(function (a) { return a.service_id === x.id && safeUrl(a.url); }); }
   function svcCardHTML(x) {
     var img = cssUrl(x.image), price = svcPrice(x), desc = svcDesc(x), dur = svcDuration(x);
-    var wa = waLink(t('Hola, me interesa este servicio: ', 'Hi, I am interested in this service: ') + svcTitle(x) + (price ? ' (' + price + ')' : '') + ' ' + pageLink());
+    var wa = svcWa(x), n = svcAssets(x).length;
     return '<article class="mp-svc">' +
       (img ? '<div class="mp-svc-img" style="background-image:url(\'' + img + '\')" role="img" aria-label="' + escapeHtml(svcTitle(x)) + '"></div>' : '') +
-      '<div class="mp-body"><h3 class="mp-title">' + escapeHtml(svcTitle(x)) + '</h3>' +
-        (desc ? '<p class="mp-svc-desc" id="d-' + escapeHtml(x.id) + '">' + escapeHtml(desc) + '</p>' +
-          (desc.length > 180 ? '<button class="mp-svc-more" type="button" data-more="' + escapeHtml(x.id) + '" aria-expanded="false" aria-controls="d-' + escapeHtml(x.id) + '">' + escapeHtml(t('Ver más', 'Read more')) + '</button>' : '') : '') +
+      '<div class="mp-body"><button class="mp-svc-head" type="button" data-svc-open="' + escapeHtml(x.id) + '"><h3 class="mp-title">' + escapeHtml(svcTitle(x)) + '</h3></button>' +
+        (desc ? '<p class="mp-svc-desc">' + escapeHtml(desc) + '</p>' : '') +
         (dur ? '<div class="mp-svc-meta">' + escapeHtml(dur) + '</div>' : '') +
+        '<button class="mp-svc-open" type="button" data-svc-open="' + escapeHtml(x.id) + '">' + escapeHtml(t('Ver detalles', 'See details')) + ' →' +
+          (n ? ' <small>· ' + escapeHtml(n + ' ' + (n === 1 ? t('archivo', 'file') : t('archivos', 'files'))) + '</small>' : '') + '</button>' +
       '</div>' +
       '<div class="mp-foot"><span class="mp-price' + (price ? '' : ' quote') + '">' + escapeHtml(price || t('Precio a cotizar', 'Price on request')) + '</span>' +
         (wa ? '<a class="mp-interest" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Pedir', 'Ask')) + '</a>' : '') +
@@ -453,6 +468,47 @@ __META__
           '<div class="mp-asset-img" style="background-image:url(\'' + cssUrl(x.url) + '\')"></div><span>' + escapeHtml(label) + '</span></button>';
       }).join('') + '</div></div></section>';
   }
+  /* One service in detail: photo, full description, price, duration, its material, ask on WhatsApp, share its link. */
+  function openService(id) {
+    var x = services.filter(function (v) { return v.id === id; })[0];
+    if (!x) return;
+    var img = safeUrl(x.image), price = svcPrice(x), desc = svcDesc(x), dur = svcDuration(x), wa = svcWa(x), mats = svcAssets(x);
+    var facts = [[t('Precio', 'Price'), price || t('A cotizar', 'On request')]];
+    if (dur) facts.push([t('Duración', 'Duration'), dur]);
+    document.getElementById('mp-sheet-in').innerHTML =
+      '<div class="mp-sheet-scroll" style="position:relative">' +
+        '<button class="mp-close" type="button" id="mp-close" aria-label="' + escapeHtml(t('Cerrar', 'Close')) + '">×</button>' +
+        (img ? '<img class="mp-asset-full" src="' + img + '" alt="' + escapeHtml(svcTitle(x)) + '">' : '<div style="height:56px"></div>') +
+        '<div class="mp-sheet-body">' +
+          '<div class="mp-loc">' + escapeHtml(pair(type().eyebrow)) + '</div>' +
+          '<h2 class="mp-title" id="mp-sheet-title" style="font-size:1.45rem">' + escapeHtml(svcTitle(x)) + '</h2>' +
+          '<div class="mp-facts">' + facts.map(function (f) { return '<div class="mp-fact"><span>' + escapeHtml(f[0]) + '</span><b>' + escapeHtml(f[1]) + '</b></div>'; }).join('') + '</div>' +
+          (desc ? '<h3>' + escapeHtml(t('Descripción', 'Description')) + '</h3><p class="mp-desc">' + escapeHtml(desc) + '</p>'
+                : '<p class="mp-desc" style="margin-top:16px">' + escapeHtml(t('Escríbenos por WhatsApp y te damos todos los detalles de este servicio.', 'Message us on WhatsApp and we will give you all the details of this service.')) + '</p>') +
+          (mats.length ? '<h3>' + escapeHtml(t('Material de este servicio', 'Material for this service')) + '</h3><div class="mp-sheet-assets">' + mats.map(function (a, i) {
+            var label = assetTitle(a, i);
+            return a.kind === 'pdf'
+              ? '<a class="mp-asset" href="' + safeUrl(a.url) + '" target="_blank" rel="noopener"><div class="mp-asset-pdf">' + icon('i-doc') + '<b>PDF</b></div><span>' + escapeHtml(label) + '</span></a>'
+              : '<button class="mp-asset" type="button" data-asset="' + escapeHtml(a.id) + '"><div class="mp-asset-img" style="background-image:url(\'' + cssUrl(a.url) + '\')"></div><span>' + escapeHtml(label) + '</span></button>';
+          }).join('') + '</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="mp-sheet-bar">' +
+        (wa ? '<a class="mp-btn mp-btn-main" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Pedir este servicio', 'Ask for this service')) + '</a>' : '') +
+        (PREVIEW ? '' : '<button class="mp-btn mp-btn-line" type="button" id="mp-share" aria-label="' + escapeHtml(t('Compartir', 'Share')) + '">' + icon('i-share') + '</button>') +
+      '</div>';
+    document.getElementById('mp-close').onclick = closeSheet;
+    var sh = document.getElementById('mp-share');
+    if (sh) sh.onclick = function () {
+      var url = svcLink(x), btn = this;
+      if (navigator.share) { navigator.share({ title: svcTitle(x), text: svcTitle(x) + ' · ' + (agency.name || ''), url: url }).catch(function () {}); return; }
+      if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { btn.textContent = t('Copiado', 'Copied'); }).catch(function () {});
+    };
+    if (typeof sheet.showModal === 'function') { if (!sheet.open) sheet.showModal(); } else sheet.setAttribute('open', '');
+    setParam('s', x.id);
+    if (data.state === 'active') miniTrack('mini_service_open', { slug: agency.slug });
+  }
+
   /* Full size in the bottom sheet: an infographic is read by scrolling down it. Download and WhatsApp share. */
   function openAsset(id) {
     var i = -1;
@@ -596,16 +652,17 @@ __META__
     setFocus(p.public_id);
   }
   /* ?p= follows the open property; other parameters (a preview's ?vista=) stay. */
-  function setFocus(id) {
+  function setParam(key, id) {
     var q = new URLSearchParams(location.search);
-    if (id) q.set('p', id); else q.delete('p');
+    if (id) q.set(key, id); else q.delete(key);
     var qs = q.toString();
     try { history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '')); } catch (e) {}
   }
+  function setFocus(id) { setParam('p', id); }
   function closeSheet() {
     if (sheet.open) { if (typeof sheet.close === 'function') sheet.close(); else sheet.removeAttribute('open'); }
   }
-  sheet.addEventListener('close', function () { setFocus(null); });
+  sheet.addEventListener('close', function () { setFocus(null); setParam('s', null); });
   sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(); });
 
   function share(p, btn) {
@@ -617,6 +674,8 @@ __META__
   root.addEventListener('click', function (e) {
     var open = e.target.closest('[data-open]');
     if (open) { openSheet(open.getAttribute('data-open')); return; }
+    var so = e.target.closest('[data-svc-open]');
+    if (so) { openService(so.getAttribute('data-svc-open')); return; }
     var asset = e.target.closest('[data-asset]');
     if (asset) { openAsset(asset.getAttribute('data-asset')); return; }
     var more = e.target.closest('[data-more]');
@@ -656,6 +715,7 @@ __META__
     if (data.state === 'active') miniTrack('mini_page_view', { slug: agency.slug, listings: listings.length, services: services.length, property: !!data.focus });
     if (PREVIEW) miniTrack('mini_page_preview', { listings: listings.length });
     if (data.focus) openSheet(data.focus);
+    else { var sq = new URLSearchParams(location.search).get('s'); if (sq && LIVE) openService(sq); }
   }
 
   /* PRIVATE PREVIEW (/:slug?vista=1). The server sends an empty shell; the page itself comes from
