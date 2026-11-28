@@ -238,3 +238,27 @@ test('botReply: when the model names no service, the client\'s words fill it', a
   assert.equal(out.service, 'Levantamiento topográfico');
   assert.ok(out.reply.endsWith(handoffText(AGENCY, {})));
 });
+
+test('the handoff message is added once, even when the model paraphrased it (live test, 2026-11-28)', async () => {
+  const { saysHandoff } = await import('../mini/api/_bot.js');
+  const a = { name: 'Gael Inmobiliaria' };
+  const hand = handoffText(a, {});   // 'Gracias. Le paso su mensaje a Gael Inmobiliaria y le responde personalmente en cuanto pueda.'
+  const live = 'Hola, soy el asistente automático de Gael Inmobiliaria. Lo siento, no puedo ofrecer descuentos. Le paso su mensaje a Gael Inmobiliaria y le responde personalmente en cuanto pueda.';
+  assert.equal(saysHandoff(live, hand), true);
+  assert.equal(enforceRules({ reply: live, handoff: true }, { agency: a, history: [{ role: 'bot', body: 'x' }] }).reply, live, 'not repeated');
+  assert.equal(saysHandoff('Para conocer el precio lo consultaremos y le responderemos pronto.', hand), false, 'a different sentence still gets the message');
+  const added = enforceRules({ reply: 'Lo consultaremos.', handoff: true }, { agency: a, history: [{ role: 'bot', body: 'x' }] }).reply;
+  assert.equal(added, 'Lo consultaremos.\n\n' + hand);
+  assert.equal(added.split('Le paso su mensaje').length - 1, 1);
+});
+
+test('when the model wrote the handoff twice (its words + verbatim), the verbatim copy is dropped', () => {
+  const a = { name: 'Gael Inmobiliaria' };
+  const hand = handoffText(a, {});
+  const twice = 'Lo siento, no puedo ofrecer descuentos. Le paso su mensaje a Gael Inmobiliaria y le responde personalmente en cuanto pueda. ' + hand;
+  const out = enforceRules({ reply: twice, handoff: true }, { agency: a, history: [{ role: 'bot', body: 'x' }] }).reply;
+  assert.equal(out, 'Lo siento, no puedo ofrecer descuentos. Le paso su mensaje a Gael Inmobiliaria y le responde personalmente en cuanto pueda.');
+  assert.equal(out.split('Le paso su mensaje').length - 1, 1);
+  const once = 'No puedo ofrecer descuentos. ' + hand;
+  assert.equal(enforceRules({ reply: once, handoff: true }, { agency: a, history: [{ role: 'bot', body: 'x' }] }).reply, once, 'a single verbatim copy stays');
+});
