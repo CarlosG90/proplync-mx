@@ -348,6 +348,18 @@
         <h2 data-es="Entrena a tu asistente" data-en="Train your assistant">Entrena a tu asistente</h2>
         <p class="pn-sub" data-es="Contesta a tus clientes de WhatsApp a cualquier hora, solo con lo que tú le enseñes aquí y lo que ya está en tu página (servicios, material, propiedades). Dice que es un asistente y te pasa el chat cuando piden precios que no pusiste, citas, descuentos o algo que no sabe." data-en="Answers your WhatsApp clients at any hour, only with what you teach it here and what is already on your page (services, material, properties). It says it is an assistant and hands you the chat for prices you didn't list, appointments, discounts or anything it doesn't know.">Contesta a tus clientes de WhatsApp a cualquier hora, solo con lo que tú le enseñes aquí y lo que ya está en tu página (servicios, material, propiedades). Dice que es un asistente y te pasa el chat cuando piden precios que no pusiste, citas, descuentos o algo que no sabe.</p>
         <div class="pn-msg" id="pn-bot-conn"></div>
+        <details class="pn-convo" id="b-guide" style="margin-top:12px"><summary data-es="Cómo activarlo en tu WhatsApp (5 pasos)" data-en="How to turn it on in your WhatsApp (5 steps)">Cómo activarlo en tu WhatsApp (5 pasos)</summary>
+          <ol style="margin:10px 0 0;padding-left:20px;display:grid;gap:10px;font-size:.88rem;line-height:1.5">
+            <li><b>Entrénalo y pruébalo aquí.</b> Llena tu horario, la zona que atiendes y responde las preguntas frecuentes. Escribe en «Pruébalo» como si fueras un cliente hasta que te gusten sus respuestas.</li>
+            <li><b>Usa WhatsApp Business</b> (el ícono con la «B»), actualizado. Si hoy usas WhatsApp normal, descarga WhatsApp Business y entra con el mismo número: tus chats se pasan solos.</li>
+            <li><b>Pide la conexión</b> con el botón de abajo. Te contactamos para conectarlo juntos en unos 15 minutos. Ten a la mano tu Facebook y tu teléfono.</li>
+            <li><b>En tu teléfono, cuando te lo indiquemos:</b> abre WhatsApp Business → te llega un mensaje de <i>Facebook Business</i> → toca <b>Conectar</b> → <b>Conectar a la plataforma</b> → <b>Confirmar</b> para compartir tus chats → copia el código que aparece y nos lo dictas.</li>
+            <li><b>Activa la casilla «Asistente activado»</b> y guarda. Listo: contesta a tus clientes a cualquier hora.</li>
+          </ol>
+          <p class="pn-sub" style="font-size:.8rem;margin-top:12px"><b>Qué cambia:</b> sigues usando tu WhatsApp Business como siempre, y tus chats y contactos se sincronizan. Si tú contestas un chat desde tu teléfono, el asistente se queda callado en ese chat por 12 horas. Las listas de difusión se desactivan. Abre la app al menos una vez cada 14 días o se desconecta.<br><b>Cuánto cuesta:</b> gratis hasta 1,000 respuestas al mes; el asistente se detiene solo en 950.</p>
+          <div class="pn-row"><button class="pn-btn pn-gold" type="button" id="b-connect">Pedir la conexión de mi WhatsApp</button></div>
+          <div class="pn-msg" id="b-connect-msg" aria-live="polite"></div>
+        </details>
         <div class="pn-form" style="margin-top:12px">
           <label class="pn-check"><input type="checkbox" id="b-enabled"><span data-es="Asistente activado (contesta cuando tu número esté conectado)" data-en="Assistant on (answers once your number is connected)">Asistente activado (contesta cuando tu número esté conectado)</span></label>
           <div class="pn-grid2">
@@ -1303,7 +1315,13 @@
     renderFaq(faq);
     renderChat(); renderLog();
   }
-  $('b-faq-add').onclick = function () { var f = readFaq(); f.push({ q: '', a: '' }); renderFaq(f); var last = document.querySelector('#b-faq .pn-faq-row:last-child [data-fq]'); if (last) last.focus(); };
+  $('b-connect').onclick = async function () {
+    this.disabled = true;
+    var r = await api('/api/panel?action=paid-notice', jsonOpts('POST', { method: 'other', product: 'whatsapp', note: 'Quiero conectar mi WhatsApp al asistente' }));
+    this.disabled = false;
+    msg($('b-connect-msg'), r.ok ? 'Listo: te contactamos para conectarlo juntos.' : errText(r.data.error), r.ok ? 'ok' : 'err');
+  };
+    $('b-faq-add').onclick = function () { var f = readFaq(); f.push({ q: '', a: '' }); renderFaq(f); var last = document.querySelector('#b-faq .pn-faq-row:last-child [data-fq]'); if (last) last.focus(); };
   $('b-faq').addEventListener('click', function (e) {
     var d = e.target.closest('[data-faq-del]'); if (!d) return;
     var f = readFaq(); f.splice(+d.getAttribute('data-faq-del'), 1); renderFaq(f);
