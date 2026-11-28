@@ -374,12 +374,19 @@
         <h2 data-es="Cómo te presentas" data-en="How you introduce yourself">Cómo te presentas</h2>
         <div class="pn-form" id="pn-card-form">
           <label><span data-es="Tu nombre o el de tu negocio" data-en="Your name or your business's">Tu nombre o el de tu negocio</span><input class="pn-in" id="c-name" maxlength="120"></label>
+          <label><span data-es="Profesión o cargo" data-en="Profession or title">Profesión o cargo</span> <small data-es="Aparece bajo tu nombre. Ej.: Valuador certificado" data-en="Shown under your name. E.g. Certified appraiser">Aparece bajo tu nombre. Ej.: Valuador certificado</small><input class="pn-in" id="c-prof" maxlength="80"></label>
           <label><span data-es="Tipo de negocio" data-en="Type of business">Tipo de negocio</span> <small data-es="Cambia los textos de tu página y los servicios que te sugerimos." data-en="Changes your page's wording and the services we suggest.">Cambia los textos de tu página y los servicios que te sugerimos.</small><select class="pn-in" id="c-type"></select></label>
           <div class="pn-grid2">
             <label><span>WhatsApp</span><input class="pn-in" id="c-wa" inputmode="tel" placeholder="+52 998 123 4567"></label>
             <label><span data-es="Teléfono" data-en="Phone">Teléfono</span><input class="pn-in" id="c-phone" inputmode="tel"></label>
           </div>
           <label><span data-es="Correo público" data-en="Public email">Correo público</span><input class="pn-in" id="c-email" type="email"></label>
+          <div class="pn-grid2">
+            <label><span>Instagram</span><input class="pn-in" id="c-ig" maxlength="200" placeholder="@tunegocio" autocapitalize="off"></label>
+            <label><span>Facebook</span><input class="pn-in" id="c-fb" maxlength="200" placeholder="tunegocio" autocapitalize="off"></label>
+            <label><span>TikTok</span><input class="pn-in" id="c-tt" maxlength="200" placeholder="@tunegocio" autocapitalize="off"></label>
+            <label><span data-es="Sitio web" data-en="Website">Sitio web</span><input class="pn-in" id="c-web" maxlength="300" placeholder="https://" inputmode="url" autocapitalize="off"></label>
+          </div>
           <label><span data-es="Sobre ti" data-en="About you">Sobre ti</span> <small data-es="Una o dos frases. Máximo 600 caracteres." data-en="One or two sentences. 600 characters max.">Una o dos frases. Máximo 600 caracteres.</small><textarea class="pn-in" id="c-bio" maxlength="600"></textarea></label>
           <label><span data-es="Etiquetas" data-en="Tags">Etiquetas</span> <small data-es="Palabras cortas bajo tu nombre, separadas por comas, hasta 8. Ej.: Venta, Renta, Avalúos" data-en="Short words under your name, comma separated, up to 8. E.g. Sale, Rent, Appraisals">Palabras cortas bajo tu nombre, separadas por comas, hasta 8. Ej.: Venta, Renta, Avalúos</small><input class="pn-in" id="c-services"></label>
           <label><span data-es="Dirección u oficina" data-en="Address or office">Dirección u oficina</span><input class="pn-in" id="c-address" maxlength="200"></label>
@@ -600,6 +607,11 @@
     invalid_phone: ['Revisa el teléfono.', 'Check the phone number.'],
     invalid_public_email: ['Revisa el correo público.', 'Check the public email.'],
     invalid_services: ['Hasta 8 etiquetas, de 40 letras cada una.', 'Up to 8 tags, 40 characters each.'],
+    invalid_instagram: ['Instagram: escribe tu usuario (@tunegocio) o el link de tu perfil.', 'Instagram: type your handle (@yourbusiness) or your profile link.'],
+    invalid_facebook: ['Facebook: escribe el nombre de tu página o el link de facebook.com.', 'Facebook: type your page name or its facebook.com link.'],
+    invalid_tiktok: ['TikTok: escribe tu usuario (@tunegocio) o el link de tu perfil.', 'TikTok: type your handle (@yourbusiness) or your profile link.'],
+    invalid_website: ['El sitio web debe empezar con https://', 'The website must start with https://'],
+    profession_too_long: ['La profesión es muy larga (máximo 80).', 'The profession is too long (80 max).'],
     invalid_business_type: ['Elige un tipo de negocio de la lista.', 'Pick a type of business from the list.'],
     missing_title: ['Escribe el nombre.', 'Enter the name.'],
     title_too_long: ['El nombre es muy largo (máximo 120).', 'The name is too long (120 max).'],
@@ -1504,6 +1516,8 @@
     $('c-name').value = a.name || ''; $('c-wa').value = a.whatsapp_number || ''; $('c-phone').value = a.phone || '';
     $('c-email').value = a.public_email || ''; $('c-bio').value = a.bio || ''; $('c-address').value = a.address || '';
     $('c-services').value = (a.services || []).join(', ');
+    $('c-prof').value = a.profession || ''; $('c-ig').value = a.instagram || ''; $('c-fb').value = a.facebook || '';
+    $('c-tt').value = a.tiktok || ''; $('c-web').value = a.website || '';
     $('c-type').innerHTML = MINI_TYPES.KEYS.map(function (k) {
       var ty = MINI_TYPES.TYPES[k];
       return '<option value="' + k + '">' + escapeHtml(pair(ty.label) + ' · ' + pair(ty.hint)) + '</option>';
@@ -1544,6 +1558,8 @@
       public_email: $('c-email').value.trim() || null, bio: $('c-bio').value.trim() || null, address: $('c-address').value.trim() || null,
       services: $('c-services').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 8),
       business_type: $('c-type').value,
+      profession: $('c-prof').value.trim() || null, instagram: $('c-ig').value.trim() || null, facebook: $('c-fb').value.trim() || null,
+      tiktok: $('c-tt').value.trim() || null, website: $('c-web').value.trim() || null,
       primary_color: S.color && S.color.toLowerCase() !== GOLD ? S.color : null
     };
     this.disabled = true;

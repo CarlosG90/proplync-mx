@@ -71,6 +71,66 @@ __META__
   .mp-stats span{display:block;font-size:.74rem;color:var(--on-ink-dim);margin-top:6px;line-height:1.35}
   @media (min-width:900px){.mp-hero .mp-wrap{padding-top:72px;padding-bottom:64px}}
 
+  /* THE CARD (2026-11-28): a Mini page opens like a premium business card, the format customers compare us
+     with: centred photo, round logo with a gold ring, name, profession in small caps, a diamond, large contact
+     rows, gold service chips; and closes with a QR, a signature and "Quiero una página así". PropLync's own
+     palette: navy, gold, cream, Fraunces. The brand colour (--mp-accent) still tints the gold parts. */
+  .mp-card-hero{text-align:center}
+  .mp-card-hero .mp-wrap{max-width:560px;padding-top:0;padding-bottom:36px}
+  .mp-cover{position:relative;height:clamp(220px,62vw,340px);margin:0 auto;max-width:560px;overflow:hidden}
+  .mp-cover img{width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block}
+  .mp-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,0) 45%,var(--ink) 98%)}
+  @media (min-width:600px){.mp-cover{-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent)}}
+  .mp-card-hero.no-cover .mp-wrap{padding-top:44px}
+  .mp-card-hero .mp-logo{width:96px;height:96px;border-radius:50%;margin:-48px auto 0;position:relative;font-size:2.4rem;
+    box-shadow:0 0 0 3px var(--ink),0 0 0 4.5px color-mix(in srgb,var(--mp-accent) 85%,#fff),0 18px 40px -12px rgba(0,0,0,.6)}
+  .mp-card-hero.no-cover .mp-logo{margin-top:0}
+  .mp-card-hero .mp-name{font-size:clamp(2rem,8.4vw,3rem);margin-top:18px}
+  .mp-prof{font:600 .7rem var(--body);letter-spacing:.22em;text-transform:uppercase;color:var(--on-ink-dim);margin-top:10px}
+  .mp-kind{font-family:var(--display);font-style:italic;font-size:.95rem;color:var(--mp-accent-hi);margin-top:6px}
+  .mp-diamond{width:7px;height:7px;background:var(--mp-accent);transform:rotate(45deg);margin:16px auto 0;opacity:.9}
+  .mp-card-hero .mp-bio{margin:14px auto 0;font-size:.95rem;max-width:44ch}
+  .mp-rows{display:grid;gap:10px;margin-top:24px;text-align:left}
+  .mp-row{display:flex;align-items:center;gap:14px;background:#f4eee3;color:var(--ink);border-radius:16px;padding:12px 14px;text-decoration:none;
+    box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 10px 24px -18px rgba(0,0,0,.7);transition:transform .15s ease}
+  .mp-row:active{transform:scale(.985)}
+  .mp-row-ic{flex:none;width:40px;height:40px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--mp-accent) 70%,#7a5a1c);display:flex;align-items:center;justify-content:center;color:#5c4a22}
+  .mp-row-ic svg{width:18px;height:18px}
+  .mp-row-t{flex:1;min-width:0}
+  .mp-row-t b{display:block;font:600 .78rem var(--body);letter-spacing:.16em;text-transform:uppercase}
+  .mp-row-t small{display:block;font-size:.8rem;color:#6b604f;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mp-row-go{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid #c9b48a;display:flex;align-items:center;justify-content:center;color:#7a5a1c;font-size:1rem;line-height:1}
+  .mp-chips-h{font:600 .68rem var(--body);letter-spacing:.24em;text-transform:uppercase;color:var(--on-ink-dim);margin:28px 0 12px}
+  .mp-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+  .mp-gold{background:linear-gradient(135deg,#efdcae 0%,#d6b878 38%,#b8924f 72%,#d9bd82 100%);color:#1d1608;
+    box-shadow:0 1px 0 rgba(255,255,255,.55) inset,0 8px 20px -12px rgba(0,0,0,.6)}
+  .mp-chip-g{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:8px 14px;font:600 .8rem var(--body);text-decoration:none;max-width:100%}
+  .mp-chip-g{text-align:left;line-height:1.3}
+  .mp-chip-g span{white-space:normal}
+  .mp-chip-g::before{content:"";width:5px;height:5px;background:#3b2c0e;transform:rotate(45deg);flex:none;opacity:.7}
+  .mp-cta-g{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;border-radius:14px;font:600 .82rem var(--body);
+    letter-spacing:.2em;text-transform:uppercase;text-decoration:none;border:0;cursor:pointer}
+  .mp-cta-g svg{width:18px;height:18px}
+  /* closing card: QR, signature, "Quiero una página así" */
+  .mp-sign{background:var(--ink);color:var(--on-ink);text-align:center;padding:40px 0 34px}
+  .mp-sign .mp-wrap{max-width:560px}
+  .mp-qr{display:inline-block;background:#fff;border-radius:18px;padding:12px;box-shadow:0 14px 34px -16px rgba(0,0,0,.7)}
+  .mp-qr img{display:block;width:132px;height:132px;image-rendering:pixelated}
+  .mp-qr-cap{font-size:.74rem;color:var(--on-ink-faint);margin-top:10px}
+  .mp-signature{font-family:var(--display);font-style:italic;font-weight:300;font-size:clamp(1.9rem,8vw,2.6rem);color:var(--mp-accent-hi);margin:22px 0 20px}
+  .mp-made2{font-size:.74rem;color:var(--on-ink-faint);margin-bottom:18px}
+  .mp-made2 a{color:var(--on-ink-dim)}
+  /* material as a photo carousel: the next photo peeks in, dots below */
+  .mp-carousel{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:2px var(--gutter) 6px;margin:0 calc(-1 * var(--gutter))}
+  .mp-carousel::-webkit-scrollbar{display:none}
+  .mp-carousel .mp-asset{flex:none;width:min(78%,360px);scroll-snap-align:center}
+  @media (min-width:900px){.mp-carousel .mp-asset{width:300px}}
+  .mp-dots{display:flex;justify-content:center;gap:6px;margin-top:12px}
+  .mp-dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+  .mp-dots i.on{background:var(--mp-accent)}
+  .mp-docs{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:16px}
+  @media (min-width:700px){.mp-docs{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
   /* listing area */
   .mp-list{padding:36px 0 64px}
   .mp-list-head{margin-bottom:18px}
@@ -233,6 +293,10 @@ __META__
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9.5V20h12V9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
   <symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-ig" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor"/></symbol>
+  <symbol id="i-fb" viewBox="0 0 24 24"><path d="M14 8h3V4.5h-3c-2.5 0-4 1.6-4 4V11H7.5v3.5H10V21h3.6v-6.5h3l.5-3.5h-3.5V8.8c0-.5.3-.8.9-.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-tt" viewBox="0 0 24 24"><path d="M14 3.5v11.2a3.3 3.3 0 1 1-3.3-3.3M14 3.5c.4 2.6 2.2 4.3 4.8 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.2-3.6-8.5S9.6 5.9 12 3.5z" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
   <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v5h5M10 13h6M10 17h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
@@ -251,6 +315,7 @@ __META__
 <script src="/js/i18n.js"></script>
 <script src="/js/track.js"></script>
 <script src="/js/business-types.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script>
 (function () {
   'use strict';
@@ -369,39 +434,77 @@ __META__
         escapeHtml(t('Hecho con PropLync Mini · Crea la tuya', 'Made with PropLync Mini · Make yours')) + '</a></div></footer>';
   }
 
+  /* Social profile → its link (a handle or the stored https URL; validated on save, migration 023). */
+  function socialLink(kind, v) {
+    if (!v) return '';
+    if (/^https:\/\//i.test(v)) return safeUrl(v);
+    var h = String(v).replace(/^@/, '');
+    if (!/^[A-Za-z0-9._-]{1,60}$/.test(h)) return '';
+    return safeUrl({ ig: 'https://instagram.com/', fb: 'https://facebook.com/', tt: 'https://www.tiktok.com/@' }[kind] + h);
+  }
+  function handleText(v) { return /^https:\/\//i.test(v) ? String(v).replace(/^https:\/\/(www\.|m\.)?/i, '').replace(/\/$/, '') : '@' + String(v).replace(/^@/, ''); }
+  function prettyPhone(p) {
+    var d = digits(p);
+    if (d.length === 12 && d.indexOf('52') === 0) d = d.slice(2);
+    return d.length === 10 ? d.slice(0, 3) + ' ' + d.slice(3, 6) + ' ' + d.slice(6) : (p || '');
+  }
+  function rowHTML(href, ic, label, detail, ext) {
+    return href ? '<a class="mp-row" href="' + href + '"' + (ext ? ' target="_blank" rel="noopener"' : '') + '>' +
+      '<span class="mp-row-ic">' + icon(ic) + '</span><span class="mp-row-t"><b>' + escapeHtml(label) + '</b>' + (detail ? '<small>' + escapeHtml(detail) + '</small>' : '') + '</span>' +
+      '<span class="mp-row-go" aria-hidden="true">›</span></a>' : '';
+  }
+  /* The service names as gold chips; each opens WhatsApp asking for that service. Falls back to the card's tags. */
+  function chipsHTML() {
+    var names = services.length ? services.map(function (x) { return svcTitle(x); }) : (agency.services || []);
+    names = names.filter(Boolean).slice(0, 10);
+    if (!names.length) return '';
+    return '<div class="mp-chips-h">' + escapeHtml(t('Servicios', 'Services')) + '</div><div class="mp-chips">' + names.map(function (n) {
+      var wa = waLink(t('Hola, me interesa: ', 'Hi, I am interested in: ') + n + ' ' + pageLink());
+      return wa ? '<a class="mp-chip-g mp-gold" href="' + wa + '" target="_blank" rel="noopener"><span>' + escapeHtml(n) + '</span></a>'
+                : '<span class="mp-chip-g mp-gold"><span>' + escapeHtml(n) + '</span></span>';
+    }).join('') + '</div>';
+  }
   function heroHTML() {
-    var cover = cssUrl(agency.cover_url);
+    var cover = safeUrl(agency.cover_url);
     var wa = waLink(greeting());
     var tel = digits(agency.phone);
     var mail = mailHref(agency.public_email);
     var map = agency.maps_url ? safeUrl(agency.maps_url) : (agency.address ? safeUrl('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(agency.address)) : '');
-    var towns = [];
-    listings.forEach(function (p) { if (p.town && towns.indexOf(p.town) === -1) towns.push(p.town); });
-    var ops = { sale: 0, rental: 0 };
-    listings.forEach(function (p) { ops[p.operation === 'rental' ? 'rental' : 'sale']++; });
-    function stat(n, label) { return '<div><b>' + n + '</b><span>' + escapeHtml(label) + '</span></div>'; }
-    var stats = [stat(listings.length, listings.length === 1 ? t('propiedad', 'property') : t('propiedades', 'properties'))];
-    if (ops.sale && ops.rental) {
-      stats.push(stat(ops.sale, t('en venta', 'for sale')));
-      stats.push(stat(ops.rental, t('en renta', 'for rent')));
-    } else {
-      if (ops.sale || ops.rental) stats.push(stat(ops.sale || ops.rental, ops.rental ? t('en renta', 'for rent') : t('en venta', 'for sale')));
-      if (towns.length) stats.push(stat(towns.length, towns.length === 1 ? towns[0] : t('zonas', 'areas')));
-    }
-    var shade = 'linear-gradient(180deg,rgba(10,22,40,.6),rgba(10,22,40,.94))';
-    return '<section class="mp-hero' + (cover ? ' has-cover' : '') + '"' + (cover ? ' style="background-image:' + shade + ',url(\'' + cover + '\')"' : '') + '><div class="mp-wrap">' +
+    var web = agency.website ? safeUrl(agency.website) : '';
+    var rows = [
+      rowHTML(wa, 'i-wa', 'WhatsApp', t('Escríbeme directo', 'Message me directly'), true),
+      rowHTML(tel ? 'tel:' + tel : '', 'i-phone', t('Llamar', 'Call'), prettyPhone(agency.phone), false),
+      rowHTML(mail, 'i-mail', t('Correo', 'Email'), agency.public_email, false),
+      rowHTML(map, 'i-pin', t('Ubicación', 'Location'), agency.address || t('Ver en el mapa', 'See on the map'), true),
+      rowHTML(socialLink('ig', agency.instagram), 'i-ig', 'Instagram', agency.instagram && handleText(agency.instagram), true),
+      rowHTML(socialLink('fb', agency.facebook), 'i-fb', 'Facebook', agency.facebook && handleText(agency.facebook), true),
+      rowHTML(socialLink('tt', agency.tiktok), 'i-tt', 'TikTok', agency.tiktok && handleText(agency.tiktok), true),
+      rowHTML(web, 'i-web', t('Sitio web', 'Website'), web ? String(agency.website).replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '') : '', true)
+    ].join('');
+    return '<section class="mp-hero mp-card-hero' + (cover ? '' : ' no-cover') + '">' +
+      (cover ? '<div class="mp-cover"><img src="' + cover + '" alt="" decoding="async"></div>' : '') +
+      '<div class="mp-wrap">' +
       markHTML('mp-logo') +
-      '<div class="mp-eyebrow">' + escapeHtml(propertiesOnly() ? t('Portafolio de propiedades', 'Property portfolio') : pair(type().eyebrow)) + '</div>' +
       '<h1 class="mp-name">' + nameHTML(agency.name) + '</h1>' +
+      (agency.profession ? '<div class="mp-prof">' + escapeHtml(agency.profession) + '</div>' : '') +
+      '<div class="mp-kind">' + escapeHtml(propertiesOnly() ? t('Portafolio de propiedades', 'Property portfolio') : pair(type().eyebrow)) + '</div>' +
+      '<div class="mp-diamond" aria-hidden="true"></div>' +
       (agency.bio ? '<p class="mp-bio">' + escapeHtml(agency.bio) + '</p>' : '') +
-      '<div class="mp-actions" id="mp-hero-actions">' +
-        (wa ? '<a class="mp-btn mp-btn-main" href="' + wa + '" target="_blank" rel="noopener">' + icon('i-wa') + escapeHtml(t('Escribir por WhatsApp', 'Message on WhatsApp')) + '</a>' : '') +
-        (tel ? '<a class="mp-btn mp-btn-ghost" href="tel:' + tel + '">' + icon('i-phone') + escapeHtml(t('Llamar', 'Call')) + '</a>' : '') +
-        (mail ? '<a class="mp-btn mp-btn-ghost" href="' + mail + '">' + icon('i-mail') + escapeHtml(t('Correo', 'Email')) + '</a>' : '') +
-        (map ? '<a class="mp-btn mp-btn-ghost" href="' + map + '" target="_blank" rel="noopener">' + icon('i-pin') + escapeHtml(t('Ubicación', 'Location')) + '</a>' : '') +
-      '</div>' +
-      ((agency.services || []).length ? '<ul class="mp-tags">' + agency.services.slice(0, 8).map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ul>' : '') +
-      (listings.length ? '<div class="mp-stats">' + stats.join('') + '</div>' : '') +
+      '<div class="mp-rows" id="mp-hero-actions">' + rows + '</div>' +
+      chipsHTML() +
+      '</div></section>';
+  }
+  /* Closing card: a QR to this page, the owner's name as a signature, and our "make yours" offer. */
+  function signHTML() {
+    var qr = '';
+    try { var q = qrcode(0, 'M'); q.addData(pageLink()); q.make(); qr = q.createDataURL(5, 2); } catch (e) { qr = ''; }
+    return '<section class="mp-sign"><div class="mp-wrap">' +
+      (qr ? '<div class="mp-qr"><img src="' + qr + '" alt="' + escapeHtml(t('Código QR de esta página', 'QR code for this page')) + '"></div>' +
+        '<div class="mp-qr-cap">' + escapeHtml(t('Escanea para abrir esta página', 'Scan to open this page')) + '</div>' : '') +
+      '<div class="mp-signature">' + escapeHtml(agency.name || '') + '</div>' +
+
+      '<a class="mp-cta-g mp-gold" href="/?ref=badge&tipo=' + encodeURIComponent(type().key === 'real_estate' ? 'inmobiliaria' : type().key === 'professional' ? 'profesional' : type().key === 'trades' ? 'oficios' : type().key === 'beauty' ? 'belleza' : 'otro') + '">' +
+        escapeHtml(t('Quiero una página así', 'I want a page like this')) + '</a>' +
       '</div></section>';
   }
 
@@ -482,18 +585,21 @@ __META__
   function assetsHTML() {
     var list = assets.filter(function (x) { return safeUrl(x.url); });
     if (!list.length) return '';
+    var imgs = list.filter(function (x) { return x.kind !== 'pdf'; }), docs = list.filter(function (x) { return x.kind === 'pdf'; });
     return '<section class="mp-assets" aria-labelledby="mp-assets-h"><div class="mp-wrap">' +
       '<div class="mp-list-head"><div class="mp-kicker">' + escapeHtml(list.length + ' ' + (list.length === 1 ? t('archivo', 'file') : t('archivos', 'files'))) + '</div>' +
       '<h2 id="mp-assets-h">' + escapeHtml(t('Material e', 'Material and')) + ' <em>' + escapeHtml(t('información', 'information')) + '</em></h2></div>' +
-      '<div class="mp-assets-grid">' + list.map(function (x, i) {
-        var label = assetTitle(x, i);
-        if (x.kind === 'pdf') {
-          return '<a class="mp-asset" href="' + safeUrl(x.url) + '" target="_blank" rel="noopener" data-asset-pdf="' + escapeHtml(x.id) + '">' +
-            '<div class="mp-asset-pdf">' + icon('i-doc') + '<b>PDF</b></div><span>' + escapeHtml(label) + '</span></a>';
-        }
+      (imgs.length ? '<div class="mp-carousel" id="mp-carousel">' + imgs.map(function (x) {
+        var label = assetTitle(x, list.indexOf(x));
         return '<button class="mp-asset" type="button" data-asset="' + escapeHtml(x.id) + '" aria-label="' + escapeHtml(t('Ver: ', 'View: ') + label) + '">' +
           fitHTML(x.url, 'mp-asset-img', label, true) + '<span>' + escapeHtml(label) + '</span></button>';
-      }).join('') + '</div></div></section>';
+      }).join('') + '</div>' + (imgs.length > 1 ? '<div class="mp-dots" id="mp-dots">' + imgs.map(function (_, i) { return '<i' + (i ? '' : ' class="on"') + '></i>'; }).join('') + '</div>' : '') : '') +
+      (docs.length ? '<div class="mp-docs">' + docs.map(function (x) {
+        var label = assetTitle(x, list.indexOf(x));
+        return '<a class="mp-asset" href="' + safeUrl(x.url) + '" target="_blank" rel="noopener" data-asset-pdf="' + escapeHtml(x.id) + '">' +
+          '<div class="mp-asset-pdf">' + icon('i-doc') + '<b>PDF</b></div><span>' + escapeHtml(label) + '</span></a>';
+      }).join('') + '</div>' : '') +
+      '</div></section>';
   }
   /* One service in detail: photo, full description, price, duration, its material, ask on WhatsApp, share its link. */
   function openService(id) {
@@ -624,7 +730,7 @@ __META__
 
   function render() {
     var html;
-    if (LIVE) html = barHTML() + heroHTML() + servicesHTML() + assetsHTML() + (showListings() ? listHTML() : '') + footHTML() + (PREVIEW ? publishHTML() : '');
+    if (LIVE) html = barHTML() + heroHTML() + servicesHTML() + assetsHTML() + (showListings() ? listHTML() : '') + signHTML() + footHTML() + (PREVIEW ? publishHTML() : '');
     else if (data.state === 'preview_loading') html = offHTML(t('Vista previa', 'Preview'), escapeHtml(t('Cargando…', 'Loading…')), '');
     else if (data.state === 'preview_private') html = offHTML(t('Vista previa privada', 'Private preview'),
       escapeHtml(t('Esta vista previa es', 'This preview is')) + ' <em>' + escapeHtml(t('privada', 'private')) + '</em>',
@@ -633,6 +739,12 @@ __META__
     else if (data.state === 'paused') html = barHTML() + offHTML(t('Página en pausa', 'Page paused'), nameHTML(agency.name), t('Esta página no está disponible por ahora. Si buscas a este asesor, escríbele directamente.', 'This page is not available right now. If you are looking for this agent, contact them directly.')) + footHTML();
     else html = offHTML('PropLync Mini', escapeHtml(t('Página no encontrada', 'Page not found')), t('Esta página no existe o cambió de dirección. Revisa el link que te compartieron.', 'This page does not exist or has moved. Check the link you were sent.')) + footHTML();
     root.innerHTML = html;
+    var car = document.getElementById('mp-carousel'), dots = document.getElementById('mp-dots');
+    if (car && dots) car.addEventListener('scroll', function () {
+      var items = car.children, best = 0, mid = car.scrollLeft + car.clientWidth / 2, d = Infinity;
+      for (var i = 0; i < items.length; i++) { var c = items[i].offsetLeft + items[i].offsetWidth / 2; if (Math.abs(c - mid) < d) { d = Math.abs(c - mid); best = i; } }
+      for (var j = 0; j < dots.children.length; j++) dots.children[j].classList.toggle('on', j === best);
+    }, { passive: true });
     var es = document.getElementById('es'), en = document.getElementById('en');
     if (es) { es.classList.toggle('on', !isEn()); en.classList.toggle('on', isEn()); es.onclick = function () { setLang('es'); }; en.onclick = function () { setLang('en'); }; }
     var wa = waLink(greeting());
