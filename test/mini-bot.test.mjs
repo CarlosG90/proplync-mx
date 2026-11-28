@@ -140,7 +140,7 @@ function fakeDb({ bot = { agency_id: 'a1', enabled: true, monthly_cap: 950 }, us
     const st = { table, op: 'select', head: false, filters: [] };
     const q = {
       select(_f, o) { if (o && o.head) st.head = true; return q; },
-      eq(k, v) { st.filters.push([k, v]); return q; }, gte() { return q; }, order() { return q; }, limit() { return q; },
+      eq(k, v) { st.filters.push([k, v]); return q; }, or() { st.filters.push(['handoff', 'or']); return q; }, gte() { return q; }, order() { return q; }, limit() { return q; },
       insert(v) { st.op = 'insert'; inserts.push({ table, v }); return q; },
       maybeSingle: async () => ({ data: table === 'mini_bot' ? bot : null, error: null }),
       then(resolve) {
@@ -261,4 +261,11 @@ test('when the model wrote the handoff twice (its words + verbatim), the verbati
   assert.equal(out.split('Le paso su mensaje').length - 1, 1);
   const once = 'No puedo ofrecer descuentos. ' + hand;
   assert.equal(enforceRules({ reply: once, handoff: true }, { agency: a, history: [{ role: 'bot', body: 'x' }] }).reply, once, 'a single verbatim copy stays');
+});
+
+test('coexistence: the owner\'s own app replies are read from smb_message_echoes', () => {
+  const body = { entry: [{ changes: [{ field: 'smb_message_echoes', value: { metadata: { phone_number_id: 'PN1' },
+    message_echoes: [{ from: '522382253570', to: '5212380000000', id: 'wamid.e1', type: 'text', text: { body: 'Hola, soy Gael' } }] } }] }] };
+  assert.deepEqual(wa.ownerEchoes(body), [{ phoneNumberId: 'PN1', to: '5212380000000', id: 'wamid.e1', text: 'Hola, soy Gael' }]);
+  assert.deepEqual(wa.incomingMessages(body), [], 'an echo is never answered');
 });

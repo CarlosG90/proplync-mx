@@ -73,6 +73,32 @@ export function incomingMessages(body) {
   return out.filter((m) => m.phoneNumberId && m.from && m.id);
 }
 
+/** Coexistence: what the owner sent from the WhatsApp Business app (field smb_message_echoes). Pure, for tests. */
+export function ownerEchoes(body) {
+  const out = [];
+  for (const entry of (body && body.entry) || []) {
+    for (const change of entry.changes || []) {
+      const v = change && change.value;
+      if (!v || change.field !== 'smb_message_echoes' || !v.metadata) continue;
+      for (const m of v.message_echoes || []) {
+        out.push({ phoneNumberId: String(v.metadata.phone_number_id || ''), to: String(m.to || '').replace(/[^0-9]/g, '').slice(0, 20),
+          id: String(m.id || ''), text: m.text ? String(m.text.body || '').slice(0, 4000) : `[${m.type || 'mensaje'}]` });
+      }
+    }
+  }
+  return out.filter((m) => m.phoneNumberId && m.to && m.id);
+}
+
+/** Log the owner's own reply (role 'owner', supabase/025): the assistant then stays quiet in that chat. */
+export async function handleEcho(e, deps = {}) {
+  const svc = deps.svc || getServiceClient();
+  const { data: bot } = await svc.from('mini_bot').select('agency_id').eq('wa_phone_number_id', e.phoneNumberId).maybeSingle();
+  if (!bot) return { skipped: 'unknown_number' };
+  const { error } = await svc.from('mini_bot_messages').insert({ agency_id: bot.agency_id, contact: e.to, role: 'owner', body: e.text, wa_message_id: e.id });
+  if (error && error.code !== '23505') throw error;
+  return { logged: true };
+}
+
 async function readRaw(req) {
   const chunks = [];
   for await (const c of req) chunks.push(typeof c === 'string' ? Buffer.from(c) : c);
@@ -113,8 +139,9 @@ export async function handleMessage(m, deps = {}) {
   const [used, lastHandoff, hist] = await Promise.all([
     svc.from('mini_bot_messages').select('id', { count: 'exact', head: true }).eq('agency_id', bot.agency_id).eq('role', 'bot')
       .gte('created_at', monthStart(new Date(now))),
-    svc.from('mini_bot_messages').select('id').eq('agency_id', bot.agency_id).eq('contact', m.from).eq('role', 'bot')
-      .eq('handoff', true).gte('created_at', new Date(now - HANDOFF_PAUSE_MS).toISOString()).limit(1),
+    // Quiet for 12 h after a handoff, or after the owner answered this chat from their own app (coexistence).
+    svc.from('mini_bot_messages').select('id').eq('agency_id', bot.agency_id).eq('contact', m.from)
+      .or('and(role.eq.bot,handoff.eq.true),role.eq.owner').gte('created_at', new Date(now - HANDOFF_PAUSE_MS).toISOString()).limit(1),
     svc.from('mini_bot_messages').select('role, body, created_at').eq('agency_id', bot.agency_id).eq('contact', m.from)
       .gte('created_at', new Date(now - 24 * 3600 * 1000).toISOString())
       .order('created_at', { ascending: false }).limit(12)
@@ -163,8 +190,10 @@ export default async function handler(req, res, deps = {}) {
 
   // Answer Meta now; the replies are written after (each message on its own, so one failure doesn't stop the rest).
   res.status(200).json({ ok: true });
-  const work = Promise.all(incomingMessages(body).map((m) =>
-    handleMessage(m, deps).catch((err) => logDegraded('mini:whatsapp', err))));
+  const work = Promise.all([
+    ...ownerEchoes(body).map((e) => handleEcho(e, deps).catch((err) => logDegraded('mini:whatsapp-echo', err))),
+    ...incomingMessages(body).map((m) => handleMessage(m, deps).catch((err) => logDegraded('mini:whatsapp', err)))
+  ]);
   if (deps.await) await work; else waitUntil(work);
 }
 

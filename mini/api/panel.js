@@ -65,7 +65,7 @@ export function cleanNotice(body) {
   const note = String(b.note || '').trim();
   if (note.length > 300) return { error: 'note_too_long' };
   // Which product it is for: the page (MXN 249 / 3 months) or the client CRM add-on (MXN 149 / month).
-  const product = b.product === 'crm' ? 'crm' : 'page';
+  const product = ['crm', 'whatsapp'].includes(b.product) ? b.product : 'page';
   return { notice: { method, reference, note, product } };
 }
 
@@ -96,7 +96,7 @@ export async function handlePaidNotice(req, res, deps = {}) {
     if (evErr) throw evErr;
 
     await (deps.notifyOperator || notifyOperator)({
-      subject: notice.product === 'crm' ? `Mini: CRM de clientes (${agency.name})` : `Mini: aviso de pago (${agency.name})`,
+      subject: notice.product === 'crm' ? `Mini: CRM de clientes (${agency.name})` : notice.product === 'whatsapp' ? `Mini: conectar WhatsApp (${agency.name})` : `Mini: aviso de pago (${agency.name})`,
       text: `${agency.name} dice que ya pago (MXN ${MINI_PRICE_MXN}).\n` +
         `Metodo: ${notice.method}\nReferencia: ${notice.reference || '-'}\nNota: ${notice.note || '-'}\n` +
         `Correo: ${auth.user && auth.user.email || '-'}\nWhatsApp: ${agency.whatsapp_number || '-'}\n` +
