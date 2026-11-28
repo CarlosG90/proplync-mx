@@ -116,7 +116,8 @@ __META__
   .mp-svcs{padding:36px 0 8px}
   .mp-svcs + .mp-list{padding-top:28px}
   .mp-svc{background:var(--white);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-sm)}
-  .mp-svc-img{aspect-ratio:16/9;background:var(--sand) center/cover no-repeat}
+  .mp-svc-img{all:unset;cursor:pointer;display:block;position:relative;aspect-ratio:16/9;background:var(--sand) center/cover no-repeat}
+  .mp-svc-img:focus-visible{outline:2px solid var(--mp-accent);outline-offset:-2px}
   .mp-svc .mp-body{padding:16px 18px 4px}
   .mp-svc-desc{color:var(--on-sand);font-size:.9rem;line-height:1.5;margin:8px 0 0;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
   .mp-svc-desc.open{display:block;-webkit-line-clamp:unset}
@@ -420,6 +421,11 @@ __META__
     if (!m) return '';
     return m < 60 ? m + ' min' : (m % 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : (m / 60) + ' h');
   }
+  /* Several photos per service (supabase/022): images[], first is the cover; older rows carry only `image`. */
+  function svcPhotos(x) {
+    var list = Array.isArray(x.images) && x.images.length ? x.images.slice() : (x.image ? [x.image] : []);
+    return list.filter(function (u) { return !!safeUrl(u); });
+  }
   function svcLink(x) { return location.origin + '/' + encodeURIComponent(agency.slug || '') + '?s=' + encodeURIComponent(x.id); }
   function svcWa(x) {
     var price = svcPrice(x);
@@ -428,10 +434,11 @@ __META__
   /* The owner's material linked to this service (mini_assets.service_id). */
   function svcAssets(x) { return assets.filter(function (a) { return a.service_id === x.id && safeUrl(a.url); }); }
   function svcCardHTML(x) {
-    var img = cssUrl(x.image), price = svcPrice(x), desc = svcDesc(x), dur = svcDuration(x);
+    var ph = svcPhotos(x), img = ph.length ? cssUrl(ph[0]) : '', price = svcPrice(x), desc = svcDesc(x), dur = svcDuration(x);
     var wa = svcWa(x), n = svcAssets(x).length;
     return '<article class="mp-svc">' +
-      (img ? '<div class="mp-svc-img" style="background-image:url(\'' + img + '\')" role="img" aria-label="' + escapeHtml(svcTitle(x)) + '"></div>' : '') +
+      (img ? '<button class="mp-svc-img" type="button" data-svc-open="' + escapeHtml(x.id) + '" style="background-image:url(\'' + img + '\')" aria-label="' + escapeHtml(t('Ver fotos: ', 'See photos: ') + svcTitle(x)) + '">' +
+        (ph.length > 1 ? '<span class="mp-count">' + icon('i-cam') + ph.length + '</span>' : '') + '</button>' : '') +
       '<div class="mp-body"><button class="mp-svc-head" type="button" data-svc-open="' + escapeHtml(x.id) + '"><h3 class="mp-title">' + escapeHtml(svcTitle(x)) + '</h3></button>' +
         (desc ? '<p class="mp-svc-desc">' + escapeHtml(desc) + '</p>' : '') +
         (dur ? '<div class="mp-svc-meta">' + escapeHtml(dur) + '</div>' : '') +
@@ -472,13 +479,14 @@ __META__
   function openService(id) {
     var x = services.filter(function (v) { return v.id === id; })[0];
     if (!x) return;
-    var img = safeUrl(x.image), price = svcPrice(x), desc = svcDesc(x), dur = svcDuration(x), wa = svcWa(x), mats = svcAssets(x);
+    var ph = svcPhotos(x), price = svcPrice(x), desc = svcDesc(x), dur = svcDuration(x), wa = svcWa(x), mats = svcAssets(x);
     var facts = [[t('Precio', 'Price'), price || t('A cotizar', 'On request')]];
     if (dur) facts.push([t('Duración', 'Duration'), dur]);
     document.getElementById('mp-sheet-in').innerHTML =
       '<div class="mp-sheet-scroll" style="position:relative">' +
         '<button class="mp-close" type="button" id="mp-close" aria-label="' + escapeHtml(t('Cerrar', 'Close')) + '">×</button>' +
-        (img ? '<img class="mp-asset-full" src="' + img + '" alt="' + escapeHtml(svcTitle(x)) + '">' : '<div style="height:56px"></div>') +
+        (ph.length ? '<div class="mp-gallery-wrap"><div class="mp-gallery" id="mp-gallery">' + ph.map(function (u, i) { return '<img src="' + safeUrl(u) + '" alt="' + escapeHtml(svcTitle(x) + ' · ' + (i + 1)) + '"' + (i ? ' loading="lazy"' : '') + '>'; }).join('') + '</div>' +
+          (ph.length > 1 ? '<span class="mp-gallery-n" id="mp-gallery-n">1 / ' + ph.length + '</span>' : '') + '</div>' : '<div style="height:56px"></div>') +
         '<div class="mp-sheet-body">' +
           '<div class="mp-loc">' + escapeHtml(pair(type().eyebrow)) + '</div>' +
           '<h2 class="mp-title" id="mp-sheet-title" style="font-size:1.45rem">' + escapeHtml(svcTitle(x)) + '</h2>' +
@@ -498,6 +506,8 @@ __META__
         (PREVIEW ? '' : '<button class="mp-btn mp-btn-line" type="button" id="mp-share" aria-label="' + escapeHtml(t('Compartir', 'Share')) + '">' + icon('i-share') + '</button>') +
       '</div>';
     document.getElementById('mp-close').onclick = closeSheet;
+    var sg = document.getElementById('mp-gallery'), sn = document.getElementById('mp-gallery-n');
+    if (sg && sn) sg.addEventListener('scroll', function () { sn.textContent = (Math.round(sg.scrollLeft / sg.clientWidth) + 1) + ' / ' + ph.length; }, { passive: true });
     var sh = document.getElementById('mp-share');
     if (sh) sh.onclick = function () {
       var url = svcLink(x), btn = this;

@@ -8,7 +8,7 @@ import { createHmac } from 'node:crypto';
 process.env.SUPABASE_URL ||= 'http://localhost';
 process.env.SUPABASE_SERVICE_ROLE_KEY ||= 'test';
 
-const { cleanTraining, buildKnowledge, systemPrompt, parseBotReply, botReply, handoffText } = await import('../mini/api/_bot.js');
+const { cleanTraining, buildKnowledge, systemPrompt, parseBotReply, botReply, handoffText, enforceRules, guessService } = await import('../mini/api/_bot.js');
 const wa = await import('../mini/api/whatsapp.js');
 const { handleBotTest } = await import('../mini/api/panel.js');
 
@@ -73,7 +73,8 @@ test('botReply: a broken model answer becomes the owner\'s handoff, never an inv
   assert.deepEqual(busy, { busy: true });
   let sent;
   const ok = await botReply(ctx, { groqChat: async (body, opts) => { sent = { body, opts }; return { choices: [{ message: { content: '{"reply":"Buen día","handoff":false}' } }] }; } });
-  assert.deepEqual(ok, { reply: 'Buen día', handoff: false, service: null });
+  assert.deepEqual(ok, { reply: 'Hola, soy el asistente automático de Gael Inmobiliaria. Buen día', handoff: false, service: null },
+    'the first reply always says it is an assistant');
   assert.equal(sent.body.messages[0].role, 'system');
   assert.deepEqual(sent.body.messages.slice(1), [{ role: 'user', content: 'hola' }]);
   assert.equal(sent.body.response_format.type, 'json_object');
@@ -205,4 +206,35 @@ test('webhook: Meta\'s verification, refused without configuration or with a bad
   await wa.default({ method: 'POST', headers: { 'x-hub-signature-256': sign(raw) } }, r, { env: { WHATSAPP_APP_SECRET: SECRET, WHATSAPP_TOKEN: 't' }, raw, await: true,
     svc: fakeDb({ bot: null }) });
   assert.equal(r.statusCode, 200);
+});
+
+// ---------- rules enforced in code (the live test of 2026-11-28 showed the model can forget them) ----------
+
+test('enforceRules: disclosure on the first reply only; a handoff always ends with the owner\'s message', () => {
+  const a = { name: 'Gael Inmobiliaria' };
+  assert.match(enforceRules({ reply: 'Sí, hacemos avalúos.', handoff: false }, { agency: a, history: [{ role: 'user', body: 'hola' }] }).reply, /^Hola, soy el asistente automático de Gael Inmobiliaria\. Sí/);
+  assert.equal(enforceRules({ reply: 'Soy el asistente de Gael. Sí.', handoff: false }, { agency: a, history: [] }).reply, 'Soy el asistente de Gael. Sí.', 'already disclosed');
+  assert.equal(enforceRules({ reply: 'Sí.', handoff: false }, { agency: a, history: [{ role: 'bot', body: 'x' }, { role: 'user', body: 'y' }] }).reply, 'Sí.', 'not the first reply');
+  const h = enforceRules({ reply: 'Se cotiza según el proyecto.', handoff: true }, { agency: a, bot: { handoff: 'Gael te escribe hoy.' }, history: [{ role: 'bot', body: 'x' }] });
+  assert.equal(h.reply, 'Se cotiza según el proyecto.\n\nGael te escribe hoy.');
+  const same = enforceRules({ reply: 'Gael te escribe hoy.', handoff: true }, { agency: a, bot: { handoff: 'Gael te escribe hoy.' }, history: [{ role: 'bot', body: 'x' }] });
+  assert.equal(same.reply, 'Gael te escribe hoy.', 'not added twice');
+});
+
+test('guessService: the client\'s words pick the service, for the CRM', () => {
+  const services = [{ title_es: 'Avalúos comerciales e hipotecarios (Infonavit, Fovissste)' }, { title_es: 'Levantamiento topográfico' },
+    { title_es: 'Gestión ante notaría' }, { title_es: 'Planos arquitectónicos' }];
+  assert.equal(guessService('Hola, ¿hacen avalúos para Infonavit?', services), services[0].title_es);
+  assert.equal(guessService('¿Cuánto cuesta un levantamiento topografico?', services), 'Levantamiento topográfico');
+  assert.equal(guessService('necesito unos planos para mi casa', services), 'Planos arquitectónicos');
+  assert.equal(guessService('hola buenas tardes', services), null);
+  assert.equal(guessService('', services), null);
+});
+
+test('botReply: when the model names no service, the client\'s words fill it', async () => {
+  const out = await botReply({ agency: AGENCY, bot: {}, knowledge: 'K', services: [{ title_es: 'Levantamiento topográfico' }],
+    history: [{ role: 'user', body: '¿Cuánto cuesta un levantamiento topográfico?' }] },
+    { groqChat: async () => ({ choices: [{ message: { content: '{"reply":"Se cotiza.","handoff":true}' } }] }) });
+  assert.equal(out.service, 'Levantamiento topográfico');
+  assert.ok(out.reply.endsWith(handoffText(AGENCY, {})));
 });
