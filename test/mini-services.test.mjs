@@ -393,3 +393,20 @@ test('cleanService: several https photos; the first is the cover', async () => {
   assert.equal(cleanService({ title_es: 'x', images: ['javascript:alert(1)'] }).error, 'invalid_image');
   assert.equal(cleanService({ title_es: 'x', images: 'https://a.b/c.jpg' }).error, 'invalid_images');
 });
+
+// ---------- the card: profession and social links (supabase/023) ----------
+
+test('card links: a handle or that network\'s own URL; website http(s) only', () => {
+  const ok = validateAgencyFields({ profession: ' Valuador certificado ', instagram: '@gael.inmobiliaria', facebook: 'https://www.facebook.com/gaelinmobiliaria',
+    tiktok: 'gael_inmo', website: 'https://gael.mx' });
+  assert.equal(ok.profession, ' Valuador certificado ');
+  assert.equal(ok.instagram, '@gael.inmobiliaria');
+  assert.equal(ok.facebook, 'https://www.facebook.com/gaelinmobiliaria');
+  assert.equal(validateAgencyFields({ facebook: 'https://fb.me/abc' }).facebook, 'https://fb.me/abc');
+  for (const [f, v] of [['instagram', 'https://evil.example.com/x'], ['instagram', 'javascript:alert(1)'], ['tiktok', 'https://instagram.com/x'],
+    ['facebook', 'http://facebook.com/x'], ['website', 'javascript:alert(1)'], ['website', 'gael'], ['instagram', 'tiene espacios']]) {
+    assert.throws(() => validateAgencyFields({ [f]: v }), new RegExp('invalid_' + f), `${f}=${v}`);
+  }
+  assert.throws(() => validateAgencyFields({ profession: 'x'.repeat(81) }), /profession_too_long/);
+  assert.equal(validateAgencyFields({ instagram: '' }).instagram, null);
+});

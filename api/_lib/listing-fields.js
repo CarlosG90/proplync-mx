@@ -18,9 +18,11 @@
 // email, location, services and a line about them. business_type (migration 019)
 // picks the Mini page's template.
 export const AGENCY_WRITABLE_FIELDS = ['name', 'logo_url', 'cover_url', 'primary_color', 'whatsapp_number',
-  'phone', 'public_email', 'address', 'maps_url', 'services', 'bio', 'business_type'];
+  'phone', 'public_email', 'address', 'maps_url', 'services', 'bio', 'business_type',
+  'profession', 'instagram', 'facebook', 'tiktok', 'website'];
 export const AGENCY_SELECT = 'id, name, slug, logo_url, cover_url, primary_color, whatsapp_number, ' +
-  'phone, public_email, address, maps_url, services, bio, business_type, plan, plan_expires_at';
+  'phone, public_email, address, maps_url, services, bio, business_type, profession, instagram, facebook, tiktok, website, ' +
+  'plan, plan_expires_at';
 
 // The same closed list as the agencies_business_type_check constraint (019) and
 // the templates in mini/js/business-types.js. Written out because this file has
@@ -48,7 +50,7 @@ const IMAGE_URL = /^(https?:\/\/|data:image\/(png|jpe?g|webp|gif|avif);base64,)/
 const TEXT_LIMITS = {
   title_es: 300, title_en: 300, town: 120, neighborhood: 120,
   description_es: 10000, description_en: 10000, property_type: 60,
-  name: 120, address: 200, bio: 600
+  name: 120, address: 200, bio: 600, profession: 80
 };
 const NUMERIC = ['bedrooms', 'bathrooms', 'parking', 'size', 'amount', 'lat', 'lng'];
 
@@ -126,6 +128,26 @@ export function validateAgencyFields(fields) {
     out.public_email = out.public_email.trim().toLowerCase();
   }
   if ('address' in out) out.address = checkText('address', out.address);
+  if ('profession' in out) out.profession = checkText('profession', out.profession);
+  // Social profiles (migration 023): a handle or the network's own profile URL, so the page's link can only
+  // ever open that network. Website: any http(s) page.
+  for (const [key, host] of [['instagram', 'instagram.com'], ['facebook', 'facebook.com'], ['tiktok', 'tiktok.com']]) {
+    if (key in out && out[key] != null && out[key] !== '') {
+      const v = typeof out[key] === 'string' ? out[key].trim() : '';
+      const handle = /^@?[A-Za-z0-9._-]{1,60}$/.test(v);
+      const url = /^https:\/\/(www\.|m\.)?([a-z]+\.)?/.test(v) && v.length <= 200 && (() => {
+        try { const u = new URL(v); return u.protocol === 'https:' && (u.hostname === host || u.hostname.endsWith('.' + host) || (key === 'facebook' && u.hostname === 'fb.me')); } catch { return false; }
+      })();
+      if (!handle && !url) throw new BadField('invalid_' + key);
+      out[key] = v;
+    } else if (key in out) out[key] = null;
+  }
+  if ('website' in out && out.website != null && out.website !== '') {
+    if (typeof out.website !== 'string' || out.website.length > 300 || !/^https?:\/\/[^\s<>"']+\.[^\s<>"']+$/i.test(out.website.trim())) {
+      throw new BadField('invalid_website');
+    }
+    out.website = out.website.trim();
+  }
   if ('bio' in out) out.bio = checkText('bio', out.bio);
   // A page link only: http(s), so the "Ubicacion" button can never run script.
   if ('maps_url' in out && out.maps_url != null && out.maps_url !== '') {
