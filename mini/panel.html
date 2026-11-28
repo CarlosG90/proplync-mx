@@ -89,6 +89,22 @@
   .pn-ord button:hover{background:var(--sand-2)}
   .pn-ord button:focus-visible{outline:2px solid var(--gold)}
   .pn-ord button[disabled]{opacity:.25;cursor:default}
+  /* WhatsApp assistant: training form, FAQ rows, test chat */
+  .pn-faq{display:grid;gap:10px;margin-top:8px}
+  .pn-faq-row{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--paper);display:grid;gap:8px}
+  .pn-faq-row .pn-row{margin:0;justify-content:flex-end}
+  .pn-chat{border:1px solid var(--line);border-radius:14px;background:#efe9df;padding:12px;min-height:180px;max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+  .pn-bub{max-width:85%;padding:8px 11px;border-radius:12px;font-size:.88rem;line-height:1.4;white-space:pre-wrap;word-wrap:break-word}
+  .pn-bub.user{align-self:flex-end;background:#d9f2d0;border-radius:12px 12px 4px 12px}
+  .pn-bub.bot{align-self:flex-start;background:#fff;border-radius:12px 12px 12px 4px}
+  .pn-bub small{display:block;margin-top:4px;font:700 .58rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#7a5a1c}
+  .pn-chat-in{display:flex;gap:8px;margin-top:8px}
+  .pn-chat-in .pn-in{flex:1}
+  .pn-usage{height:8px;border-radius:999px;background:var(--sand-2);overflow:hidden;margin-top:6px}
+  .pn-usage i{display:block;height:100%;background:var(--sea)}
+  .pn-convo{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--paper)}
+  .pn-convo summary{cursor:pointer;font-weight:600;font-size:.9rem}
+  .pn-convo summary small{font-weight:400;color:var(--on-sand)}
   #pn-asset-pick{cursor:pointer}
   #pn-asset-pick.is-off{opacity:.45;pointer-events:none}
   .pn-check{display:flex;align-items:center;gap:10px;font-size:.9rem}
@@ -242,6 +258,47 @@
           <label class="pn-btn pn-gold" id="pn-asset-pick"><svg><use href="#i-plus"/></svg><span data-es="Subir material" data-en="Upload material">Subir material</span><input type="file" id="pn-asset-files" accept="image/jpeg,image/png,image/webp,image/*,application/pdf" multiple hidden></label>
         </div>
         <div class="pn-msg" id="pn-asset-msg" aria-live="polite"></div>
+      </section>
+
+      <section class="pn-card" id="pn-bot-card">
+        <div class="pn-eyebrow"><span data-es="Asistente de WhatsApp" data-en="WhatsApp assistant">Asistente de WhatsApp</span><span class="pn-count" id="pn-bot-state"></span></div>
+        <h2 data-es="Entrena a tu asistente" data-en="Train your assistant">Entrena a tu asistente</h2>
+        <p class="pn-sub" data-es="Contesta a tus clientes de WhatsApp a cualquier hora, solo con lo que tú le enseñes aquí y lo que ya está en tu página (servicios, material, propiedades). Dice que es un asistente y te pasa el chat cuando piden precios que no pusiste, citas, descuentos o algo que no sabe." data-en="Answers your WhatsApp clients at any hour, only with what you teach it here and what is already on your page (services, material, properties). It says it is an assistant and hands you the chat for prices you didn't list, appointments, discounts or anything it doesn't know.">Contesta a tus clientes de WhatsApp a cualquier hora, solo con lo que tú le enseñes aquí y lo que ya está en tu página (servicios, material, propiedades). Dice que es un asistente y te pasa el chat cuando piden precios que no pusiste, citas, descuentos o algo que no sabe.</p>
+        <div class="pn-msg" id="pn-bot-conn"></div>
+        <div class="pn-form" style="margin-top:12px">
+          <label class="pn-check"><input type="checkbox" id="b-enabled"><span data-es="Asistente activado (contesta cuando tu número esté conectado)" data-en="Assistant on (answers once your number is connected)">Asistente activado (contesta cuando tu número esté conectado)</span></label>
+          <div class="pn-grid2">
+            <label><span data-es="Trato" data-en="Address clients as">Trato</span><select class="pn-in" id="b-tone"><option value="usted" data-es="De usted" data-en="Formal (usted)">De usted</option><option value="tu" data-es="De tú" data-en="Informal (tú)">De tú</option></select></label>
+            <label><span data-es="Horario de atención" data-en="Opening hours">Horario de atención</span><input class="pn-in" id="b-hours" maxlength="300" placeholder="Lun a vie 9 a 18 h, sáb 9 a 14 h"></label>
+          </div>
+          <label><span data-es="Zona que atiendes" data-en="Area you serve">Zona que atiendes</span><input class="pn-in" id="b-area" maxlength="300" placeholder="Tehuacán y municipios cercanos"></label>
+          <label><span data-es="Lo que nunca debe decir o prometer" data-en="What it must never say or promise">Lo que nunca debe decir o prometer</span><textarea class="pn-in" id="b-never" maxlength="800" placeholder="No dar precios de avalúo sin ver el inmueble. No prometer fechas de entrega."></textarea></label>
+          <label><span data-es="Mensaje cuando te pasa el chat" data-en="Message when it hands you the chat">Mensaje cuando te pasa el chat</span><input class="pn-in" id="b-handoff" maxlength="300"></label>
+          <div>
+            <span class="pn-label" style="font-weight:600;font-size:.86rem" data-es="Preguntas frecuentes y tus respuestas" data-en="Frequent questions and your answers">Preguntas frecuentes y tus respuestas</span>
+            <p class="pn-sub" style="font-size:.8rem" data-es="Las preguntas sin respuesta no se usan: el asistente nunca inventa." data-en="Questions without an answer are not used: the assistant never makes things up.">Las preguntas sin respuesta no se usan: el asistente nunca inventa.</p>
+            <div class="pn-faq" id="b-faq"></div>
+            <div class="pn-row"><button class="pn-btn pn-line" type="button" id="b-faq-add"><svg><use href="#i-plus"/></svg><span data-es="Agregar pregunta" data-en="Add question">Agregar pregunta</span></button></div>
+          </div>
+          <label><span data-es="Más información para el asistente" data-en="More information for the assistant">Más información para el asistente</span> <small data-es="Requisitos, formas de pago, tiempos, lo que tus clientes suelen preguntar." data-en="Requirements, payment methods, timings, what clients usually ask.">Requisitos, formas de pago, tiempos, lo que tus clientes suelen preguntar.</small><textarea class="pn-in" id="b-extra" maxlength="4000" style="min-height:110px"></textarea></label>
+          <button class="pn-btn pn-gold" id="b-save" type="button" data-es="Guardar entrenamiento" data-en="Save training">Guardar entrenamiento</button>
+          <div class="pn-msg" id="b-msg" aria-live="polite"></div>
+        </div>
+
+        <h3 style="margin:22px 0 4px;font-size:1.05rem" data-es="Pruébalo" data-en="Try it">Pruébalo</h3>
+        <p class="pn-sub" style="font-size:.82rem" data-es="Escribe como si fueras un cliente. Usa lo que tienes en pantalla, aunque no lo hayas guardado. No se envía a nadie." data-en="Write as if you were a client. It uses what is on screen, even unsaved. Nothing is sent to anyone.">Escribe como si fueras un cliente. Usa lo que tienes en pantalla, aunque no lo hayas guardado. No se envía a nadie.</p>
+        <div class="pn-chat" id="b-chat" aria-live="polite"></div>
+        <div class="pn-chat-in">
+          <input class="pn-in" id="b-say" maxlength="600" placeholder="Hola, ¿cuánto cuesta un avalúo para Infonavit?" aria-label="Mensaje de prueba">
+          <button class="pn-btn pn-gold" type="button" id="b-send" data-es="Enviar" data-en="Send">Enviar</button>
+        </div>
+        <div class="pn-row"><button class="pn-btn pn-line" type="button" id="b-reset" data-es="Empezar de nuevo" data-en="Start over">Empezar de nuevo</button></div>
+
+        <div id="b-log-wrap" hidden>
+          <h3 style="margin:22px 0 4px;font-size:1.05rem" data-es="Conversaciones recientes" data-en="Recent conversations">Conversaciones recientes</h3>
+          <p class="pn-sub" style="font-size:.82rem" data-es="Revísalas cada semana: cada respuesta que corrijas aquí arriba mejora al asistente." data-en="Review them weekly: every answer you fix above makes the assistant better.">Revísalas cada semana: cada respuesta que corrijas aquí arriba mejora al asistente.</p>
+          <div id="b-log" style="display:grid;gap:8px"></div>
+        </div>
       </section>
 
       <section class="pn-card" id="pn-props-card">
@@ -420,7 +477,7 @@
 (function () {
   'use strict';
   var MAX_PHOTOS = 6, PHOTO_PX = 1600, GOLD = '#c9a96e';
-  var S = { agency: null, listings: [], services: [], svcLimit: 20, plan: null, editing: null, photos: [], color: null, svcEditing: null, svcImage: null, assets: [], assetLimit: 30, assetEditing: null };
+  var S = { agency: null, listings: [], services: [], svcLimit: 20, plan: null, editing: null, photos: [], color: null, svcEditing: null, svcImage: null, assets: [], assetLimit: 30, assetEditing: null, bot: null, botInfo: null, chat: [] };
   function type() { return MINI_TYPES.typeFor(S.agency && S.agency.business_type); }
   function pair(p) { return isEn() ? p[1] : p[0]; }
   function $(id) { return document.getElementById(id); }
@@ -450,6 +507,10 @@
     service_limit_reached: ['Ya tienes 20 servicios, el máximo. Elimina uno para agregar otro.', 'You already have 20 services, the maximum. Delete one to add another.'],
     asset_limit_reached: ['Ya tienes 30 archivos, el máximo. Quita uno para subir otro.', 'You already have 30 files, the maximum. Remove one to upload another.'],
     invalid_asset_type: ['Solo imágenes JPG, PNG, WebP o PDF.', 'Only JPG, PNG, WebP images or PDF.'],
+    bot_failed: ['El asistente no pudo responder. Intenta de nuevo.', 'The assistant could not answer. Try again.'],
+    faq_answer_too_long: ['Una respuesta es muy larga (máximo 1,200).', 'An answer is too long (1,200 max).'],
+    extra_too_long: ['La información extra es muy larga (máximo 4,000).', 'The extra information is too long (4,000 max).'],
+    never_too_long: ['El texto de «nunca» es muy largo (máximo 800).', 'The “never” text is too long (800 max).'],
     invalid_service: ['Ese servicio ya no existe. Elige otro.', 'That service no longer exists. Pick another.'],
     invalid_asset_url: ['No se pudo guardar el archivo. Intenta de nuevo.', 'The file could not be saved. Try again.'],
     bio_too_long: ['El texto sobre ti es muy largo (máximo 600).', 'The about text is too long (600 max).'],
@@ -503,14 +564,15 @@
     var session = await getSession();
     if (!session) { $('pn-out').hidden = true; show('pn-signin'); return; }
     $('pn-out').hidden = false;
-    var both = await Promise.all([api('/api/panel?resource=agency'), api('/api/panel'), api('/api/panel?resource=services'), api('/api/panel?resource=assets')]);
-    var ag = both[0], ls = both[1], sv = both[2], as = both[3];
+    var both = await Promise.all([api('/api/panel?resource=agency'), api('/api/panel'), api('/api/panel?resource=services'), api('/api/panel?resource=assets'), api('/api/panel?resource=bot')]);
+    var ag = both[0], ls = both[1], sv = both[2], as = both[3], bt = both[4];
     if (ag.status === 401 || ls.status === 401) { show('pn-none'); return; }
     if (!ag.ok || !ls.ok) { show('pn-signin'); msg($('pn-signin-msg'), t('No pudimos cargar tu página. Intenta de nuevo.', 'We could not load your page. Try again.'), 'err'); return; }
     S.agency = ag.data.agency; S.listings = ls.data.listings || []; S.plan = ls.data.plan || {};
     // Services load on their own: if that call fails the rest of the panel still works.
     S.services = sv.ok ? (sv.data.services || []) : []; S.svcLimit = (sv.ok && sv.data.limit) || 20;
     S.assets = as.ok ? (as.data.assets || []) : []; S.assetLimit = (as.ok && as.data.limit) || 30;
+    S.botInfo = bt.ok ? bt.data : null; S.bot = S.botInfo ? S.botInfo.bot : null;
     renderAll();
     show('pn-app');
     miniTrack('mini_panel_view', { state: miniState().state, listings: S.listings.length, services: S.services.length, business_type: type().key });
@@ -526,7 +588,7 @@
     location.href = pageUrl() + (miniState().state === 'active' ? '' : '?vista=1');
   }
 
-  function renderAll() { renderStatus(); renderLink(); renderServices(); renderAssets(); renderList(); fillCard(); }
+  function renderAll() { renderStatus(); renderLink(); renderServices(); renderAssets(); renderBot(); renderList(); fillCard(); }
 
   function miniState() { return (S.plan && S.plan.mini) || { state: 'active', activeUntil: null }; }
   function renderStatus() {
@@ -1020,6 +1082,103 @@
     if (m && m.indexOf(S.agency.id + '/') === 0) initSupabase().storage.from('listing-photos').remove([m]).catch(function () {});
     close('as'); await refreshAssets(); msg($('pn-asset-msg'), t('Material quitado.', 'Material removed.'), 'ok');
   };
+
+  /* ---------- WhatsApp assistant (mini_bot, supabase/021; api: mini/api/_bot.js, whatsapp.js) ----------
+     The owner teaches it here and tries it in the test chat with exactly the rules clients get. */
+  function faqRowHTML(f, i) {
+    return '<div class="pn-faq-row" data-faq="' + i + '">' +
+      '<input class="pn-in" data-fq maxlength="300" placeholder="' + escapeHtml(t('Pregunta del cliente', 'Client question')) + '" value="' + escapeHtml(f.q || '') + '">' +
+      '<textarea class="pn-in" data-fa maxlength="1200" style="min-height:64px" placeholder="' + escapeHtml(t('Tu respuesta (déjala vacía si no aplica)', 'Your answer (leave empty if it does not apply)')) + '">' + escapeHtml(f.a || '') + '</textarea>' +
+      '<div class="pn-row"><button class="pn-btn pn-line pn-danger" type="button" data-faq-del="' + i + '" style="min-height:36px">' + escapeHtml(t('Quitar', 'Remove')) + '</button></div></div>';
+  }
+  function readFaq() {
+    return Array.from(document.querySelectorAll('#b-faq .pn-faq-row')).map(function (r) {
+      return { q: r.querySelector('[data-fq]').value.trim(), a: r.querySelector('[data-fa]').value.trim() };
+    });
+  }
+  function renderFaq(list) { $('b-faq').innerHTML = list.map(faqRowHTML).join(''); }
+  function readTraining() {
+    return {
+      enabled: $('b-enabled').checked, tone: $('b-tone').value,
+      hours: $('b-hours').value.trim() || null, area: $('b-area').value.trim() || null,
+      never: $('b-never').value.trim() || null, handoff: $('b-handoff').value.trim() || null,
+      extra: $('b-extra').value.trim() || null,
+      faq: readFaq().filter(function (f) { return f.q && f.a; })
+    };
+  }
+  function renderBot() {
+    if (!S.botInfo) { $('pn-bot-card').hidden = true; return; }
+    $('pn-bot-card').hidden = false;
+    var b = S.bot, info = S.botInfo, u = info.usage || { replies: 0, cap: 950, free: 1000 };
+    $('pn-bot-state').textContent = info.connected ? (b.enabled ? t('Activo', 'On') : t('En pausa', 'Paused')) : t('Sin conectar', 'Not connected');
+    var pct = Math.min(100, Math.round(100 * u.replies / Math.max(1, u.cap)));
+    $('pn-bot-conn').innerHTML = info.connected
+      ? escapeHtml(t('Respuestas este mes: ' + u.replies + ' de ' + u.cap + ' (gratis hasta ' + u.free + '). Al llegar al límite se detiene y contestas tú.', 'Replies this month: ' + u.replies + ' of ' + u.cap + ' (free up to ' + u.free + '). At the limit it stops and you answer.')) + '<div class="pn-usage"><i style="width:' + pct + '%"></i></div>'
+      : escapeHtml(t('Tu número de WhatsApp aún no está conectado. Mientras, entrénalo y pruébalo aquí. Para conectarlo necesitas una cuenta de Meta Business; escríbenos y lo hacemos contigo.', 'Your WhatsApp number is not connected yet. Meanwhile, train and test it here. To connect it you need a Meta Business account; message us and we do it with you.'));
+    $('b-enabled').checked = !!b.enabled;
+    $('b-tone').value = b.tone === 'tu' ? 'tu' : 'usted';
+    $('b-hours').value = b.hours || ''; $('b-area').value = b.area || ''; $('b-never').value = b.never || '';
+    $('b-handoff').value = b.handoff || '';
+    $('b-handoff').placeholder = t('Gracias. Le paso su mensaje a ', 'Thanks. I am passing your message to ') + ((S.agency && S.agency.name) || '') + t(' y le responde personalmente en cuanto pueda.', ' who will reply personally as soon as possible.');
+    $('b-extra').value = b.extra || '';
+    // Saved answers first; then the template's suggested questions, without answers, for the owner to fill.
+    var faq = (b.faq || []).slice(), have = faq.map(function (f) { return f.q.toLowerCase(); });
+    (type().botFaq || []).forEach(function (q) { if (have.indexOf(q.toLowerCase()) === -1) faq.push({ q: q, a: '' }); });
+    renderFaq(faq);
+    renderChat(); renderLog();
+  }
+  $('b-faq-add').onclick = function () { var f = readFaq(); f.push({ q: '', a: '' }); renderFaq(f); var last = document.querySelector('#b-faq .pn-faq-row:last-child [data-fq]'); if (last) last.focus(); };
+  $('b-faq').addEventListener('click', function (e) {
+    var d = e.target.closest('[data-faq-del]'); if (!d) return;
+    var f = readFaq(); f.splice(+d.getAttribute('data-faq-del'), 1); renderFaq(f);
+  });
+  $('b-save').onclick = async function () {
+    this.disabled = true;
+    var r = await api('/api/panel?resource=bot', jsonOpts('PUT', readTraining()));
+    this.disabled = false;
+    if (!r.ok) { msg($('b-msg'), errText(r.data.error), 'err'); return; }
+    S.bot = r.data.bot; S.botInfo.bot = r.data.bot; S.botInfo.connected = r.data.connected;
+    renderBot();
+    msg($('b-msg'), t('Entrenamiento guardado.', 'Training saved.'), 'ok');
+  };
+  function renderChat() {
+    $('b-chat').innerHTML = S.chat.length ? S.chat.map(function (m) {
+      return '<div class="pn-bub ' + (m.role === 'bot' ? 'bot' : 'user') + '">' + escapeHtml(m.body) +
+        (m.handoff ? '<small>' + escapeHtml(t('→ Aquí te pasaría el chat a ti', '→ Here it would hand the chat to you')) + '</small>' : '') + '</div>';
+    }).join('') : '<p class="pn-sub" style="margin:auto;text-align:center;font-size:.82rem">' + escapeHtml(t('Escribe abajo como si fueras un cliente.', 'Write below as if you were a client.')) + '</p>';
+    $('b-chat').scrollTop = $('b-chat').scrollHeight;
+  }
+  async function sendTest() {
+    var text = $('b-say').value.trim();
+    if (!text) return;
+    $('b-say').value = '';
+    S.chat.push({ role: 'user', body: text }); renderChat();
+    $('b-send').disabled = true;
+    var r = await api('/api/panel?action=bot-test', jsonOpts('POST', { messages: S.chat.map(function (m) { return { role: m.role, body: m.body }; }), draft: readTraining() }));
+    $('b-send').disabled = false;
+    if (!r.ok) {
+      S.chat.push({ role: 'bot', body: r.data.error === 'bot_busy' ? t('(El asistente está ocupado. Intenta en un minuto.)', '(The assistant is busy. Try again in a minute.)') : t('(No se pudo responder: ', '(Could not answer: ') + errText(r.data.error) + ')' });
+    } else S.chat.push({ role: 'bot', body: r.data.reply, handoff: r.data.handoff });
+    renderChat(); $('b-say').focus();
+  }
+  $('b-send').onclick = sendTest;
+  $('b-say').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); sendTest(); } });
+  $('b-reset').onclick = function () { S.chat = []; renderChat(); };
+  /* Real conversations, newest first, one per client (the number is the owner's own client). */
+  function renderLog() {
+    var msgs = (S.botInfo && S.botInfo.messages) || [];
+    $('b-log-wrap').hidden = !msgs.length;
+    if (!msgs.length) return;
+    var by = {}, order = [];
+    msgs.forEach(function (m) { if (!by[m.contact]) { by[m.contact] = []; order.push(m.contact); } by[m.contact].push(m); });
+    $('b-log').innerHTML = order.slice(0, 20).map(function (c) {
+      var list = by[c].slice().reverse(), last = list[list.length - 1], hand = list.some(function (m) { return m.handoff; });
+      return '<details class="pn-convo"><summary>+' + escapeHtml(c) + ' <small>· ' + escapeHtml(fmtDate(last.created_at)) + (hand ? ' · ' + escapeHtml(t('te lo pasó', 'handed to you')) : '') + '</small></summary>' +
+        '<div class="pn-chat" style="margin-top:8px;max-height:300px">' + list.map(function (m) {
+          return '<div class="pn-bub ' + (m.role === 'bot' ? 'bot' : 'user') + '">' + escapeHtml(m.body) + (m.handoff ? '<small>' + escapeHtml(t('→ Te pasó el chat', '→ Handed to you')) + '</small>' : '') + '</div>';
+        }).join('') + '</div></details>';
+    }).join('');
+  }
 
   /* ---------- the agent's card ---------- */
   function fillCard() {
