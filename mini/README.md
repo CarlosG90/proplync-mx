@@ -22,9 +22,10 @@ failed at runtime. Never edit the copy: change `api/` and run `node scripts/sync
 | `/privacidad`, `/terminos` | | Legal drafts (noindex, `[CONFIRMAR]` items pending) |
 | `/pago` | redirect | → `/panel?pay=1` |
 
-## Functions (4 of 12)
+## Functions (5 of 12)
 `api/signup.js` (status, create) · `api/import.js` (paste → properties) · `api/panel.js` (card + listings via
-`api/my-listings.js`, services via `api/_services.js`, material (infographics, PDFs) via `api/_assets.js`, `paid-notice`, `preview`) · `api/page.js` (public page). The preview address carries no secret:
+`api/my-listings.js`, services via `api/_services.js`, material (infographics, PDFs) via `api/_assets.js`, `paid-notice`, `preview`) · `api/page.js` (public page) · `api/whatsapp.js` (Meta webhook for the assistant). Panel resources also serve
+the CRM (`api/_cases.js`) and the assistant's training and test chat (`api/_bot.js`). The preview address carries no secret:
 `/:slug?vista=1` is an empty shell that loads the page with the owner's own session, so a shared preview link shows nothing.
 
 ## Set up the Vercel project (once)
@@ -37,9 +38,16 @@ failed at runtime. Never edit the copy: change `api/` and run `node scripts/sync
 3. Supabase Auth → URL configuration: add the Mini domain to the redirect allow-list.
 4. Payment details for customers: `js/pay-config.js` (bank, CLABE, holder). Empty = "Pedir datos de pago".
 
+## WhatsApp assistant: connecting a number (once per customer)
+1. The customer creates a Meta Business account; their number goes on the WhatsApp Cloud API (coexistence keeps their app).
+2. On proplync-mini set `WHATSAPP_APP_SECRET`, `WHATSAPP_TOKEN`, `WHATSAPP_VERIFY_TOKEN` (and optionally `WHATSAPP_GRAPH_VERSION`).
+3. Subscribe `https://proplync-mini.vercel.app/api/whatsapp` (field `messages`) in the Meta app with the verify token.
+4. Save their `phone_number_id` in `mini_bot.wa_phone_number_id` for their agency. Until then the panel says "Sin conectar".
+
 ## Operating it
 - Who is waiting to pay, and their payment notices: `node scripts/mini.mjs list`
 - After a payment is in: `node scripts/mini.mjs activate <slug>` (publishes drafts, 90 days, logs `mini_activated`)
+- Client CRM add-on (MXN 149/month) after its payment: `node scripts/mini.mjs crm <slug> [--days 30]`
 - Close signup without touching live pages: `MINI_SIGNUP=off`.
 
 ## Local preview

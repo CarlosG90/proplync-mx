@@ -13,6 +13,7 @@
  *   node scripts/mini.mjs activate <slug>           one paid period (3 months)
  *   node scripts/mini.mjs activate <slug> --periods 2
  *   node scripts/mini.mjs login-link <email>        one-time sign-in link to that customer's panel
+ *   node scripts/mini.mjs crm <slug> [--days 30]     turn on (or extend) the client CRM add-on after its payment
  *   node scripts/mini.mjs create <email> --name "<business>" [--type real_estate|professional|trades|beauty|general]
  *        [--whatsapp "+52 …"] [--phone "+52 …"] [--public-email <addr>] [--tags "A, B"] [--suggested] [--dry-run]
  *                                                   set up a page for a customer, unpaid, ready for them to finish
@@ -32,7 +33,7 @@
  */
 
 import { parseArgs, serviceClient, die } from './_lib.mjs';
-import { MINI_PERIOD_DAYS, MINI_PRICE_MXN, pageActive } from '../api/_lib/plans.js';
+import { MINI_PERIOD_DAYS, MINI_PRICE_MXN, pageActive, CRM_PERIOD_DAYS, CRM_PRICE_MXN } from '../api/_lib/plans.js';
 import { provisionAgency } from '../api/_lib/agency.js';
 import { validateAgencyFields } from '../api/_lib/listing-fields.js';
 import { typeFor, BUSINESS_TYPE_KEYS } from '../mini/api/_business-types.js';
@@ -102,6 +103,25 @@ async function activate(svc, slug, periods) {
   console.log(`    Published ${published.length} draft(s). Page: ${site}/${agency.slug}`);
   if (evErr) console.log(`    (the funnel event was not recorded: ${evErr.message})`);
   console.log('    Tell the customer: their page is live, and the date it runs until.\n');
+}
+
+/** The new end of the CRM period: from today, or from the current end if it still runs. Pure, for tests. */
+export function extendCrm(currentIso, days = CRM_PERIOD_DAYS, now = Date.now()) {
+  const cur = currentIso ? Date.parse(currentIso) : NaN;
+  const from = Number.isFinite(cur) && cur > now ? cur : now;
+  return new Date(from + days * 864e5).toISOString();
+}
+
+async function crm(svc, slug, days) {
+  const { data: agency, error } = await svc.from('agencies').select('id, name, slug, plan, crm_until').eq('slug', slug).maybeSingle();
+  if (error) die(`Could not read the agency: ${error.message}`);
+  if (!agency) die(`No agency with slug "${slug}".`);
+  if (agency.plan !== 'mini') die(`"${slug}" is on plan ${agency.plan}, not mini. Nothing changed.`);
+  const until = extendCrm(agency.crm_until, days);
+  const { error: upErr } = await svc.from('agencies').update({ crm_until: until }).eq('id', agency.id);
+  if (upErr) die(`Could not turn on the CRM: ${upErr.message}`);
+  await svc.from('events').insert({ name: 'mini_crm_activated', page: 'operator', session: agency.id, props: { slug: agency.slug, days, until } });
+  console.log(`\n  ✓ ${agency.name}: client CRM active until ${day(until)} (MXN ${CRM_PRICE_MXN} a month).\n`);
 }
 
 async function loginLink(svc, email) {
@@ -178,7 +198,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2), ['help', 'suggested', 'dry-run']);
   const [cmd, slug] = args._;
   if (!cmd || args.flags.has('help')) {
-    console.log('\n  node scripts/mini.mjs list\n  node scripts/mini.mjs activate <slug> [--periods n]\n  node scripts/mini.mjs login-link <email>\n' +
+    console.log('\n  node scripts/mini.mjs list\n  node scripts/mini.mjs activate <slug> [--periods n]\n  node scripts/mini.mjs crm <slug> [--days 30]\n  node scripts/mini.mjs login-link <email>\n' +
       '  node scripts/mini.mjs create <email> --name "<business>" [--type ' + BUSINESS_TYPE_KEYS.join('|') + ']\n' +
       '       [--whatsapp "+52 …"] [--phone "+52 …"] [--public-email <addr>] [--tags "A, B"] [--suggested] [--dry-run]\n');
     return;
@@ -196,11 +216,17 @@ async function main() {
     if (!Number.isInteger(periods) || periods < 1 || periods > 8) die('--periods must be a whole number from 1 to 8.');
     return activate(svc, slug, periods);
   }
+  if (cmd === 'crm') {
+    if (!slug) die('Which page? node scripts/mini.mjs crm <slug> [--days 30]');
+    const days = Number(args.days || CRM_PERIOD_DAYS);
+    if (!Number.isInteger(days) || days < 1 || days > 400) die('--days must be a whole number from 1 to 400.');
+    return crm(svc, slug, days);
+  }
   if (cmd === 'login-link') {
     if (!slug || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(slug)) die('Which email? node scripts/mini.mjs login-link <email>');
     return loginLink(svc, slug.toLowerCase());
   }
-  die(`Unknown command "${cmd}". Use list, activate, login-link or create.`);
+  die(`Unknown command "${cmd}". Use list, activate, crm, login-link or create.`);
 }
 
 // Run only from the command line, so the tests can import extendUntil.

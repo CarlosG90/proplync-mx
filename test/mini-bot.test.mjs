@@ -57,8 +57,10 @@ test('the prompt carries the rules: disclose, only the knowledge, no invented mo
 });
 
 test('parseBotReply: only a JSON object with a non-empty reply', () => {
-  assert.deepEqual(parseBotReply('{"reply":" Hola ","handoff":true}'), { reply: 'Hola', handoff: true });
-  assert.deepEqual(parseBotReply('{"reply":"Hola"}'), { reply: 'Hola', handoff: false });
+  assert.deepEqual(parseBotReply('{"reply":" Hola ","handoff":true}'), { reply: 'Hola', handoff: true, service: null });
+  assert.deepEqual(parseBotReply('{"reply":"Hola"}'), { reply: 'Hola', handoff: false, service: null });
+  assert.equal(parseBotReply('{"reply":"Hola","service":" Avalúo Infonavit "}').service, 'Avalúo Infonavit', 'the service asked about, for the CRM');
+  assert.equal(parseBotReply('{"reply":"Hola","service":5}').service, null);
   for (const bad of ['', 'Hola', '{"reply":""}', '{"handoff":true}', '[1]', `{"reply":"${'x'.repeat(1501)}"}`]) assert.equal(parseBotReply(bad), null, bad);
 });
 
@@ -71,7 +73,7 @@ test('botReply: a broken model answer becomes the owner\'s handoff, never an inv
   assert.deepEqual(busy, { busy: true });
   let sent;
   const ok = await botReply(ctx, { groqChat: async (body, opts) => { sent = { body, opts }; return { choices: [{ message: { content: '{"reply":"Buen día","handoff":false}' } }] }; } });
-  assert.deepEqual(ok, { reply: 'Buen día', handoff: false });
+  assert.deepEqual(ok, { reply: 'Buen día', handoff: false, service: null });
   assert.equal(sent.body.messages[0].role, 'system');
   assert.deepEqual(sent.body.messages.slice(1), [{ role: 'user', content: 'hola' }]);
   assert.equal(sent.body.response_format.type, 'json_object');
