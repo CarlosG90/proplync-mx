@@ -16,6 +16,9 @@
     },
     "api/panel.js": {
       "maxDuration": 15
+    },
+    "api/whatsapp.js": {
+      "maxDuration": 30
     }
   },
   "redirects": [

@@ -52,7 +52,9 @@
         c('Medición de terreno', ['Agendado', 'Medición', 'Croquis entregado']),
         c('Gestión Infonavit / Fovissste', ['Precalificación', 'Documentos', 'Avalúo e inscripción', 'Firma', 'Crédito ejercido']),
         c('Gestión ante notaría', ['Documentos', 'Proyecto de escritura', 'Firma', 'Inscripción en el registro', 'Escritura entregada'])
-      ]
+      ],
+      botFaq: ['¿Qué documentos necesito para un avalúo Infonavit o Fovissste?', '¿Cuánto tarda un avalúo?', '¿Cuánto cuesta un avalúo?',
+               '¿Atienden fuera de la ciudad?', '¿Cómo se paga el servicio? ¿Piden anticipo?', '¿Qué necesito para vender mi casa con ustedes?']
     },
     professional: {
       key: 'professional',
@@ -71,7 +73,8 @@
         c('Asesoría', ['Primera consulta', 'Propuesta enviada', 'En proceso', 'Entregado']),
         c('Trámite', ['Documentos recibidos', 'Ingresado', 'En revisión', 'Resuelto']),
         c('Proyecto', ['Cotización', 'Anticipo', 'En desarrollo', 'Revisión con el cliente', 'Entregado'])
-      ]
+      ],
+      botFaq: ['¿Cuánto cuesta la consulta inicial?', '¿Atienden en línea?', '¿Qué documentos debo traer?', '¿Cómo se paga?']
     },
     trades: {
       key: 'trades',
@@ -89,7 +92,8 @@
       cases: [
         c('Servicio', ['Agendado', 'Visita', 'Cotización aceptada', 'En trabajo', 'Terminado']),
         c('Mantenimiento', ['Agendado', 'Realizado', 'Pagado'])
-      ]
+      ],
+      botFaq: ['¿Cuánto cobran por la visita?', '¿Qué zonas cubren?', '¿Atienden urgencias o fines de semana?', '¿Dan garantía del trabajo?']
     },
     beauty: {
       key: 'beauty',
@@ -107,7 +111,8 @@
       cases: [
         c('Cita', ['Agendada', 'Confirmada', 'Atendida', 'Pagada']),
         c('Paquete', ['Vendido', 'En curso', 'Terminado'])
-      ]
+      ],
+      botFaq: ['¿Cómo agendo una cita?', '¿Cuál es su horario?', '¿Qué formas de pago aceptan?', '¿Tienen estacionamiento?']
     },
     general: {
       key: 'general',
@@ -119,7 +124,8 @@
       services: [],
       cases: [
         c('Servicio', ['Recibido', 'En proceso', 'Terminado'])
-      ]
+      ],
+      botFaq: ['¿Cuánto cuesta?', '¿Cuál es su horario?', '¿Dónde están?', '¿Cómo se paga?']
     }
   };
 

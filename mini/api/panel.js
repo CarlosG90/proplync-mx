@@ -16,6 +16,10 @@
  *       (mini_services, supabase/019; rules in api/_services.js).
  *   GET/POST/PUT/DELETE ?resource=assets (&id=)  the owner's material: infographics
  *       and PDFs (mini_assets, supabase/020; rules in api/_assets.js).
+ *   GET/PUT ?resource=bot  the WhatsApp assistant's training, this month's usage and
+ *       recent conversations (mini_bot, supabase/021; rules in api/_bot.js).
+ *   POST ?action=bot-test  { messages, draft }  one reply from the assistant, for the
+ *       panel's test chat, with unsaved training applied. Nothing is stored or sent.
  *   GET ?action=preview&slug=  the customer's own page as buyers will see it,
  *       drafts included, before it is paid. Only for the signed-in owner of that
  *       slug: the preview address (/:slug?vista=1) carries no secret, so a shared
@@ -41,6 +45,7 @@ import { notifyOperator } from './_proplync/_lib/notify.js';
 import { buildModel, AGENCY_FIELDS, LISTING_FIELDS } from './_page-model.js';
 import { handleServices, PUBLIC_SERVICE_FIELDS } from './_services.js';
 import { handleAssets, ASSET_FIELDS, missingTable } from './_assets.js';
+import { cleanTraining, botDefaults, loadBotContext, botReply, BOT_FIELDS } from './_bot.js';
 
 export const PAY_METHODS = ['transfer', 'deposit', 'oxxo', 'other'];
 
@@ -151,11 +156,81 @@ function ownRoute(name, handle) {
   };
 }
 export const handleServicesRoute = ownRoute('services', handleServices);
+
+/** Start of the current calendar month (UTC): Meta's free tier resets monthly. */
+export const monthStart = (now = new Date()) => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+
+/** GET: training + usage + recent conversations. PUT: save training (partial). */
+async function handleBot(req, res, { auth, svc }) {
+  if (req.method === 'GET') {
+    const [bt, used, recent] = await Promise.all([
+      svc.from('mini_bot').select(BOT_FIELDS).eq('agency_id', auth.agencyId).maybeSingle(),
+      svc.from('mini_bot_messages').select('id', { count: 'exact', head: true }).eq('agency_id', auth.agencyId)
+        .eq('role', 'bot').gte('created_at', monthStart()),
+      svc.from('mini_bot_messages').select('contact, role, body, handoff, created_at').eq('agency_id', auth.agencyId)
+        .order('created_at', { ascending: false }).limit(150)
+    ]);
+    if (bt.error) throw bt.error;
+    const bot = botDefaults(bt.data);
+    res.status(200).json({
+      bot: { ...bot, wa_phone_number_id: undefined },
+      connected: !!bot.wa_phone_number_id,
+      usage: { replies: used.count || 0, cap: bot.monthly_cap, free: 1000 },
+      messages: recent.error ? [] : recent.data || []
+    });
+    return;
+  }
+  if (req.method === 'PUT' || req.method === 'PATCH') {
+    const { training, error } = cleanTraining(req.body);
+    if (error) { res.status(400).json({ error }); return; }
+    if (!Object.keys(training).length) { res.status(400).json({ error: 'nothing_to_update' }); return; }
+    const { data, error: uErr } = await svc.from('mini_bot')
+      .upsert({ ...training, agency_id: auth.agencyId, updated_at: new Date().toISOString() }, { onConflict: 'agency_id' })
+      .select(BOT_FIELDS).single();
+    if (uErr) throw uErr;
+    res.status(200).json({ bot: { ...botDefaults(data), wa_phone_number_id: undefined }, connected: !!data.wa_phone_number_id });
+    return;
+  }
+  res.status(405).json({ error: 'method_not_allowed' });
+}
+export const handleBotRoute = ownRoute('bot', handleBot);
+
+/** The test chat: one reply with the saved training plus the unsaved draft. Nothing stored, nothing sent. */
+export async function handleBotTest(req, res, deps = {}) {
+  if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }
+  if (await (deps.enforceRateLimit || enforceRateLimit)(req, res, { bucket: 'mini-bot-test', limit: 60, windowSec: 3600 })) return;
+  res.setHeader('Cache-Control', 'no-store');
+  const auth = await (deps.requireAgencyUser || requireAgencyUser)(req);
+  if (!auth) { res.status(401).json({ error: 'unauthorized' }); return; }
+  const b = req.body && typeof req.body === 'object' ? req.body : {};
+  const messages = Array.isArray(b.messages) ? b.messages.slice(-12) : [];
+  const history = messages.map((m) => ({ role: m && m.role === 'bot' ? 'bot' : 'user', body: String((m && m.body) || '').slice(0, 1500) }))
+    .filter((m) => m.body.trim());
+  if (!history.length || history[history.length - 1].role !== 'user') { res.status(400).json({ error: 'missing_message' }); return; }
+  let override = null;
+  if (b.draft) {
+    const { training, error } = cleanTraining(b.draft);
+    if (error) { res.status(400).json({ error }); return; }
+    override = training;
+  }
+  try {
+    const ctx = await (deps.loadBotContext || loadBotContext)((deps.getServiceClient || getServiceClient)(), auth.agencyId, { override });
+    if (!ctx) { res.status(404).json({ error: 'not_found' }); return; }
+    const out = await (deps.botReply || botReply)({ ...ctx, history });
+    if (out.busy) { res.status(503).json({ error: 'bot_busy' }); return; }
+    res.status(200).json({ reply: out.reply, handoff: out.handoff });
+  } catch (err) {
+    logDegraded('mini:bot-test', err);
+    res.status(500).json({ error: 'bot_failed', detail: safeDetail(err) });
+  }
+}
 export const handleAssetsRoute = ownRoute('assets', handleAssets);
 
 export default async function handler(req, res) {
   if (req.query && req.query.resource === 'services') return handleServicesRoute(req, res);
   if (req.query && req.query.resource === 'assets') return handleAssetsRoute(req, res);
+  if (req.query && req.query.resource === 'bot') return handleBotRoute(req, res);
+  if (req.query && req.query.action === 'bot-test') return handleBotTest(req, res);
   if (req.query && req.query.action === 'paid-notice') return handlePaidNotice(req, res);
   if (req.query && req.query.action === 'preview') return handlePreview(req, res);
   return listingsHandler(req, res);
