@@ -89,6 +89,8 @@
   .pn-ord button:hover{background:var(--sand-2)}
   .pn-ord button:focus-visible{outline:2px solid var(--gold)}
   .pn-ord button[disabled]{opacity:.25;cursor:default}
+  #pn-asset-pick{cursor:pointer}
+  #pn-asset-pick.is-off{opacity:.45;pointer-events:none}
   .pn-check{display:flex;align-items:center;gap:10px;font-size:.9rem}
   .pn-check input{width:20px;height:20px;accent-color:var(--gold)}
   .pn-count{font-family:var(--mono);font-size:.7rem;color:var(--on-sand-light)}
@@ -231,6 +233,17 @@
         <div class="pn-msg" id="pn-svc-msg" aria-live="polite"></div>
       </section>
 
+      <section class="pn-card" id="pn-asset-card">
+        <div class="pn-eyebrow"><span data-es="Material" data-en="Material">Material</span><span class="pn-count" id="pn-asset-used"></span></div>
+        <h2 data-es="Infografías, folletos y PDFs" data-en="Infographics, brochures and PDFs">Infografías, folletos y PDFs</h2>
+        <p class="pn-sub" data-es="Sube tus imágenes (JPG, PNG) o PDFs tal como los compartes. Se ven en tu página en buena calidad y tus clientes los pueden abrir, descargar o reenviar." data-en="Upload your images (JPG, PNG) or PDFs as you share them. They show on your page in good quality and clients can open, download or forward them.">Sube tus imágenes (JPG, PNG) o PDFs tal como los compartes. Se ven en tu página en buena calidad y tus clientes los pueden abrir, descargar o reenviar.</p>
+        <ul class="pn-list" id="pn-assets"></ul>
+        <div class="pn-row">
+          <label class="pn-btn pn-gold" id="pn-asset-pick"><svg><use href="#i-plus"/></svg><span data-es="Subir material" data-en="Upload material">Subir material</span><input type="file" id="pn-asset-files" accept="image/jpeg,image/png,image/webp,image/*,application/pdf" multiple hidden></label>
+        </div>
+        <div class="pn-msg" id="pn-asset-msg" aria-live="polite"></div>
+      </section>
+
       <section class="pn-card" id="pn-props-card">
         <div class="pn-eyebrow"><span data-es="Propiedades" data-en="Properties">Propiedades</span><span class="pn-count" id="pn-used"></span></div>
         <h2 data-es="Lo que ven tus clientes" data-en="What your clients see">Lo que ven tus clientes</h2>
@@ -304,6 +317,23 @@
   <div class="pn-sheet-foot">
     <button class="pn-btn pn-line" type="button" data-close="ed" data-es="Cancelar" data-en="Cancel">Cancelar</button>
     <button class="pn-btn pn-gold" id="e-save" type="button" data-es="Guardar" data-en="Save">Guardar</button>
+  </div>
+</dialog>
+
+<!-- material: rename or delete one file -->
+<dialog class="pn-sheet" id="as" aria-labelledby="as-title">
+  <div class="pn-sheet-head"><h2 id="as-title" data-es="Editar material" data-en="Edit material">Editar material</h2><button class="pn-x" type="button" data-close="as" aria-label="Cerrar">×</button></div>
+  <div class="pn-sheet-body">
+    <div class="pn-form">
+      <div id="as-prev"></div>
+      <label><span data-es="Título" data-en="Title">Título</span> <small data-es="Lo que ven tus clientes bajo la imagen. Ej.: Requisitos para avalúo Infonavit" data-en="What clients see under the file. E.g. Requirements for an Infonavit appraisal">Lo que ven tus clientes bajo la imagen. Ej.: Requisitos para avalúo Infonavit</small><input class="pn-in" id="as-name" maxlength="120"></label>
+      <button class="pn-btn pn-line pn-danger" id="as-del" type="button" data-es="Quitar de mi página" data-en="Remove from my page">Quitar de mi página</button>
+      <div class="pn-msg" id="as-msg" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="pn-sheet-foot">
+    <button class="pn-btn pn-line" type="button" data-close="as" data-es="Cancelar" data-en="Cancel">Cancelar</button>
+    <button class="pn-btn pn-gold" id="as-save" type="button" data-es="Guardar" data-en="Save">Guardar</button>
   </div>
 </dialog>
 
@@ -389,7 +419,7 @@
 (function () {
   'use strict';
   var MAX_PHOTOS = 6, PHOTO_PX = 1600, GOLD = '#c9a96e';
-  var S = { agency: null, listings: [], services: [], svcLimit: 20, plan: null, editing: null, photos: [], color: null, svcEditing: null, svcImage: null };
+  var S = { agency: null, listings: [], services: [], svcLimit: 20, plan: null, editing: null, photos: [], color: null, svcEditing: null, svcImage: null, assets: [], assetLimit: 30, assetEditing: null };
   function type() { return MINI_TYPES.typeFor(S.agency && S.agency.business_type); }
   function pair(p) { return isEn() ? p[1] : p[0]; }
   function $(id) { return document.getElementById(id); }
@@ -417,6 +447,9 @@
     invalid_price: ['Revisa el monto.', 'Check the amount.'],
     invalid_duration: ['La duración va de 5 a 1,440 minutos.', 'Duration is 5 to 1,440 minutes.'],
     service_limit_reached: ['Ya tienes 20 servicios, el máximo. Elimina uno para agregar otro.', 'You already have 20 services, the maximum. Delete one to add another.'],
+    asset_limit_reached: ['Ya tienes 30 archivos, el máximo. Quita uno para subir otro.', 'You already have 30 files, the maximum. Remove one to upload another.'],
+    invalid_asset_type: ['Solo imágenes JPG, PNG, WebP o PDF.', 'Only JPG, PNG, WebP images or PDF.'],
+    invalid_asset_url: ['No se pudo guardar el archivo. Intenta de nuevo.', 'The file could not be saved. Try again.'],
     bio_too_long: ['El texto sobre ti es muy largo (máximo 600).', 'The about text is too long (600 max).'],
     rate_limited: ['Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.']
   };
@@ -468,13 +501,14 @@
     var session = await getSession();
     if (!session) { $('pn-out').hidden = true; show('pn-signin'); return; }
     $('pn-out').hidden = false;
-    var both = await Promise.all([api('/api/panel?resource=agency'), api('/api/panel'), api('/api/panel?resource=services')]);
-    var ag = both[0], ls = both[1], sv = both[2];
+    var both = await Promise.all([api('/api/panel?resource=agency'), api('/api/panel'), api('/api/panel?resource=services'), api('/api/panel?resource=assets')]);
+    var ag = both[0], ls = both[1], sv = both[2], as = both[3];
     if (ag.status === 401 || ls.status === 401) { show('pn-none'); return; }
     if (!ag.ok || !ls.ok) { show('pn-signin'); msg($('pn-signin-msg'), t('No pudimos cargar tu página. Intenta de nuevo.', 'We could not load your page. Try again.'), 'err'); return; }
     S.agency = ag.data.agency; S.listings = ls.data.listings || []; S.plan = ls.data.plan || {};
     // Services load on their own: if that call fails the rest of the panel still works.
     S.services = sv.ok ? (sv.data.services || []) : []; S.svcLimit = (sv.ok && sv.data.limit) || 20;
+    S.assets = as.ok ? (as.data.assets || []) : []; S.assetLimit = (as.ok && as.data.limit) || 30;
     renderAll();
     show('pn-app');
     miniTrack('mini_panel_view', { state: miniState().state, listings: S.listings.length, services: S.services.length, business_type: type().key });
@@ -490,7 +524,7 @@
     location.href = pageUrl() + (miniState().state === 'active' ? '' : '?vista=1');
   }
 
-  function renderAll() { renderStatus(); renderLink(); renderServices(); renderList(); fillCard(); }
+  function renderAll() { renderStatus(); renderLink(); renderServices(); renderAssets(); renderList(); fillCard(); }
 
   function miniState() { return (S.plan && S.plan.mini) || { state: 'active', activeUntil: null }; }
   function renderStatus() {
@@ -850,6 +884,135 @@
     btn.disabled = false;
     await refreshServices();
     msg($('pn-svc-msg'), t('Agregamos ' + added + ' servicio(s). Edita cada uno para poner precio y descripción.', 'Added ' + added + ' service(s). Edit each one to add a price and description.'), added ? 'ok' : 'err');
+  };
+
+  /* ---------- material: infographics and PDFs (mini_assets, supabase/020; api: mini/api/_assets.js) ----------
+     WHY NOT shrink(): property photos are cut to 1600 px, which blurs the small print of a tall infographic. Here a
+     JPG/PNG/WebP up to 8 MB is kept exactly as designed; only bigger or other images are re-encoded, at 2400 px. */
+  var ASSET_IMG_MAX = 8 * 1024 * 1024, ASSET_PDF_MAX = 15 * 1024 * 1024, ASSET_PX = 2400;
+  function shrinkTo(file, px, quality) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, px / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(img.src);
+        c.toBlob(function (b) { resolve(b); }, 'image/jpeg', quality);
+      };
+      img.onerror = function () { URL.revokeObjectURL(img.src); resolve(null); };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  /** One file → its public URL in the agency's folder, or { error } with a message key. */
+  async function uploadAsset(file) {
+    var isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+    var blob, ext, ct;
+    if (isPdf) {
+      if (file.size > ASSET_PDF_MAX) return { error: 'pdf_big' };
+      blob = file; ext = 'pdf'; ct = 'application/pdf';
+    } else if (/^image\//.test(file.type)) {
+      var keep = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[file.type];
+      if (keep && file.size <= ASSET_IMG_MAX) { blob = file; ext = keep; ct = file.type; }
+      else { blob = await shrinkTo(file, ASSET_PX, 0.9); ext = 'jpg'; ct = 'image/jpeg'; if (!blob) return { error: 'unreadable' }; }
+    } else return { error: 'type' };
+    var sb = initSupabase();
+    var path = S.agency.id + '/asset-' + rid() + '.' + ext;
+    var up = await sb.storage.from('listing-photos').upload(path, blob, { contentType: ct, upsert: false });
+    if (up.error) return { error: 'upload' };
+    return { url: sb.storage.from('listing-photos').getPublicUrl(path).data.publicUrl, path: path };
+  }
+  function assetName(file) { return String(file.name || '').replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim().slice(0, 120); }
+  function renderAssets() {
+    var n = S.assets.length;
+    $('pn-asset-used').textContent = n + ' / ' + S.assetLimit;
+    $('pn-asset-pick').classList.toggle('is-off', n >= S.assetLimit);
+    $('pn-asset-files').disabled = n >= S.assetLimit;
+    if (!n) {
+      $('pn-assets').innerHTML = '<li class="pn-sub" style="padding:8px 2px">' + escapeHtml(t('Aún no subes material. Tus infografías y PDFs aparecerán en tu página en una sección «Material e información».', 'No material yet. Your infographics and PDFs will show on your page in a “Material and information” section.')) + '</li>';
+      return;
+    }
+    $('pn-assets').innerHTML = S.assets.map(function (x, i) {
+      var thumb = x.kind === 'image' ? cssUrl(x.url) : '';
+      return '<li class="pn-item">' +
+        '<div class="pn-ord"><button type="button" data-aup="' + i + '"' + (i ? '' : ' disabled') + ' aria-label="' + escapeHtml(t('Subir', 'Move up')) + '">▲</button>' +
+        '<button type="button" data-adown="' + i + '"' + (i < n - 1 ? '' : ' disabled') + ' aria-label="' + escapeHtml(t('Bajar', 'Move down')) + '">▼</button></div>' +
+        '<div class="pn-thumb"' + (thumb ? ' style="background-image:url(\'' + thumb + '\');background-position:top center"' : '') + '>' + (thumb ? '' : '<b style="font:700 .6rem var(--mono);color:#a23a24">PDF</b>') + '</div>' +
+        '<div class="pn-item-main"><div class="pn-item-title">' + escapeHtml(x.title || (x.kind === 'pdf' ? t('Documento PDF', 'PDF document') : t('Imagen', 'Image'))) + '</div>' +
+        '<div class="pn-item-meta"><span>' + escapeHtml(x.kind === 'pdf' ? 'PDF' : t('Imagen', 'Image')) + '</span>' + (x.title ? '' : '<span class="pn-pill warn">' + escapeHtml(t('Sin título', 'No title')) + '</span>') + '</div></div>' +
+        '<button class="pn-btn pn-line pn-edit" type="button" data-asset="' + escapeHtml(x.id) + '">' + escapeHtml(t('Editar', 'Edit')) + '</button></li>';
+    }).join('');
+  }
+  async function refreshAssets() {
+    var r = await api('/api/panel?resource=assets');
+    if (r.ok) { S.assets = r.data.assets || []; S.assetLimit = r.data.limit || S.assetLimit; renderAssets(); }
+  }
+  $('pn-asset-files').addEventListener('change', async function () {
+    var files = Array.from(this.files || []); this.value = '';
+    if (!files.length) return;
+    var room = S.assetLimit - S.assets.length, list = files.slice(0, room), added = 0, problems = [];
+    for (var i = 0; i < list.length; i++) {
+      msg($('pn-asset-msg'), t('Subiendo ', 'Uploading ') + (i + 1) + ' / ' + list.length + '…');
+      var up = await uploadAsset(list[i]);
+      if (up.error) {
+        problems.push(list[i].name + ': ' + ({ pdf_big: t('PDF de más de 15 MB', 'PDF over 15 MB'), type: t('solo imágenes o PDF', 'images or PDF only'),
+          unreadable: t('no se pudo leer la imagen', 'image could not be read'), upload: t('no se pudo subir', 'upload failed') })[up.error]);
+        continue;
+      }
+      var r = await api('/api/panel?resource=assets', jsonOpts('POST', { url: up.url, title: assetName(list[i]) || null }));
+      if (r.ok) added++;
+      else { problems.push(list[i].name + ': ' + errText(r.data.error)); initSupabase().storage.from('listing-photos').remove([up.path]).catch(function () {}); }
+    }
+    await refreshAssets();
+    var skipped = files.length - list.length;
+    msg($('pn-asset-msg'), (added ? t('Subimos ' + added + ' archivo(s). ', 'Uploaded ' + added + ' file(s). ') : '') +
+      (skipped > 0 ? t(skipped + ' no cupieron (máximo ' + S.assetLimit + '). ', skipped + ' did not fit (max ' + S.assetLimit + '). ') : '') +
+      problems.join(' · '), problems.length || skipped > 0 ? 'err' : 'ok');
+  });
+  async function moveAsset(i, j) {
+    if (j < 0 || j >= S.assets.length) return;
+    var list = S.assets.slice(), tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+    var changes = [];
+    list.forEach(function (x, k) { if (x.sort !== k * 10) changes.push(api('/api/panel?resource=assets&id=' + encodeURIComponent(x.id), jsonOpts('PUT', { sort: k * 10 }))); });
+    S.assets = list.map(function (x, k) { x.sort = k * 10; return x; }); renderAssets();
+    var res = await Promise.all(changes);
+    if (res.some(function (r) { return !r.ok; })) { msg($('pn-asset-msg'), t('No se pudo guardar el orden.', 'The order could not be saved.'), 'err'); await refreshAssets(); }
+  }
+  $('pn-assets').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-asset]'); if (b) { openAssetEditor(b.getAttribute('data-asset')); return; }
+    var up = e.target.closest('[data-aup]'); if (up) { var i = +up.getAttribute('data-aup'); moveAsset(i, i - 1); return; }
+    var dn = e.target.closest('[data-adown]'); if (dn) { var k = +dn.getAttribute('data-adown'); moveAsset(k, k + 1); }
+  });
+  function openAssetEditor(id) {
+    var x = S.assets.filter(function (v) { return v.id === id; })[0];
+    if (!x) return;
+    S.assetEditing = x;
+    $('as-name').value = x.title || '';
+    $('as-prev').innerHTML = x.kind === 'image' && safeUrl(x.url)
+      ? '<img src="' + safeUrl(x.url) + '" alt="" style="display:block;max-width:100%;max-height:260px;margin:0 auto;border-radius:10px">'
+      : '<a class="pn-btn pn-line" href="' + safeUrl(x.url) + '" target="_blank" rel="noopener">' + escapeHtml(t('Abrir el PDF', 'Open the PDF')) + '</a>';
+    $('as-del').dataset.confirm = ''; $('as-del').textContent = t('Quitar de mi página', 'Remove from my page');
+    msg($('as-msg'), '');
+    sheet('as');
+  }
+  $('as-save').onclick = async function () {
+    var x = S.assetEditing; if (!x) return;
+    this.disabled = true;
+    var r = await api('/api/panel?resource=assets&id=' + encodeURIComponent(x.id), jsonOpts('PUT', { title: $('as-name').value.trim() || null }));
+    this.disabled = false;
+    if (!r.ok) { msg($('as-msg'), errText(r.data.error), 'err'); return; }
+    close('as'); await refreshAssets(); msg($('pn-asset-msg'), t('Guardado.', 'Saved.'), 'ok');
+  };
+  $('as-del').onclick = async function () {
+    var x = S.assetEditing; if (!x) return;
+    if (this.dataset.confirm !== '1') { this.dataset.confirm = '1'; this.textContent = t('Toca otra vez para quitarlo', 'Tap again to remove'); return; }
+    var r = await api('/api/panel?resource=assets&id=' + encodeURIComponent(x.id), { method: 'DELETE' });
+    if (!r.ok) { msg($('as-msg'), errText(r.data.error), 'err'); return; }
+    // Also remove the file (only files in our own folder; the storage policy enforces it too).
+    var m = String(x.url).split('/object/public/listing-photos/')[1];
+    if (m && m.indexOf(S.agency.id + '/') === 0) initSupabase().storage.from('listing-photos').remove([m]).catch(function () {});
+    close('as'); await refreshAssets(); msg($('pn-asset-msg'), t('Material quitado.', 'Material removed.'), 'ok');
   };
 
   /* ---------- the agent's card ---------- */
