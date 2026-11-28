@@ -64,6 +64,16 @@ export const MINI_PERIOD_DAYS = 90;
 export const MINI_PRICE_MXN = 249;
 export const MINI_MONTHLY_PRICE_MXN = 149;
 
+/* The client CRM ("Clientes", supabase/022) is a monthly add-on to a Mini page (owner's decision
+   2026-11-27: MXN 149 a month, activated by hand like the page: scripts/mini.mjs crm <slug>).
+   agencies.crm_until carries the paid period; writes need it, reads never stop (data is kept). */
+export const CRM_PERIOD_DAYS = 30;
+export const CRM_PRICE_MXN = MINI_MONTHLY_PRICE_MXN;
+export function crmActive(agency, now = Date.now()) {
+  const until = agency && agency.crm_until ? Date.parse(agency.crm_until) : NaN;
+  return Number.isFinite(until) && until > now;
+}
+
 /** Resolve a plan record from whatever the agency row carries. */
 export function planFor(agency) {
   const key = String((agency && agency.plan) || DEFAULT_PLAN).toLowerCase();

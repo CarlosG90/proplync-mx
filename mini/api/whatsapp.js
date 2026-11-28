@@ -22,6 +22,10 @@
  *   bot switched off or page not paid · monthly cap reached · the chat was handed
  *   to the owner in the last 12 hours · a message that isn't text · Groq busy.
  *
+ * EVERY INQUIRY REACHES THE OWNER'S CRM (mini/api/_cases.js leadFromWhatsApp): a
+ * new client number becomes a lead in "Clientes", with the service the assistant
+ * understood they want, even when the bot stays quiet.
+ *
  * Retries are harmless: each incoming message id is stored once (unique
  * mini_bot_messages.wa_message_id); a repeat is ignored.
  * -----------------------------------------------------------------------------
@@ -33,6 +37,7 @@ import { getServiceClient } from './_proplync/_lib/supabase.js';
 import { pageActive } from './_proplync/_lib/plans.js';
 import { logDegraded } from './_proplync/_lib/health.js';
 import { loadBotContext, botReply } from './_bot.js';
+import { leadFromWhatsApp } from './_cases.js';
 
 const GRAPH = 'https://graph.facebook.com/' + (process.env.WHATSAPP_GRAPH_VERSION || 'v23.0');
 export const HANDOFF_PAUSE_MS = 12 * 3600 * 1000;
@@ -100,7 +105,8 @@ export async function handleMessage(m, deps = {}) {
     if (insErr.code === '23505') return { skipped: 'duplicate' };   // Meta retried this message
     throw insErr;
   }
-  if (deps.afterStore) await deps.afterStore({ agencyId: bot.agency_id, contact: m.from, text: m.text });
+  const lead = deps.leadFromWhatsApp || leadFromWhatsApp;
+  await lead(svc, { agencyId: bot.agency_id, phone: m.from, now }).catch((err) => logDegraded('mini:whatsapp-lead', err));
   if (!bot.enabled) return { skipped: 'disabled' };
   if (!m.text) return { skipped: 'not_text' };
 
@@ -128,6 +134,7 @@ export async function handleMessage(m, deps = {}) {
     agency_id: bot.agency_id, contact: m.from, role: 'bot', body: out.reply.slice(0, 4000), handoff: !!out.handoff
   });
   if (bIns) logDegraded('mini:whatsapp-log', bIns);
+  if (out.service) await lead(svc, { agencyId: bot.agency_id, phone: m.from, serviceTitle: out.service, now }).catch((err) => logDegraded('mini:whatsapp-lead', err));
   return { replied: true, handoff: !!out.handoff };
 }
 

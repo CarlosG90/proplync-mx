@@ -82,7 +82,9 @@ test('payment notice: only known methods, bounded text', () => {
   assert.equal(cleanNotice({ method: 'bitcoin' }).error, 'invalid_method');
   assert.equal(cleanNotice({ method: 'transfer', reference: 'x'.repeat(81) }).error, 'reference_too_long');
   assert.equal(cleanNotice({ method: 'oxxo', note: 'x'.repeat(301) }).error, 'note_too_long');
-  assert.deepEqual(cleanNotice({ method: 'transfer', reference: ' 123 ', note: ' ok ' }).notice, { method: 'transfer', reference: '123', note: 'ok' });
+  assert.deepEqual(cleanNotice({ method: 'transfer', reference: ' 123 ', note: ' ok ' }).notice, { method: 'transfer', reference: '123', note: 'ok', product: 'page' });
+  assert.equal(cleanNotice({ method: 'other', product: 'crm' }).notice.product, 'crm', 'the CRM add-on is named in the notice');
+  assert.equal(cleanNotice({ method: 'other', product: 'anything' }).notice.product, 'page');
 });
 
 function fakeRes() {
@@ -134,7 +136,7 @@ test('payment notice handler: the notice is stored before the email, so it is ne
   assert.equal(ev.table, 'events');
   assert.equal(ev.row.name, 'mini_paid_notice');
   assert.equal(ev.row.session, 'a1');
-  assert.deepEqual(ev.row.props, { slug: 'nadia', method: 'transfer', reference: 'SPEI-42', state: 'pending' });
+  assert.deepEqual(ev.row.props, { slug: 'nadia', method: 'transfer', reference: 'SPEI-42', state: 'pending', product: 'page' });
   assert.equal(mail.length, 1);
   assert.match(mail[0].text, /scripts\/mini\.mjs activate nadia/);
 });

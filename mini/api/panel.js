@@ -18,6 +18,8 @@
  *       and PDFs (mini_assets, supabase/020; rules in api/_assets.js).
  *   GET/PUT ?resource=bot  the WhatsApp assistant's training, this month's usage and
  *       recent conversations (mini_bot, supabase/021; rules in api/_bot.js).
+ *   GET/POST/PUT/DELETE ?resource=cases (&id=, &service=&stages=1)  the client CRM:
+ *       jobs per service, WhatsApp leads, totals (mini_cases, supabase/022; api/_cases.js).
  *   POST ?action=bot-test  { messages, draft }  one reply from the assistant, for the
  *       panel's test chat, with unsaved training applied. Nothing is stored or sent.
  *   GET ?action=preview&slug=  the customer's own page as buyers will see it,
@@ -40,12 +42,13 @@ import { requireAgencyUser } from './_proplync/_lib/auth.js';
 import { getServiceClient } from './_proplync/_lib/supabase.js';
 import { enforceRateLimit } from './_proplync/_lib/ratelimit.js';
 import { safeDetail, logDegraded } from './_proplync/_lib/health.js';
-import { miniState, MINI_PRICE_MXN } from './_proplync/_lib/plans.js';
+import { miniState, MINI_PRICE_MXN, CRM_PRICE_MXN } from './_proplync/_lib/plans.js';
 import { notifyOperator } from './_proplync/_lib/notify.js';
 import { buildModel, AGENCY_FIELDS, LISTING_FIELDS } from './_page-model.js';
 import { handleServices, PUBLIC_SERVICE_FIELDS } from './_services.js';
 import { handleAssets, ASSET_FIELDS, missingTable } from './_assets.js';
 import { cleanTraining, botDefaults, loadBotContext, botReply, BOT_FIELDS } from './_bot.js';
+import { handleCases } from './_cases.js';
 
 export const PAY_METHODS = ['transfer', 'deposit', 'oxxo', 'other'];
 
@@ -58,7 +61,9 @@ export function cleanNotice(body) {
   if (reference.length > 80) return { error: 'reference_too_long' };
   const note = String(b.note || '').trim();
   if (note.length > 300) return { error: 'note_too_long' };
-  return { notice: { method, reference, note } };
+  // Which product it is for: the page (MXN 249 / 3 months) or the client CRM add-on (MXN 149 / month).
+  const product = b.product === 'crm' ? 'crm' : 'page';
+  return { notice: { method, reference, note, product } };
 }
 
 export async function handlePaidNotice(req, res, deps = {}) {
@@ -83,17 +88,19 @@ export async function handlePaidNotice(req, res, deps = {}) {
       name: 'mini_paid_notice',
       page: 'panel',
       session: agency.id,
-      props: { slug: agency.slug, method: notice.method, reference: notice.reference.slice(0, 80), state: state && state.state }
+      props: { slug: agency.slug, method: notice.method, reference: notice.reference.slice(0, 80), state: state && state.state, product: notice.product }
     });
     if (evErr) throw evErr;
 
     await (deps.notifyOperator || notifyOperator)({
-      subject: `Mini: aviso de pago (${agency.name})`,
+      subject: notice.product === 'crm' ? `Mini: CRM de clientes (${agency.name})` : `Mini: aviso de pago (${agency.name})`,
       text: `${agency.name} dice que ya pago (MXN ${MINI_PRICE_MXN}).\n` +
         `Metodo: ${notice.method}\nReferencia: ${notice.reference || '-'}\nNota: ${notice.note || '-'}\n` +
         `Correo: ${auth.user && auth.user.email || '-'}\nWhatsApp: ${agency.whatsapp_number || '-'}\n` +
         `Estado actual: ${state ? state.state : '-'}\nSlug: ${agency.slug}\n\n` +
-        `Verifica el pago y luego: node scripts/mini.mjs activate ${agency.slug}`
+        (notice.product === 'crm'
+          ? `Producto: CRM de clientes (MXN ${CRM_PRICE_MXN} al mes).\nVerifica el pago y luego: node scripts/mini.mjs crm ${agency.slug}`
+          : `Verifica el pago y luego: node scripts/mini.mjs activate ${agency.slug}`)
     });
     res.status(200).json({ ok: true });
   } catch (err) {
@@ -194,6 +201,7 @@ async function handleBot(req, res, { auth, svc }) {
   res.status(405).json({ error: 'method_not_allowed' });
 }
 export const handleBotRoute = ownRoute('bot', handleBot);
+export const handleCasesRoute = ownRoute('cases', handleCases);
 
 /** The test chat: one reply with the saved training plus the unsaved draft. Nothing stored, nothing sent. */
 export async function handleBotTest(req, res, deps = {}) {
@@ -230,6 +238,7 @@ export default async function handler(req, res) {
   if (req.query && req.query.resource === 'services') return handleServicesRoute(req, res);
   if (req.query && req.query.resource === 'assets') return handleAssetsRoute(req, res);
   if (req.query && req.query.resource === 'bot') return handleBotRoute(req, res);
+  if (req.query && req.query.resource === 'cases') return handleCasesRoute(req, res);
   if (req.query && req.query.action === 'bot-test') return handleBotTest(req, res);
   if (req.query && req.query.action === 'paid-notice') return handlePaidNotice(req, res);
   if (req.query && req.query.action === 'preview') return handlePreview(req, res);

@@ -89,6 +89,25 @@
   .pn-ord button:hover{background:var(--sand-2)}
   .pn-ord button:focus-visible{outline:2px solid var(--gold)}
   .pn-ord button[disabled]{opacity:.25;cursor:default}
+  /* tabs: Mi página · Clientes · WhatsApp */
+  .pn-off-tab{display:none !important}
+  .pn-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--sand);border-radius:999px;padding:4px;margin:0 0 14px;position:sticky;top:64px;z-index:10}
+  .pn-tabs button{border:0;background:none;border-radius:999px;padding:10px 6px;font:600 .86rem var(--body);color:var(--on-sand);cursor:pointer}
+  .pn-tabs button[aria-selected=true]{background:var(--white);color:var(--ink);box-shadow:var(--shadow-sm)}
+  /* client CRM */
+  .pn-crm-sum{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+  .pn-crm-sum div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+  .pn-crm-sum b{display:block;font:700 1.05rem var(--mono);color:var(--ink)}
+  .pn-crm-sum span{font-size:.74rem;color:var(--on-sand)}
+  .pn-crm-sum .owed b{color:#a23a24}
+  .pn-crm-chips{display:flex;gap:6px;overflow-x:auto;padding:12px 0 2px;scrollbar-width:none}
+  .pn-crm-chips button{flex:none;border:1px solid var(--line);background:var(--white);border-radius:999px;padding:7px 12px;font:600 .78rem var(--body);color:var(--on-sand);cursor:pointer;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pn-crm-chips button[aria-pressed=true]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+  .pn-stage{font:700 .58rem var(--mono);letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:3px 8px;background:rgba(45,138,133,.12);color:var(--sea-deep)}
+  .pn-pill.wa{background:#d9f2d0;color:#1f6b2e}
+  .pn-owe{color:#a23a24;font-weight:700}
+  .pn-crm-rest{font:700 .9rem var(--mono);padding:8px 12px;border-radius:10px;background:var(--paper);border:1px solid var(--line)}
+  .pn-stage-edit{margin-top:8px;font-size:.8rem;color:var(--on-sand);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   /* WhatsApp assistant: training form, FAQ rows, test chat */
   .pn-faq{display:grid;gap:10px;margin-top:8px}
   .pn-faq-row{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--paper);display:grid;gap:8px}
@@ -227,7 +246,13 @@
         <div class="pn-row" id="pn-status-actions"></div>
       </section>
 
-      <section class="pn-card">
+      <nav class="pn-tabs" id="pn-tabs" role="tablist" aria-label="Secciones">
+        <button type="button" role="tab" data-tab-btn="pagina" data-es="Mi página" data-en="My page">Mi página</button>
+        <button type="button" role="tab" data-tab-btn="clientes" data-es="Clientes" data-en="Clients">Clientes</button>
+        <button type="button" role="tab" data-tab-btn="whatsapp" data-es="WhatsApp" data-en="WhatsApp">WhatsApp</button>
+      </nav>
+
+      <section class="pn-card" data-tab="pagina">
         <div class="pn-eyebrow"><span data-es="Tu link" data-en="Your link">Tu link</span></div>
         <div class="pn-link"><code id="pn-url"></code></div>
         <div class="pn-row">
@@ -238,7 +263,7 @@
         <div class="pn-qr"><img id="pn-qr" alt="QR"><p data-es="Ponlo en tu tarjeta, tus lonas o tus estados de WhatsApp. Lleva a tu página." data-en="Put it on your card, signs or WhatsApp status. It opens your page.">Ponlo en tu tarjeta, tus lonas o tus estados de WhatsApp. Lleva a tu página.</p></div>
       </section>
 
-      <section class="pn-card" id="pn-svc-card">
+      <section class="pn-card" id="pn-svc-card" data-tab="pagina">
         <div class="pn-eyebrow"><span data-es="Servicios" data-en="Services">Servicios</span><span class="pn-count" id="pn-svc-used"></span></div>
         <h2 data-es="Lo que ofreces" data-en="What you offer">Lo que ofreces</h2>
         <ul class="pn-list" id="pn-svcs"></ul>
@@ -249,7 +274,7 @@
         <div class="pn-msg" id="pn-svc-msg" aria-live="polite"></div>
       </section>
 
-      <section class="pn-card" id="pn-asset-card">
+      <section class="pn-card" id="pn-asset-card" data-tab="pagina">
         <div class="pn-eyebrow"><span data-es="Material" data-en="Material">Material</span><span class="pn-count" id="pn-asset-used"></span></div>
         <h2 data-es="Infografías, folletos y PDFs" data-en="Infographics, brochures and PDFs">Infografías, folletos y PDFs</h2>
         <p class="pn-sub" data-es="Sube tus imágenes (JPG, PNG) o PDFs tal como los compartes. Se ven en tu página en buena calidad y tus clientes los pueden abrir, descargar o reenviar." data-en="Upload your images (JPG, PNG) or PDFs as you share them. They show on your page in good quality and clients can open, download or forward them.">Sube tus imágenes (JPG, PNG) o PDFs tal como los compartes. Se ven en tu página en buena calidad y tus clientes los pueden abrir, descargar o reenviar.</p>
@@ -260,7 +285,39 @@
         <div class="pn-msg" id="pn-asset-msg" aria-live="polite"></div>
       </section>
 
-      <section class="pn-card" id="pn-bot-card">
+      <section class="pn-card" id="pn-crm-card" data-tab="clientes">
+        <div class="pn-eyebrow"><span data-es="Clientes" data-en="Clients">Clientes</span><span class="pn-count" id="pn-crm-state"></span></div>
+        <h2 data-es="Tus clientes y trámites" data-en="Your clients and jobs">Tus clientes y trámites</h2>
+        <div id="crm-locked" hidden>
+          <p class="pn-sub" data-es="Lleva cada cliente por servicio: en qué etapa va, cuánto cobraste, el anticipo, lo que te deben y tus comisiones. Cada consulta que te llega por WhatsApp aparece aquí sola, como prospecto." data-en="Track every client by service: which step it's on, what you charged, the deposit, what they owe and your commissions. Every WhatsApp inquiry shows up here by itself, as a prospect.">Lleva cada cliente por servicio: en qué etapa va, cuánto cobraste, el anticipo, lo que te deben y tus comisiones. Cada consulta que te llega por WhatsApp aparece aquí sola, como prospecto.</p>
+          <div class="pn-row"><button class="pn-btn pn-gold" type="button" id="crm-ask"></button></div>
+          <div class="pn-msg" id="crm-ask-msg" aria-live="polite"></div>
+        </div>
+        <div id="crm-app" hidden>
+          <div class="pn-crm-sum" id="crm-sum"></div>
+          <div class="pn-crm-chips" id="crm-chips" role="toolbar" aria-label="Servicio"></div>
+          <div id="crm-stages"></div>
+          <div class="pn-grid2" style="margin-top:10px">
+            <select class="pn-in" id="crm-status" aria-label="Estado">
+              <option value="active" data-es="Prospectos y en proceso" data-en="Prospects and in progress">Prospectos y en proceso</option>
+              <option value="lead" data-es="Prospectos" data-en="Prospects">Prospectos</option>
+              <option value="open" data-es="En proceso" data-en="In progress">En proceso</option>
+              <option value="done" data-es="Terminados" data-en="Done">Terminados</option>
+              <option value="cancelled" data-es="Cancelados" data-en="Cancelled">Cancelados</option>
+              <option value="all" data-es="Todos" data-en="All">Todos</option>
+            </select>
+            <input class="pn-in" id="crm-q" placeholder="Buscar nombre o teléfono" aria-label="Buscar">
+          </div>
+          <ul class="pn-list" id="crm-list"></ul>
+          <div class="pn-row">
+            <button class="pn-btn pn-gold" type="button" id="crm-new"><svg><use href="#i-plus"/></svg><span data-es="Nuevo cliente" data-en="New client">Nuevo cliente</span></button>
+            <button class="pn-btn pn-line" type="button" id="crm-csv" data-es="Exportar a Excel (CSV)" data-en="Export to Excel (CSV)">Exportar a Excel (CSV)</button>
+          </div>
+          <div class="pn-msg" id="crm-msg" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="pn-card" id="pn-bot-card" data-tab="whatsapp">
         <div class="pn-eyebrow"><span data-es="Asistente de WhatsApp" data-en="WhatsApp assistant">Asistente de WhatsApp</span><span class="pn-count" id="pn-bot-state"></span></div>
         <h2 data-es="Entrena a tu asistente" data-en="Train your assistant">Entrena a tu asistente</h2>
         <p class="pn-sub" data-es="Contesta a tus clientes de WhatsApp a cualquier hora, solo con lo que tú le enseñes aquí y lo que ya está en tu página (servicios, material, propiedades). Dice que es un asistente y te pasa el chat cuando piden precios que no pusiste, citas, descuentos o algo que no sabe." data-en="Answers your WhatsApp clients at any hour, only with what you teach it here and what is already on your page (services, material, properties). It says it is an assistant and hands you the chat for prices you didn't list, appointments, discounts or anything it doesn't know.">Contesta a tus clientes de WhatsApp a cualquier hora, solo con lo que tú le enseñes aquí y lo que ya está en tu página (servicios, material, propiedades). Dice que es un asistente y te pasa el chat cuando piden precios que no pusiste, citas, descuentos o algo que no sabe.</p>
@@ -301,7 +358,7 @@
         </div>
       </section>
 
-      <section class="pn-card" id="pn-props-card">
+      <section class="pn-card" id="pn-props-card" data-tab="pagina">
         <div class="pn-eyebrow"><span data-es="Propiedades" data-en="Properties">Propiedades</span><span class="pn-count" id="pn-used"></span></div>
         <h2 data-es="Lo que ven tus clientes" data-en="What your clients see">Lo que ven tus clientes</h2>
         <ul class="pn-list" id="pn-list"></ul>
@@ -312,7 +369,7 @@
         <div class="pn-msg" id="pn-list-msg" aria-live="polite"></div>
       </section>
 
-      <section class="pn-card">
+      <section class="pn-card" data-tab="pagina">
         <div class="pn-eyebrow" data-es="Tu tarjeta" data-en="Your card">Tu tarjeta</div>
         <h2 data-es="Cómo te presentas" data-en="How you introduce yourself">Cómo te presentas</h2>
         <div class="pn-form" id="pn-card-form">
@@ -374,6 +431,50 @@
   <div class="pn-sheet-foot">
     <button class="pn-btn pn-line" type="button" data-close="ed" data-es="Cancelar" data-en="Cancel">Cancelar</button>
     <button class="pn-btn pn-gold" id="e-save" type="button" data-es="Guardar" data-en="Save">Guardar</button>
+  </div>
+</dialog>
+
+<!-- client / job editor (mini_cases) -->
+<dialog class="pn-sheet" id="cs" aria-labelledby="cs-title">
+  <div class="pn-sheet-head"><h2 id="cs-title"></h2><button class="pn-x" type="button" data-close="cs" aria-label="Cerrar">×</button></div>
+  <div class="pn-sheet-body">
+    <div class="pn-form">
+      <div id="cs-wa-note"></div>
+      <label><span data-es="Nombre completo" data-en="Full name">Nombre completo</span><input class="pn-in" id="c2-name" maxlength="120" autocomplete="off"></label>
+      <label><span data-es="Teléfono" data-en="Phone">Teléfono</span><input class="pn-in" id="c2-phone" maxlength="30" inputmode="tel"></label>
+      <label><span data-es="Servicio o trámite" data-en="Service or job">Servicio o trámite</span><select class="pn-in" id="c2-svc"></select></label>
+      <div class="pn-grid2">
+        <label><span data-es="Estado" data-en="Status">Estado</span><select class="pn-in" id="c2-status">
+          <option value="lead" data-es="Prospecto" data-en="Prospect">Prospecto</option>
+          <option value="open" data-es="En proceso" data-en="In progress">En proceso</option>
+          <option value="done" data-es="Terminado" data-en="Done">Terminado</option>
+          <option value="cancelled" data-es="Cancelado" data-en="Cancelled">Cancelado</option></select></label>
+        <label><span data-es="Proceso (etapa)" data-en="Step">Proceso (etapa)</span><select class="pn-in" id="c2-stage"></select></label>
+      </div>
+      <label><span id="c2-addr-label"></span><input class="pn-in" id="c2-addr" maxlength="200"></label>
+      <div class="pn-grid2">
+        <label><span data-es="Inicio" data-en="Started">Inicio</span><input class="pn-in" id="c2-start" type="date"></label>
+        <label><span data-es="Finalizó" data-en="Finished">Finalizó</span><input class="pn-in" id="c2-end" type="date"></label>
+      </div>
+      <div class="pn-grid2">
+        <label><span data-es="Costo" data-en="Fee">Costo</span><input class="pn-in" id="c2-fee" type="number" min="0" step="0.01" inputmode="decimal"></label>
+        <label><span data-es="Anticipo" data-en="Deposit">Anticipo</span><input class="pn-in" id="c2-adv" type="number" min="0" step="0.01" inputmode="decimal"></label>
+      </div>
+      <div class="pn-crm-rest" id="c2-rest"></div>
+      <div class="pn-grid2">
+        <label><span data-es="Costo de venta" data-en="Sale price">Costo de venta</span><input class="pn-in" id="c2-sale" type="number" min="0" step="0.01" inputmode="decimal"></label>
+        <label><span data-es="Comisión" data-en="Commission">Comisión</span><input class="pn-in" id="c2-com" type="number" min="0" step="0.01" inputmode="decimal"></label>
+      </div>
+      <label><span data-es="Comisión pagada el" data-en="Commission paid on">Comisión pagada el</span><input class="pn-in" id="c2-compaid" type="date"></label>
+      <label><span data-es="Notas" data-en="Notes">Notas</span><textarea class="pn-in" id="c2-notes" maxlength="4000"></textarea></label>
+      <div id="c2-chat"></div>
+      <button class="pn-btn pn-line pn-danger" id="c2-del" type="button" data-es="Eliminar cliente" data-en="Delete client">Eliminar cliente</button>
+      <div class="pn-msg" id="c2-msg" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="pn-sheet-foot">
+    <button class="pn-btn pn-line" type="button" data-close="cs" data-es="Cancelar" data-en="Cancel">Cancelar</button>
+    <button class="pn-btn pn-gold" id="c2-save" type="button" data-es="Guardar" data-en="Save">Guardar</button>
   </div>
 </dialog>
 
@@ -477,7 +578,7 @@
 (function () {
   'use strict';
   var MAX_PHOTOS = 6, PHOTO_PX = 1600, GOLD = '#c9a96e';
-  var S = { agency: null, listings: [], services: [], svcLimit: 20, plan: null, editing: null, photos: [], color: null, svcEditing: null, svcImage: null, assets: [], assetLimit: 30, assetEditing: null, bot: null, botInfo: null, chat: [] };
+  var S = { agency: null, listings: [], services: [], svcLimit: 20, plan: null, editing: null, photos: [], color: null, svcEditing: null, svcImage: null, assets: [], assetLimit: 30, assetEditing: null, bot: null, botInfo: null, chat: [], crm: null, crmSvc: 'all', crmEditing: null, tab: 'pagina' };
   function type() { return MINI_TYPES.typeFor(S.agency && S.agency.business_type); }
   function pair(p) { return isEn() ? p[1] : p[0]; }
   function $(id) { return document.getElementById(id); }
@@ -507,6 +608,13 @@
     service_limit_reached: ['Ya tienes 20 servicios, el máximo. Elimina uno para agregar otro.', 'You already have 20 services, the maximum. Delete one to add another.'],
     asset_limit_reached: ['Ya tienes 30 archivos, el máximo. Quita uno para subir otro.', 'You already have 30 files, the maximum. Remove one to upload another.'],
     invalid_asset_type: ['Solo imágenes JPG, PNG, WebP o PDF.', 'Only JPG, PNG, WebP images or PDF.'],
+    upgrade_required: ['Activa el CRM de clientes para guardar cambios.', 'Activate the client CRM to save changes.'],
+    missing_client: ['Escribe al menos el nombre o el teléfono.', 'Enter at least the name or the phone.'],
+    invalid_stage: ['Esa etapa no es de este servicio. Elige una de la lista.', 'That step is not one of this service\'s. Pick one from the list.'],
+    advance_over_fee: ['El anticipo no puede ser mayor que el costo.', 'The deposit cannot be more than the fee.'],
+    finished_before_start: ['La fecha de fin es antes del inicio.', 'The end date is before the start.'],
+    invalid_client_phone: ['Revisa el teléfono del cliente.', 'Check the client\'s phone.'],
+    invalid_stages: ['Pon entre 2 y 12 etapas, separadas por comas.', 'Enter 2 to 12 steps, comma separated.'],
     bot_failed: ['El asistente no pudo responder. Intenta de nuevo.', 'The assistant could not answer. Try again.'],
     faq_answer_too_long: ['Una respuesta es muy larga (máximo 1,200).', 'An answer is too long (1,200 max).'],
     extra_too_long: ['La información extra es muy larga (máximo 4,000).', 'The extra information is too long (4,000 max).'],
@@ -564,8 +672,8 @@
     var session = await getSession();
     if (!session) { $('pn-out').hidden = true; show('pn-signin'); return; }
     $('pn-out').hidden = false;
-    var both = await Promise.all([api('/api/panel?resource=agency'), api('/api/panel'), api('/api/panel?resource=services'), api('/api/panel?resource=assets'), api('/api/panel?resource=bot')]);
-    var ag = both[0], ls = both[1], sv = both[2], as = both[3], bt = both[4];
+    var both = await Promise.all([api('/api/panel?resource=agency'), api('/api/panel'), api('/api/panel?resource=services'), api('/api/panel?resource=assets'), api('/api/panel?resource=bot'), api('/api/panel?resource=cases')]);
+    var ag = both[0], ls = both[1], sv = both[2], as = both[3], bt = both[4], cs = both[5];
     if (ag.status === 401 || ls.status === 401) { show('pn-none'); return; }
     if (!ag.ok || !ls.ok) { show('pn-signin'); msg($('pn-signin-msg'), t('No pudimos cargar tu página. Intenta de nuevo.', 'We could not load your page. Try again.'), 'err'); return; }
     S.agency = ag.data.agency; S.listings = ls.data.listings || []; S.plan = ls.data.plan || {};
@@ -573,10 +681,12 @@
     S.services = sv.ok ? (sv.data.services || []) : []; S.svcLimit = (sv.ok && sv.data.limit) || 20;
     S.assets = as.ok ? (as.data.assets || []) : []; S.assetLimit = (as.ok && as.data.limit) || 30;
     S.botInfo = bt.ok ? bt.data : null; S.bot = S.botInfo ? S.botInfo.bot : null;
+    S.crm = cs.ok ? cs.data : null;
     renderAll();
     show('pn-app');
     miniTrack('mini_panel_view', { state: miniState().state, listings: S.listings.length, services: S.services.length, business_type: type().key });
     var q = new URLSearchParams(location.search);
+    var tabQ = q.get('tab'); if (tabQ) setTab(tabQ); else { try { var tl = localStorage.getItem('mini_panel_tab'); if (tl) setTab(tl); } catch (e) {} }
     if (q.get('preview')) { history.replaceState(null, '', location.pathname); openPreview(); return; }
     if (q.get('pay')) openPay();
   }
@@ -588,7 +698,7 @@
     location.href = pageUrl() + (miniState().state === 'active' ? '' : '?vista=1');
   }
 
-  function renderAll() { renderStatus(); renderLink(); renderServices(); renderAssets(); renderBot(); renderList(); fillCard(); }
+  function renderAll() { renderStatus(); renderLink(); renderServices(); renderAssets(); renderBot(); renderCrm(); renderList(); fillCard(); setTab(S.tab); }
 
   function miniState() { return (S.plan && S.plan.mini) || { state: 'active', activeUntil: null }; }
   function renderStatus() {
@@ -1179,6 +1289,191 @@
         }).join('') + '</div></details>';
     }).join('');
   }
+
+  /* ---------- tabs ---------- */
+  function setTab(tab) {
+    if (['pagina', 'clientes', 'whatsapp'].indexOf(tab) === -1) tab = 'pagina';
+    S.tab = tab;
+    document.querySelectorAll('[data-tab]').forEach(function (el) { el.classList.toggle('pn-off-tab', el.getAttribute('data-tab') !== tab); });
+    document.querySelectorAll('[data-tab-btn]').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-tab-btn') === tab)); });
+    try { localStorage.setItem('mini_panel_tab', tab); } catch (e) {}
+  }
+  $('pn-tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-tab-btn]'); if (b) { setTab(b.getAttribute('data-tab-btn')); window.scrollTo({ top: 0, behavior: 'smooth' }); } });
+
+  /* ---------- client CRM (mini_cases, supabase/022; api: mini/api/_cases.js) ----------
+     The owner's paper sheet per service (NOMBRE, DIRECCIÓN, TRÁMITE, INICIO, FINALIZÓ, PROCESO, TELÉFONO, COSTO,
+     ANTICIPO, RESTO, COSTO DE VENTA, COMISIÓN), plus every WhatsApp inquiry as a prospect. */
+  var STATUS_LBL = { lead: ['Prospecto', 'Prospect'], open: ['En proceso', 'In progress'], done: ['Terminado', 'Done'], cancelled: ['Cancelado', 'Cancelled'] };
+  function mxn(n) { return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+  function crmSvc(id) { return id && S.crm && S.crm.services.filter(function (x) { return x.id === id; })[0]; }
+  function stagesOf(id) { var v = crmSvc(id); return v ? v.stages : ((S.crm && S.crm.generic_stages) || ['Nuevo', 'En proceso', 'Terminado']); }
+  function crmVisible() {
+    var st = $('crm-status').value, q = $('crm-q').value.trim().toLowerCase();
+    return (S.crm.cases || []).filter(function (c) {
+      if (S.crmSvc !== 'all' && (S.crmSvc === 'none' ? c.service_id : c.service_id !== S.crmSvc)) return false;
+      if (st === 'active' ? (c.status !== 'lead' && c.status !== 'open') : (st !== 'all' && c.status !== st)) return false;
+      return !q || String(c.client_name || '').toLowerCase().indexOf(q) !== -1 || String(c.client_phone || '').indexOf(q.replace(/\D/g, '') || q) !== -1;
+    });
+  }
+  function renderCrm() {
+    if (!S.crm) { $('pn-crm-card').hidden = true; return; }
+    $('pn-crm-card').hidden = false;
+    var c = S.crm;
+    $('pn-crm-state').textContent = c.active ? (c.crm_until ? t('Activo hasta ', 'Active until ') + fmtDate(c.crm_until) : t('Activo', 'Active')) : t('Sin activar', 'Not active');
+    var hasRows = (c.cases || []).length > 0;
+    $('crm-locked').hidden = c.active;
+    $('crm-app').hidden = !c.active && !hasRows;
+    $('crm-ask').textContent = t('Activar · MXN 149 al mes', 'Activate · MXN 149 a month');
+    $('crm-new').hidden = !c.active;
+    var s = c.summary || {};
+    $('crm-sum').innerHTML = [
+      ['', s.leads || 0, t('Prospectos', 'Prospects')], ['', s.open || 0, t('En proceso', 'In progress')],
+      ['owed', mxn(s.owed), t('Te deben (resto)', 'Owed to you')], ['', mxn(s.commissions_pending), t('Comisiones por cobrar', 'Commissions pending')]
+    ].map(function (x) { return '<div class="' + x[0] + '"><b>' + escapeHtml(String(x[1])) + '</b><span>' + escapeHtml(x[2]) + '</span></div>'; }).join('');
+    var by = s.by_service || {}, total = (c.cases || []).length;
+    var chips = [['all', t('Todos', 'All') + ' · ' + total]].concat(c.services.map(function (v) { return [v.id, v.title + ' · ' + (by[v.id] || 0)]; }));
+    if (by.none) chips.push(['none', t('Sin servicio', 'No service') + ' · ' + by.none]);
+    $('crm-chips').innerHTML = chips.map(function (x) { return '<button type="button" data-crm-svc="' + escapeHtml(x[0]) + '" aria-pressed="' + (S.crmSvc === x[0]) + '">' + escapeHtml(x[1]) + '</button>'; }).join('');
+    // The chosen service's steps, editable.
+    var sv = crmSvc(S.crmSvc);
+    $('crm-stages').innerHTML = sv ? '<div class="pn-stage-edit"><span>' + escapeHtml(t('Etapas: ', 'Steps: ') + sv.stages.join(' → ')) + '</span>' +
+      (c.active ? '<button class="pn-btn pn-line" type="button" id="crm-stages-edit" style="min-height:32px;padding:4px 12px">' + escapeHtml(t('Editar etapas', 'Edit steps')) + '</button>' : '') + '</div>' : '';
+    var list = crmVisible();
+    $('crm-list').innerHTML = list.length ? list.map(function (k) {
+      var v = crmSvc(k.service_id), owe = Number(k.balance) > 0 && k.status !== 'cancelled';
+      var phone = String(k.client_phone || '').replace(/\D/g, '');
+      return '<li class="pn-item" style="align-items:flex-start">' +
+        '<div class="pn-item-main"><div class="pn-item-title">' + escapeHtml(k.client_name || (k.client_phone ? '+' + phone : t('Sin nombre', 'No name'))) + '</div>' +
+        '<div class="pn-item-meta"><span>' + escapeHtml(v ? v.title : t('Sin servicio', 'No service')) + '</span></div>' +
+        '<div class="pn-item-meta">' +
+          '<span class="pn-pill">' + escapeHtml(pair(STATUS_LBL[k.status] || STATUS_LBL.open)) + '</span>' +
+          (k.stage ? '<span class="pn-stage">' + escapeHtml(k.stage) + '</span>' : '') +
+          (k.source === 'whatsapp' ? '<span class="pn-pill wa">WhatsApp</span>' : '') +
+          (owe ? '<span class="pn-owe">' + escapeHtml(t('Resto ', 'Owes ') + mxn(k.balance)) + '</span>' : '') +
+        '</div></div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px;flex:none">' +
+          '<button class="pn-btn pn-line pn-edit" type="button" data-case="' + escapeHtml(k.id) + '">' + escapeHtml(c.active ? t('Abrir', 'Open') : t('Ver', 'View')) + '</button>' +
+          (phone ? '<a class="pn-btn pn-line pn-edit" href="https://wa.me/' + phone + '" target="_blank" rel="noopener" aria-label="WhatsApp"><svg><use href="#i-wa"/></svg></a>' : '') +
+        '</div></li>';
+    }).join('') : '<li class="pn-sub" style="padding:8px 2px">' + escapeHtml(total ? t('Nadie con ese filtro.', 'No one matches that filter.') : t('Aún no hay clientes. Agrega uno, o espera tu primera consulta de WhatsApp.', 'No clients yet. Add one, or wait for your first WhatsApp inquiry.')) + '</li>';
+  }
+  async function refreshCrm() {
+    var r = await api('/api/panel?resource=cases');
+    if (r.ok) { S.crm = r.data; renderCrm(); }
+  }
+  $('crm-chips').addEventListener('click', function (e) { var b = e.target.closest('[data-crm-svc]'); if (b) { S.crmSvc = b.getAttribute('data-crm-svc'); renderCrm(); } });
+  $('crm-status').onchange = renderCrm;
+  $('crm-q').oninput = renderCrm;
+  $('crm-stages').addEventListener('click', async function (e) {
+    if (!e.target.closest('#crm-stages-edit')) return;
+    var sv = crmSvc(S.crmSvc); if (!sv) return;
+    $('crm-stages').innerHTML = '<div class="pn-form" style="margin-top:8px"><label><span>' + escapeHtml(t('Etapas de «' + sv.title + '», separadas por comas', 'Steps of “' + sv.title + '”, comma separated')) + '</span>' +
+      '<input class="pn-in" id="crm-stages-in" value="' + escapeHtml(sv.stages.join(', ')) + '"></label>' +
+      '<div class="pn-row" style="margin:0"><button class="pn-btn pn-gold" type="button" id="crm-stages-save">' + escapeHtml(t('Guardar etapas', 'Save steps')) + '</button>' +
+      '<button class="pn-btn pn-line" type="button" id="crm-stages-cancel">' + escapeHtml(t('Cancelar', 'Cancel')) + '</button></div></div>';
+    $('crm-stages-cancel').onclick = renderCrm;
+    $('crm-stages-save').onclick = async function () {
+      var list = $('crm-stages-in').value.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+      var r = await api('/api/panel?resource=cases&stages=1&service=' + encodeURIComponent(sv.id), jsonOpts('PUT', { stages: list }));
+      if (!r.ok) { msg($('crm-msg'), errText(r.data.error), 'err'); return; }
+      await refreshCrm(); msg($('crm-msg'), t('Etapas guardadas.', 'Steps saved.'), 'ok');
+    };
+  });
+  $('crm-ask').onclick = async function () {
+    this.disabled = true;
+    var r = await api('/api/panel?action=paid-notice', jsonOpts('POST', { method: 'other', product: 'crm', note: t('Quiero activar el CRM de clientes', 'I want to activate the client CRM') }));
+    this.disabled = false;
+    msg($('crm-ask-msg'), r.ok ? t('Listo: te contactamos con los datos de pago y lo activamos en cuanto pagues.', 'Done: we will contact you with payment details and activate it once you pay.') : errText(r.data.error), r.ok ? 'ok' : 'err');
+  };
+  function fillStageSelect(serviceId, current) {
+    var st = stagesOf(serviceId);
+    $('c2-stage').innerHTML = '<option value="">' + escapeHtml(t('—', '—')) + '</option>' + st.map(function (x) { return '<option>' + escapeHtml(x) + '</option>'; }).join('');
+    $('c2-stage').value = current && st.indexOf(current) !== -1 ? current : '';
+  }
+  function updateRest() {
+    var fee = Number($('c2-fee').value || 0), adv = Number($('c2-adv').value || 0);
+    var rest = fee - adv;
+    $('c2-rest').textContent = t('Resto (te deben): ', 'Balance (owed to you): ') + mxn(rest < 0 ? 0 : rest);
+    $('c2-rest').style.color = adv > fee ? '#a23a24' : '';
+  }
+  ['c2-fee', 'c2-adv'].forEach(function (id) { $(id).addEventListener('input', updateRest); });
+  $('c2-svc').onchange = function () { fillStageSelect(this.value || null, $('c2-stage').value); };
+  function openCase(id) {
+    var k = id ? (S.crm.cases || []).filter(function (x) { return x.id === id; })[0] : null;
+    S.crmEditing = k ? k.id : null;
+    var ro = !S.crm.active;
+    $('cs-title').textContent = k ? (k.client_name || t('Cliente', 'Client')) : t('Nuevo cliente', 'New client');
+    $('c2-svc').innerHTML = '<option value="">' + escapeHtml(t('Sin servicio', 'No service')) + '</option>' +
+      S.crm.services.map(function (v) { return '<option value="' + escapeHtml(v.id) + '">' + escapeHtml(v.title) + '</option>'; }).join('');
+    var svcId = k ? k.service_id : (S.crmSvc !== 'all' && S.crmSvc !== 'none' ? S.crmSvc : '');
+    $('c2-svc').value = svcId || '';
+    $('c2-status').value = k ? k.status : 'open';
+    fillStageSelect(svcId || null, k && k.stage);
+    if (!k && !$('c2-stage').value) $('c2-stage').selectedIndex = 1;
+    $('c2-name').value = k ? k.client_name || '' : ''; $('c2-phone').value = k ? k.client_phone || '' : '';
+    $('c2-addr').value = k ? k.address || '' : '';
+    // Real estate: the property's address (owner's decision 2026-11-27); other businesses: optional.
+    $('c2-addr-label').textContent = type().key === 'real_estate' ? t('Dirección del inmueble', 'Property address') : t('Dirección (opcional)', 'Address (optional)');
+    $('c2-start').value = k ? k.started_on || '' : new Date().toISOString().slice(0, 10);
+    $('c2-end').value = k ? k.finished_on || '' : '';
+    $('c2-fee').value = k && k.fee != null ? k.fee : ''; $('c2-adv').value = k && k.advance != null ? k.advance : '';
+    $('c2-sale').value = k && k.sale_price != null ? k.sale_price : ''; $('c2-com').value = k && k.commission != null ? k.commission : '';
+    $('c2-compaid').value = k ? k.commission_paid_on || '' : '';
+    $('c2-notes').value = k ? k.notes || '' : '';
+    updateRest();
+    $('cs-wa-note').innerHTML = k && k.source === 'whatsapp' ? '<p class="pn-sub" style="font-size:.82rem;margin:0">' + escapeHtml(t('Llegó por WhatsApp. Completa su nombre y pásalo a «En proceso» cuando lo atiendas.', 'Came in on WhatsApp. Add their name and move it to “In progress” when you take it.')) + '</p>' : '';
+    // The WhatsApp conversation with this number, if the assistant logged one.
+    var phone = k && String(k.client_phone || '').replace(/\D/g, '');
+    var conv = phone ? ((S.botInfo && S.botInfo.messages) || []).filter(function (m) { return m.contact === phone; }).slice().reverse() : [];
+    $('c2-chat').innerHTML = conv.length ? '<span style="font-weight:600;font-size:.86rem">' + escapeHtml(t('Conversación de WhatsApp', 'WhatsApp conversation')) + '</span><div class="pn-chat" style="margin-top:6px;max-height:260px">' +
+      conv.map(function (m) { return '<div class="pn-bub ' + (m.role === 'bot' ? 'bot' : 'user') + '">' + escapeHtml(m.body) + '</div>'; }).join('') + '</div>' : '';
+    document.querySelectorAll('#cs .pn-in').forEach(function (el) { el.disabled = ro; });
+    $('c2-save').hidden = ro; $('c2-del').hidden = ro || !k;
+    $('c2-del').dataset.confirm = ''; $('c2-del').textContent = t('Eliminar cliente', 'Delete client');
+    msg($('c2-msg'), ro ? t('Solo lectura: activa el CRM para editar.', 'Read only: activate the CRM to edit.') : '');
+    sheet('cs');
+  }
+  $('crm-new').onclick = function () { openCase(null); };
+  $('crm-list').addEventListener('click', function (e) { var b = e.target.closest('[data-case]'); if (b) openCase(b.getAttribute('data-case')); });
+  function numOrNull(id) { var v = $(id).value.trim(); return v === '' ? null : Number(v); }
+  $('c2-save').onclick = async function () {
+    var body = {
+      client_name: $('c2-name').value.trim() || null, client_phone: $('c2-phone').value.trim() || null,
+      service_id: $('c2-svc').value || null, status: $('c2-status').value, stage: $('c2-stage').value || null,
+      address: $('c2-addr').value.trim() || null, started_on: $('c2-start').value || null, finished_on: $('c2-end').value || null,
+      fee: numOrNull('c2-fee'), advance: numOrNull('c2-adv'), sale_price: numOrNull('c2-sale'), commission: numOrNull('c2-com'),
+      commission_paid_on: $('c2-compaid').value || null, notes: $('c2-notes').value.trim() || null
+    };
+    if (!body.client_name && !body.client_phone) { msg($('c2-msg'), errText('missing_client'), 'err'); return; }
+    // Marking it finished fills today's date if none was set.
+    if (body.status === 'done' && !body.finished_on) body.finished_on = new Date().toISOString().slice(0, 10);
+    this.disabled = true;
+    var r = S.crmEditing ? await api('/api/panel?resource=cases&id=' + encodeURIComponent(S.crmEditing), jsonOpts('PUT', body))
+      : await api('/api/panel?resource=cases', jsonOpts('POST', body));
+    this.disabled = false;
+    if (!r.ok) { msg($('c2-msg'), errText(r.data.error), 'err'); return; }
+    close('cs'); await refreshCrm(); msg($('crm-msg'), t('Guardado.', 'Saved.'), 'ok');
+  };
+  $('c2-del').onclick = async function () {
+    if (!S.crmEditing) return;
+    if (this.dataset.confirm !== '1') { this.dataset.confirm = '1'; this.textContent = t('Toca otra vez para eliminar', 'Tap again to delete'); return; }
+    var r = await api('/api/panel?resource=cases&id=' + encodeURIComponent(S.crmEditing), { method: 'DELETE' });
+    if (!r.ok) { msg($('c2-msg'), errText(r.data.error), 'err'); return; }
+    close('cs'); await refreshCrm(); msg($('crm-msg'), t('Cliente eliminado.', 'Client deleted.'), 'ok');
+  };
+  /* CSV for Excel: the paper sheet's columns, in Spanish, with a BOM so accents open right. */
+  $('crm-csv').onclick = function () {
+    var head = ['Nombre completo', 'Teléfono', 'Dirección', 'Servicio', 'Estado', 'Proceso', 'Inicio', 'Finalizó', 'Costo', 'Anticipo', 'Resto', 'Costo de venta', 'Comisión', 'Comisión pagada', 'Origen', 'Notas'];
+    var esc = function (v) { var x = v == null ? '' : String(v); if (/^[=+\-@]/.test(x)) x = "'" + x; return '"' + x.replace(/"/g, '""') + '"'; };
+    var rows = crmVisible().map(function (k) {
+      var v = crmSvc(k.service_id);
+      return [k.client_name, k.client_phone, k.address, v ? v.title : '', pair(STATUS_LBL[k.status] || STATUS_LBL.open), k.stage, k.started_on, k.finished_on,
+        k.fee, k.advance, k.balance, k.sale_price, k.commission, k.commission_paid_on, k.source === 'whatsapp' ? 'WhatsApp' : 'Manual', k.notes].map(esc).join(',');
+    });
+    var blob = new Blob(['\ufeff' + [head.map(esc).join(',')].concat(rows).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'clientes-' + ((S.agency && S.agency.slug) || 'mini') + '.csv';
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  };
 
   /* ---------- the agent's card ---------- */
   function fillCard() {
